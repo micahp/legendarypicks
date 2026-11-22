@@ -31,791 +31,3566 @@
    "play_pool": "nfl_pbp seasons 2022-2025, weeks 1-18; empirical E1 cell sampler",
    "rule_version": "NFL-2026-GAME-STATE-RULES.md / E2 successor rules matrix"
   },
-  "roster_snapshot_id": "nfl-depth-chart:e40276d7db05299572794501ffa832391ae40776548971009794aac63412a01c",
+  "roster_resolution": {
+   "away": {
+    "as_of_utc": "2026-11-08T16:30:00Z",
+    "blocks": [],
+    "content_hash": "2865df68347908c979e6737cd259f6286d14f5f7269b022d07ac869639900f49",
+    "forecast_class": "PROVISIONAL",
+    "game_id": "2026_09_NYG_PHI",
+    "input_fingerprint": "ff3d3e7390f060596fcff8ad4092284500afc3b4db389e9747e17370505cb158",
+    "players": [
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0031270",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Shelby Harris",
+      "official_eligible": true,
+      "pos": "LDE",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0031503",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jameis Winston",
+      "official_eligible": true,
+      "pos": "QB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0032424",
+      "membership": "ACTIVE_ROSTER",
+      "name": "DJ Reader",
+      "official_eligible": true,
+      "pos": "NT",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0032667",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Roy Robertson-Harris",
+      "official_eligible": true,
+      "pos": "LDE",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0033290",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jermaine Eluemunor",
+      "official_eligible": true,
+      "pos": "RT",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0033376",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Patrick Ricard",
+      "official_eligible": true,
+      "pos": "FB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0033907",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Dawuane Smoot",
+      "official_eligible": true,
+      "pos": "WLB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0034248",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Elijah Campbell",
+      "official_eligible": true,
+      "pos": "FS",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 4,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0034419",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Braxton Berrios",
+      "official_eligible": true,
+      "pos": "PR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 4,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0034419",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Braxton Berrios",
+      "official_eligible": true,
+      "pos": "KR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 7,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0034419",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Braxton Berrios",
+      "official_eligible": true,
+      "pos": "WR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0034668",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Aaron Stinnie",
+      "official_eligible": true,
+      "pos": "LG",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0034668",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Aaron Stinnie",
+      "official_eligible": true,
+      "pos": "RG",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0034673",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Tremaine Edmunds",
+      "official_eligible": true,
+      "pos": "RILB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0035250",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Devin Singletary",
+      "official_eligible": true,
+      "pos": "RB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 5,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0035645",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Gunner Olszewski",
+      "official_eligible": true,
+      "pos": "PR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 8,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0035645",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Gunner Olszewski",
+      "official_eligible": true,
+      "pos": "WR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0035713",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Brian Burns",
+      "official_eligible": true,
+      "pos": "WLB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0036246",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jon Runyan",
+      "official_eligible": true,
+      "pos": "LG",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0036280",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Malik Harrison",
+      "official_eligible": true,
+      "pos": "LILB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0036309",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Darnell Mooney",
+      "official_eligible": true,
+      "pos": "WR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [
+       "game_status_questionable"
+      ],
+      "gsis_id": "00-0036386",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Andrew Thomas",
+      "official_eligible": true,
+      "pos": "LT",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0036502",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jason Pinnock",
+      "official_eligible": true,
+      "pos": "SS",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0036587",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Ar'Darius Washington",
+      "official_eligible": true,
+      "pos": "FS",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0036937",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Paulson Adebo",
+      "official_eligible": true,
+      "pos": "LCB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0036982",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Chauncey Golston",
+      "official_eligible": true,
+      "pos": "RDE",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [
+       "game_status_questionable"
+      ],
+      "gsis_id": "00-0036996",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Greg Newsome II",
+      "official_eligible": true,
+      "pos": "RCB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0036998",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jevon Holland",
+      "official_eligible": true,
+      "pos": "FS",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0036998",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jevon Holland",
+      "official_eligible": true,
+      "pos": "PR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0037138",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Josh Sills",
+      "official_eligible": true,
+      "pos": "LG",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0037259",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Micah McFadden",
+      "official_eligible": true,
+      "pos": "RILB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0037611",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Kayvon Thibodeaux",
+      "official_eligible": true,
+      "pos": "WLB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0037837",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Calvin Austin III",
+      "official_eligible": true,
+      "pos": "PR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 6,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0037837",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Calvin Austin III",
+      "official_eligible": true,
+      "pos": "WR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0037838",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Isaiah Likely",
+      "official_eligible": true,
+      "pos": "TE",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0038094",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jordan Stout",
+      "official_eligible": true,
+      "pos": "P",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0038094",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jordan Stout",
+      "official_eligible": true,
+      "pos": "H",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0038399",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Zaire Barnes",
+      "official_eligible": true,
+      "pos": "RILB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 4,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0038401",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jarrick Bernard-Converse",
+      "official_eligible": true,
+      "pos": "RCB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0038576",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Charlie Jones",
+      "official_eligible": true,
+      "pos": "PR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0038576",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Charlie Jones",
+      "official_eligible": true,
+      "pos": "KR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 4,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0038576",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Charlie Jones",
+      "official_eligible": true,
+      "pos": "WR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 5,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0038938",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jalin Hyatt",
+      "official_eligible": true,
+      "pos": "WR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0038986",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Nic Jones",
+      "official_eligible": true,
+      "pos": "NB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039000",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Deonte Banks",
+      "official_eligible": true,
+      "pos": "LCB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039000",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Deonte Banks",
+      "official_eligible": true,
+      "pos": "KR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039019",
+      "membership": "ACTIVE_ROSTER",
+      "name": "John Michael Schmitz Jr.",
+      "official_eligible": true,
+      "pos": "C",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039176",
+      "membership": "ACTIVE_ROSTER",
+      "name": "CJ Okoye",
+      "official_eligible": true,
+      "pos": "NT",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [
+       "game_status_questionable"
+      ],
+      "gsis_id": "00-0039337",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Malik Nabers",
+      "official_eligible": true,
+      "pos": "WR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039384",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Tyrone Tracy Jr.",
+      "official_eligible": true,
+      "pos": "KR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 5,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039384",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Tyrone Tracy Jr.",
+      "official_eligible": true,
+      "pos": "RB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039446",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Bryan Hudson",
+      "official_eligible": true,
+      "pos": "C",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 4,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039620",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Rico Payton",
+      "official_eligible": true,
+      "pos": "LCB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039821",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Dru Phillips",
+      "official_eligible": true,
+      "pos": "NB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039847",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Theo Johnson",
+      "official_eligible": true,
+      "pos": "TE",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039861",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Tyler Nubin",
+      "official_eligible": true,
+      "pos": "SS",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039923",
+      "membership": "ACTIVE_ROSTER",
+      "name": "J.J. McCarthy",
+      "official_eligible": true,
+      "pos": "QB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 4,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040021",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Phil Mafah",
+      "official_eligible": true,
+      "pos": "RB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040181",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Marcus Mbow",
+      "official_eligible": true,
+      "pos": "RT",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 4,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040225",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Thomas Fidone II",
+      "official_eligible": true,
+      "pos": "TE",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040243",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Korie Black",
+      "official_eligible": true,
+      "pos": "RCB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040434",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Trace Ford",
+      "official_eligible": true,
+      "pos": "SLB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040471",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Nikko Reed",
+      "official_eligible": true,
+      "pos": "NB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [
+       "game_status_questionable"
+      ],
+      "gsis_id": "00-0040677",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Abdul Carter",
+      "official_eligible": true,
+      "pos": "SLB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040691",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jaxson Dart",
+      "official_eligible": true,
+      "pos": "QB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040694",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Darius Alexander",
+      "official_eligible": true,
+      "pos": "RDE",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [
+       "conditional_baseline",
+       "game_status_doubtful"
+      ],
+      "gsis_id": "00-0040715",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Cam Skattebo",
+      "official_eligible": true,
+      "pos": "RB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0041042",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Malachi Fields",
+      "official_eligible": true,
+      "pos": "WR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0041095",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Bobby Jamison-Travis",
+      "official_eligible": true,
+      "pos": "LDE",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0041101",
+      "membership": "ACTIVE_ROSTER",
+      "name": "J.C. Davis",
+      "official_eligible": true,
+      "pos": "LT",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0041102",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jack Kelly",
+      "official_eligible": true,
+      "pos": "LILB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0041142",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Thaddeus Dixon",
+      "official_eligible": true,
+      "pos": "LCB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0041143",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Ben Mann",
+      "official_eligible": true,
+      "pos": "LS",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0041145",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Dominic Zvada",
+      "official_eligible": true,
+      "pos": "PK",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0041462",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Colton Hood",
+      "official_eligible": true,
+      "pos": "RCB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0041505",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Francis Mauigoa",
+      "official_eligible": true,
+      "pos": "RG",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0041509",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Arvell Reese",
+      "official_eligible": true,
+      "pos": "LILB",
+      "projected_participant": true,
+      "projection_status": null
+     }
+    ],
+    "resolver_version": "roster-resolution-v2-slice1",
+    "roles": [
+     {
+      "basis": "depth_rank",
+      "extra": {
+       "depth_rank": 1,
+       "excluded_ranked_ahead": [],
+       "first_depth_rank": 1,
+       "promoted": false
+      },
+      "group": "PK",
+      "gsis_id": "00-0041145",
+      "kind": "PK",
+      "required": true,
+      "role": "PK",
+      "status": "ASSIGNED"
+     },
+     {
+      "basis": "depth_rank",
+      "extra": {
+       "depth_rank": 1,
+       "excluded_ranked_ahead": [],
+       "first_depth_rank": 1,
+       "promoted": false
+      },
+      "group": "QB",
+      "gsis_id": "00-0039923",
+      "kind": null,
+      "required": true,
+      "role": "QB1",
+      "status": "ASSIGNED"
+     },
+     {
+      "basis": "depth_rank",
+      "extra": {
+       "depth_rank": 1,
+       "excluded_ranked_ahead": [],
+       "first_depth_rank": 1,
+       "promoted": false
+      },
+      "group": "RB",
+      "gsis_id": "00-0040715",
+      "kind": null,
+      "required": true,
+      "role": "RB1",
+      "status": "ASSIGNED"
+     },
+     {
+      "basis": "depth_rank",
+      "extra": {
+       "depth_rank": 1,
+       "excluded_ranked_ahead": [],
+       "first_depth_rank": 1,
+       "promoted": false
+      },
+      "group": "TE",
+      "gsis_id": "00-0037838",
+      "kind": null,
+      "required": true,
+      "role": "TE1",
+      "status": "ASSIGNED"
+     },
+     {
+      "basis": "depth_rank",
+      "extra": {
+       "depth_rank": 1,
+       "excluded_ranked_ahead": [],
+       "first_depth_rank": 1,
+       "promoted": false
+      },
+      "group": "WR",
+      "gsis_id": "00-0039337",
+      "kind": null,
+      "required": true,
+      "role": "WR1",
+      "status": "ASSIGNED"
+     },
+     {
+      "basis": "depth_rank",
+      "extra": {
+       "depth_rank": 2,
+       "excluded_ranked_ahead": [],
+       "first_depth_rank": 2,
+       "promoted": false
+      },
+      "group": "WR",
+      "gsis_id": "00-0041042",
+      "kind": null,
+      "required": true,
+      "role": "WR2",
+      "status": "ASSIGNED"
+     }
+    ],
+    "schema": "lp-nfl-resolved-roster-2",
+    "team": "NYG"
+   },
+   "content_hash": "1a766296280cb9f62db3da32764596eb08e11018ca365add6c8ff78a371aef34",
+   "home": {
+    "as_of_utc": "2026-11-08T16:30:00Z",
+    "blocks": [],
+    "content_hash": "a854b9099c16e56e82a29af81e5b1e5beb50e2f90fdbb50d3fd00a8e4eec897a",
+    "forecast_class": "PROVISIONAL",
+    "game_id": "2026_09_NYG_PHI",
+    "input_fingerprint": "614c4f8e97bb67c10176334f13875041a115d482d6a4e355b7c479e92053bd4b",
+    "players": [
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0030561",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Lane Johnson",
+      "official_eligible": true,
+      "pos": "RT",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": "injury_out",
+      "flags": [],
+      "gsis_id": "00-0032580",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jonathan Jones",
+      "official_eligible": false,
+      "pos": "LCB",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0033246",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Johnny Mundt",
+      "official_eligible": true,
+      "pos": "TE",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0033393",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Kenny Moore II",
+      "official_eligible": true,
+      "pos": "FS",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0033393",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Kenny Moore II",
+      "official_eligible": true,
+      "pos": "NB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [
+       "game_status_questionable"
+      ],
+      "gsis_id": "00-0033787",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jake Elliott",
+      "official_eligible": true,
+      "pos": "PK",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0034351",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Dallas Goedert",
+      "official_eligible": true,
+      "pos": "TE",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0034429",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jordan Mailata",
+      "official_eligible": true,
+      "pos": "LT",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [
+       "game_status_questionable"
+      ],
+      "gsis_id": "00-0034844",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Saquon Barkley",
+      "official_eligible": true,
+      "pos": "RB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0034951",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Fred Johnson",
+      "official_eligible": true,
+      "pos": "LT",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0034951",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Fred Johnson",
+      "official_eligible": true,
+      "pos": "RG",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0034951",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Fred Johnson",
+      "official_eligible": true,
+      "pos": "RT",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0034993",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Marcus Epps",
+      "official_eligible": true,
+      "pos": "SS",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 5,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0035662",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Hollywood Brown",
+      "official_eligible": true,
+      "pos": "WR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0036192",
+      "membership": "ACTIVE_ROSTER",
+      "name": "AJ Epenesa",
+      "official_eligible": true,
+      "pos": "WLB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0036224",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jonathan Greenard",
+      "official_eligible": true,
+      "pos": "SLB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0036313",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Braden Mann",
+      "official_eligible": true,
+      "pos": "P",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0036313",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Braden Mann",
+      "official_eligible": true,
+      "pos": "H",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 4,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0036389",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jalen Hurts",
+      "official_eligible": true,
+      "pos": "QB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0036418",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Zack Baun",
+      "official_eligible": true,
+      "pos": "LILB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": "injury_out",
+      "flags": [],
+      "gsis_id": "00-0036501",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Michael Carter II",
+      "official_eligible": false,
+      "pos": "SS",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0036567",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Elijah Mitchell",
+      "official_eligible": true,
+      "pos": "RB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": "injury_out",
+      "flags": [],
+      "gsis_id": "00-0036912",
+      "membership": "ACTIVE_ROSTER",
+      "name": "DeVonta Smith",
+      "official_eligible": false,
+      "pos": "WR",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 6,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0036980",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Elijah Moore",
+      "official_eligible": true,
+      "pos": "WR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0037002",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Landon Dickerson",
+      "official_eligible": true,
+      "pos": "LG",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0037079",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Riq Woolen",
+      "official_eligible": true,
+      "pos": "LCB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 4,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0037086",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Grant Calcaterra",
+      "official_eligible": true,
+      "pos": "TE",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": "injury_out",
+      "flags": [],
+      "gsis_id": "00-0037132",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Britain Covey",
+      "official_eligible": false,
+      "pos": "PR",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": "injury_out",
+      "flags": [],
+      "gsis_id": "00-0037132",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Britain Covey",
+      "official_eligible": false,
+      "pos": "KR",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 7,
+      "events_applied": [],
+      "exclusion_reason": "injury_out",
+      "flags": [],
+      "gsis_id": "00-0037132",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Britain Covey",
+      "official_eligible": false,
+      "pos": "WR",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0038116",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Arnold Ebiketie",
+      "official_eligible": true,
+      "pos": "WLB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0038386",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jalen Carter",
+      "official_eligible": true,
+      "pos": "LDE",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": "injury_out",
+      "flags": [],
+      "gsis_id": "00-0038393",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Dontayvion Wicks",
+      "official_eligible": false,
+      "pos": "WR",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [
+       "game_status_questionable"
+      ],
+      "gsis_id": "00-0038400",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Tanner McKee",
+      "official_eligible": true,
+      "pos": "QB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0038412",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Moro Ojomo",
+      "official_eligible": true,
+      "pos": "RDE",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 4,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0038555",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Tank Bigsby",
+      "official_eligible": true,
+      "pos": "KR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 4,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0038555",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Tank Bigsby",
+      "official_eligible": true,
+      "pos": "RB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0038978",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Byron Young",
+      "official_eligible": true,
+      "pos": "LDE",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039001",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Tyler Steen",
+      "official_eligible": true,
+      "pos": "RG",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039013",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Nolan Smith Jr.",
+      "official_eligible": true,
+      "pos": "WLB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039140",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Kelee Ringo",
+      "official_eligible": true,
+      "pos": "RCB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 8,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039236",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Johnny Wilson",
+      "official_eligible": true,
+      "pos": "WR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 4,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039267",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Andre' Sam",
+      "official_eligible": true,
+      "pos": "FS",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039398",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Joe Milton III",
+      "official_eligible": true,
+      "pos": "QB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039740",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jalyx Hunt",
+      "official_eligible": true,
+      "pos": "SLB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039746",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Will Shipley",
+      "official_eligible": true,
+      "pos": "KR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 5,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039746",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Will Shipley",
+      "official_eligible": true,
+      "pos": "RB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039826",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jeremiah Trotter Jr.",
+      "official_eligible": true,
+      "pos": "RILB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039841",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Cooper DeJean",
+      "official_eligible": true,
+      "pos": "NB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039841",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Cooper DeJean",
+      "official_eligible": true,
+      "pos": "FS",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0039888",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Quinyon Mitchell",
+      "official_eligible": true,
+      "pos": "RCB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040013",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Smael Mondon Jr.",
+      "official_eligible": true,
+      "pos": "LILB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040024",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Darius Cooper",
+      "official_eligible": true,
+      "pos": "KR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 4,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040024",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Darius Cooper",
+      "official_eligible": true,
+      "pos": "WR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040071",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Mac McWilliams",
+      "official_eligible": true,
+      "pos": "NB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040422",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jake Majors",
+      "official_eligible": true,
+      "pos": "C",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040586",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jaydon Blue",
+      "official_eligible": true,
+      "pos": "RB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040587",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Drew Kendall",
+      "official_eligible": true,
+      "pos": "C",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040631",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Willie Lampkin",
+      "official_eligible": true,
+      "pos": "LG",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040662",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Ty Robinson",
+      "official_eligible": true,
+      "pos": "RDE",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": "injury_out",
+      "flags": [],
+      "gsis_id": "00-0040708",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Jihaad Campbell",
+      "official_eligible": false,
+      "pos": "RILB",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040749",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Andrew Mukuba",
+      "official_eligible": true,
+      "pos": "FS",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040867",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Makai Lemon",
+      "official_eligible": true,
+      "pos": "PR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040867",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Makai Lemon",
+      "official_eligible": true,
+      "pos": "WR",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040891",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Cole Payton",
+      "official_eligible": true,
+      "pos": "QB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040897",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Micah Morris",
+      "official_eligible": true,
+      "pos": "RG",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040905",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Cole Wisniewski",
+      "official_eligible": true,
+      "pos": "SS",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040925",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Rocco Underwood",
+      "official_eligible": true,
+      "pos": "LS",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 4,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0040929",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Tucker Large",
+      "official_eligible": true,
+      "pos": "SS",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 2,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0041483",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Eli Stowers",
+      "official_eligible": true,
+      "pos": "TE",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 1,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0041554",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Markel Bell",
+      "official_eligible": true,
+      "pos": "RT",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": 3,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0041554",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Markel Bell",
+      "official_eligible": true,
+      "pos": "LT",
+      "projected_participant": true,
+      "projection_status": null
+     }
+    ],
+    "resolver_version": "roster-resolution-v2-slice1",
+    "roles": [
+     {
+      "basis": "depth_rank",
+      "extra": {
+       "depth_rank": 1,
+       "excluded_ranked_ahead": [],
+       "first_depth_rank": 1,
+       "promoted": false
+      },
+      "group": "PK",
+      "gsis_id": "00-0033787",
+      "kind": "PK",
+      "required": true,
+      "role": "PK",
+      "status": "ASSIGNED"
+     },
+     {
+      "basis": "depth_rank",
+      "extra": {
+       "depth_rank": 1,
+       "excluded_ranked_ahead": [],
+       "first_depth_rank": 1,
+       "promoted": false
+      },
+      "group": "QB",
+      "gsis_id": "00-0039398",
+      "kind": null,
+      "required": true,
+      "role": "QB1",
+      "status": "ASSIGNED"
+     },
+     {
+      "basis": "depth_rank",
+      "extra": {
+       "depth_rank": 1,
+       "excluded_ranked_ahead": [],
+       "first_depth_rank": 1,
+       "promoted": false
+      },
+      "group": "RB",
+      "gsis_id": "00-0034844",
+      "kind": null,
+      "required": true,
+      "role": "RB1",
+      "status": "ASSIGNED"
+     },
+     {
+      "basis": "depth_rank",
+      "extra": {
+       "depth_rank": 1,
+       "excluded_ranked_ahead": [],
+       "first_depth_rank": 1,
+       "promoted": false
+      },
+      "group": "TE",
+      "gsis_id": "00-0034351",
+      "kind": null,
+      "required": true,
+      "role": "TE1",
+      "status": "ASSIGNED"
+     },
+     {
+      "basis": "depth_rank",
+      "extra": {
+       "depth_rank": 3,
+       "excluded_ranked_ahead": [
+        "00-0036912",
+        "00-0038393"
+       ],
+       "first_depth_rank": 1,
+       "promoted": true
+      },
+      "group": "WR",
+      "gsis_id": "00-0040867",
+      "kind": null,
+      "required": true,
+      "role": "WR1",
+      "status": "ASSIGNED"
+     },
+     {
+      "basis": "depth_rank",
+      "extra": {
+       "depth_rank": 4,
+       "excluded_ranked_ahead": [
+        "00-0036912",
+        "00-0038393"
+       ],
+       "first_depth_rank": 1,
+       "promoted": true
+      },
+      "group": "WR",
+      "gsis_id": "00-0040024",
+      "kind": null,
+      "required": true,
+      "role": "WR2",
+      "status": "ASSIGNED"
+     }
+    ],
+    "schema": "lp-nfl-resolved-roster-2",
+    "team": "PHI"
+   },
+   "matchup_blocks": []
+  },
+  "roster_snapshot_id": "nfl-depth-chart:27a9e6ed59a878f8e15204a96018f129ee69d33a8b094392ebe50cc17f7ee8fc",
   "rosters": {
    "away": {
     "injury_report": {
-     "listed": 195,
-     "players": [
+     "listed": 181,
+     "obsolete": [
       {
-       "gsis_id": "00-0039344",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035993",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033307",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041027",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033955",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040074",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040719",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038611",
-       "report_status": "Questionable"
+       "gsis_id": "00-0027973",
+       "previous_kickoff_utc": "2026-11-08T14:30:00+00:00",
+       "published_utc": "2026-11-08T13:31:14+00:00",
+       "report_status": "Out",
+       "rotowire_status": "INACTIVE",
+       "team": "ATL"
       },
       {
        "gsis_id": "00-0034960",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037667",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036996",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036510",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036260",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0034333",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033553",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033945",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039386",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036262",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033038",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041415",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037235",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036616",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0041546",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0038580",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038114",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036885",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0041442",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033555",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036261",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033537",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037746",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041029",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040129",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037740",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0038120",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037664",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035676",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040734",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040715",
-       "report_status": "Doubtful"
-      },
-      {
-       "gsis_id": "00-0038041",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0034869",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035704",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0035685",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033090",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0033885",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036912",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041026",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038393",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035680",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0033280",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0031408",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035719",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0034431",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036963",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039874",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036973",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0030506",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039067",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040134",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037247",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040737",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0038124",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0033906",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0041037",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038559",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040736",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0033868",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0034844",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0035717",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0041326",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036244",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0034775",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037157",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037549",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037742",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039018",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040865",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0035227",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0032103",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039232",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0032775",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040888",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036302",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039141",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0041524",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038519",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036871",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041096",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039371",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037195",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037801",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040236",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037557",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035687",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0038625",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038685",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035133",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037545",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0034361",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0033787",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040708",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035166",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037130",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039751",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036349",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039906",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037191",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036990",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0041060",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040185",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039846",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036902",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041120",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037081",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035705",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036682",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0029685",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040192",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040125",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0034320",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0038553",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039855",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040579",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0035228",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039337",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0034827",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040432",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036298",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040677",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0034796",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0038440",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040663",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039811",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038933",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039901",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0035537",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036564",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038556",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036259",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035272",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038400",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039577",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040581",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036994",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036626",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0031933",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036406",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036386",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036417",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037821",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0034342",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041113",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039791",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038038",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040578",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0041543",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039347",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039071",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040641",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037250",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0041537",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041043",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037258",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039167",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036221",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0038106",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041550",
-       "report_status": "Doubtful"
-      },
-      {
-       "gsis_id": "00-0038589",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037132",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039364",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038896",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0034350",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036934",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0034384",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036335",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041104",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039807",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040706",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040139",
-       "report_status": "Out"
+       "previous_kickoff_utc": "2026-11-06T01:15:00+00:00",
+       "published_utc": "2026-11-03T21:57:29+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "JAC"
       },
       {
        "gsis_id": "00-0036231",
-       "report_status": "Out"
+       "previous_kickoff_utc": "2026-11-08T14:30:00+00:00",
+       "published_utc": "2026-11-07T02:55:07+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "CIN"
+      },
+      {
+       "gsis_id": "00-0036302",
+       "previous_kickoff_utc": "2026-11-06T01:15:00+00:00",
+       "published_utc": "2026-11-05T01:14:30+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "BAL"
+      },
+      {
+       "gsis_id": "00-0036990",
+       "previous_kickoff_utc": "2026-11-08T14:30:00+00:00",
+       "published_utc": "2026-11-06T17:10:34+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "ATL"
+      },
+      {
+       "gsis_id": "00-0037235",
+       "previous_kickoff_utc": "2026-11-06T01:15:00+00:00",
+       "published_utc": "2026-11-05T00:51:31+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "JAC"
+      },
+      {
+       "gsis_id": "00-0038580",
+       "previous_kickoff_utc": "2026-11-08T14:30:00+00:00",
+       "published_utc": "2026-11-08T03:22:41+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "ATL"
+      },
+      {
+       "gsis_id": "00-0038611",
+       "previous_kickoff_utc": "2026-11-06T01:15:00+00:00",
+       "published_utc": "2026-11-03T21:54:09+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "JAC"
+      },
+      {
+       "gsis_id": "00-0039232",
+       "previous_kickoff_utc": "2026-11-06T01:15:00+00:00",
+       "published_utc": "2026-11-06T00:12:50+00:00",
+       "report_status": "Out",
+       "rotowire_status": "INACTIVE",
+       "team": "BAL"
+      },
+      {
+       "gsis_id": "00-0039577",
+       "previous_kickoff_utc": "2026-11-06T01:15:00+00:00",
+       "published_utc": "2026-11-06T00:09:13+00:00",
+       "report_status": "Out",
+       "rotowire_status": "INACTIVE",
+       "team": "BAL"
       },
       {
        "gsis_id": "00-0039752",
-       "report_status": "Questionable"
+       "previous_kickoff_utc": "2026-11-08T14:30:00+00:00",
+       "published_utc": "2026-11-07T02:57:12+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CIN"
       },
       {
-       "gsis_id": "00-0041545",
-       "report_status": "Out"
+       "gsis_id": "00-0040432",
+       "previous_kickoff_utc": "2026-11-08T14:30:00+00:00",
+       "published_utc": "2026-11-08T00:27:51+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "ATL"
       },
       {
-       "gsis_id": "00-0037320",
-       "report_status": "Out"
+       "gsis_id": "00-0040578",
+       "previous_kickoff_utc": "2026-11-08T14:30:00+00:00",
+       "published_utc": "2026-11-06T17:18:58+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "ATL"
       },
       {
-       "gsis_id": "00-0038414",
-       "report_status": "Out"
+       "gsis_id": "00-0040719",
+       "previous_kickoff_utc": "2026-11-06T01:15:00+00:00",
+       "published_utc": "2026-11-05T23:25:23+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "JAC"
+      }
+     ],
+     "players": [
+      {
+       "gsis_id": "00-0029685",
+       "published_utc": "2026-11-08T03:43:59+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "NE"
       },
       {
-       "gsis_id": "00-0036501",
-       "report_status": "Out"
+       "gsis_id": "00-0030506",
+       "published_utc": "2026-11-04T21:41:34+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "KC"
+      },
+      {
+       "gsis_id": "00-0031408",
+       "published_utc": "2026-11-08T13:26:40+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SF"
+      },
+      {
+       "gsis_id": "00-0031933",
+       "published_utc": "2026-11-07T02:03:58+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0032103",
+       "published_utc": "2026-11-07T03:42:37+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "LAC"
       },
       {
        "gsis_id": "00-0032580",
-       "report_status": "Out"
+       "published_utc": "2026-11-07T03:50:16+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "PHI"
       },
       {
-       "gsis_id": "00-0037262",
-       "report_status": "Out"
+       "gsis_id": "00-0032775",
+       "published_utc": "2026-11-06T23:54:36+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "SF"
       },
       {
-       "gsis_id": "00-0037297",
-       "report_status": "Out"
+       "gsis_id": "00-0033038",
+       "published_utc": "2026-11-04T01:11:52+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "JAC"
       },
       {
-       "gsis_id": "00-0038694",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0038679",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036986",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033904",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039352",
-       "report_status": "Questionable"
+       "gsis_id": "00-0033090",
+       "published_utc": "2026-11-08T14:22:46+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NE"
       },
       {
        "gsis_id": "00-0033093",
-       "report_status": "Out"
+       "published_utc": "2026-11-08T02:22:09+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "DAL"
       },
       {
-       "gsis_id": "00-0027973",
-       "report_status": "Out"
+       "gsis_id": "00-0033280",
+       "published_utc": "2026-11-06T20:54:00+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "SF"
+      },
+      {
+       "gsis_id": "00-0033307",
+       "published_utc": "2026-11-03T21:12:49+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "ARZ"
+      },
+      {
+       "gsis_id": "00-0033537",
+       "published_utc": "2026-11-08T12:33:10+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CLE"
+      },
+      {
+       "gsis_id": "00-0033553",
+       "published_utc": "2026-11-04T00:31:38+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "ARZ"
+      },
+      {
+       "gsis_id": "00-0033555",
+       "published_utc": "2026-11-07T21:23:53+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NE"
+      },
+      {
+       "gsis_id": "00-0033787",
+       "published_utc": "2026-11-06T00:22:08+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "PHI"
+      },
+      {
+       "gsis_id": "00-0033868",
+       "published_utc": "2026-11-06T21:41:05+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0033885",
+       "published_utc": "2026-11-06T22:46:51+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "LAC"
+      },
+      {
+       "gsis_id": "00-0033904",
+       "published_utc": "2026-11-08T02:01:58+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "BUF"
+      },
+      {
+       "gsis_id": "00-0033906",
+       "published_utc": "2026-11-05T21:42:06+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NO"
+      },
+      {
+       "gsis_id": "00-0033945",
+       "published_utc": "2026-11-04T00:37:37+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "ATL"
+      },
+      {
+       "gsis_id": "00-0033955",
+       "published_utc": "2026-11-04T17:09:41+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "WAS"
+      },
+      {
+       "gsis_id": "00-0034320",
+       "published_utc": "2026-11-05T04:55:49+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "CHI"
+      },
+      {
+       "gsis_id": "00-0034333",
+       "published_utc": "2026-11-04T19:13:21+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "WAS"
+      },
+      {
+       "gsis_id": "00-0034342",
+       "published_utc": "2026-11-07T00:56:36+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0034350",
+       "published_utc": "2026-11-07T02:08:31+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0034361",
+       "published_utc": "2026-11-05T02:39:55+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NO"
+      },
+      {
+       "gsis_id": "00-0034384",
+       "published_utc": "2026-11-07T02:12:54+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0034431",
+       "published_utc": "2026-11-07T01:20:24+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "GB"
+      },
+      {
+       "gsis_id": "00-0034775",
+       "published_utc": "2026-11-07T21:50:35+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "SF"
+      },
+      {
+       "gsis_id": "00-0034796",
+       "published_utc": "2026-11-08T12:12:47+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "BAL"
+      },
+      {
+       "gsis_id": "00-0034827",
+       "published_utc": "2026-11-07T17:57:34+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "BUF"
+      },
+      {
+       "gsis_id": "00-0034844",
+       "published_utc": "2026-11-06T17:21:41+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "PHI"
+      },
+      {
+       "gsis_id": "00-0034869",
+       "published_utc": "2026-11-08T12:19:16+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0035133",
+       "published_utc": "2026-11-07T01:25:59+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "GB"
+      },
+      {
+       "gsis_id": "00-0035166",
+       "published_utc": "2026-11-05T02:57:34+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "HOU"
+      },
+      {
+       "gsis_id": "00-0035227",
+       "published_utc": "2026-11-05T00:55:07+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0035228",
+       "published_utc": "2026-11-07T19:24:19+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "MIN"
+      },
+      {
+       "gsis_id": "00-0035272",
+       "published_utc": "2026-11-05T23:38:24+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "MIN"
+      },
+      {
+       "gsis_id": "00-0035537",
+       "published_utc": "2026-11-05T22:23:56+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "BUF"
+      },
+      {
+       "gsis_id": "00-0035676",
+       "published_utc": "2026-11-06T18:22:10+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "NE"
+      },
+      {
+       "gsis_id": "00-0035680",
+       "published_utc": "2026-11-05T22:33:23+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CLE"
+      },
+      {
+       "gsis_id": "00-0035685",
+       "published_utc": "2026-11-04T20:52:17+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "HOU"
+      },
+      {
+       "gsis_id": "00-0035687",
+       "published_utc": "2026-11-07T01:54:16+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "CAR"
+      },
+      {
+       "gsis_id": "00-0035704",
+       "published_utc": "2026-11-06T00:13:15+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0035705",
+       "published_utc": "2026-11-05T03:45:44+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0035717",
+       "published_utc": "2026-11-05T00:07:09+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "SF"
+      },
+      {
+       "gsis_id": "00-0035719",
+       "published_utc": "2026-11-06T22:00:23+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SF"
+      },
+      {
+       "gsis_id": "00-0035993",
+       "published_utc": "2026-11-05T21:20:18+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "BAL"
+      },
+      {
+       "gsis_id": "00-0036221",
+       "published_utc": "2026-11-07T01:00:07+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "DEN"
+      },
+      {
+       "gsis_id": "00-0036244",
+       "published_utc": "2026-11-06T21:35:54+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0036259",
+       "published_utc": "2026-11-07T19:34:00+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "MIN"
+      },
+      {
+       "gsis_id": "00-0036260",
+       "published_utc": "2026-11-04T16:10:51+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "WAS"
+      },
+      {
+       "gsis_id": "00-0036261",
+       "published_utc": "2026-11-07T16:58:06+00:00",
+       "report_status": "Out",
+       "rotowire_status": "RESERVE-DNR",
+       "team": "SF"
+      },
+      {
+       "gsis_id": "00-0036262",
+       "published_utc": "2026-11-04T01:05:55+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "JAC"
+      },
+      {
+       "gsis_id": "00-0036298",
+       "published_utc": "2026-11-06T19:29:10+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "IND"
+      },
+      {
+       "gsis_id": "00-0036335",
+       "published_utc": "2026-11-07T02:18:20+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0036349",
+       "published_utc": "2026-11-06T20:10:27+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0036386",
+       "published_utc": "2026-11-06T01:12:12+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NYG"
+      },
+      {
+       "gsis_id": "00-0036406",
+       "published_utc": "2026-11-06T00:58:41+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "TB"
+      },
+      {
+       "gsis_id": "00-0036417",
+       "published_utc": "2026-11-07T04:00:11+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "CAR"
+      },
+      {
+       "gsis_id": "00-0036501",
+       "published_utc": "2026-11-07T03:45:26+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "PHI"
+      },
+      {
+       "gsis_id": "00-0036510",
+       "published_utc": "2026-11-03T22:55:17+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": ""
+      },
+      {
+       "gsis_id": "00-0036564",
+       "published_utc": "2026-11-08T14:24:33+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DEN"
+      },
+      {
+       "gsis_id": "00-0036616",
+       "published_utc": "2026-11-04T01:35:04+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "MIN"
+      },
+      {
+       "gsis_id": "00-0036626",
+       "published_utc": "2026-11-07T23:15:49+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "WAS"
+      },
+      {
+       "gsis_id": "00-0036682",
+       "published_utc": "2026-11-07T03:23:24+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "MIA"
+      },
+      {
+       "gsis_id": "00-0036871",
+       "published_utc": "2026-11-08T01:27:17+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "SF"
+      },
+      {
+       "gsis_id": "00-0036885",
+       "published_utc": "2026-11-04T02:00:57+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": ""
+      },
+      {
+       "gsis_id": "00-0036902",
+       "published_utc": "2026-11-08T01:45:07+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0036912",
+       "published_utc": "2026-11-06T21:09:15+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "PHI"
+      },
+      {
+       "gsis_id": "00-0036934",
+       "published_utc": "2026-11-07T02:10:21+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "CAR"
+      },
+      {
+       "gsis_id": "00-0036963",
+       "published_utc": "2026-11-08T11:08:34+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0036973",
+       "published_utc": "2026-11-04T21:38:42+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "NO"
+      },
+      {
+       "gsis_id": "00-0036986",
+       "published_utc": "2026-11-08T01:51:53+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0036994",
+       "published_utc": "2026-11-06T00:42:13+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0036996",
+       "published_utc": "2026-11-03T22:37:49+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NYG"
+      },
+      {
+       "gsis_id": "00-0037081",
+       "published_utc": "2026-11-05T03:40:42+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "CHI"
+      },
+      {
+       "gsis_id": "00-0037130",
+       "published_utc": "2026-11-07T01:09:37+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "HOU"
+      },
+      {
+       "gsis_id": "00-0037132",
+       "published_utc": "2026-11-07T01:32:27+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "PHI"
+      },
+      {
+       "gsis_id": "00-0037157",
+       "published_utc": "2026-11-06T17:58:27+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "ARZ"
+      },
+      {
+       "gsis_id": "00-0037191",
+       "published_utc": "2026-11-06T19:57:52+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0037195",
+       "published_utc": "2026-11-07T20:38:23+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0037247",
+       "published_utc": "2026-11-06T20:09:39+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0037250",
+       "published_utc": "2026-11-07T00:17:03+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NO"
+      },
+      {
+       "gsis_id": "00-0037258",
+       "published_utc": "2026-11-07T00:38:12+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": ""
+      },
+      {
+       "gsis_id": "00-0037262",
+       "published_utc": "2026-11-07T03:51:44+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "LV"
+      },
+      {
+       "gsis_id": "00-0037297",
+       "published_utc": "2026-11-07T03:55:53+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0037320",
+       "published_utc": "2026-11-07T03:36:19+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "LAC"
+      },
+      {
+       "gsis_id": "00-0037545",
+       "published_utc": "2026-11-06T21:38:43+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0037549",
+       "published_utc": "2026-11-05T00:35:02+00:00",
+       "report_status": "Out",
+       "rotowire_status": "PUP-R",
+       "team": "MIA"
+      },
+      {
+       "gsis_id": "00-0037557",
+       "published_utc": "2026-11-07T01:50:34+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0037664",
+       "published_utc": "2026-11-04T17:54:20+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "IND"
+      },
+      {
+       "gsis_id": "00-0037667",
+       "published_utc": "2026-11-07T02:10:50+00:00",
+       "report_status": "Out",
+       "rotowire_status": "PUP-R",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0037740",
+       "published_utc": "2026-11-06T16:16:24+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0037742",
+       "published_utc": "2026-11-06T21:31:42+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "WAS"
+      },
+      {
+       "gsis_id": "00-0037746",
+       "published_utc": "2026-11-07T21:13:38+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "ATL"
+      },
+      {
+       "gsis_id": "00-0037801",
+       "published_utc": "2026-11-07T00:19:15+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0037821",
+       "published_utc": "2026-11-07T04:17:53+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0038038",
+       "published_utc": "2026-11-06T03:33:50+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "BAL"
+      },
+      {
+       "gsis_id": "00-0038041",
+       "published_utc": "2026-11-06T20:13:36+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0038106",
+       "published_utc": "2026-11-08T03:38:48+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "DEN"
+      },
+      {
+       "gsis_id": "00-0038114",
+       "published_utc": "2026-11-04T01:56:46+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0038120",
+       "published_utc": "2026-11-05T21:08:34+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0038124",
+       "published_utc": "2026-11-05T21:36:09+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "GB"
+      },
+      {
+       "gsis_id": "00-0038393",
+       "published_utc": "2026-11-06T21:02:17+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "PHI"
+      },
+      {
+       "gsis_id": "00-0038400",
+       "published_utc": "2026-11-08T12:17:56+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "PHI"
+      },
+      {
+       "gsis_id": "00-0038414",
+       "published_utc": "2026-11-07T03:39:51+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "LAC"
+      },
+      {
+       "gsis_id": "00-0038440",
+       "published_utc": "2026-11-05T21:19:23+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "CHI"
+      },
+      {
+       "gsis_id": "00-0038519",
+       "published_utc": "2026-11-07T02:40:47+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "KC"
+      },
+      {
+       "gsis_id": "00-0038553",
+       "published_utc": "2026-11-05T13:54:12+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "LAC"
+      },
+      {
+       "gsis_id": "00-0038556",
+       "published_utc": "2026-11-07T00:32:05+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0038559",
+       "published_utc": "2026-11-06T00:19:10+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "ARZ"
+      },
+      {
+       "gsis_id": "00-0038589",
+       "published_utc": "2026-11-07T01:13:29+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "GB"
+      },
+      {
+       "gsis_id": "00-0038625",
+       "published_utc": "2026-11-05T02:17:52+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0038679",
+       "published_utc": "2026-11-07T21:01:27+00:00",
+       "report_status": "Out",
+       "rotowire_status": "PUP-R",
+       "team": "BUF"
+      },
+      {
+       "gsis_id": "00-0038685",
+       "published_utc": "2026-11-08T01:36:08+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "GB"
+      },
+      {
+       "gsis_id": "00-0038694",
+       "published_utc": "2026-11-07T04:09:35+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0038896",
+       "published_utc": "2026-11-07T01:51:12+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0038933",
+       "published_utc": "2026-11-06T19:43:54+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "BUF"
+      },
+      {
+       "gsis_id": "00-0039018",
+       "published_utc": "2026-11-07T22:18:45+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0039067",
+       "published_utc": "2026-11-04T21:47:35+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "KC"
+      },
+      {
+       "gsis_id": "00-0039071",
+       "published_utc": "2026-11-08T12:31:26+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CHI"
+      },
+      {
+       "gsis_id": "00-0039141",
+       "published_utc": "2026-11-05T22:35:49+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0039167",
+       "published_utc": "2026-11-07T00:43:37+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0039337",
+       "published_utc": "2026-11-06T19:36:36+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NYG"
+      },
+      {
+       "gsis_id": "00-0039344",
+       "published_utc": "2026-11-03T19:22:18+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "CAR"
+      },
+      {
+       "gsis_id": "00-0039347",
+       "published_utc": "2026-11-06T20:52:46+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0039352",
+       "published_utc": "2026-11-08T02:15:42+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0039364",
+       "published_utc": "2026-11-07T01:48:22+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0039371",
+       "published_utc": "2026-11-07T03:26:18+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "DEN"
+      },
+      {
+       "gsis_id": "00-0039386",
+       "published_utc": "2026-11-04T00:49:23+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": ""
+      },
+      {
+       "gsis_id": "00-0039751",
+       "published_utc": "2026-11-07T01:46:59+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0039791",
+       "published_utc": "2026-11-06T03:14:44+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "BAL"
+      },
+      {
+       "gsis_id": "00-0039807",
+       "published_utc": "2026-11-07T02:30:55+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "ARZ"
+      },
+      {
+       "gsis_id": "00-0039811",
+       "published_utc": "2026-11-06T20:52:27+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "GB"
+      },
+      {
+       "gsis_id": "00-0039846",
+       "published_utc": "2026-11-05T03:32:15+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "TB"
+      },
+      {
+       "gsis_id": "00-0039855",
+       "published_utc": "2026-11-05T16:08:40+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "TB"
+      },
+      {
+       "gsis_id": "00-0039874",
+       "published_utc": "2026-11-08T12:39:26+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "MIA"
+      },
+      {
+       "gsis_id": "00-0039901",
+       "published_utc": "2026-11-06T22:05:34+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "BUF"
+      },
+      {
+       "gsis_id": "00-0039906",
+       "published_utc": "2026-11-07T20:53:51+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "WAS"
+      },
+      {
+       "gsis_id": "00-0040074",
+       "published_utc": "2026-11-03T21:44:28+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "BAL"
+      },
+      {
+       "gsis_id": "00-0040125",
+       "published_utc": "2026-11-08T03:02:07+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NO"
+      },
+      {
+       "gsis_id": "00-0040129",
+       "published_utc": "2026-11-08T11:16:49+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "TB"
+      },
+      {
+       "gsis_id": "00-0040134",
+       "published_utc": "2026-11-07T21:35:19+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DEN"
+      },
+      {
+       "gsis_id": "00-0040139",
+       "published_utc": "2026-11-07T02:55:02+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "IND"
+      },
+      {
+       "gsis_id": "00-0040185",
+       "published_utc": "2026-11-05T03:29:05+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "SF"
+      },
+      {
+       "gsis_id": "00-0040192",
+       "published_utc": "2026-11-05T03:59:40+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "BUF"
+      },
+      {
+       "gsis_id": "00-0040236",
+       "published_utc": "2026-11-08T12:25:36+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CHI"
+      },
+      {
+       "gsis_id": "00-0040579",
+       "published_utc": "2026-11-05T17:04:31+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CLE"
+      },
+      {
+       "gsis_id": "00-0040581",
+       "published_utc": "2026-11-06T00:11:26+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "LV"
+      },
+      {
+       "gsis_id": "00-0040641",
+       "published_utc": "2026-11-07T00:14:11+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "LV"
+      },
+      {
+       "gsis_id": "00-0040663",
+       "published_utc": "2026-11-06T18:28:09+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CLE"
+      },
+      {
+       "gsis_id": "00-0040677",
+       "published_utc": "2026-11-05T20:59:57+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NYG"
+      },
+      {
+       "gsis_id": "00-0040706",
+       "published_utc": "2026-11-07T02:35:24+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "ARZ"
+      },
+      {
+       "gsis_id": "00-0040708",
+       "published_utc": "2026-11-07T01:37:06+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "PHI"
+      },
+      {
+       "gsis_id": "00-0040715",
+       "published_utc": "2026-11-08T15:26:58+00:00",
+       "report_status": "Doubtful",
+       "rotowire_status": "DOUBTFUL",
+       "team": "NYG"
+      },
+      {
+       "gsis_id": "00-0040734",
+       "published_utc": "2026-11-06T18:30:14+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "NE"
+      },
+      {
+       "gsis_id": "00-0040736",
+       "published_utc": "2026-11-04T22:53:04+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0040737",
+       "published_utc": "2026-11-06T22:29:44+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0040865",
+       "published_utc": "2026-11-05T23:25:27+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0040888",
+       "published_utc": "2026-11-05T01:10:19+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "BAL"
+      },
+      {
+       "gsis_id": "00-0041026",
+       "published_utc": "2026-11-04T20:39:25+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0041027",
+       "published_utc": "2026-11-03T21:13:49+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "ARZ"
+      },
+      {
+       "gsis_id": "00-0041029",
+       "published_utc": "2026-11-07T21:09:42+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NO"
+      },
+      {
+       "gsis_id": "00-0041037",
+       "published_utc": "2026-11-05T21:32:38+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CLE"
+      },
+      {
+       "gsis_id": "00-0041043",
+       "published_utc": "2026-11-07T20:43:16+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "IND"
+      },
+      {
+       "gsis_id": "00-0041060",
+       "published_utc": "2026-11-08T12:28:48+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CHI"
+      },
+      {
+       "gsis_id": "00-0041096",
+       "published_utc": "2026-11-07T00:51:33+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "MIA"
+      },
+      {
+       "gsis_id": "00-0041104",
+       "published_utc": "2026-11-07T22:56:59+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "MIN"
+      },
+      {
+       "gsis_id": "00-0041113",
+       "published_utc": "2026-11-07T03:08:41+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "ARZ"
+      },
+      {
+       "gsis_id": "00-0041120",
+       "published_utc": "2026-11-08T01:56:12+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0041326",
+       "published_utc": "2026-11-06T19:12:51+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "NO"
+      },
+      {
+       "gsis_id": "00-0041415",
+       "published_utc": "2026-11-04T01:20:56+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0041442",
+       "published_utc": "2026-11-04T02:07:36+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0041524",
+       "published_utc": "2026-11-05T01:46:43+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "MIA"
+      },
+      {
+       "gsis_id": "00-0041537",
+       "published_utc": "2026-11-07T22:30:16+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0041543",
+       "published_utc": "2026-11-06T20:29:09+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "KC"
+      },
+      {
+       "gsis_id": "00-0041545",
+       "published_utc": "2026-11-07T02:59:31+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "KC"
+      },
+      {
+       "gsis_id": "00-0041546",
+       "published_utc": "2026-11-04T01:35:26+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "CIN"
+      },
+      {
+       "gsis_id": "00-0041550",
+       "published_utc": "2026-11-07T01:08:39+00:00",
+       "report_status": "Doubtful",
+       "rotowire_status": "DOUBTFUL",
+       "team": "LAC"
       }
      ],
      "rows": 824,
@@ -1677,787 +4452,1388 @@
    },
    "home": {
     "injury_report": {
-     "listed": 195,
-     "players": [
+     "listed": 181,
+     "obsolete": [
       {
-       "gsis_id": "00-0039344",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035993",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033307",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041027",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033955",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040074",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040719",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038611",
-       "report_status": "Questionable"
+       "gsis_id": "00-0027973",
+       "previous_kickoff_utc": "2026-11-08T14:30:00+00:00",
+       "published_utc": "2026-11-08T13:31:14+00:00",
+       "report_status": "Out",
+       "rotowire_status": "INACTIVE",
+       "team": "ATL"
       },
       {
        "gsis_id": "00-0034960",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037667",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036996",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036510",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036260",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0034333",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033553",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033945",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039386",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036262",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033038",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041415",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037235",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036616",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0041546",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0038580",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038114",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036885",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0041442",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033555",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036261",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033537",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037746",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041029",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040129",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037740",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0038120",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037664",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035676",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040734",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040715",
-       "report_status": "Doubtful"
-      },
-      {
-       "gsis_id": "00-0038041",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0034869",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035704",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0035685",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033090",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0033885",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036912",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041026",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038393",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035680",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0033280",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0031408",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035719",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0034431",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036963",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039874",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036973",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0030506",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039067",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040134",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037247",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040737",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0038124",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0033906",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0041037",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038559",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040736",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0033868",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0034844",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0035717",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0041326",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036244",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0034775",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037157",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037549",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037742",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039018",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040865",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0035227",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0032103",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039232",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0032775",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040888",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036302",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039141",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0041524",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038519",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036871",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041096",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039371",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037195",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037801",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040236",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037557",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035687",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0038625",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038685",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035133",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037545",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0034361",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0033787",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040708",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035166",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037130",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039751",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036349",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039906",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037191",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036990",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0041060",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040185",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039846",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036902",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041120",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037081",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035705",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036682",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0029685",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040192",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040125",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0034320",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0038553",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039855",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040579",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0035228",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039337",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0034827",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040432",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036298",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040677",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0034796",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0038440",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040663",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039811",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038933",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039901",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0035537",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036564",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038556",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036259",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0035272",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038400",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039577",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0040581",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036994",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036626",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0031933",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036406",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036386",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036417",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037821",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0034342",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041113",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039791",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038038",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040578",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0041543",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039347",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039071",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040641",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0037250",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0041537",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041043",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037258",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039167",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0036221",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0038106",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041550",
-       "report_status": "Doubtful"
-      },
-      {
-       "gsis_id": "00-0038589",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0037132",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039364",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0038896",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0034350",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036934",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0034384",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036335",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0041104",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0039807",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040706",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0040139",
-       "report_status": "Out"
+       "previous_kickoff_utc": "2026-11-06T01:15:00+00:00",
+       "published_utc": "2026-11-03T21:57:29+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "JAC"
       },
       {
        "gsis_id": "00-0036231",
-       "report_status": "Out"
+       "previous_kickoff_utc": "2026-11-08T14:30:00+00:00",
+       "published_utc": "2026-11-07T02:55:07+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "CIN"
+      },
+      {
+       "gsis_id": "00-0036302",
+       "previous_kickoff_utc": "2026-11-06T01:15:00+00:00",
+       "published_utc": "2026-11-05T01:14:30+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "BAL"
+      },
+      {
+       "gsis_id": "00-0036990",
+       "previous_kickoff_utc": "2026-11-08T14:30:00+00:00",
+       "published_utc": "2026-11-06T17:10:34+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "ATL"
+      },
+      {
+       "gsis_id": "00-0037235",
+       "previous_kickoff_utc": "2026-11-06T01:15:00+00:00",
+       "published_utc": "2026-11-05T00:51:31+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "JAC"
+      },
+      {
+       "gsis_id": "00-0038580",
+       "previous_kickoff_utc": "2026-11-08T14:30:00+00:00",
+       "published_utc": "2026-11-08T03:22:41+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "ATL"
+      },
+      {
+       "gsis_id": "00-0038611",
+       "previous_kickoff_utc": "2026-11-06T01:15:00+00:00",
+       "published_utc": "2026-11-03T21:54:09+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "JAC"
+      },
+      {
+       "gsis_id": "00-0039232",
+       "previous_kickoff_utc": "2026-11-06T01:15:00+00:00",
+       "published_utc": "2026-11-06T00:12:50+00:00",
+       "report_status": "Out",
+       "rotowire_status": "INACTIVE",
+       "team": "BAL"
+      },
+      {
+       "gsis_id": "00-0039577",
+       "previous_kickoff_utc": "2026-11-06T01:15:00+00:00",
+       "published_utc": "2026-11-06T00:09:13+00:00",
+       "report_status": "Out",
+       "rotowire_status": "INACTIVE",
+       "team": "BAL"
       },
       {
        "gsis_id": "00-0039752",
-       "report_status": "Questionable"
+       "previous_kickoff_utc": "2026-11-08T14:30:00+00:00",
+       "published_utc": "2026-11-07T02:57:12+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CIN"
       },
       {
-       "gsis_id": "00-0041545",
-       "report_status": "Out"
+       "gsis_id": "00-0040432",
+       "previous_kickoff_utc": "2026-11-08T14:30:00+00:00",
+       "published_utc": "2026-11-08T00:27:51+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "ATL"
       },
       {
-       "gsis_id": "00-0037320",
-       "report_status": "Out"
+       "gsis_id": "00-0040578",
+       "previous_kickoff_utc": "2026-11-08T14:30:00+00:00",
+       "published_utc": "2026-11-06T17:18:58+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "ATL"
       },
       {
-       "gsis_id": "00-0038414",
-       "report_status": "Out"
+       "gsis_id": "00-0040719",
+       "previous_kickoff_utc": "2026-11-06T01:15:00+00:00",
+       "published_utc": "2026-11-05T23:25:23+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "JAC"
+      }
+     ],
+     "players": [
+      {
+       "gsis_id": "00-0029685",
+       "published_utc": "2026-11-08T03:43:59+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "NE"
       },
       {
-       "gsis_id": "00-0036501",
-       "report_status": "Out"
+       "gsis_id": "00-0030506",
+       "published_utc": "2026-11-04T21:41:34+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "KC"
+      },
+      {
+       "gsis_id": "00-0031408",
+       "published_utc": "2026-11-08T13:26:40+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SF"
+      },
+      {
+       "gsis_id": "00-0031933",
+       "published_utc": "2026-11-07T02:03:58+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0032103",
+       "published_utc": "2026-11-07T03:42:37+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "LAC"
       },
       {
        "gsis_id": "00-0032580",
-       "report_status": "Out"
+       "published_utc": "2026-11-07T03:50:16+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "PHI"
       },
       {
-       "gsis_id": "00-0037262",
-       "report_status": "Out"
+       "gsis_id": "00-0032775",
+       "published_utc": "2026-11-06T23:54:36+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "SF"
       },
       {
-       "gsis_id": "00-0037297",
-       "report_status": "Out"
+       "gsis_id": "00-0033038",
+       "published_utc": "2026-11-04T01:11:52+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "JAC"
       },
       {
-       "gsis_id": "00-0038694",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0038679",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0036986",
-       "report_status": "Out"
-      },
-      {
-       "gsis_id": "00-0033904",
-       "report_status": "Questionable"
-      },
-      {
-       "gsis_id": "00-0039352",
-       "report_status": "Questionable"
+       "gsis_id": "00-0033090",
+       "published_utc": "2026-11-08T14:22:46+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NE"
       },
       {
        "gsis_id": "00-0033093",
-       "report_status": "Out"
+       "published_utc": "2026-11-08T02:22:09+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "DAL"
       },
       {
-       "gsis_id": "00-0027973",
-       "report_status": "Out"
+       "gsis_id": "00-0033280",
+       "published_utc": "2026-11-06T20:54:00+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "SF"
+      },
+      {
+       "gsis_id": "00-0033307",
+       "published_utc": "2026-11-03T21:12:49+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "ARZ"
+      },
+      {
+       "gsis_id": "00-0033537",
+       "published_utc": "2026-11-08T12:33:10+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CLE"
+      },
+      {
+       "gsis_id": "00-0033553",
+       "published_utc": "2026-11-04T00:31:38+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "ARZ"
+      },
+      {
+       "gsis_id": "00-0033555",
+       "published_utc": "2026-11-07T21:23:53+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NE"
+      },
+      {
+       "gsis_id": "00-0033787",
+       "published_utc": "2026-11-06T00:22:08+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "PHI"
+      },
+      {
+       "gsis_id": "00-0033868",
+       "published_utc": "2026-11-06T21:41:05+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0033885",
+       "published_utc": "2026-11-06T22:46:51+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "LAC"
+      },
+      {
+       "gsis_id": "00-0033904",
+       "published_utc": "2026-11-08T02:01:58+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "BUF"
+      },
+      {
+       "gsis_id": "00-0033906",
+       "published_utc": "2026-11-05T21:42:06+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NO"
+      },
+      {
+       "gsis_id": "00-0033945",
+       "published_utc": "2026-11-04T00:37:37+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "ATL"
+      },
+      {
+       "gsis_id": "00-0033955",
+       "published_utc": "2026-11-04T17:09:41+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "WAS"
+      },
+      {
+       "gsis_id": "00-0034320",
+       "published_utc": "2026-11-05T04:55:49+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "CHI"
+      },
+      {
+       "gsis_id": "00-0034333",
+       "published_utc": "2026-11-04T19:13:21+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "WAS"
+      },
+      {
+       "gsis_id": "00-0034342",
+       "published_utc": "2026-11-07T00:56:36+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0034350",
+       "published_utc": "2026-11-07T02:08:31+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0034361",
+       "published_utc": "2026-11-05T02:39:55+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NO"
+      },
+      {
+       "gsis_id": "00-0034384",
+       "published_utc": "2026-11-07T02:12:54+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0034431",
+       "published_utc": "2026-11-07T01:20:24+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "GB"
+      },
+      {
+       "gsis_id": "00-0034775",
+       "published_utc": "2026-11-07T21:50:35+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "SF"
+      },
+      {
+       "gsis_id": "00-0034796",
+       "published_utc": "2026-11-08T12:12:47+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "BAL"
+      },
+      {
+       "gsis_id": "00-0034827",
+       "published_utc": "2026-11-07T17:57:34+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "BUF"
+      },
+      {
+       "gsis_id": "00-0034844",
+       "published_utc": "2026-11-06T17:21:41+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "PHI"
+      },
+      {
+       "gsis_id": "00-0034869",
+       "published_utc": "2026-11-08T12:19:16+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0035133",
+       "published_utc": "2026-11-07T01:25:59+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "GB"
+      },
+      {
+       "gsis_id": "00-0035166",
+       "published_utc": "2026-11-05T02:57:34+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "HOU"
+      },
+      {
+       "gsis_id": "00-0035227",
+       "published_utc": "2026-11-05T00:55:07+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0035228",
+       "published_utc": "2026-11-07T19:24:19+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "MIN"
+      },
+      {
+       "gsis_id": "00-0035272",
+       "published_utc": "2026-11-05T23:38:24+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "MIN"
+      },
+      {
+       "gsis_id": "00-0035537",
+       "published_utc": "2026-11-05T22:23:56+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "BUF"
+      },
+      {
+       "gsis_id": "00-0035676",
+       "published_utc": "2026-11-06T18:22:10+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "NE"
+      },
+      {
+       "gsis_id": "00-0035680",
+       "published_utc": "2026-11-05T22:33:23+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CLE"
+      },
+      {
+       "gsis_id": "00-0035685",
+       "published_utc": "2026-11-04T20:52:17+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "HOU"
+      },
+      {
+       "gsis_id": "00-0035687",
+       "published_utc": "2026-11-07T01:54:16+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "CAR"
+      },
+      {
+       "gsis_id": "00-0035704",
+       "published_utc": "2026-11-06T00:13:15+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0035705",
+       "published_utc": "2026-11-05T03:45:44+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0035717",
+       "published_utc": "2026-11-05T00:07:09+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "SF"
+      },
+      {
+       "gsis_id": "00-0035719",
+       "published_utc": "2026-11-06T22:00:23+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SF"
+      },
+      {
+       "gsis_id": "00-0035993",
+       "published_utc": "2026-11-05T21:20:18+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "BAL"
+      },
+      {
+       "gsis_id": "00-0036221",
+       "published_utc": "2026-11-07T01:00:07+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "DEN"
+      },
+      {
+       "gsis_id": "00-0036244",
+       "published_utc": "2026-11-06T21:35:54+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0036259",
+       "published_utc": "2026-11-07T19:34:00+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "MIN"
+      },
+      {
+       "gsis_id": "00-0036260",
+       "published_utc": "2026-11-04T16:10:51+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "WAS"
+      },
+      {
+       "gsis_id": "00-0036261",
+       "published_utc": "2026-11-07T16:58:06+00:00",
+       "report_status": "Out",
+       "rotowire_status": "RESERVE-DNR",
+       "team": "SF"
+      },
+      {
+       "gsis_id": "00-0036262",
+       "published_utc": "2026-11-04T01:05:55+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "JAC"
+      },
+      {
+       "gsis_id": "00-0036298",
+       "published_utc": "2026-11-06T19:29:10+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "IND"
+      },
+      {
+       "gsis_id": "00-0036335",
+       "published_utc": "2026-11-07T02:18:20+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0036349",
+       "published_utc": "2026-11-06T20:10:27+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0036386",
+       "published_utc": "2026-11-06T01:12:12+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NYG"
+      },
+      {
+       "gsis_id": "00-0036406",
+       "published_utc": "2026-11-06T00:58:41+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "TB"
+      },
+      {
+       "gsis_id": "00-0036417",
+       "published_utc": "2026-11-07T04:00:11+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "CAR"
+      },
+      {
+       "gsis_id": "00-0036501",
+       "published_utc": "2026-11-07T03:45:26+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "PHI"
+      },
+      {
+       "gsis_id": "00-0036510",
+       "published_utc": "2026-11-03T22:55:17+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": ""
+      },
+      {
+       "gsis_id": "00-0036564",
+       "published_utc": "2026-11-08T14:24:33+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DEN"
+      },
+      {
+       "gsis_id": "00-0036616",
+       "published_utc": "2026-11-04T01:35:04+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "MIN"
+      },
+      {
+       "gsis_id": "00-0036626",
+       "published_utc": "2026-11-07T23:15:49+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "WAS"
+      },
+      {
+       "gsis_id": "00-0036682",
+       "published_utc": "2026-11-07T03:23:24+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "MIA"
+      },
+      {
+       "gsis_id": "00-0036871",
+       "published_utc": "2026-11-08T01:27:17+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "SF"
+      },
+      {
+       "gsis_id": "00-0036885",
+       "published_utc": "2026-11-04T02:00:57+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": ""
+      },
+      {
+       "gsis_id": "00-0036902",
+       "published_utc": "2026-11-08T01:45:07+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0036912",
+       "published_utc": "2026-11-06T21:09:15+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "PHI"
+      },
+      {
+       "gsis_id": "00-0036934",
+       "published_utc": "2026-11-07T02:10:21+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "CAR"
+      },
+      {
+       "gsis_id": "00-0036963",
+       "published_utc": "2026-11-08T11:08:34+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0036973",
+       "published_utc": "2026-11-04T21:38:42+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "NO"
+      },
+      {
+       "gsis_id": "00-0036986",
+       "published_utc": "2026-11-08T01:51:53+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0036994",
+       "published_utc": "2026-11-06T00:42:13+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0036996",
+       "published_utc": "2026-11-03T22:37:49+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NYG"
+      },
+      {
+       "gsis_id": "00-0037081",
+       "published_utc": "2026-11-05T03:40:42+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "CHI"
+      },
+      {
+       "gsis_id": "00-0037130",
+       "published_utc": "2026-11-07T01:09:37+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "HOU"
+      },
+      {
+       "gsis_id": "00-0037132",
+       "published_utc": "2026-11-07T01:32:27+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "PHI"
+      },
+      {
+       "gsis_id": "00-0037157",
+       "published_utc": "2026-11-06T17:58:27+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "ARZ"
+      },
+      {
+       "gsis_id": "00-0037191",
+       "published_utc": "2026-11-06T19:57:52+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0037195",
+       "published_utc": "2026-11-07T20:38:23+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0037247",
+       "published_utc": "2026-11-06T20:09:39+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0037250",
+       "published_utc": "2026-11-07T00:17:03+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NO"
+      },
+      {
+       "gsis_id": "00-0037258",
+       "published_utc": "2026-11-07T00:38:12+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": ""
+      },
+      {
+       "gsis_id": "00-0037262",
+       "published_utc": "2026-11-07T03:51:44+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "LV"
+      },
+      {
+       "gsis_id": "00-0037297",
+       "published_utc": "2026-11-07T03:55:53+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0037320",
+       "published_utc": "2026-11-07T03:36:19+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "LAC"
+      },
+      {
+       "gsis_id": "00-0037545",
+       "published_utc": "2026-11-06T21:38:43+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0037549",
+       "published_utc": "2026-11-05T00:35:02+00:00",
+       "report_status": "Out",
+       "rotowire_status": "PUP-R",
+       "team": "MIA"
+      },
+      {
+       "gsis_id": "00-0037557",
+       "published_utc": "2026-11-07T01:50:34+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0037664",
+       "published_utc": "2026-11-04T17:54:20+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "IND"
+      },
+      {
+       "gsis_id": "00-0037667",
+       "published_utc": "2026-11-07T02:10:50+00:00",
+       "report_status": "Out",
+       "rotowire_status": "PUP-R",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0037740",
+       "published_utc": "2026-11-06T16:16:24+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0037742",
+       "published_utc": "2026-11-06T21:31:42+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "WAS"
+      },
+      {
+       "gsis_id": "00-0037746",
+       "published_utc": "2026-11-07T21:13:38+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "ATL"
+      },
+      {
+       "gsis_id": "00-0037801",
+       "published_utc": "2026-11-07T00:19:15+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0037821",
+       "published_utc": "2026-11-07T04:17:53+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0038038",
+       "published_utc": "2026-11-06T03:33:50+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "BAL"
+      },
+      {
+       "gsis_id": "00-0038041",
+       "published_utc": "2026-11-06T20:13:36+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0038106",
+       "published_utc": "2026-11-08T03:38:48+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "DEN"
+      },
+      {
+       "gsis_id": "00-0038114",
+       "published_utc": "2026-11-04T01:56:46+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0038120",
+       "published_utc": "2026-11-05T21:08:34+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0038124",
+       "published_utc": "2026-11-05T21:36:09+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "GB"
+      },
+      {
+       "gsis_id": "00-0038393",
+       "published_utc": "2026-11-06T21:02:17+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "PHI"
+      },
+      {
+       "gsis_id": "00-0038400",
+       "published_utc": "2026-11-08T12:17:56+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "PHI"
+      },
+      {
+       "gsis_id": "00-0038414",
+       "published_utc": "2026-11-07T03:39:51+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "LAC"
+      },
+      {
+       "gsis_id": "00-0038440",
+       "published_utc": "2026-11-05T21:19:23+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "CHI"
+      },
+      {
+       "gsis_id": "00-0038519",
+       "published_utc": "2026-11-07T02:40:47+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "KC"
+      },
+      {
+       "gsis_id": "00-0038553",
+       "published_utc": "2026-11-05T13:54:12+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "LAC"
+      },
+      {
+       "gsis_id": "00-0038556",
+       "published_utc": "2026-11-07T00:32:05+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0038559",
+       "published_utc": "2026-11-06T00:19:10+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "ARZ"
+      },
+      {
+       "gsis_id": "00-0038589",
+       "published_utc": "2026-11-07T01:13:29+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "GB"
+      },
+      {
+       "gsis_id": "00-0038625",
+       "published_utc": "2026-11-05T02:17:52+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0038679",
+       "published_utc": "2026-11-07T21:01:27+00:00",
+       "report_status": "Out",
+       "rotowire_status": "PUP-R",
+       "team": "BUF"
+      },
+      {
+       "gsis_id": "00-0038685",
+       "published_utc": "2026-11-08T01:36:08+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "GB"
+      },
+      {
+       "gsis_id": "00-0038694",
+       "published_utc": "2026-11-07T04:09:35+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "SEA"
+      },
+      {
+       "gsis_id": "00-0038896",
+       "published_utc": "2026-11-07T01:51:12+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0038933",
+       "published_utc": "2026-11-06T19:43:54+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "BUF"
+      },
+      {
+       "gsis_id": "00-0039018",
+       "published_utc": "2026-11-07T22:18:45+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0039067",
+       "published_utc": "2026-11-04T21:47:35+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "KC"
+      },
+      {
+       "gsis_id": "00-0039071",
+       "published_utc": "2026-11-08T12:31:26+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CHI"
+      },
+      {
+       "gsis_id": "00-0039141",
+       "published_utc": "2026-11-05T22:35:49+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0039167",
+       "published_utc": "2026-11-07T00:43:37+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0039337",
+       "published_utc": "2026-11-06T19:36:36+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NYG"
+      },
+      {
+       "gsis_id": "00-0039344",
+       "published_utc": "2026-11-03T19:22:18+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "CAR"
+      },
+      {
+       "gsis_id": "00-0039347",
+       "published_utc": "2026-11-06T20:52:46+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0039352",
+       "published_utc": "2026-11-08T02:15:42+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0039364",
+       "published_utc": "2026-11-07T01:48:22+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0039371",
+       "published_utc": "2026-11-07T03:26:18+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "DEN"
+      },
+      {
+       "gsis_id": "00-0039386",
+       "published_utc": "2026-11-04T00:49:23+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": ""
+      },
+      {
+       "gsis_id": "00-0039751",
+       "published_utc": "2026-11-07T01:46:59+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0039791",
+       "published_utc": "2026-11-06T03:14:44+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "BAL"
+      },
+      {
+       "gsis_id": "00-0039807",
+       "published_utc": "2026-11-07T02:30:55+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "ARZ"
+      },
+      {
+       "gsis_id": "00-0039811",
+       "published_utc": "2026-11-06T20:52:27+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "GB"
+      },
+      {
+       "gsis_id": "00-0039846",
+       "published_utc": "2026-11-05T03:32:15+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "TB"
+      },
+      {
+       "gsis_id": "00-0039855",
+       "published_utc": "2026-11-05T16:08:40+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "TB"
+      },
+      {
+       "gsis_id": "00-0039874",
+       "published_utc": "2026-11-08T12:39:26+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "MIA"
+      },
+      {
+       "gsis_id": "00-0039901",
+       "published_utc": "2026-11-06T22:05:34+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "BUF"
+      },
+      {
+       "gsis_id": "00-0039906",
+       "published_utc": "2026-11-07T20:53:51+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "WAS"
+      },
+      {
+       "gsis_id": "00-0040074",
+       "published_utc": "2026-11-03T21:44:28+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "BAL"
+      },
+      {
+       "gsis_id": "00-0040125",
+       "published_utc": "2026-11-08T03:02:07+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NO"
+      },
+      {
+       "gsis_id": "00-0040129",
+       "published_utc": "2026-11-08T11:16:49+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "TB"
+      },
+      {
+       "gsis_id": "00-0040134",
+       "published_utc": "2026-11-07T21:35:19+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DEN"
+      },
+      {
+       "gsis_id": "00-0040139",
+       "published_utc": "2026-11-07T02:55:02+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "IND"
+      },
+      {
+       "gsis_id": "00-0040185",
+       "published_utc": "2026-11-05T03:29:05+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "SF"
+      },
+      {
+       "gsis_id": "00-0040192",
+       "published_utc": "2026-11-05T03:59:40+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "BUF"
+      },
+      {
+       "gsis_id": "00-0040236",
+       "published_utc": "2026-11-08T12:25:36+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CHI"
+      },
+      {
+       "gsis_id": "00-0040579",
+       "published_utc": "2026-11-05T17:04:31+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CLE"
+      },
+      {
+       "gsis_id": "00-0040581",
+       "published_utc": "2026-11-06T00:11:26+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "LV"
+      },
+      {
+       "gsis_id": "00-0040641",
+       "published_utc": "2026-11-07T00:14:11+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "LV"
+      },
+      {
+       "gsis_id": "00-0040663",
+       "published_utc": "2026-11-06T18:28:09+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CLE"
+      },
+      {
+       "gsis_id": "00-0040677",
+       "published_utc": "2026-11-05T20:59:57+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NYG"
+      },
+      {
+       "gsis_id": "00-0040706",
+       "published_utc": "2026-11-07T02:35:24+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "ARZ"
+      },
+      {
+       "gsis_id": "00-0040708",
+       "published_utc": "2026-11-07T01:37:06+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "PHI"
+      },
+      {
+       "gsis_id": "00-0040715",
+       "published_utc": "2026-11-08T15:26:58+00:00",
+       "report_status": "Doubtful",
+       "rotowire_status": "DOUBTFUL",
+       "team": "NYG"
+      },
+      {
+       "gsis_id": "00-0040734",
+       "published_utc": "2026-11-06T18:30:14+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "NE"
+      },
+      {
+       "gsis_id": "00-0040736",
+       "published_utc": "2026-11-04T22:53:04+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0040737",
+       "published_utc": "2026-11-06T22:29:44+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0040865",
+       "published_utc": "2026-11-05T23:25:27+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0040888",
+       "published_utc": "2026-11-05T01:10:19+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "BAL"
+      },
+      {
+       "gsis_id": "00-0041026",
+       "published_utc": "2026-11-04T20:39:25+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0041027",
+       "published_utc": "2026-11-03T21:13:49+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "ARZ"
+      },
+      {
+       "gsis_id": "00-0041029",
+       "published_utc": "2026-11-07T21:09:42+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "NO"
+      },
+      {
+       "gsis_id": "00-0041037",
+       "published_utc": "2026-11-05T21:32:38+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CLE"
+      },
+      {
+       "gsis_id": "00-0041043",
+       "published_utc": "2026-11-07T20:43:16+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "IND"
+      },
+      {
+       "gsis_id": "00-0041060",
+       "published_utc": "2026-11-08T12:28:48+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "CHI"
+      },
+      {
+       "gsis_id": "00-0041096",
+       "published_utc": "2026-11-07T00:51:33+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "MIA"
+      },
+      {
+       "gsis_id": "00-0041104",
+       "published_utc": "2026-11-07T22:56:59+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "MIN"
+      },
+      {
+       "gsis_id": "00-0041113",
+       "published_utc": "2026-11-07T03:08:41+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "ARZ"
+      },
+      {
+       "gsis_id": "00-0041120",
+       "published_utc": "2026-11-08T01:56:12+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR-R",
+       "team": "NYJ"
+      },
+      {
+       "gsis_id": "00-0041326",
+       "published_utc": "2026-11-06T19:12:51+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "NO"
+      },
+      {
+       "gsis_id": "00-0041415",
+       "published_utc": "2026-11-04T01:20:56+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "LA"
+      },
+      {
+       "gsis_id": "00-0041442",
+       "published_utc": "2026-11-04T02:07:36+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "DET"
+      },
+      {
+       "gsis_id": "00-0041524",
+       "published_utc": "2026-11-05T01:46:43+00:00",
+       "report_status": "Questionable",
+       "rotowire_status": "QUESTIONABLE",
+       "team": "MIA"
+      },
+      {
+       "gsis_id": "00-0041537",
+       "published_utc": "2026-11-07T22:30:16+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "DAL"
+      },
+      {
+       "gsis_id": "00-0041543",
+       "published_utc": "2026-11-06T20:29:09+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "KC"
+      },
+      {
+       "gsis_id": "00-0041545",
+       "published_utc": "2026-11-07T02:59:31+00:00",
+       "report_status": "Out",
+       "rotowire_status": "OUT",
+       "team": "KC"
+      },
+      {
+       "gsis_id": "00-0041546",
+       "published_utc": "2026-11-04T01:35:26+00:00",
+       "report_status": "Out",
+       "rotowire_status": "IR",
+       "team": "CIN"
+      },
+      {
+       "gsis_id": "00-0041550",
+       "published_utc": "2026-11-07T01:08:39+00:00",
+       "report_status": "Doubtful",
+       "rotowire_status": "DOUBTFUL",
+       "team": "LAC"
       }
      ],
      "rows": 824,
@@ -3280,7 +6656,7 @@
    "week": 9
   },
   "schema": "lp-nfl-pregame-snapshot-1",
-  "snapshot_sha256": "ab7ee1ab1ca74c1a674fc4a4772368f4da5c4531523ffdc0e4e984fbd47cf51e"
+  "snapshot_sha256": "79d241894ec825273f079a73bd2aeada0db8bcf2a8352caad79473ac49b75554"
  },
  "runtime_model_inputs": {
   "current_streak": {

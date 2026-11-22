@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-11-22T22:28:28Z",
+ "generated_utc": "2026-11-22T23:28:38Z",
  "max_depth_age_hours": 24,
  "games": [
   {
@@ -3517,7 +3517,7 @@
    "kickoff_utc": "2026-11-06T01:15Z",
    "cutoff_passed": true,
    "status": "OK",
-   "run_on": "docs/research/model-snapshots-2026/week-09/2026_09_JAX_BAL.json",
+   "run_on": "docs/research/walkforward-2026/snapshots/w09/2026_09_JAX_BAL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3530,13 +3530,6 @@
       "FETCHED_AFTER_CUTOFF",
       "VERIFIED"
      ]
-    },
-    {
-     "set": "model",
-     "path": "docs/research/model-snapshots-2026/week-09/2026_09_JAX_BAL.json",
-     "cutoff_utc": "2026-11-05T23:45:00Z",
-     "depth_age_hours": 8.4,
-     "stale": false
     },
     {
      "set": "walkforward",

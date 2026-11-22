@@ -1,6 +1,6 @@
 # 2026 pregame snapshot index
 
-Generated 2026-11-22 22:28 UTC by `scripts/nfl_sequence/snapshot_index.py`. Do not edit by hand.
+Generated 2026-11-22 23:28 UTC by `scripts/nfl_sequence/snapshot_index.py`. Do not edit by hand.
 
 Games: 161 OK, 0 MISSING, 111 upcoming.
 
@@ -133,7 +133,7 @@ Games: 161 OK, 0 MISSING, 111 upcoming.
 | 8 | 2026_08_NE_MIA | 2026-11-01T21:25Z | OK | [walkforward-2026/snapshots/w08/2026_08_NE_MIA.json](walkforward-2026/snapshots/w08/2026_08_NE_MIA.json) | [5.7h backfilled](cutoff-snapshots-2026/week-08/2026_08_NE_MIA.json) | - | [5.2h](walkforward-2026/snapshots/w08/2026_08_NE_MIA.json) |
 | 8 | 2026_08_PHI_WAS | 2026-11-02T01:20Z | OK | [walkforward-2026/snapshots/w08/2026_08_PHI_WAS.json](walkforward-2026/snapshots/w08/2026_08_PHI_WAS.json) | [9.6h backfilled](cutoff-snapshots-2026/week-08/2026_08_PHI_WAS.json) | - | [9.1h](walkforward-2026/snapshots/w08/2026_08_PHI_WAS.json) |
 | 8 | 2026_08_CHI_SEA | 2026-11-03T01:15Z | OK | [walkforward-2026/snapshots/w08/2026_08_CHI_SEA.json](walkforward-2026/snapshots/w08/2026_08_CHI_SEA.json) | [6.7h backfilled](cutoff-snapshots-2026/week-08/2026_08_CHI_SEA.json) | - | [6.2h](walkforward-2026/snapshots/w08/2026_08_CHI_SEA.json) |
-| 9 | 2026_09_JAX_BAL | 2026-11-06T01:15Z | OK | [model-snapshots-2026/week-09/2026_09_JAX_BAL.json](model-snapshots-2026/week-09/2026_09_JAX_BAL.json) | [8.4h backfilled](cutoff-snapshots-2026/week-09/2026_09_JAX_BAL.json) | [8.4h](model-snapshots-2026/week-09/2026_09_JAX_BAL.json) | [7.9h](walkforward-2026/snapshots/w09/2026_09_JAX_BAL.json) |
+| 9 | 2026_09_JAX_BAL | 2026-11-06T01:15Z | OK | [walkforward-2026/snapshots/w09/2026_09_JAX_BAL.json](walkforward-2026/snapshots/w09/2026_09_JAX_BAL.json) | [8.4h backfilled](cutoff-snapshots-2026/week-09/2026_09_JAX_BAL.json) | - | [7.9h](walkforward-2026/snapshots/w09/2026_09_JAX_BAL.json) |
 | 9 | 2026_09_CIN_ATL | 2026-11-08T14:30Z | OK | [model-snapshots-2026/week-09/2026_09_CIN_ATL.json](model-snapshots-2026/week-09/2026_09_CIN_ATL.json) | [6.0h backfilled](cutoff-snapshots-2026/week-09/2026_09_CIN_ATL.json) | [6.0h](model-snapshots-2026/week-09/2026_09_CIN_ATL.json) | [5.5h](walkforward-2026/snapshots/w09/2026_09_CIN_ATL.json) |
 | 9 | 2026_09_CLE_NO | 2026-11-08T18:00Z | OK | [model-snapshots-2026/week-09/2026_09_CLE_NO.json](model-snapshots-2026/week-09/2026_09_CLE_NO.json) | [2.3h backfilled](cutoff-snapshots-2026/week-09/2026_09_CLE_NO.json) | [2.3h](model-snapshots-2026/week-09/2026_09_CLE_NO.json) | [1.8h](walkforward-2026/snapshots/w09/2026_09_CLE_NO.json) |
 | 9 | 2026_09_DAL_IND | 2026-11-08T18:00Z | OK | [model-snapshots-2026/week-09/2026_09_DAL_IND.json](model-snapshots-2026/week-09/2026_09_DAL_IND.json) | [2.3h backfilled](cutoff-snapshots-2026/week-09/2026_09_DAL_IND.json) | [2.3h](model-snapshots-2026/week-09/2026_09_DAL_IND.json) | [1.8h](walkforward-2026/snapshots/w09/2026_09_DAL_IND.json) |
