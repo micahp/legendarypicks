@@ -3,9 +3,12 @@
 
 Snapshot sets read:
   cutoff    docs/research/cutoff-snapshots-2026/week-NN/<game_id>.json   (90-minute cutoff job on the fast host; copied here)
-  model     docs/research/walkforward-2026/snapshots/wNN/<game_id>.json   (pregame_snapshot format, for the model runs)
+  model     docs/research/model-snapshots-2026/week-NN/<game_id>.json    (cutoff capture in the model format;
+            cutoff_to_model_snapshot.py)
+  walkforward docs/research/walkforward-2026/snapshots/wNN/<game_id>.json (model format, weeks 1-10 walk-forward build)
+Each game's RUN ON column names the one model-format snapshot to run: model first, else walkforward, never a stale one.
 A snapshot is STALE when a team's depth chart is more than 24 hours older than the snapshot cutoff
-(pregame_snapshot.MAX_DEPTH_CHART_AGE). A game whose cutoff has passed is MISSING when it has no snapshot that is not stale.
+(pregame_snapshot.MAX_DEPTH_CHART_AGE). A game whose cutoff has passed is MISSING when it has no model-format snapshot that is not stale.
 
 Writes docs/research/SNAPSHOT-INDEX-2026.md and .json. Exits 1 when any game is MISSING, so it cannot pass quietly.
 
@@ -23,7 +26,8 @@ from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[2]
 CUTOFF_DIR = ROOT / 'docs' / 'research' / 'cutoff-snapshots-2026'
-MODEL_DIR = ROOT / 'docs' / 'research' / 'walkforward-2026' / 'snapshots'
+MODEL_DIR = ROOT / 'docs' / 'research' / 'model-snapshots-2026'
+WALKFORWARD_DIR = ROOT / 'docs' / 'research' / 'walkforward-2026' / 'snapshots'
 OUT = ROOT / 'docs' / 'research' / 'SNAPSHOT-INDEX-2026'
 MAX_AGE = timedelta(hours=24)
 CUTOFF_BEFORE_KICKOFF = timedelta(minutes=90)
@@ -48,12 +52,12 @@ def cutoff_entry(path):
             'backfilled': 'backfilled' in d, 'labels': labels}
 
 
-def model_entry(path):
+def model_entry(path, kind='model'):
     d = json.loads(path.read_text())
     d = d.get('pregame_snapshot', d)
     cut = utc(d['as_of'])
     age = max((cut - utc(d['rosters'][s]['snapshot_at'])).total_seconds() / 3600 for s in ('away', 'home'))
-    return {'set': 'model', 'path': str(path.relative_to(ROOT)), 'cutoff_utc': d['as_of'],
+    return {'set': kind, 'path': str(path.relative_to(ROOT)), 'cutoff_utc': d['as_of'],
             'depth_age_hours': round(age, 1), 'stale': age > MAX_AGE.total_seconds() / 3600}
 
 
@@ -68,8 +72,12 @@ def main(argv=None):
     found = {}
     for path in sorted(CUTOFF_DIR.glob('week-*/*.json')):
         found.setdefault(path.stem, []).append(cutoff_entry(path))
-    for path in sorted(MODEL_DIR.glob('w*/*.json')):
+    for path in sorted(MODEL_DIR.glob('week-*/*.json')):
+        if path.name.endswith('.streak.json'):
+            continue
         found.setdefault(path.stem, []).append(model_entry(path))
+    for path in sorted(WALKFORWARD_DIR.glob('w*/*.json')):
+        found.setdefault(path.stem, []).append(model_entry(path, 'walkforward'))
 
     games = []
     with open(args.games_csv, newline='') as handle:
@@ -81,7 +89,8 @@ def main(argv=None):
     rows, missing = [], []
     for g in sorted(games, key=lambda g: (g['week'], g['kickoff_utc'], g['game_id'])):
         entries = found.pop(g['game_id'], [])
-        usable = [e for e in entries if not e['stale']]
+        usable = [e for kind in ('model', 'walkforward') for e in entries if e['set'] == kind and not e['stale']]
+        run_on = usable[0]['path'] if usable else None
         if not g['cutoff_passed']:
             status = 'UPCOMING'
         elif usable:
@@ -89,7 +98,7 @@ def main(argv=None):
         else:
             status = 'MISSING'
             missing.append(g['game_id'])
-        rows.append(dict(g, status=status, snapshots=entries))
+        rows.append(dict(g, status=status, run_on=run_on, snapshots=entries))
     unknown = sorted(found)
 
     OUT.with_suffix('.json').write_text(json.dumps(
@@ -112,12 +121,16 @@ def main(argv=None):
              '- **cutoff**: the 90-minute cutoff job (`/root/cutoff-captures` on the fast host), copied to '
              '`cutoff-snapshots-2026/`. Backfilled ones were built after the game: their depth chart is the capture '
              'before the cutoff, but injury and roster data are `FETCHED_AFTER_CUTOFF`.',
-             '- **model**: `walkforward-2026/snapshots/`, the pregame_snapshot format the model runs read.',
+             '- **RUN ON**: the model-format snapshot to run on for that game. Use this one.',
+             '- **model**: `model-snapshots-2026/`, the cutoff snapshot turned into the model format by '
+             '`cutoff_to_model_snapshot.py`, with RotoWire injuries published before the cutoff (weeks 9 on).',
+             '- **walkforward**: `walkforward-2026/snapshots/`, the walk-forward build in the model format (weeks 1-10).',
              '- The number is the depth chart age at the cutoff. STALE means over 24 hours: do not run on it.', '',
-             '| week | game | kickoff (UTC) | status | cutoff | model |', '|---|---|---|---|---|---|']
+             '| week | game | kickoff (UTC) | status | RUN ON | cutoff | model | walkforward |', '|---|---|---|---|---|---|---|---|']
     for r in rows:
-        lines.append(f"| {r['week']} | {r['game_id']} | {r['kickoff_utc']} | {r['status']} | "
-                     f"{cell(r['snapshots'], 'cutoff')} | {cell(r['snapshots'], 'model')} |")
+        run_on = f"[{Path(r['run_on']).relative_to('docs/research')}]({Path(r['run_on']).relative_to('docs/research')})" if r['run_on'] else '-'
+        lines.append(f"| {r['week']} | {r['game_id']} | {r['kickoff_utc']} | {r['status']} | {run_on} | "
+                     f"{cell(r['snapshots'], 'cutoff')} | {cell(r['snapshots'], 'model')} | {cell(r['snapshots'], 'walkforward')} |")
     if unknown:
         lines += ['', 'Snapshots for game ids not in the schedule: ' + ', '.join(unknown)]
     OUT.with_suffix('.md').write_text('\n'.join(lines) + '\n')

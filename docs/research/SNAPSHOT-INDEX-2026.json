@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-11-22T22:04:40Z",
+ "generated_utc": "2026-11-22T22:28:28Z",
  "max_depth_age_hours": 24,
  "games": [
   {
@@ -8,6 +8,7 @@
    "kickoff_utc": "2026-09-10T00:20Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w01/2026_01_NE_SEA.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -22,7 +23,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w01/2026_01_NE_SEA.json",
      "cutoff_utc": "2026-09-09T22:20:00Z",
      "depth_age_hours": 10.2,
@@ -36,6 +37,7 @@
    "kickoff_utc": "2026-09-11T00:35Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w01/2026_01_SF_LA.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -50,7 +52,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w01/2026_01_SF_LA.json",
      "cutoff_utc": "2026-09-10T22:35:00Z",
      "depth_age_hours": 10.6,
@@ -64,6 +66,7 @@
    "kickoff_utc": "2026-09-13T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w01/2026_01_ATL_PIT.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -78,7 +81,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w01/2026_01_ATL_PIT.json",
      "cutoff_utc": "2026-09-13T15:00:00Z",
      "depth_age_hours": 2.3,
@@ -92,6 +95,7 @@
    "kickoff_utc": "2026-09-13T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w01/2026_01_BAL_IND.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -106,7 +110,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w01/2026_01_BAL_IND.json",
      "cutoff_utc": "2026-09-13T15:00:00Z",
      "depth_age_hours": 2.3,
@@ -120,6 +124,7 @@
    "kickoff_utc": "2026-09-13T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w01/2026_01_BUF_HOU.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -134,7 +139,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w01/2026_01_BUF_HOU.json",
      "cutoff_utc": "2026-09-13T15:00:00Z",
      "depth_age_hours": 2.3,
@@ -148,6 +153,7 @@
    "kickoff_utc": "2026-09-13T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w01/2026_01_CHI_CAR.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -162,7 +168,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w01/2026_01_CHI_CAR.json",
      "cutoff_utc": "2026-09-13T15:00:00Z",
      "depth_age_hours": 2.3,
@@ -176,6 +182,7 @@
    "kickoff_utc": "2026-09-13T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w01/2026_01_CLE_JAX.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -190,7 +197,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w01/2026_01_CLE_JAX.json",
      "cutoff_utc": "2026-09-13T15:00:00Z",
      "depth_age_hours": 2.3,
@@ -204,6 +211,7 @@
    "kickoff_utc": "2026-09-13T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w01/2026_01_NO_DET.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -218,7 +226,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w01/2026_01_NO_DET.json",
      "cutoff_utc": "2026-09-13T15:00:00Z",
      "depth_age_hours": 2.3,
@@ -232,6 +240,7 @@
    "kickoff_utc": "2026-09-13T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w01/2026_01_NYJ_TEN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -246,7 +255,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w01/2026_01_NYJ_TEN.json",
      "cutoff_utc": "2026-09-13T15:00:00Z",
      "depth_age_hours": 2.3,
@@ -260,6 +269,7 @@
    "kickoff_utc": "2026-09-13T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w01/2026_01_TB_CIN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -274,7 +284,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w01/2026_01_TB_CIN.json",
      "cutoff_utc": "2026-09-13T15:00:00Z",
      "depth_age_hours": 2.3,
@@ -288,6 +298,7 @@
    "kickoff_utc": "2026-09-13T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w01/2026_01_ARI_LAC.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -302,7 +313,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w01/2026_01_ARI_LAC.json",
      "cutoff_utc": "2026-09-13T18:25:00Z",
      "depth_age_hours": 5.7,
@@ -316,6 +327,7 @@
    "kickoff_utc": "2026-09-13T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w01/2026_01_GB_MIN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -330,7 +342,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w01/2026_01_GB_MIN.json",
      "cutoff_utc": "2026-09-13T18:25:00Z",
      "depth_age_hours": 5.7,
@@ -344,6 +356,7 @@
    "kickoff_utc": "2026-09-13T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w01/2026_01_MIA_LV.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -358,7 +371,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w01/2026_01_MIA_LV.json",
      "cutoff_utc": "2026-09-13T18:25:00Z",
      "depth_age_hours": 5.7,
@@ -372,6 +385,7 @@
    "kickoff_utc": "2026-09-13T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w01/2026_01_WAS_PHI.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -386,7 +400,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w01/2026_01_WAS_PHI.json",
      "cutoff_utc": "2026-09-13T18:25:00Z",
      "depth_age_hours": 5.7,
@@ -400,6 +414,7 @@
    "kickoff_utc": "2026-09-14T00:20Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w01/2026_01_DAL_NYG.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -414,7 +429,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w01/2026_01_DAL_NYG.json",
      "cutoff_utc": "2026-09-13T22:20:00Z",
      "depth_age_hours": 9.6,
@@ -428,6 +443,7 @@
    "kickoff_utc": "2026-09-15T00:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w01/2026_01_DEN_KC.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -442,7 +458,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w01/2026_01_DEN_KC.json",
      "cutoff_utc": "2026-09-14T22:15:00Z",
      "depth_age_hours": 8.4,
@@ -456,6 +472,7 @@
    "kickoff_utc": "2026-09-18T00:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w02/2026_02_DET_BUF.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -470,7 +487,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w02/2026_02_DET_BUF.json",
      "cutoff_utc": "2026-09-17T22:15:00Z",
      "depth_age_hours": 9.7,
@@ -484,6 +501,7 @@
    "kickoff_utc": "2026-09-20T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w02/2026_02_CAR_ATL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -498,7 +516,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w02/2026_02_CAR_ATL.json",
      "cutoff_utc": "2026-09-20T15:00:00Z",
      "depth_age_hours": 2.8,
@@ -512,6 +530,7 @@
    "kickoff_utc": "2026-09-20T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w02/2026_02_CIN_HOU.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -526,7 +545,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w02/2026_02_CIN_HOU.json",
      "cutoff_utc": "2026-09-20T15:00:00Z",
      "depth_age_hours": 2.8,
@@ -540,6 +559,7 @@
    "kickoff_utc": "2026-09-20T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w02/2026_02_CLE_TB.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -554,7 +574,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w02/2026_02_CLE_TB.json",
      "cutoff_utc": "2026-09-20T15:00:00Z",
      "depth_age_hours": 2.8,
@@ -568,6 +588,7 @@
    "kickoff_utc": "2026-09-20T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w02/2026_02_GB_NYJ.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -582,7 +603,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w02/2026_02_GB_NYJ.json",
      "cutoff_utc": "2026-09-20T15:00:00Z",
      "depth_age_hours": 2.8,
@@ -596,6 +617,7 @@
    "kickoff_utc": "2026-09-20T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w02/2026_02_MIN_CHI.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -610,7 +632,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w02/2026_02_MIN_CHI.json",
      "cutoff_utc": "2026-09-20T15:00:00Z",
      "depth_age_hours": 2.8,
@@ -624,6 +646,7 @@
    "kickoff_utc": "2026-09-20T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w02/2026_02_NO_BAL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -638,7 +661,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w02/2026_02_NO_BAL.json",
      "cutoff_utc": "2026-09-20T15:00:00Z",
      "depth_age_hours": 2.8,
@@ -652,6 +675,7 @@
    "kickoff_utc": "2026-09-20T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w02/2026_02_PHI_TEN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -666,7 +690,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w02/2026_02_PHI_TEN.json",
      "cutoff_utc": "2026-09-20T15:00:00Z",
      "depth_age_hours": 2.8,
@@ -680,6 +704,7 @@
    "kickoff_utc": "2026-09-20T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w02/2026_02_PIT_NE.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -694,7 +719,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w02/2026_02_PIT_NE.json",
      "cutoff_utc": "2026-09-20T15:00:00Z",
      "depth_age_hours": 2.8,
@@ -708,6 +733,7 @@
    "kickoff_utc": "2026-09-20T20:05Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w02/2026_02_JAX_DEN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -722,7 +748,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w02/2026_02_JAX_DEN.json",
      "cutoff_utc": "2026-09-20T18:05:00Z",
      "depth_age_hours": 5.8,
@@ -736,6 +762,7 @@
    "kickoff_utc": "2026-09-20T20:05Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w02/2026_02_LV_LAC.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -750,7 +777,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w02/2026_02_LV_LAC.json",
      "cutoff_utc": "2026-09-20T18:05:00Z",
      "depth_age_hours": 5.8,
@@ -764,6 +791,7 @@
    "kickoff_utc": "2026-09-20T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w02/2026_02_MIA_SF.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -778,7 +806,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w02/2026_02_MIA_SF.json",
      "cutoff_utc": "2026-09-20T18:25:00Z",
      "depth_age_hours": 6.2,
@@ -792,6 +820,7 @@
    "kickoff_utc": "2026-09-20T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w02/2026_02_SEA_ARI.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -806,7 +835,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w02/2026_02_SEA_ARI.json",
      "cutoff_utc": "2026-09-20T18:25:00Z",
      "depth_age_hours": 6.2,
@@ -820,6 +849,7 @@
    "kickoff_utc": "2026-09-20T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w02/2026_02_WAS_DAL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -834,7 +864,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w02/2026_02_WAS_DAL.json",
      "cutoff_utc": "2026-09-20T18:25:00Z",
      "depth_age_hours": 6.2,
@@ -848,6 +878,7 @@
    "kickoff_utc": "2026-09-21T00:20Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w02/2026_02_IND_KC.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -862,7 +893,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w02/2026_02_IND_KC.json",
      "cutoff_utc": "2026-09-20T22:20:00Z",
      "depth_age_hours": 10.1,
@@ -876,6 +907,7 @@
    "kickoff_utc": "2026-09-22T00:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w02/2026_02_NYG_LA.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -890,7 +922,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w02/2026_02_NYG_LA.json",
      "cutoff_utc": "2026-09-21T22:15:00Z",
      "depth_age_hours": 8.3,
@@ -904,6 +936,7 @@
    "kickoff_utc": "2026-09-25T00:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w03/2026_03_ATL_GB.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -918,7 +951,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w03/2026_03_ATL_GB.json",
      "cutoff_utc": "2026-09-24T22:15:00Z",
      "depth_age_hours": 9.5,
@@ -932,6 +965,7 @@
    "kickoff_utc": "2026-09-27T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w03/2026_03_CAR_CLE.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -946,7 +980,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w03/2026_03_CAR_CLE.json",
      "cutoff_utc": "2026-09-27T15:00:00Z",
      "depth_age_hours": 2.1,
@@ -960,6 +994,7 @@
    "kickoff_utc": "2026-09-27T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w03/2026_03_CIN_PIT.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -974,7 +1009,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w03/2026_03_CIN_PIT.json",
      "cutoff_utc": "2026-09-27T15:00:00Z",
      "depth_age_hours": 2.1,
@@ -988,6 +1023,7 @@
    "kickoff_utc": "2026-09-27T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w03/2026_03_HOU_IND.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1002,7 +1038,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w03/2026_03_HOU_IND.json",
      "cutoff_utc": "2026-09-27T15:00:00Z",
      "depth_age_hours": 2.1,
@@ -1016,6 +1052,7 @@
    "kickoff_utc": "2026-09-27T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w03/2026_03_KC_MIA.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1030,7 +1067,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w03/2026_03_KC_MIA.json",
      "cutoff_utc": "2026-09-27T15:00:00Z",
      "depth_age_hours": 2.1,
@@ -1044,6 +1081,7 @@
    "kickoff_utc": "2026-09-27T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w03/2026_03_LAC_BUF.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1058,7 +1096,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w03/2026_03_LAC_BUF.json",
      "cutoff_utc": "2026-09-27T15:00:00Z",
      "depth_age_hours": 2.1,
@@ -1072,6 +1110,7 @@
    "kickoff_utc": "2026-09-27T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w03/2026_03_NE_JAX.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1086,7 +1125,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w03/2026_03_NE_JAX.json",
      "cutoff_utc": "2026-09-27T15:00:00Z",
      "depth_age_hours": 2.1,
@@ -1100,6 +1139,7 @@
    "kickoff_utc": "2026-09-27T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w03/2026_03_NYJ_DET.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1114,7 +1154,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w03/2026_03_NYJ_DET.json",
      "cutoff_utc": "2026-09-27T15:00:00Z",
      "depth_age_hours": 2.1,
@@ -1128,6 +1168,7 @@
    "kickoff_utc": "2026-09-27T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w03/2026_03_SEA_WAS.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1142,7 +1183,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w03/2026_03_SEA_WAS.json",
      "cutoff_utc": "2026-09-27T15:00:00Z",
      "depth_age_hours": 2.1,
@@ -1156,6 +1197,7 @@
    "kickoff_utc": "2026-09-27T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w03/2026_03_TEN_NYG.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1170,7 +1212,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w03/2026_03_TEN_NYG.json",
      "cutoff_utc": "2026-09-27T15:00:00Z",
      "depth_age_hours": 2.1,
@@ -1184,6 +1226,7 @@
    "kickoff_utc": "2026-09-27T20:05Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w03/2026_03_ARI_SF.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1198,7 +1241,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w03/2026_03_ARI_SF.json",
      "cutoff_utc": "2026-09-27T18:05:00Z",
      "depth_age_hours": 5.1,
@@ -1212,6 +1255,7 @@
    "kickoff_utc": "2026-09-27T20:05Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w03/2026_03_MIN_TB.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1226,7 +1270,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w03/2026_03_MIN_TB.json",
      "cutoff_utc": "2026-09-27T18:05:00Z",
      "depth_age_hours": 5.1,
@@ -1240,6 +1284,7 @@
    "kickoff_utc": "2026-09-27T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w03/2026_03_BAL_DAL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1254,7 +1299,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w03/2026_03_BAL_DAL.json",
      "cutoff_utc": "2026-09-27T18:25:00Z",
      "depth_age_hours": 5.5,
@@ -1268,6 +1313,7 @@
    "kickoff_utc": "2026-09-27T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w03/2026_03_LV_NO.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1282,7 +1328,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w03/2026_03_LV_NO.json",
      "cutoff_utc": "2026-09-27T18:25:00Z",
      "depth_age_hours": 5.5,
@@ -1296,6 +1342,7 @@
    "kickoff_utc": "2026-09-28T00:20Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w03/2026_03_LA_DEN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1310,7 +1357,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w03/2026_03_LA_DEN.json",
      "cutoff_utc": "2026-09-27T22:20:00Z",
      "depth_age_hours": 9.4,
@@ -1324,6 +1371,7 @@
    "kickoff_utc": "2026-09-29T00:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w03/2026_03_PHI_CHI.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1338,7 +1386,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w03/2026_03_PHI_CHI.json",
      "cutoff_utc": "2026-09-28T22:15:00Z",
      "depth_age_hours": 7.0,
@@ -1352,6 +1400,7 @@
    "kickoff_utc": "2026-10-02T00:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w04/2026_04_PIT_CLE.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1366,7 +1415,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w04/2026_04_PIT_CLE.json",
      "cutoff_utc": "2026-10-01T22:15:00Z",
      "depth_age_hours": 7.8,
@@ -1380,6 +1429,7 @@
    "kickoff_utc": "2026-10-04T13:30Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w04/2026_04_IND_WAS.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1394,7 +1444,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w04/2026_04_IND_WAS.json",
      "cutoff_utc": "2026-10-04T11:30:00Z",
      "depth_age_hours": 5.5,
@@ -1408,6 +1458,7 @@
    "kickoff_utc": "2026-10-04T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w04/2026_04_ARI_NYG.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1422,7 +1473,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w04/2026_04_ARI_NYG.json",
      "cutoff_utc": "2026-10-04T15:00:00Z",
      "depth_age_hours": 1.8,
@@ -1436,6 +1487,7 @@
    "kickoff_utc": "2026-10-04T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w04/2026_04_DAL_HOU.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1450,7 +1502,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w04/2026_04_DAL_HOU.json",
      "cutoff_utc": "2026-10-04T15:00:00Z",
      "depth_age_hours": 1.8,
@@ -1464,6 +1516,7 @@
    "kickoff_utc": "2026-10-04T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w04/2026_04_GB_TB.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1478,7 +1531,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w04/2026_04_GB_TB.json",
      "cutoff_utc": "2026-10-04T15:00:00Z",
      "depth_age_hours": 1.8,
@@ -1492,6 +1545,7 @@
    "kickoff_utc": "2026-10-04T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w04/2026_04_JAX_CIN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1506,7 +1560,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w04/2026_04_JAX_CIN.json",
      "cutoff_utc": "2026-10-04T15:00:00Z",
      "depth_age_hours": 1.8,
@@ -1520,6 +1574,7 @@
    "kickoff_utc": "2026-10-04T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w04/2026_04_LA_PHI.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1534,7 +1589,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w04/2026_04_LA_PHI.json",
      "cutoff_utc": "2026-10-04T15:00:00Z",
      "depth_age_hours": 1.8,
@@ -1548,6 +1603,7 @@
    "kickoff_utc": "2026-10-04T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w04/2026_04_NE_BUF.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1562,7 +1618,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w04/2026_04_NE_BUF.json",
      "cutoff_utc": "2026-10-04T15:00:00Z",
      "depth_age_hours": 1.8,
@@ -1576,6 +1632,7 @@
    "kickoff_utc": "2026-10-04T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w04/2026_04_NYJ_CHI.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1590,7 +1647,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w04/2026_04_NYJ_CHI.json",
      "cutoff_utc": "2026-10-04T15:00:00Z",
      "depth_age_hours": 1.8,
@@ -1604,6 +1661,7 @@
    "kickoff_utc": "2026-10-04T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w04/2026_04_TEN_BAL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1618,7 +1676,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w04/2026_04_TEN_BAL.json",
      "cutoff_utc": "2026-10-04T15:00:00Z",
      "depth_age_hours": 1.8,
@@ -1632,6 +1690,7 @@
    "kickoff_utc": "2026-10-04T20:05Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w04/2026_04_MIA_MIN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1646,7 +1705,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w04/2026_04_MIA_MIN.json",
      "cutoff_utc": "2026-10-04T18:05:00Z",
      "depth_age_hours": 4.9,
@@ -1660,6 +1719,7 @@
    "kickoff_utc": "2026-10-04T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w04/2026_04_DEN_SF.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1674,7 +1734,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w04/2026_04_DEN_SF.json",
      "cutoff_utc": "2026-10-04T18:25:00Z",
      "depth_age_hours": 5.3,
@@ -1688,6 +1748,7 @@
    "kickoff_utc": "2026-10-04T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w04/2026_04_KC_LV.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1702,7 +1763,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w04/2026_04_KC_LV.json",
      "cutoff_utc": "2026-10-04T18:25:00Z",
      "depth_age_hours": 5.3,
@@ -1716,6 +1777,7 @@
    "kickoff_utc": "2026-10-04T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w04/2026_04_LAC_SEA.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1730,7 +1792,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w04/2026_04_LAC_SEA.json",
      "cutoff_utc": "2026-10-04T18:25:00Z",
      "depth_age_hours": 5.3,
@@ -1744,6 +1806,7 @@
    "kickoff_utc": "2026-10-05T00:20Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w04/2026_04_DET_CAR.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1758,7 +1821,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w04/2026_04_DET_CAR.json",
      "cutoff_utc": "2026-10-04T22:20:00Z",
      "depth_age_hours": 9.2,
@@ -1772,6 +1835,7 @@
    "kickoff_utc": "2026-10-06T00:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w04/2026_04_ATL_NO.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1786,7 +1850,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w04/2026_04_ATL_NO.json",
      "cutoff_utc": "2026-10-05T22:15:00Z",
      "depth_age_hours": 6.4,
@@ -1800,6 +1864,7 @@
    "kickoff_utc": "2026-10-09T00:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w05/2026_05_TB_DAL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1814,7 +1879,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w05/2026_05_TB_DAL.json",
      "cutoff_utc": "2026-10-08T22:15:00Z",
      "depth_age_hours": 7.7,
@@ -1828,6 +1893,7 @@
    "kickoff_utc": "2026-10-11T13:30Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w05/2026_05_PHI_JAX.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1842,7 +1908,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w05/2026_05_PHI_JAX.json",
      "cutoff_utc": "2026-10-11T11:30:00Z",
      "depth_age_hours": 5.5,
@@ -1856,6 +1922,7 @@
    "kickoff_utc": "2026-10-11T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w05/2026_05_CHI_GB.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1870,7 +1937,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w05/2026_05_CHI_GB.json",
      "cutoff_utc": "2026-10-11T15:00:00Z",
      "depth_age_hours": 1.1,
@@ -1884,6 +1951,7 @@
    "kickoff_utc": "2026-10-11T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w05/2026_05_CIN_MIA.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1898,7 +1966,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w05/2026_05_CIN_MIA.json",
      "cutoff_utc": "2026-10-11T15:00:00Z",
      "depth_age_hours": 1.1,
@@ -1912,6 +1980,7 @@
    "kickoff_utc": "2026-10-11T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w05/2026_05_CLE_NYJ.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1926,7 +1995,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w05/2026_05_CLE_NYJ.json",
      "cutoff_utc": "2026-10-11T15:00:00Z",
      "depth_age_hours": 1.1,
@@ -1940,6 +2009,7 @@
    "kickoff_utc": "2026-10-11T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w05/2026_05_HOU_TEN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1954,7 +2024,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w05/2026_05_HOU_TEN.json",
      "cutoff_utc": "2026-10-11T15:00:00Z",
      "depth_age_hours": 1.1,
@@ -1968,6 +2038,7 @@
    "kickoff_utc": "2026-10-11T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w05/2026_05_IND_PIT.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -1982,7 +2053,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w05/2026_05_IND_PIT.json",
      "cutoff_utc": "2026-10-11T15:00:00Z",
      "depth_age_hours": 1.1,
@@ -1996,6 +2067,7 @@
    "kickoff_utc": "2026-10-11T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w05/2026_05_LV_NE.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2010,7 +2082,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w05/2026_05_LV_NE.json",
      "cutoff_utc": "2026-10-11T15:00:00Z",
      "depth_age_hours": 1.1,
@@ -2024,6 +2096,7 @@
    "kickoff_utc": "2026-10-11T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w05/2026_05_MIN_NO.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2038,7 +2111,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w05/2026_05_MIN_NO.json",
      "cutoff_utc": "2026-10-11T15:00:00Z",
      "depth_age_hours": 1.1,
@@ -2052,6 +2125,7 @@
    "kickoff_utc": "2026-10-11T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w05/2026_05_NYG_WAS.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2066,7 +2140,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w05/2026_05_NYG_WAS.json",
      "cutoff_utc": "2026-10-11T15:00:00Z",
      "depth_age_hours": 1.1,
@@ -2080,6 +2154,7 @@
    "kickoff_utc": "2026-10-11T20:05Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w05/2026_05_DEN_LAC.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2094,7 +2169,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w05/2026_05_DEN_LAC.json",
      "cutoff_utc": "2026-10-11T18:05:00Z",
      "depth_age_hours": 4.1,
@@ -2108,6 +2183,7 @@
    "kickoff_utc": "2026-10-11T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w05/2026_05_DET_ARI.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2122,7 +2198,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w05/2026_05_DET_ARI.json",
      "cutoff_utc": "2026-10-11T18:25:00Z",
      "depth_age_hours": 4.5,
@@ -2136,6 +2212,7 @@
    "kickoff_utc": "2026-10-11T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w05/2026_05_SF_SEA.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2150,7 +2227,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w05/2026_05_SF_SEA.json",
      "cutoff_utc": "2026-10-11T18:25:00Z",
      "depth_age_hours": 4.5,
@@ -2164,6 +2241,7 @@
    "kickoff_utc": "2026-10-12T00:20Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w05/2026_05_BAL_ATL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2178,7 +2256,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w05/2026_05_BAL_ATL.json",
      "cutoff_utc": "2026-10-11T22:20:00Z",
      "depth_age_hours": 8.4,
@@ -2192,6 +2270,7 @@
    "kickoff_utc": "2026-10-13T00:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w05/2026_05_BUF_LA.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2206,7 +2285,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w05/2026_05_BUF_LA.json",
      "cutoff_utc": "2026-10-12T22:15:00Z",
      "depth_age_hours": 5.6,
@@ -2220,6 +2299,7 @@
    "kickoff_utc": "2026-10-16T00:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w06/2026_06_SEA_DEN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2234,7 +2314,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w06/2026_06_SEA_DEN.json",
      "cutoff_utc": "2026-10-15T22:15:00Z",
      "depth_age_hours": 9.6,
@@ -2248,6 +2328,7 @@
    "kickoff_utc": "2026-10-18T13:30Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w06/2026_06_HOU_JAX.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2262,7 +2343,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w06/2026_06_HOU_JAX.json",
      "cutoff_utc": "2026-10-18T11:30:00Z",
      "depth_age_hours": 5.5,
@@ -2276,6 +2357,7 @@
    "kickoff_utc": "2026-10-18T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w06/2026_06_BAL_CLE.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2290,7 +2372,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w06/2026_06_BAL_CLE.json",
      "cutoff_utc": "2026-10-18T15:00:00Z",
      "depth_age_hours": 3.0,
@@ -2304,6 +2386,7 @@
    "kickoff_utc": "2026-10-18T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w06/2026_06_CAR_PHI.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2318,7 +2401,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w06/2026_06_CAR_PHI.json",
      "cutoff_utc": "2026-10-18T15:00:00Z",
      "depth_age_hours": 3.0,
@@ -2332,6 +2415,7 @@
    "kickoff_utc": "2026-10-18T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w06/2026_06_CHI_ATL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2346,7 +2430,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w06/2026_06_CHI_ATL.json",
      "cutoff_utc": "2026-10-18T15:00:00Z",
      "depth_age_hours": 3.0,
@@ -2360,6 +2444,7 @@
    "kickoff_utc": "2026-10-18T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w06/2026_06_NO_NYG.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2374,7 +2459,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w06/2026_06_NO_NYG.json",
      "cutoff_utc": "2026-10-18T15:00:00Z",
      "depth_age_hours": 3.0,
@@ -2388,6 +2473,7 @@
    "kickoff_utc": "2026-10-18T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w06/2026_06_NYJ_NE.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2402,7 +2488,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w06/2026_06_NYJ_NE.json",
      "cutoff_utc": "2026-10-18T15:00:00Z",
      "depth_age_hours": 3.0,
@@ -2416,6 +2502,7 @@
    "kickoff_utc": "2026-10-18T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w06/2026_06_PIT_TB.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2430,7 +2517,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w06/2026_06_PIT_TB.json",
      "cutoff_utc": "2026-10-18T15:00:00Z",
      "depth_age_hours": 3.0,
@@ -2444,6 +2531,7 @@
    "kickoff_utc": "2026-10-18T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w06/2026_06_TEN_IND.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2458,7 +2546,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w06/2026_06_TEN_IND.json",
      "cutoff_utc": "2026-10-18T15:00:00Z",
      "depth_age_hours": 3.0,
@@ -2472,6 +2560,7 @@
    "kickoff_utc": "2026-10-18T20:05Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w06/2026_06_ARI_LA.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2486,7 +2575,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w06/2026_06_ARI_LA.json",
      "cutoff_utc": "2026-10-18T18:05:00Z",
      "depth_age_hours": 6.0,
@@ -2500,6 +2589,7 @@
    "kickoff_utc": "2026-10-18T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w06/2026_06_BUF_LV.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2514,7 +2604,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w06/2026_06_BUF_LV.json",
      "cutoff_utc": "2026-10-18T18:25:00Z",
      "depth_age_hours": 6.4,
@@ -2528,6 +2618,7 @@
    "kickoff_utc": "2026-10-18T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w06/2026_06_LAC_KC.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2542,7 +2633,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w06/2026_06_LAC_KC.json",
      "cutoff_utc": "2026-10-18T18:25:00Z",
      "depth_age_hours": 6.4,
@@ -2556,6 +2647,7 @@
    "kickoff_utc": "2026-10-19T00:20Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w06/2026_06_DAL_GB.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2570,7 +2662,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w06/2026_06_DAL_GB.json",
      "cutoff_utc": "2026-10-18T22:20:00Z",
      "depth_age_hours": 10.3,
@@ -2584,6 +2676,7 @@
    "kickoff_utc": "2026-10-20T00:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w06/2026_06_WAS_SF.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2598,7 +2691,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w06/2026_06_WAS_SF.json",
      "cutoff_utc": "2026-10-19T22:15:00Z",
      "depth_age_hours": 7.7,
@@ -2612,6 +2705,7 @@
    "kickoff_utc": "2026-10-23T00:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w07/2026_07_NE_CHI.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2626,7 +2720,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w07/2026_07_NE_CHI.json",
      "cutoff_utc": "2026-10-22T22:15:00Z",
      "depth_age_hours": 9.3,
@@ -2640,6 +2734,7 @@
    "kickoff_utc": "2026-10-25T13:30Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w07/2026_07_PIT_NO.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2654,7 +2749,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w07/2026_07_PIT_NO.json",
      "cutoff_utc": "2026-10-25T11:30:00Z",
      "depth_age_hours": 5.5,
@@ -2668,6 +2763,7 @@
    "kickoff_utc": "2026-10-25T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w07/2026_07_CIN_BAL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2682,7 +2778,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w07/2026_07_CIN_BAL.json",
      "cutoff_utc": "2026-10-25T15:00:00Z",
      "depth_age_hours": 2.5,
@@ -2696,6 +2792,7 @@
    "kickoff_utc": "2026-10-25T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w07/2026_07_CLE_TEN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2710,7 +2807,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w07/2026_07_CLE_TEN.json",
      "cutoff_utc": "2026-10-25T15:00:00Z",
      "depth_age_hours": 2.5,
@@ -2724,6 +2821,7 @@
    "kickoff_utc": "2026-10-25T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w07/2026_07_IND_MIN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2738,7 +2836,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w07/2026_07_IND_MIN.json",
      "cutoff_utc": "2026-10-25T15:00:00Z",
      "depth_age_hours": 2.5,
@@ -2752,6 +2850,7 @@
    "kickoff_utc": "2026-10-25T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w07/2026_07_MIA_NYJ.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2766,7 +2865,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w07/2026_07_MIA_NYJ.json",
      "cutoff_utc": "2026-10-25T15:00:00Z",
      "depth_age_hours": 2.5,
@@ -2780,6 +2879,7 @@
    "kickoff_utc": "2026-10-25T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w07/2026_07_NYG_HOU.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2794,7 +2894,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w07/2026_07_NYG_HOU.json",
      "cutoff_utc": "2026-10-25T15:00:00Z",
      "depth_age_hours": 2.5,
@@ -2808,6 +2908,7 @@
    "kickoff_utc": "2026-10-25T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w07/2026_07_SF_ATL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2822,7 +2923,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w07/2026_07_SF_ATL.json",
      "cutoff_utc": "2026-10-25T15:00:00Z",
      "depth_age_hours": 2.5,
@@ -2836,6 +2937,7 @@
    "kickoff_utc": "2026-10-25T17:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w07/2026_07_TB_CAR.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2850,7 +2952,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w07/2026_07_TB_CAR.json",
      "cutoff_utc": "2026-10-25T15:00:00Z",
      "depth_age_hours": 2.5,
@@ -2864,6 +2966,7 @@
    "kickoff_utc": "2026-10-25T20:05Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w07/2026_07_DEN_ARI.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2878,7 +2981,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w07/2026_07_DEN_ARI.json",
      "cutoff_utc": "2026-10-25T18:05:00Z",
      "depth_age_hours": 5.6,
@@ -2892,6 +2995,7 @@
    "kickoff_utc": "2026-10-25T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w07/2026_07_GB_DET.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2906,7 +3010,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w07/2026_07_GB_DET.json",
      "cutoff_utc": "2026-10-25T18:25:00Z",
      "depth_age_hours": 5.9,
@@ -2920,6 +3024,7 @@
    "kickoff_utc": "2026-10-25T20:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w07/2026_07_LA_LV.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2934,7 +3039,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w07/2026_07_LA_LV.json",
      "cutoff_utc": "2026-10-25T18:25:00Z",
      "depth_age_hours": 5.9,
@@ -2948,6 +3053,7 @@
    "kickoff_utc": "2026-10-26T00:20Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w07/2026_07_KC_SEA.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2962,7 +3068,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w07/2026_07_KC_SEA.json",
      "cutoff_utc": "2026-10-25T22:20:00Z",
      "depth_age_hours": 9.8,
@@ -2976,6 +3082,7 @@
    "kickoff_utc": "2026-10-27T00:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w07/2026_07_DAL_PHI.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -2990,7 +3097,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w07/2026_07_DAL_PHI.json",
      "cutoff_utc": "2026-10-26T22:15:00Z",
      "depth_age_hours": 8.1,
@@ -3004,6 +3111,7 @@
    "kickoff_utc": "2026-10-30T00:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w08/2026_08_CAR_GB.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3018,7 +3126,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w08/2026_08_CAR_GB.json",
      "cutoff_utc": "2026-10-29T22:15:00Z",
      "depth_age_hours": 8.1,
@@ -3032,6 +3140,7 @@
    "kickoff_utc": "2026-11-01T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w08/2026_08_ARI_DAL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3046,7 +3155,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w08/2026_08_ARI_DAL.json",
      "cutoff_utc": "2026-11-01T16:00:00Z",
      "depth_age_hours": 1.8,
@@ -3060,6 +3169,7 @@
    "kickoff_utc": "2026-11-01T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w08/2026_08_ATL_TB.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3074,7 +3184,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w08/2026_08_ATL_TB.json",
      "cutoff_utc": "2026-11-01T16:00:00Z",
      "depth_age_hours": 1.8,
@@ -3088,6 +3198,7 @@
    "kickoff_utc": "2026-11-01T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w08/2026_08_BAL_BUF.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3102,7 +3213,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w08/2026_08_BAL_BUF.json",
      "cutoff_utc": "2026-11-01T16:00:00Z",
      "depth_age_hours": 1.8,
@@ -3116,6 +3227,7 @@
    "kickoff_utc": "2026-11-01T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w08/2026_08_CLE_PIT.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3130,7 +3242,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w08/2026_08_CLE_PIT.json",
      "cutoff_utc": "2026-11-01T16:00:00Z",
      "depth_age_hours": 1.8,
@@ -3144,6 +3256,7 @@
    "kickoff_utc": "2026-11-01T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w08/2026_08_IND_JAX.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3158,7 +3271,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w08/2026_08_IND_JAX.json",
      "cutoff_utc": "2026-11-01T16:00:00Z",
      "depth_age_hours": 1.8,
@@ -3172,6 +3285,7 @@
    "kickoff_utc": "2026-11-01T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w08/2026_08_LV_NYJ.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3186,7 +3300,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w08/2026_08_LV_NYJ.json",
      "cutoff_utc": "2026-11-01T16:00:00Z",
      "depth_age_hours": 1.8,
@@ -3200,6 +3314,7 @@
    "kickoff_utc": "2026-11-01T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w08/2026_08_MIN_DET.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3214,7 +3329,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w08/2026_08_MIN_DET.json",
      "cutoff_utc": "2026-11-01T16:00:00Z",
      "depth_age_hours": 1.8,
@@ -3228,6 +3343,7 @@
    "kickoff_utc": "2026-11-01T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w08/2026_08_TEN_CIN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3242,7 +3358,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w08/2026_08_TEN_CIN.json",
      "cutoff_utc": "2026-11-01T16:00:00Z",
      "depth_age_hours": 1.8,
@@ -3256,6 +3372,7 @@
    "kickoff_utc": "2026-11-01T21:05Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w08/2026_08_LAC_LA.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3270,7 +3387,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w08/2026_08_LAC_LA.json",
      "cutoff_utc": "2026-11-01T19:05:00Z",
      "depth_age_hours": 4.8,
@@ -3284,6 +3401,7 @@
    "kickoff_utc": "2026-11-01T21:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w08/2026_08_KC_DEN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3298,7 +3416,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w08/2026_08_KC_DEN.json",
      "cutoff_utc": "2026-11-01T19:25:00Z",
      "depth_age_hours": 5.2,
@@ -3312,6 +3430,7 @@
    "kickoff_utc": "2026-11-01T21:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w08/2026_08_NE_MIA.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3326,7 +3445,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w08/2026_08_NE_MIA.json",
      "cutoff_utc": "2026-11-01T19:25:00Z",
      "depth_age_hours": 5.2,
@@ -3340,6 +3459,7 @@
    "kickoff_utc": "2026-11-02T01:20Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w08/2026_08_PHI_WAS.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3354,7 +3474,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w08/2026_08_PHI_WAS.json",
      "cutoff_utc": "2026-11-01T23:20:00Z",
      "depth_age_hours": 9.1,
@@ -3368,6 +3488,7 @@
    "kickoff_utc": "2026-11-03T01:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/walkforward-2026/snapshots/w08/2026_08_CHI_SEA.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3382,7 +3503,7 @@
      ]
     },
     {
-     "set": "model",
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w08/2026_08_CHI_SEA.json",
      "cutoff_utc": "2026-11-02T23:15:00Z",
      "depth_age_hours": 6.2,
@@ -3396,6 +3517,7 @@
    "kickoff_utc": "2026-11-06T01:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-09/2026_09_JAX_BAL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3411,6 +3533,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-09/2026_09_JAX_BAL.json",
+     "cutoff_utc": "2026-11-05T23:45:00Z",
+     "depth_age_hours": 8.4,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w09/2026_09_JAX_BAL.json",
      "cutoff_utc": "2026-11-05T23:15:00Z",
      "depth_age_hours": 7.9,
@@ -3424,6 +3553,7 @@
    "kickoff_utc": "2026-11-08T14:30Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-09/2026_09_CIN_ATL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3439,6 +3569,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-09/2026_09_CIN_ATL.json",
+     "cutoff_utc": "2026-11-08T13:00:00Z",
+     "depth_age_hours": 6.0,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w09/2026_09_CIN_ATL.json",
      "cutoff_utc": "2026-11-08T12:30:00Z",
      "depth_age_hours": 5.5,
@@ -3452,6 +3589,7 @@
    "kickoff_utc": "2026-11-08T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-09/2026_09_CLE_NO.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3467,6 +3605,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-09/2026_09_CLE_NO.json",
+     "cutoff_utc": "2026-11-08T16:30:00Z",
+     "depth_age_hours": 2.3,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w09/2026_09_CLE_NO.json",
      "cutoff_utc": "2026-11-08T16:00:00Z",
      "depth_age_hours": 1.8,
@@ -3480,6 +3625,7 @@
    "kickoff_utc": "2026-11-08T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-09/2026_09_DAL_IND.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3495,6 +3641,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-09/2026_09_DAL_IND.json",
+     "cutoff_utc": "2026-11-08T16:30:00Z",
+     "depth_age_hours": 2.3,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w09/2026_09_DAL_IND.json",
      "cutoff_utc": "2026-11-08T16:00:00Z",
      "depth_age_hours": 1.8,
@@ -3508,6 +3661,7 @@
    "kickoff_utc": "2026-11-08T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-09/2026_09_DEN_CAR.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3523,6 +3677,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-09/2026_09_DEN_CAR.json",
+     "cutoff_utc": "2026-11-08T16:30:00Z",
+     "depth_age_hours": 2.3,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w09/2026_09_DEN_CAR.json",
      "cutoff_utc": "2026-11-08T16:00:00Z",
      "depth_age_hours": 1.8,
@@ -3536,6 +3697,7 @@
    "kickoff_utc": "2026-11-08T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-09/2026_09_DET_MIA.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3551,6 +3713,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-09/2026_09_DET_MIA.json",
+     "cutoff_utc": "2026-11-08T16:30:00Z",
+     "depth_age_hours": 2.3,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w09/2026_09_DET_MIA.json",
      "cutoff_utc": "2026-11-08T16:00:00Z",
      "depth_age_hours": 1.8,
@@ -3564,6 +3733,7 @@
    "kickoff_utc": "2026-11-08T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-09/2026_09_LA_WAS.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3579,6 +3749,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-09/2026_09_LA_WAS.json",
+     "cutoff_utc": "2026-11-08T16:30:00Z",
+     "depth_age_hours": 2.3,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w09/2026_09_LA_WAS.json",
      "cutoff_utc": "2026-11-08T16:00:00Z",
      "depth_age_hours": 1.8,
@@ -3592,6 +3769,7 @@
    "kickoff_utc": "2026-11-08T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-09/2026_09_NYG_PHI.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3607,6 +3785,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-09/2026_09_NYG_PHI.json",
+     "cutoff_utc": "2026-11-08T16:30:00Z",
+     "depth_age_hours": 2.3,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w09/2026_09_NYG_PHI.json",
      "cutoff_utc": "2026-11-08T16:00:00Z",
      "depth_age_hours": 1.8,
@@ -3620,6 +3805,7 @@
    "kickoff_utc": "2026-11-08T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-09/2026_09_NYJ_KC.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3635,6 +3821,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-09/2026_09_NYJ_KC.json",
+     "cutoff_utc": "2026-11-08T16:30:00Z",
+     "depth_age_hours": 2.3,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w09/2026_09_NYJ_KC.json",
      "cutoff_utc": "2026-11-08T16:00:00Z",
      "depth_age_hours": 1.8,
@@ -3648,6 +3841,7 @@
    "kickoff_utc": "2026-11-08T21:05Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-09/2026_09_HOU_LAC.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3663,6 +3857,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-09/2026_09_HOU_LAC.json",
+     "cutoff_utc": "2026-11-08T19:35:00Z",
+     "depth_age_hours": 5.3,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w09/2026_09_HOU_LAC.json",
      "cutoff_utc": "2026-11-08T19:05:00Z",
      "depth_age_hours": 4.8,
@@ -3676,6 +3877,7 @@
    "kickoff_utc": "2026-11-08T21:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-09/2026_09_ARI_SEA.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3691,6 +3893,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-09/2026_09_ARI_SEA.json",
+     "cutoff_utc": "2026-11-08T19:55:00Z",
+     "depth_age_hours": 5.7,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w09/2026_09_ARI_SEA.json",
      "cutoff_utc": "2026-11-08T19:25:00Z",
      "depth_age_hours": 5.2,
@@ -3704,6 +3913,7 @@
    "kickoff_utc": "2026-11-08T21:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-09/2026_09_GB_NE.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3719,6 +3929,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-09/2026_09_GB_NE.json",
+     "cutoff_utc": "2026-11-08T19:55:00Z",
+     "depth_age_hours": 5.7,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w09/2026_09_GB_NE.json",
      "cutoff_utc": "2026-11-08T19:25:00Z",
      "depth_age_hours": 5.2,
@@ -3732,6 +3949,7 @@
    "kickoff_utc": "2026-11-08T21:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-09/2026_09_LV_SF.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3747,6 +3965,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-09/2026_09_LV_SF.json",
+     "cutoff_utc": "2026-11-08T19:35:00Z",
+     "depth_age_hours": 5.3,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w09/2026_09_LV_SF.json",
      "cutoff_utc": "2026-11-08T19:05:00Z",
      "depth_age_hours": 4.8,
@@ -3760,6 +3985,7 @@
    "kickoff_utc": "2026-11-09T01:20Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-09/2026_09_TB_CHI.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3775,6 +4001,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-09/2026_09_TB_CHI.json",
+     "cutoff_utc": "2026-11-08T23:50:00Z",
+     "depth_age_hours": 9.6,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w09/2026_09_TB_CHI.json",
      "cutoff_utc": "2026-11-08T23:20:00Z",
      "depth_age_hours": 9.1,
@@ -3788,6 +4021,7 @@
    "kickoff_utc": "2026-11-10T01:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-09/2026_09_BUF_MIN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3803,6 +4037,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-09/2026_09_BUF_MIN.json",
+     "cutoff_utc": "2026-11-09T23:45:00Z",
+     "depth_age_hours": 6.3,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w09/2026_09_BUF_MIN.json",
      "cutoff_utc": "2026-11-09T23:15:00Z",
      "depth_age_hours": 5.8,
@@ -3816,6 +4057,7 @@
    "kickoff_utc": "2026-11-13T01:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-10/2026_10_WAS_NYG.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3831,6 +4073,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-10/2026_10_WAS_NYG.json",
+     "cutoff_utc": "2026-11-12T23:45:00Z",
+     "depth_age_hours": 7.8,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w10/2026_10_WAS_NYG.json",
      "cutoff_utc": "2026-11-12T23:15:00Z",
      "depth_age_hours": 40.2,
@@ -3844,6 +4093,7 @@
    "kickoff_utc": "2026-11-15T14:30Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-10/2026_10_NE_DET.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3859,6 +4109,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-10/2026_10_NE_DET.json",
+     "cutoff_utc": "2026-11-15T13:00:00Z",
+     "depth_age_hours": 6.0,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w10/2026_10_NE_DET.json",
      "cutoff_utc": "2026-11-15T12:30:00Z",
      "depth_age_hours": 101.5,
@@ -3872,6 +4129,7 @@
    "kickoff_utc": "2026-11-15T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-10/2026_10_BUF_NYJ.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3887,6 +4145,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-10/2026_10_BUF_NYJ.json",
+     "cutoff_utc": "2026-11-15T16:30:00Z",
+     "depth_age_hours": 1.8,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w10/2026_10_BUF_NYJ.json",
      "cutoff_utc": "2026-11-15T16:00:00Z",
      "depth_age_hours": 105.0,
@@ -3900,6 +4165,7 @@
    "kickoff_utc": "2026-11-15T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-10/2026_10_CAR_NO.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3915,6 +4181,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-10/2026_10_CAR_NO.json",
+     "cutoff_utc": "2026-11-15T16:30:00Z",
+     "depth_age_hours": 1.8,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w10/2026_10_CAR_NO.json",
      "cutoff_utc": "2026-11-15T16:00:00Z",
      "depth_age_hours": 105.0,
@@ -3928,6 +4201,7 @@
    "kickoff_utc": "2026-11-15T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-10/2026_10_HOU_CLE.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3943,6 +4217,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-10/2026_10_HOU_CLE.json",
+     "cutoff_utc": "2026-11-15T16:30:00Z",
+     "depth_age_hours": 1.8,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w10/2026_10_HOU_CLE.json",
      "cutoff_utc": "2026-11-15T16:00:00Z",
      "depth_age_hours": 105.0,
@@ -3956,6 +4237,7 @@
    "kickoff_utc": "2026-11-15T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-10/2026_10_JAX_TEN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3971,6 +4253,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-10/2026_10_JAX_TEN.json",
+     "cutoff_utc": "2026-11-15T16:30:00Z",
+     "depth_age_hours": 1.8,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w10/2026_10_JAX_TEN.json",
      "cutoff_utc": "2026-11-15T16:00:00Z",
      "depth_age_hours": 105.0,
@@ -3984,6 +4273,7 @@
    "kickoff_utc": "2026-11-15T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-10/2026_10_KC_ATL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -3999,6 +4289,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-10/2026_10_KC_ATL.json",
+     "cutoff_utc": "2026-11-15T16:30:00Z",
+     "depth_age_hours": 1.8,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w10/2026_10_KC_ATL.json",
      "cutoff_utc": "2026-11-15T16:00:00Z",
      "depth_age_hours": 105.0,
@@ -4012,6 +4309,7 @@
    "kickoff_utc": "2026-11-15T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-10/2026_10_MIA_IND.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4027,6 +4325,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-10/2026_10_MIA_IND.json",
+     "cutoff_utc": "2026-11-15T16:30:00Z",
+     "depth_age_hours": 1.8,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w10/2026_10_MIA_IND.json",
      "cutoff_utc": "2026-11-15T16:00:00Z",
      "depth_age_hours": 105.0,
@@ -4040,6 +4345,7 @@
    "kickoff_utc": "2026-11-15T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-10/2026_10_MIN_GB.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4055,6 +4361,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-10/2026_10_MIN_GB.json",
+     "cutoff_utc": "2026-11-15T16:30:00Z",
+     "depth_age_hours": 1.8,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w10/2026_10_MIN_GB.json",
      "cutoff_utc": "2026-11-15T16:00:00Z",
      "depth_age_hours": 105.0,
@@ -4068,6 +4381,7 @@
    "kickoff_utc": "2026-11-15T21:05Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-10/2026_10_LA_ARI.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4083,6 +4397,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-10/2026_10_LA_ARI.json",
+     "cutoff_utc": "2026-11-15T19:35:00Z",
+     "depth_age_hours": 4.9,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w10/2026_10_LA_ARI.json",
      "cutoff_utc": "2026-11-15T19:05:00Z",
      "depth_age_hours": 108.0,
@@ -4096,6 +4417,7 @@
    "kickoff_utc": "2026-11-15T21:05Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-10/2026_10_SEA_LV.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4111,6 +4433,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-10/2026_10_SEA_LV.json",
+     "cutoff_utc": "2026-11-15T19:35:00Z",
+     "depth_age_hours": 4.9,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w10/2026_10_SEA_LV.json",
      "cutoff_utc": "2026-11-15T19:05:00Z",
      "depth_age_hours": 108.0,
@@ -4124,6 +4453,7 @@
    "kickoff_utc": "2026-11-15T21:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-10/2026_10_SF_DAL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4139,6 +4469,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-10/2026_10_SF_DAL.json",
+     "cutoff_utc": "2026-11-15T19:55:00Z",
+     "depth_age_hours": 5.2,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w10/2026_10_SF_DAL.json",
      "cutoff_utc": "2026-11-15T19:25:00Z",
      "depth_age_hours": 108.4,
@@ -4152,6 +4489,7 @@
    "kickoff_utc": "2026-11-16T01:20Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-10/2026_10_PIT_CIN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4167,6 +4505,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-10/2026_10_PIT_CIN.json",
+     "cutoff_utc": "2026-11-15T23:50:00Z",
+     "depth_age_hours": 9.1,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w10/2026_10_PIT_CIN.json",
      "cutoff_utc": "2026-11-15T23:20:00Z",
      "depth_age_hours": 112.3,
@@ -4180,6 +4525,7 @@
    "kickoff_utc": "2026-11-17T01:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-10/2026_10_LAC_BAL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4195,6 +4541,13 @@
     },
     {
      "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-10/2026_10_LAC_BAL.json",
+     "cutoff_utc": "2026-11-16T23:45:00Z",
+     "depth_age_hours": 6.8,
+     "stale": false
+    },
+    {
+     "set": "walkforward",
      "path": "docs/research/walkforward-2026/snapshots/w10/2026_10_LAC_BAL.json",
      "cutoff_utc": "2026-11-16T23:15:00Z",
      "depth_age_hours": 136.2,
@@ -4208,6 +4561,7 @@
    "kickoff_utc": "2026-11-20T01:15Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-11/2026_11_IND_HOU.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4220,6 +4574,13 @@
       "FETCHED_AFTER_CUTOFF",
       "VERIFIED"
      ]
+    },
+    {
+     "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-11/2026_11_IND_HOU.json",
+     "cutoff_utc": "2026-11-19T23:45:00Z",
+     "depth_age_hours": 7.2,
+     "stale": false
     }
    ]
   },
@@ -4229,6 +4590,7 @@
    "kickoff_utc": "2026-11-22T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-11/2026_11_ARI_KC.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4241,6 +4603,13 @@
       "FETCHED_AFTER_CUTOFF",
       "VERIFIED"
      ]
+    },
+    {
+     "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-11/2026_11_ARI_KC.json",
+     "cutoff_utc": "2026-11-22T16:30:00Z",
+     "depth_age_hours": 1.3,
+     "stale": false
     }
    ]
   },
@@ -4250,6 +4619,7 @@
    "kickoff_utc": "2026-11-22T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-11/2026_11_BAL_CAR.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4262,6 +4632,13 @@
       "FETCHED_AFTER_CUTOFF",
       "VERIFIED"
      ]
+    },
+    {
+     "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-11/2026_11_BAL_CAR.json",
+     "cutoff_utc": "2026-11-22T16:30:00Z",
+     "depth_age_hours": 1.3,
+     "stale": false
     }
    ]
   },
@@ -4271,6 +4648,7 @@
    "kickoff_utc": "2026-11-22T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-11/2026_11_MIA_BUF.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4283,6 +4661,13 @@
       "FETCHED_AFTER_CUTOFF",
       "VERIFIED"
      ]
+    },
+    {
+     "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-11/2026_11_MIA_BUF.json",
+     "cutoff_utc": "2026-11-22T16:30:00Z",
+     "depth_age_hours": 1.3,
+     "stale": false
     }
    ]
   },
@@ -4292,6 +4677,7 @@
    "kickoff_utc": "2026-11-22T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-11/2026_11_NO_CHI.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4304,6 +4690,13 @@
       "FETCHED_AFTER_CUTOFF",
       "VERIFIED"
      ]
+    },
+    {
+     "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-11/2026_11_NO_CHI.json",
+     "cutoff_utc": "2026-11-22T16:30:00Z",
+     "depth_age_hours": 1.3,
+     "stale": false
     }
    ]
   },
@@ -4313,6 +4706,7 @@
    "kickoff_utc": "2026-11-22T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-11/2026_11_PIT_PHI.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4325,6 +4719,13 @@
       "FETCHED_AFTER_CUTOFF",
       "VERIFIED"
      ]
+    },
+    {
+     "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-11/2026_11_PIT_PHI.json",
+     "cutoff_utc": "2026-11-22T16:30:00Z",
+     "depth_age_hours": 1.3,
+     "stale": false
     }
    ]
   },
@@ -4334,6 +4735,7 @@
    "kickoff_utc": "2026-11-22T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-11/2026_11_TB_DET.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4346,6 +4748,13 @@
       "FETCHED_AFTER_CUTOFF",
       "VERIFIED"
      ]
+    },
+    {
+     "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-11/2026_11_TB_DET.json",
+     "cutoff_utc": "2026-11-22T16:30:00Z",
+     "depth_age_hours": 1.3,
+     "stale": false
     }
    ]
   },
@@ -4355,6 +4764,7 @@
    "kickoff_utc": "2026-11-22T18:00Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-11/2026_11_TEN_DAL.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4367,6 +4777,13 @@
       "FETCHED_AFTER_CUTOFF",
       "VERIFIED"
      ]
+    },
+    {
+     "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-11/2026_11_TEN_DAL.json",
+     "cutoff_utc": "2026-11-22T16:30:00Z",
+     "depth_age_hours": 1.3,
+     "stale": false
     }
    ]
   },
@@ -4376,6 +4793,7 @@
    "kickoff_utc": "2026-11-22T21:05Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-11/2026_11_NYJ_LAC.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4388,6 +4806,13 @@
       "FETCHED_AFTER_CUTOFF",
       "VERIFIED"
      ]
+    },
+    {
+     "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-11/2026_11_NYJ_LAC.json",
+     "cutoff_utc": "2026-11-22T19:35:00Z",
+     "depth_age_hours": 4.4,
+     "stale": false
     }
    ]
   },
@@ -4397,6 +4822,7 @@
    "kickoff_utc": "2026-11-22T21:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-11/2026_11_JAX_NYG.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4409,6 +4835,13 @@
       "FETCHED_AFTER_CUTOFF",
       "VERIFIED"
      ]
+    },
+    {
+     "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-11/2026_11_JAX_NYG.json",
+     "cutoff_utc": "2026-11-22T19:55:00Z",
+     "depth_age_hours": 4.7,
+     "stale": false
     }
    ]
   },
@@ -4418,6 +4851,7 @@
    "kickoff_utc": "2026-11-22T21:25Z",
    "cutoff_passed": true,
    "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-11/2026_11_LV_DEN.json",
    "snapshots": [
     {
      "set": "cutoff",
@@ -4430,6 +4864,13 @@
       "FETCHED_AFTER_CUTOFF",
       "VERIFIED"
      ]
+    },
+    {
+     "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-11/2026_11_LV_DEN.json",
+     "cutoff_utc": "2026-11-22T19:55:00Z",
+     "depth_age_hours": 4.7,
+     "stale": false
     }
    ]
   },
@@ -4439,6 +4880,7 @@
    "kickoff_utc": "2026-11-23T01:20Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4447,6 +4889,7 @@
    "kickoff_utc": "2026-11-24T01:15Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4455,6 +4898,7 @@
    "kickoff_utc": "2026-11-26T01:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4463,6 +4907,7 @@
    "kickoff_utc": "2026-11-26T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4471,6 +4916,7 @@
    "kickoff_utc": "2026-11-26T21:30Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4479,6 +4925,7 @@
    "kickoff_utc": "2026-11-27T01:20Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4487,6 +4934,7 @@
    "kickoff_utc": "2026-11-27T20:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4495,6 +4943,7 @@
    "kickoff_utc": "2026-11-29T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4503,6 +4952,7 @@
    "kickoff_utc": "2026-11-29T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4511,6 +4961,7 @@
    "kickoff_utc": "2026-11-29T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4519,6 +4970,7 @@
    "kickoff_utc": "2026-11-29T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4527,6 +4979,7 @@
    "kickoff_utc": "2026-11-29T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4535,6 +4988,7 @@
    "kickoff_utc": "2026-11-29T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4543,6 +4997,7 @@
    "kickoff_utc": "2026-11-29T21:05Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4551,6 +5006,7 @@
    "kickoff_utc": "2026-11-29T21:25Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4559,6 +5015,7 @@
    "kickoff_utc": "2026-11-29T21:25Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4567,6 +5024,7 @@
    "kickoff_utc": "2026-11-30T01:20Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4575,6 +5033,7 @@
    "kickoff_utc": "2026-12-01T01:15Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4583,6 +5042,7 @@
    "kickoff_utc": "2026-12-04T01:15Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4591,6 +5051,7 @@
    "kickoff_utc": "2026-12-06T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4599,6 +5060,7 @@
    "kickoff_utc": "2026-12-06T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4607,6 +5069,7 @@
    "kickoff_utc": "2026-12-06T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4615,6 +5078,7 @@
    "kickoff_utc": "2026-12-06T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4623,6 +5087,7 @@
    "kickoff_utc": "2026-12-06T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4631,6 +5096,7 @@
    "kickoff_utc": "2026-12-06T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4639,6 +5105,7 @@
    "kickoff_utc": "2026-12-06T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4647,6 +5114,7 @@
    "kickoff_utc": "2026-12-06T21:05Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4655,6 +5123,7 @@
    "kickoff_utc": "2026-12-06T21:05Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4663,6 +5132,7 @@
    "kickoff_utc": "2026-12-06T21:25Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4671,6 +5141,7 @@
    "kickoff_utc": "2026-12-06T21:25Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4679,6 +5150,7 @@
    "kickoff_utc": "2026-12-07T01:20Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4687,6 +5159,7 @@
    "kickoff_utc": "2026-12-08T01:15Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4695,6 +5168,7 @@
    "kickoff_utc": "2026-12-11T01:15Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4703,6 +5177,7 @@
    "kickoff_utc": "2026-12-13T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4711,6 +5186,7 @@
    "kickoff_utc": "2026-12-13T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4719,6 +5195,7 @@
    "kickoff_utc": "2026-12-13T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4727,6 +5204,7 @@
    "kickoff_utc": "2026-12-13T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4735,6 +5213,7 @@
    "kickoff_utc": "2026-12-13T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4743,6 +5222,7 @@
    "kickoff_utc": "2026-12-13T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4751,6 +5231,7 @@
    "kickoff_utc": "2026-12-13T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4759,6 +5240,7 @@
    "kickoff_utc": "2026-12-13T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4767,6 +5249,7 @@
    "kickoff_utc": "2026-12-13T21:05Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4775,6 +5258,7 @@
    "kickoff_utc": "2026-12-13T21:25Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4783,6 +5267,7 @@
    "kickoff_utc": "2026-12-13T21:25Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4791,6 +5276,7 @@
    "kickoff_utc": "2026-12-13T21:25Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4799,6 +5285,7 @@
    "kickoff_utc": "2026-12-14T01:20Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4807,6 +5294,7 @@
    "kickoff_utc": "2026-12-15T01:15Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4815,6 +5303,7 @@
    "kickoff_utc": "2026-12-18T01:15Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4823,6 +5312,7 @@
    "kickoff_utc": "2026-12-19T22:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4831,6 +5321,7 @@
    "kickoff_utc": "2026-12-20T01:20Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4839,6 +5330,7 @@
    "kickoff_utc": "2026-12-20T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4847,6 +5339,7 @@
    "kickoff_utc": "2026-12-20T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4855,6 +5348,7 @@
    "kickoff_utc": "2026-12-20T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4863,6 +5357,7 @@
    "kickoff_utc": "2026-12-20T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4871,6 +5366,7 @@
    "kickoff_utc": "2026-12-20T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4879,6 +5375,7 @@
    "kickoff_utc": "2026-12-20T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4887,6 +5384,7 @@
    "kickoff_utc": "2026-12-20T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4895,6 +5393,7 @@
    "kickoff_utc": "2026-12-20T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4903,6 +5402,7 @@
    "kickoff_utc": "2026-12-20T21:05Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4911,6 +5411,7 @@
    "kickoff_utc": "2026-12-20T21:25Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4919,6 +5420,7 @@
    "kickoff_utc": "2026-12-20T21:25Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4927,6 +5429,7 @@
    "kickoff_utc": "2026-12-21T01:20Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4935,6 +5438,7 @@
    "kickoff_utc": "2026-12-22T01:15Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4943,6 +5447,7 @@
    "kickoff_utc": "2026-12-25T01:15Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4951,6 +5456,7 @@
    "kickoff_utc": "2026-12-25T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4959,6 +5465,7 @@
    "kickoff_utc": "2026-12-25T21:30Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4967,6 +5474,7 @@
    "kickoff_utc": "2026-12-26T01:15Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4975,6 +5483,7 @@
    "kickoff_utc": "2026-12-27T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4983,6 +5492,7 @@
    "kickoff_utc": "2026-12-27T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4991,6 +5501,7 @@
    "kickoff_utc": "2026-12-27T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -4999,6 +5510,7 @@
    "kickoff_utc": "2026-12-27T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5007,6 +5519,7 @@
    "kickoff_utc": "2026-12-27T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5015,6 +5528,7 @@
    "kickoff_utc": "2026-12-27T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5023,6 +5537,7 @@
    "kickoff_utc": "2026-12-27T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5031,6 +5546,7 @@
    "kickoff_utc": "2026-12-27T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5039,6 +5555,7 @@
    "kickoff_utc": "2026-12-27T21:05Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5047,6 +5564,7 @@
    "kickoff_utc": "2026-12-27T21:25Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5055,6 +5573,7 @@
    "kickoff_utc": "2026-12-28T01:20Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5063,6 +5582,7 @@
    "kickoff_utc": "2026-12-29T01:15Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5071,6 +5591,7 @@
    "kickoff_utc": "2027-01-01T01:15Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5079,6 +5600,7 @@
    "kickoff_utc": "2027-01-03T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5087,6 +5609,7 @@
    "kickoff_utc": "2027-01-03T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5095,6 +5618,7 @@
    "kickoff_utc": "2027-01-03T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5103,6 +5627,7 @@
    "kickoff_utc": "2027-01-03T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5111,6 +5636,7 @@
    "kickoff_utc": "2027-01-03T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5119,6 +5645,7 @@
    "kickoff_utc": "2027-01-03T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5127,6 +5654,7 @@
    "kickoff_utc": "2027-01-03T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5135,6 +5663,7 @@
    "kickoff_utc": "2027-01-03T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5143,6 +5672,7 @@
    "kickoff_utc": "2027-01-03T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5151,6 +5681,7 @@
    "kickoff_utc": "2027-01-03T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5159,6 +5690,7 @@
    "kickoff_utc": "2027-01-03T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5167,6 +5699,7 @@
    "kickoff_utc": "2027-01-03T21:05Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5175,6 +5708,7 @@
    "kickoff_utc": "2027-01-03T21:25Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5183,6 +5717,7 @@
    "kickoff_utc": "2027-01-04T01:20Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5191,6 +5726,7 @@
    "kickoff_utc": "2027-01-05T01:15Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5199,6 +5735,7 @@
    "kickoff_utc": "2027-01-10T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5207,6 +5744,7 @@
    "kickoff_utc": "2027-01-10T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5215,6 +5753,7 @@
    "kickoff_utc": "2027-01-10T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5223,6 +5762,7 @@
    "kickoff_utc": "2027-01-10T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5231,6 +5771,7 @@
    "kickoff_utc": "2027-01-10T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5239,6 +5780,7 @@
    "kickoff_utc": "2027-01-10T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5247,6 +5789,7 @@
    "kickoff_utc": "2027-01-10T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5255,6 +5798,7 @@
    "kickoff_utc": "2027-01-10T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5263,6 +5807,7 @@
    "kickoff_utc": "2027-01-10T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5271,6 +5816,7 @@
    "kickoff_utc": "2027-01-10T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5279,6 +5825,7 @@
    "kickoff_utc": "2027-01-10T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5287,6 +5834,7 @@
    "kickoff_utc": "2027-01-10T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5295,6 +5843,7 @@
    "kickoff_utc": "2027-01-10T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5303,6 +5852,7 @@
    "kickoff_utc": "2027-01-10T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5311,6 +5861,7 @@
    "kickoff_utc": "2027-01-10T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   },
   {
@@ -5319,6 +5870,7 @@
    "kickoff_utc": "2027-01-10T18:00Z",
    "cutoff_passed": false,
    "status": "UPCOMING",
+   "run_on": null,
    "snapshots": []
   }
  ],
