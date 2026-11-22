@@ -1,0 +1,19 @@
+{
+ "counts": {
+  "dead: clock stopped by rule or no live time": 17801,
+  "dead: game clock ran less than the live ball (dropped)": 8,
+  "dead: kept": 73049,
+  "dead: next snap not the same offense in the same quarter": 23934,
+  "dead: timeout, penalty or untimed row in the gap": 16482,
+  "live: no usable wall times": 6633,
+  "snaps": 132171
+ },
+ "output_sha256": "4b63dec10c6ed54936e90e41f0ffc5269aff8a0c957e95f65741cf86c1036515",
+ "sources": {
+  "play_by_play_2022.parquet": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09",
+  "play_by_play_2023.parquet": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776",
+  "play_by_play_2024.parquet": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b",
+  "play_by_play_2025.parquet": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
+ },
+ "window": "season 2022-2025, season_type REG, week <= 18"
+}
