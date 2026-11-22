@@ -1,3 +1,25 @@
+## v11.0.0
+
+### SLC model family: portable packs
+
+Each model is a checksummed pack. It runs a full game, overtime included, from a pregame snapshot alone. No historical database is needed at run time.
+
+| Model | Pack | Code commit | Rules policy | Pack SHA-256 |
+|---|---|---|---|---|
+| v1 | `v1--season-2026.slcpkg` | `58ef3861` | nfl-2026-e2-successor | `6286d341…` |
+| v1.5 | `v1.5-ind-hou-overtime.slcpack` | `2eab8a89` | nfl-2026-e2-successor | `72782012…` |
+| v1.6 | `v1.6--season-2026.slcpkg` | `1bb3bd50` | nfl-2026-e2-successor | `6cf1e836…` |
+| v1.7 | `v1.7--season-2026.slcpkg` | `1ca59e0d` | nfl-2026-e2-successor-v1.7-penalty-transitions | `10d491b1…` |
+| v2 (call first) | `v2--season-2026-runtimefix1.slcpkg` | `8a1d9842` | nfl-2026-e2-successor-v2 | `97c4a01e…` |
+| v2 (personnel first) | `v2--season-2026.slcpkg` (in `v2-personnel-first-9a2e8624/`) | `9a2e8624` | nfl-2026-e2-successor-v2 | `407a514b…` |
+| PBV1 | `pbv1--season-2026.slcpkg` | `8a1d9842` | nfl-2026-e2-successor | `77436659…` |
+| PBV1 off | `pbv1-off--season-2026.slcpkg` | `8a1d9842` | nfl-2026-e2-successor | `48cca8b6…` |
+
+- v2 personnel first draws the personnel grouping and formation before the run or pass call. The personnel draw is fitted from play data.
+- v2 call first is kept as its own pack, so earlier v2 results keep their meaning.
+- Each pack's SHA-256 is in `registry.json` beside the packs.
+- The current-season score file is now a build input with a hash, not a path in the code. A build checks it, and the kicker table, before loading anything, and names any game or team it cannot cover.
+
 ## v10.3.0
 
 ### NFL box score
