@@ -113,6 +113,8 @@ def _reproduction_command(args, seed):
         command.extend(['--slc-blocker-fix', fix])
     if args.slc_blocker_fix:
         command.extend(['--slc-fg-ordinary-cutoff', str(args.slc_fg_ordinary_cutoff)])
+    if args.legacy_source_row_timeouts:
+        command.append('--legacy-source-row-timeouts')
     if args.slc_profile != 'custom':
         command.extend(['--slc-profile', args.slc_profile])
     for layer in args.slc_disable_layer:
@@ -857,7 +859,8 @@ def run_batch(args):
                                                            qb_run_role_style=resolved_profile['enabled_layers'].get(
                                                                'qb_run_role_style', False),
                                                            score_clock_playcalling=resolved_profile['enabled_layers'].get(
-                                                               'score_clock_playcalling', True))
+                                                               'score_clock_playcalling', True),
+                                                           timeout_decisions=not args.legacy_source_row_timeouts)
     elif args.context_mode == 'unconditioned':
         ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
                                          safety_kick_table=safety_kick_table)
@@ -1214,6 +1217,9 @@ def main(argv=None):
                          'the weeks before the game. Omit for the S0 control')
     ap.add_argument('--slc-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],
                     help='opt-in SLC research blocker fix; repeat to enable multiple fixes')
+    ap.add_argument('--legacy-source-row-timeouts', action='store_true',
+                    help='frozen V1 behaviour for the V1 control: apply a timeout only when the sampled source row carries '
+                         'one, instead of the V1-Pure timeout decision after each whistle')
     ap.add_argument('--slc-fg-ordinary-cutoff', type=float, default=60.0,
                     help='ordinary field-goal decision maximum in yards when long_field_goal_feasibility is enabled')
     ap.add_argument('--progress-every', type=int, default=1000,

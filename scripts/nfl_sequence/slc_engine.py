@@ -96,7 +96,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    streak_league=False, target_roles=False, decision=False, decision_filter=True, dirichlet_shares=False,
                    playbook=False, source_commit=None, qb_decisions=False, player_outcomes=False,
                    player_outcomes_receiver_only=False, blocker_fixes=(), fg_ordinary_cutoff=60,
-                   qb_run_role_style=None, score_clock_playcalling=True):
+                   qb_run_role_style=None, score_clock_playcalling=True, timeout_decisions=True):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it."""
     schedule = require_snapshot(snapshot)['schedule']
@@ -114,7 +114,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    playcall_point_splits=point_splits, playcall_streak=streak, playcall_streak_league=streak_league,
                    playcall_qb_decisions=(qb_decisions or run_scramble_backoff),
                    playcall_player_outcomes=player_outcomes, blocker_fixes=fixes,
-                   fg_ordinary_cutoff=fg_ordinary_cutoff)
+                   fg_ordinary_cutoff=fg_ordinary_cutoff, timeout_decisions=timeout_decisions)
     ref.contextual_sampler.score_clock_playcalling_enabled = bool(score_clock_playcalling)
     ref.pool, lateral_source_filter = exclude_unmodeled_lateral_rows(ref.pool, ref.participants)
     ref.pool, pass_yardage_source_filter = exclude_inconsistent_pass_yardage_rows(ref.pool, ref.participants)
