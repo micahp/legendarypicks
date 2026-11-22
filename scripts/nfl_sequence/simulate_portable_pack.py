@@ -440,8 +440,10 @@ def main(argv=None):
     ap.add_argument("--expected-stream-root-sha256", default=None,
                     help="for RNG v2, reject the run before seeds if its computed stream root differs")
     ap.add_argument("--out", required=True)
-    ap.add_argument("--with-player-lines", action="store_true",
-                    help="retain player box stats for each seed in output")
+    ap.add_argument("--with-player-lines", dest="with_player_lines", action="store_true", default=True,
+                    help="retain player box stats for each seed in output (the default)")
+    ap.add_argument("--no-player-lines", dest="with_player_lines", action="store_false",
+                    help="leave player box stats out of the output")
     ap.add_argument("--records-out", type=Path,
                     help="write each full per-seed game record as JSONL for exact parity checks")
     ap.add_argument("--decisions-out", type=Path,
