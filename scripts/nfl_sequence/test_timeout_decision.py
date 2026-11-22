@@ -64,5 +64,39 @@ class Decide(unittest.TestCase):
         self.assertEqual(level, 'full')
 
 
+def row(play_id, game='g', qtr=1, seconds=3000, play_type='run'):
+    return {'game_id': game, 'play_id': play_id, 'qtr': qtr, 'game_seconds_remaining': seconds, 'play_type': play_type}
+
+
+class Runoff(unittest.TestCase):
+    def test_only_a_row_whose_next_row_is_a_team_timeout_is_followed(self):
+        rows = [row(1), row(2, play_type='no_play'), row(3), row(4), row(5, game='h')]
+        self.assertEqual(set(td.rows_followed_by_timeout(rows, {('g', 2), ('h', 5)})), {('g', 1)})
+
+    def test_the_runoff_runs_through_the_timeout_row_to_the_next_snap(self):
+        # the timeout row repeats the snap clock (3000); the play's 7 seconds show at the next snap
+        rows = [row(1, seconds=3000), row(2, seconds=3000, play_type='no_play'), row(3, seconds=2993)]
+        self.assertEqual(td.rows_followed_by_timeout(rows, {('g', 2)}), {('g', 1): 7})
+
+    def setUp(self):
+        self.followed_row, self.plain_row = row(1), row(3)
+        pool = {'cell': [('run', self.followed_row, 6, None)] + [('run', row(10 + i), 38, None) for i in range(25)]}
+        self.split = td.RunoffSplit(pool, {('g', 1): 6})
+
+    def test_agreement_keeps_the_source_runoff(self):
+        rng = random.Random(1)
+        self.assertEqual(self.split.runoff(rng, 'cell', 'run', self.plain_row, 40, False, False), (40, 'source_row'))
+        self.assertEqual(self.split.runoff(rng, 'cell', 'run', self.followed_row, 0, True, False),
+                         (6, 'source_row_through_timeout'))
+
+    def test_no_timeout_after_a_timeout_row_redraws_a_full_runoff(self):
+        self.assertEqual(self.split.runoff(random.Random(1), 'cell', 'run', self.followed_row, 0, False, False),
+                         (38, 'cell_event_timeout_status'))
+
+    def test_a_timeout_with_no_supported_short_runoff_refuses(self):
+        with self.assertRaises(ValueError):
+            self.split.runoff(random.Random(1), 'cell', 'run', self.plain_row, 40, True, False)
+
+
 if __name__ == '__main__':
     unittest.main()

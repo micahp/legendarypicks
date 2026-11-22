@@ -93,3 +93,89 @@ class TimeoutModel:
                 break
         record['caller'] = caller
         return caller, record
+
+
+LATE_CLOCK = 120
+MIN_RUNOFF_SUPPORT = 20
+
+
+def team_timeout_keys(extras_path):
+    """(game_id, play_id) of every team timeout row in the play-extras table."""
+    keys = set()
+    with open(extras_path, newline='') as f:
+        for r in csv.DictReader(f):
+            if r['timeout'] == '1' and r['timeout_team']:
+                keys.add((r['game_id'], int(float(r['play_id']))))
+    return keys
+
+
+def rows_followed_by_timeout(rows, timeout_keys):
+    """{(game_id, play_id): runoff} for each row whose next row in its game is a team timeout.
+
+    nflverse stamps a timeout row with the clock of the snap before it, so that play's time sits between the timeout
+    row and the next snap: the runoff is taken through any timeout rows to the next row in the same quarter. A row
+    with no such next row in its quarter maps to None.
+    """
+    followed = {}
+    for i, here in enumerate(rows[:-1]):
+        nxt = rows[i + 1]
+        if nxt['game_id'] != here['game_id'] or (nxt['game_id'], int(nxt['play_id'])) not in timeout_keys:
+            continue
+        j = i + 1
+        while j < len(rows) and rows[j]['game_id'] == here['game_id'] and (rows[j]['game_id'], int(rows[j]['play_id'])) in timeout_keys:
+            j += 1
+        runoff = None
+        if (j < len(rows) and rows[j]['game_id'] == here['game_id'] and rows[j]['qtr'] == here['qtr']
+                and here['game_seconds_remaining'] is not None and rows[j]['game_seconds_remaining'] is not None):
+            runoff = int(round(here['game_seconds_remaining'] - rows[j]['game_seconds_remaining']))
+        followed[(here['game_id'], int(here['play_id']))] = runoff
+    return followed
+
+
+def _late(row):
+    """Late in a half: the second or fourth quarter with two minutes or less. game_seconds_remaining counts the game."""
+    seconds = row.get('game_seconds_remaining')
+    return row.get('qtr') in (2, 4) and seconds is not None and seconds % 900 <= LATE_CLOCK
+
+
+class RunoffSplit:
+    """The sampled play's runoff, made to agree with the timeout decision.
+
+    A source row followed by a timeout has a pool runoff of about zero (the timeout row repeats its snap clock); its
+    runoff here is the time through the timeout to the next snap. A row followed by the next snap keeps its pool runoff.
+    When the decision and the source row agree, the row's own runoff is used. When they differ, the runoff is drawn from
+    rows of the same event and timeout status in the same cell, else league-wide by event and late clock.
+    """
+
+    def __init__(self, pool, followed):
+        self.followed = followed
+        self.by_cell, self.by_event = {}, {}
+        for cell, samples in pool.items():
+            for event, row, runoff, _spot in samples:
+                status = (row['game_id'], int(row['play_id'])) in followed
+                if status:
+                    runoff = followed[(row['game_id'], int(row['play_id']))]
+                    if runoff is None:
+                        continue
+                self.by_cell.setdefault((cell, event, status), []).append(runoff)
+                self.by_event.setdefault((event, status, _late(row)), []).append(runoff)
+
+    def follows(self, row):
+        return (row['game_id'], int(row['play_id'])) in self.followed
+
+    def runoff(self, rng, cell, event, row, runoff, called, late):
+        """(runoff, source) for the play, given whether a timeout was called at its whistle."""
+        if self.follows(row) == bool(called):
+            if called:
+                through = self.followed[(row['game_id'], int(row['play_id']))]
+                if through is not None:
+                    return through, 'source_row_through_timeout'
+            else:
+                return runoff, 'source_row'
+        sample = self.by_cell.get((cell, event, bool(called)), [])
+        if len(sample) >= MIN_RUNOFF_SUPPORT:
+            return rng.choice(sample), 'cell_event_timeout_status'
+        sample = self.by_event.get((event, bool(called), bool(late)), [])
+        if len(sample) >= MIN_RUNOFF_SUPPORT:
+            return rng.choice(sample), 'event_timeout_status_late'
+        raise ValueError(f'no runoff with timeout status {bool(called)} for {event} (cell {cell}, late {late})')
