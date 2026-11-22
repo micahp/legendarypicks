@@ -11,13 +11,16 @@ import hashlib
 import json
 import sqlite3
 import sys
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts import nfl_team_codes
 
 SCHEMA = 'lp-nfl-pregame-snapshot-1'
+# A team's newest depth chart must be captured no more than this long before the cutoff. nflverse publishes the depth
+# chart twice a day in season, so an older one means the builder read a stale copy (week 11 2026 used a 30-day-old one).
+MAX_DEPTH_CHART_AGE = timedelta(hours=24)
 # Reviewed builder versions of build_full_depth_roster_snapshot.py. The week-7 fixture pins the first; the second is the
 # same builder with --jersey-week (default 7). The running builder and the provenance must both be one of these.
 REVIEWED_FULL_BUILDER_SHA256 = {
@@ -346,6 +349,9 @@ def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
             latest_time = max(_utc(row['snapshot_at'], f'{team} snapshot_at') for row in eligible)
             latest = next(row['snapshot_at'] for row in eligible
                           if _utc(row['snapshot_at'], f'{team} snapshot_at') == latest_time)
+            if cutoff - latest_time > MAX_DEPTH_CHART_AGE:
+                raise ValueError(f'STALE_DEPTH_CHART {game_id}: {team} newest depth chart is {latest}, more than '
+                                 f'{MAX_DEPTH_CHART_AGE} before the cutoff {cutoff.isoformat()}; fetch the current one')
             selected = [dict(row) for row in eligible
                         if _utc(row['snapshot_at'], f'{team} snapshot_at') == latest_time]
             positions = {row['pos_abb'] for row in selected}
