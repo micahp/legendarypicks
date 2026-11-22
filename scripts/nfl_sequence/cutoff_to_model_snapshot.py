@@ -12,7 +12,7 @@ For each docs/research/cutoff-snapshots-2026/week-NN/<game_id>.json, pregame_sna
 The output is the file the pack runner reads: {"pregame_snapshot": ..., "runtime_model_inputs": ...}, plus the streak
 source file it hashes, beside it as <game_id>.streak.json.
 The 24-hour depth chart rule in pregame_snapshot.build applies. roster_preflight then resolves each team's playable roster
-(Out and inactive players excluded, the next eligible player promoted) and writes it into the snapshot as
+(membership from --weekly-roster, Out and inactive players excluded, the next eligible player promoted) and writes it into the snapshot as
 roster_resolution; any preflight FAIL refuses the game. A game status from a team's previous game is not used. Writes docs/research/model-snapshots-2026/week-NN/<game_id>.json
 and never overwrites one. Prints every refusal.
 
@@ -21,6 +21,7 @@ Usage: python3 scripts/nfl_sequence/cutoff_to_model_snapshot.py --db picks.dev.d
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from datetime import datetime
@@ -57,6 +58,24 @@ class StreakBuckets:
         return f'{side}5+' if count >= 5 else f'{side}{count}'
 
 
+def write_runner_file(snap, streaks, out):
+    """Write the pack runner's input: {pregame_snapshot, runtime_model_inputs} at `out`, and the streak source it hashes
+    at <out stem>.streak.json. Refuses to overwrite either. Reloads and checks the file it wrote."""
+    out.parent.mkdir(parents=True, exist_ok=True)
+    streak_path = out.with_suffix('.streak.json')
+    with streak_path.open('x') as handle:
+        json.dump(streaks, handle, indent=1, sort_keys=True)
+    slc_pregame_context.freeze_current_streak_context(streak_path, snap, StreakBuckets, nfl_team_codes)
+    snap = pregame_snapshot.reseal(snap)
+    inputs = slc_pregame_context.freeze_current_streak_model_inputs(streak_path, snap, StreakBuckets, nfl_team_codes)
+    with out.open('x') as handle:
+        json.dump({'pregame_snapshot': snap, 'runtime_model_inputs': inputs}, handle, indent=1, sort_keys=True)
+        handle.write('\n')
+    loaded = pregame_snapshot.load_frozen_snapshot(str(out))
+    slc_pregame_context.current_streaks_for_snapshot(loaded, nfl_team_codes, StreakBuckets, inputs)
+    return loaded
+
+
 def depth_from_capture(capture):
     """{team: {version datetime: [row]}} with each team under its database and nflverse codes."""
     out = {}
@@ -73,8 +92,13 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--db', required=True)
     ap.add_argument('--archive-schedule', required=True, type=Path)
+    ap.add_argument('--weekly-roster', required=True, type=Path,
+                    help='nflverse roster_weekly_<season>.parquet: membership for the preflight (no publish time; record when fetched)')
     ap.add_argument('--games', nargs='*')
     args = ap.parse_args(argv)
+    import pandas as pd
+    weekly_roster = pd.read_parquet(args.weekly_roster).to_dict('records')
+    roster_source = f'{args.weekly_roster.name} sha256 {hashlib.sha256(args.weekly_roster.read_bytes()).hexdigest()}'
     archive = {g: [(utc(at), row) for at, row in obs] for g, obs in json.loads(args.archive_schedule.read_text()).items()}
     built, skipped, refused = 0, 0, []
     for path in sorted(CUTOFF_DIR.glob('week-*/*.json')):
@@ -103,26 +127,21 @@ def main(argv=None):
         except ValueError as exc:
             refused.append(f'{game_id}: {exc}')
             continue
+        try:
+            roster_preflight.attach_membership(snap, weekly_roster, roster_source)
+        except ValueError as exc:
+            refused.append(f'{game_id}: {exc}')
+            continue
         rows, resolved = roster_preflight.check(snap)
         bad = roster_preflight.failed(rows)
         if bad:
             refused.extend(f'{game_id}: {name}: {detail}' for name, _, detail in bad)
             continue
         snap['roster_resolution'] = resolved
+        roster_preflight.apply_exclusions(snap, resolved)
         snap['cutoff_capture'] = {'path': str(path.relative_to(ROOT)), 'fetched_at_utc': capture['fetched_at_utc'],
                                   'backfilled': 'backfilled' in capture}
-        out.parent.mkdir(parents=True, exist_ok=True)
-        streak_path = out.with_suffix('.streak.json')
-        with streak_path.open('x') as handle:
-            json.dump(streaks, handle, indent=1, sort_keys=True)
-        slc_pregame_context.freeze_current_streak_context(streak_path, snap, StreakBuckets, nfl_team_codes)
-        snap = pregame_snapshot.reseal(snap)
-        inputs = slc_pregame_context.freeze_current_streak_model_inputs(streak_path, snap, StreakBuckets, nfl_team_codes)
-        with out.open('x') as handle:
-            json.dump({'pregame_snapshot': snap, 'runtime_model_inputs': inputs}, handle, indent=1, sort_keys=True)
-            handle.write('\n')
-        loaded = pregame_snapshot.load_frozen_snapshot(str(out))
-        slc_pregame_context.current_streaks_for_snapshot(loaded, nfl_team_codes, StreakBuckets, inputs)
+        write_runner_file(snap, streaks, out)
         built += 1
     for line in refused:
         print('REFUSED', line)

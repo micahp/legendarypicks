@@ -7,12 +7,15 @@ Every run downloads the published nflverse depth chart and schedule, so it never
     refuses one older than 24 hours (STALE_DEPTH_CHART)
   - injuries are the RotoWire news in --db, each with its publish time; a game status from a team's previous game is
     dropped (oracle.rotowire_injury_report)
+  - each team's membership is the nflverse weekly roster for the game's week, fetched now (attach_membership)
   - roster_preflight resolves each team's playable roster (Out and inactive players excluded, the next eligible player
     promoted, reasons recorded) and writes it into the snapshot as roster_resolution, so every model reads one roster.
     Any preflight FAIL refuses the game: depth chart over 24 hours old, injury report without publish times, no
     eligible QB1, an unresolved required role, a player on both teams, or a resolved QB1 with no passing-yards prop in
     --props-db (joined on the GSIS id; a game with no QB prop yet cannot be checked and is refused)
-Nothing is written unless every requested game passes. The manifest records each source, its capture time and hash.
+Nothing is written unless every requested game passes. Each game is written in the pack runner's format
+({pregame_snapshot, runtime_model_inputs} plus <game>.streak.json, win-loss streaks known at the cutoff), ready to run.
+The manifest records each source, its capture time and hash.
 
 Usage:
   python3 scripts/nfl_sequence/build_current_snapshots.py --db picks.db --week 11 --out DIR [--games 2026_11_CIN_WAS ...]
@@ -35,11 +38,13 @@ sys.path[:0] = [str(ROOT / 'backend'), str(ROOT / 'scripts' / 'nfl_sequence'), s
 import oracle  # noqa: E402
 import pregame_snapshot  # noqa: E402
 import roster_preflight  # noqa: E402
+from cutoff_to_model_snapshot import write_runner_file  # noqa: E402
 from paced_http import Fetcher  # noqa: E402
 from scripts import nfl_team_codes  # noqa: E402
 
 DEPTH_URL = 'https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_{season}.parquet'
 GAMES_URL = 'https://github.com/nflverse/nfldata/raw/master/data/games.csv'
+WEEKLY_ROSTER_URL = 'https://github.com/nflverse/nflverse-data/releases/download/weekly_rosters/roster_weekly_{season}.parquet'
 
 
 def download(url, path):
@@ -100,6 +105,10 @@ def main(argv=None):
     games_path = sources / f'games.{now:%Y%m%dT%H%M%SZ}.csv'
     depth_sha = download(DEPTH_URL.format(season=args.season), depth_path)
     games_sha = download(GAMES_URL, games_path)
+    roster_path = sources / f'roster_weekly_{args.season}.{now:%Y%m%dT%H%M%SZ}.parquet'
+    roster_sha = download(WEEKLY_ROSTER_URL.format(season=args.season), roster_path)
+    import pandas as pd
+    weekly_roster = pd.read_parquet(roster_path).to_dict('records')
     depth = oracle.archive_depth_by_team(sources / 'no-archives', since=f'{args.season}-08-01T00:00:00Z',
                                          extra_parquet=[(depth_path, now)])
     schedule = schedule_rows(games_path, args.season, args.week, now)
@@ -126,6 +135,11 @@ def main(argv=None):
         except ValueError as exc:
             refused.append(str(exc))
             continue
+        try:
+            roster_preflight.attach_membership(snap, weekly_roster, f'{WEEKLY_ROSTER_URL.format(season=args.season)} fetched {cutoff}')
+        except ValueError as exc:
+            refused.append(str(exc))
+            continue
         rows, resolved = roster_preflight.check(snap, market_qbs(args.props_db, game_id, row['gameday']))
         print(roster_preflight.render(f'PREFLIGHT {game_id}', rows))
         bad = roster_preflight.failed(rows)
@@ -133,6 +147,7 @@ def main(argv=None):
             refused.extend(f'{game_id}: {name}: {detail}' for name, _, detail in bad)
             continue
         snap['roster_resolution'] = resolved
+        roster_preflight.apply_exclusions(snap, resolved)
         built.append((game_id, pregame_snapshot.reseal(snap)))
     if refused:
         print('\n'.join(f'REFUSED {line}' for line in refused))
@@ -143,16 +158,16 @@ def main(argv=None):
                 'sources': {'depth_chart': {'url': DEPTH_URL.format(season=args.season), 'fetched_utc': cutoff,
                                             'path': str(depth_path), 'sha256': depth_sha},
                             'schedule': {'url': GAMES_URL, 'fetched_utc': cutoff, 'path': str(games_path), 'sha256': games_sha},
+                            'weekly_roster': {'url': WEEKLY_ROSTER_URL.format(season=args.season), 'fetched_utc': cutoff,
+                                              'path': str(roster_path), 'sha256': roster_sha},
                             'injury_news': {'table': 'nfl_player_news_updates', 'newest_published_utc': newest_news,
                                             'players_listed': injury['listed'], 'obsolete_dropped': len(injury['obsolete']),
                                             'unmatched': len(unmatched)}},
                 'max_depth_chart_age_hours': pregame_snapshot.MAX_DEPTH_CHART_AGE.total_seconds() / 3600, 'games': []}
     for game_id, snap in built:
         path = args.out / f'{game_id}.json'
-        with path.open('x') as handle:
-            json.dump(snap, handle, indent=1, sort_keys=True)
-            handle.write('\n')
-        loaded = pregame_snapshot.load_frozen_snapshot(str(path))
+        streaks, _used = oracle.build_streaks(args.db, now, game_id)
+        loaded = write_runner_file(snap, streaks, path)
         manifest['games'].append({'game_id': game_id, 'path': str(path), 'snapshot_sha256': loaded['snapshot_sha256'],
                                   'kickoff_utc': loaded['schedule']['scheduled_kickoff_utc'],
                                   'depth_chart_at': {s: loaded['rosters'][s]['snapshot_at'] for s in ('away', 'home')},

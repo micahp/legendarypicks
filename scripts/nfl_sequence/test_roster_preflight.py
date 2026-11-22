@@ -36,12 +36,26 @@ def snapshot(injuries, away_qbs=None, home_extra=()):
                             (MINSHEW, 'Gardner Minshew II', 4)]
     report = {'players': [{'gsis_id': g, 'report_status': s, 'published_utc': '2026-11-21T19:25:31+00:00'}
                           for g, s in injuries.items()], 'obsolete': []}
-    return {'as_of': CUTOFF, 'snapshot_sha256': 'x',
-            'schedule': {'game_id': '2026_11_ARI_KC', 'away_team': 'ARI', 'home_team': 'KC'},
+    snap = {'as_of': CUTOFF, 'snapshot_sha256': 'x',
+            'schedule': {'game_id': '2026_11_ARI_KC', 'away_team': 'ARI', 'home_team': 'KC', 'week': 11},
             'rosters': {'away': {'team': 'ARI', 'snapshot_at': '2026-11-22T15:12:52Z', 'injury_report': report,
                                  'players': team_rows('ARI', 'ARI', away_qbs)},
                         'home': {'team': 'KC', 'snapshot_at': '2026-11-22T15:12:52Z', 'injury_report': report,
                                  'players': team_rows('KC', 'KC', [('00-0033873', 'Patrick Mahomes', 1)]) + list(home_extra)}}}
+    for side in ('away', 'home'):
+        snap['rosters'][side]['membership'] = {'week': 11, 'players': [
+            {'gsis_id': p['gsis_id'], 'name': p['player_name'], 'position': p['pos_abb'], 'status': 'ACT'}
+            for p in snap['rosters'][side]['players']]}
+    return snap
+
+
+def set_status(snap, side, gsis, status, name=None, position=None):
+    members = snap['rosters'][side]['membership']['players']
+    row = next((m for m in members if m['gsis_id'] == gsis), None)
+    if row is None:
+        members.append({'gsis_id': gsis, 'name': name, 'position': position, 'status': status})
+    else:
+        row['status'] = status
 
 
 def result(rows, name):
@@ -92,6 +106,42 @@ class ObsoleteStatus(unittest.TestCase):
 
 
 class Membership(unittest.TestCase):
+    def test_an_active_kicker_off_the_depth_chart_replaces_a_reserve_kicker(self):
+        # BAL week 9: Tyler Loop on a reserve list, Jake Moody active (elevated) but not on the depth chart
+        snap = snapshot({})
+        set_status(snap, 'away', 'ARI-PK', 'RES')
+        set_status(snap, 'away', 'MOODY', 'ACT', 'Jake Moody', 'K')
+        rows, resolved = rp.check(snap)
+        pk = next(r for r in resolved['away']['roles'] if r['role'] == 'PK')
+        self.assertEqual((pk['gsis_id'], pk['basis']), ('MOODY', 'unique_candidate'))
+
+    def test_a_sole_practice_squad_kicker_is_projected(self):
+        snap = snapshot({})
+        set_status(snap, 'away', 'ARI-PK', 'RES')
+        set_status(snap, 'away', 'SQUAD', 'DEV', 'Squad Kicker', 'K')
+        _, resolved = rp.check(snap)
+        pk = next(r for r in resolved['away']['roles'] if r['role'] == 'PK')
+        self.assertEqual((pk['gsis_id'], pk['status']), ('SQUAD', 'PROJECTED'))
+
+    def test_a_depth_chart_qb_cut_or_not_yet_signed_is_not_used(self):
+        # BAL week 9: Brissett on the depth chart, cut by ARI and not yet on BAL's weekly roster
+        snap = snapshot({})
+        set_status(snap, 'away', BECK, 'CUT')
+        _, resolved = rp.check(snap)
+        self.assertEqual(rp.resolved_qb1(resolved['away']), JOHNSON)
+
+    def test_a_game_day_inactive_is_excluded(self):
+        snap = snapshot({})
+        set_status(snap, 'away', BECK, 'INA')
+        _, resolved = rp.check(snap)
+        self.assertEqual(rp.resolved_qb1(resolved['away']), JOHNSON)
+
+    def test_no_weekly_roster_fails(self):
+        snap = snapshot({})
+        del snap['rosters']['away']['membership']
+        rows, _ = rp.check(snap)
+        self.assertEqual(result(rows, 'ARI roster membership from the weekly roster')[1], 'FAIL')
+
     def test_a_starter_listed_on_both_teams_blocks(self):
         traded = player(JOHNSON, 'Josh Johnson', 'QB', 2, 'KC')
         rows, _ = rp.check(snapshot({BECK: 'Out'}, home_extra=[traded]))
@@ -117,6 +167,22 @@ class Postflight(unittest.TestCase):
         rows = rp.postflight(snap, run)
         self.assertEqual(result(rows, 'ARI simulated passer is the resolved QB1')[1], 'FAIL')
         self.assertEqual(result(rows, 'excluded players receiving stats')[1], 'FAIL')
+
+
+class Exclusions(unittest.TestCase):
+    def test_reserve_and_practice_squad_depth_players_reach_the_engine_as_out_without_changing_the_resolution(self):
+        snap = snapshot({BECK: 'Out'})
+        set_status(snap, 'away', 'ARI-WR2', 'RES')
+        set_status(snap, 'away', 'ARI-WR3', 'DEV')
+        resolved = rp.resolve(snap)
+        rp.apply_exclusions(snap, resolved)
+        added = {p['gsis_id']: p['reason'] for p in snap['rosters']['away']['injury_report']['players']
+                 if p.get('source') == rp.EXCLUSION_SOURCE}
+        self.assertEqual(added, {'ARI-WR2': 'membership_reserve', 'ARI-WR3': 'membership_practice_squad'})
+        self.assertNotIn(BECK, added)  # already Out in the report
+        self.assertEqual(rp.resolve(snap)['content_hash'], resolved['content_hash'])
+        rows, _ = rp.check(snap)
+        self.assertEqual(result(rows, 'ARI injury report applies to this game')[1], 'PASS')
 
 
 class EngineSelection(unittest.TestCase):
