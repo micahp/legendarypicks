@@ -168,6 +168,16 @@ class Postflight(unittest.TestCase):
         self.assertEqual(result(rows, 'ARI simulated passer is the resolved QB1')[1], 'FAIL')
         self.assertEqual(result(rows, 'excluded players receiving stats')[1], 'FAIL')
 
+    def test_a_receiver_trick_pass_listed_first_does_not_make_him_the_passer(self):
+        # 2026-11-23 CIN at WAS v1.6 smoke seed: Van Jefferson 1 attempt, Jayden Daniels 36
+        snap = snapshot({BECK: 'Out'})
+        run = {'player_boxscores_by_seed': [{'seed': 1, 'players': [
+            {'player_id': 'ARI-WR1', 'player_name': 'ARI WR1', 'player_team': 'ARI', 'passing': {'att': 1}},
+            {'player_id': JOHNSON, 'player_name': 'Josh Johnson', 'player_team': 'ARI', 'passing': {'att': 36}},
+            {'player_id': '00-0033873', 'player_name': 'Patrick Mahomes', 'player_team': 'KC', 'passing': {'att': 35}}]}]}
+        rows = rp.postflight(snap, run)
+        self.assertEqual(result(rows, 'ARI simulated passer is the resolved QB1')[1], 'PASS')
+
 
 class Exclusions(unittest.TestCase):
     def test_reserve_and_practice_squad_depth_players_reach_the_engine_as_out_without_changing_the_resolution(self):

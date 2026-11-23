@@ -206,6 +206,7 @@ def postflight(snapshot, run_output, resolved=None):
         return [('run has player box scores', 'FAIL', 'no player_boxscores_by_seed')]
     out_hits, passers = Counter(), {t: Counter() for t in teams}
     for seed in seeds:
+        attempts = {t: Counter() for t in teams}
         for p in seed['players']:
             res = teams.get(p.get('player_team'))
             if res is None:
@@ -213,7 +214,11 @@ def postflight(snapshot, run_output, resolved=None):
             if p['player_id'] in excluded(res):
                 out_hits[(p['player_team'], p['player_name'])] += 1
             if (p.get('passing') or {}).get('att'):
-                passers[p['player_team']][p['player_id']] += 1
+                attempts[p['player_team']][p['player_id']] += p['passing']['att']
+        # the seed's passer is the player with the most attempts, so a receiver's trick pass does not count
+        for team, counts in attempts.items():
+            if counts:
+                passers[team][counts.most_common(1)[0][0]] += 1
     rows = [('run has player box scores', 'PASS', f'{len(seeds)} seeds'),
             ('excluded players receiving stats', 'PASS' if not out_hits else 'FAIL',
              ', '.join(f'{t} {n} in {c} seeds' for (t, n), c in out_hits.items()) or '0')]
