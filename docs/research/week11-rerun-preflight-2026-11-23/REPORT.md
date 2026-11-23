@@ -3,8 +3,9 @@
 Date: 2026-11-23. 100 seeds per game and model, six models (v1, v1.5, v1.6, v2, pbv1, pbv1-off). Every run used a
 snapshot that passed the roster preflight, and every run in this report passed the postflight.
 
-Graded: all 12 games against the final scores and the published player stats. CIN at WAS (Monday night) is not in
-this report: its runs are invalid (see below).
+Graded: all 12 Sunday and Thursday games against the final scores and the published player stats. CIN at WAS
+(Monday night) was rerun on a current snapshot after the first runs failed (see below). It is compared to the market
+but not graded: it kicks off 2026-11-24 01:15 UTC.
 
 ## Result
 
@@ -31,8 +32,30 @@ exclusions to the engine (23:53 UTC). The resolution hash did not change, so the
 
 Fixed in `8b92bf26` (on dev): the batch preflight now checks that every excluded depth-chart player is Out in the
 injury report, and a one-seed smoke test for every game and model must pass the postflight before the full runs.
-A rebuilt snapshot that passes the new check is on the fast host at
-`/root/runs/week-11/snapshots/cinwas-fixed-2026-11-23/`.
+### CIN at WAS rerun (valid)
+
+- Snapshot built 2026-11-23 14:18 UTC from current data (depth chart 07:01 UTC, weekly roster, injury news to that
+  time): `/root/runs/week-11/snapshots/cinwas-current-2026-11-23T1418/` on the fast host. All preflight checks PASS,
+  including the new exclusion check. QB1: Joe Burrow and Jayden Daniels.
+- The first smoke test stopped the batch at 14:27 UTC: the postflight named Van Jefferson as the WSH passer in the
+  v1.6 seed (one trick pass, Daniels had 36). That was a bug in the check, fixed in `14bacb1a` (on dev): a seed's
+  passer is now the player with the most attempts.
+- The second run (`cinwas-current-100b`): smoke test passed for all six models, then all six 100-seed runs passed the
+  postflight. Done 15:12 UTC.
+
+Market: CIN -6, total 54.5, WAS no-vig win 0.28. WAS is home.
+
+| model | valid games | WAS win | WAS margin | WAS covers +6 | total | over 54.5 |
+|---|---|---|---|---|---|---|
+| v1 | 97 | 0.28 | -8.0 | 0.43 | 53.0 | 0.46 |
+| v1.5 | 97 | 0.30 | -5.6 | 0.47 | 50.9 | 0.37 |
+| v1.6 | 100 | 0.21 | -8.1 | 0.38 | 49.3 | 0.31 |
+| v2 | 100 | 0.30 | -5.0 | 0.51 | 45.8 | 0.18 |
+| pbv1 | 100 | 0.35 | -4.9 | 0.55 | 51.6 | 0.42 |
+
+Props, 91 per model with prices on both sides: mean P(over) gap -0.06 to -0.08; mean absolute gap v1.6 0.127, the
+others 0.211 to 0.215. Jacory Croskey-Merritt (WSH RB) has lines but is RESERVE in the nflverse weekly roster, so the
+sims give him nothing. Lines come from rows captured before 15:12 UTC; they can still move before kickoff.
 
 ## Inputs
 
@@ -137,7 +160,7 @@ skipped: kicking, field goals, extra points, sacks and longest plays.
 
 ## Next
 
-1. Run CIN at WAS on the fixed snapshot (smoke test first) and add it.
+1. Grade CIN at WAS after the game.
 2. Find why every model shrinks big favorites (mean margin about 3 points short of the spread).
 3. Give the fullback a usage role in the engine (Kyle Juszczyk gets no touches).
 4. Drop pbv1-off or rebuild it so the switch changes the reference data.
