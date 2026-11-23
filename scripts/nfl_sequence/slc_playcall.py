@@ -437,6 +437,22 @@ class PlayCallSampler:
         validator = getattr(self, 'participant_validator', None)
         if validator is not None:
             validator(offense, pre_event)
+        live_qb_model = getattr(self, 'live_qb_model', None)
+        if live_qb_model is not None and called_intent == 'dropback':
+            # Never substitute a sampled historical result for a live QB decision.
+            import live_qb
+            if observer is not None:
+                observer('snap', {'offense': offense})
+            observations = live_qb_model.observations(offense, state, (pre_event or {}).get('passer'))
+            allowed = getattr(self, 'live_qb_allowed', None)
+            if allowed is None or offense not in allowed or defense not in allowed:
+                raise ValueError('live_qb_resolved_rosters_required')
+            decision = live_qb.decide(observations, live_qb_model.policy,
+                                      offense_ids=allowed[offense], defense_ids=allowed[defense])
+            if observer is not None:
+                observer('live_qb_decision', {'offense': offense, 'action': decision['action'],
+                                               'seconds': decision['seconds']})
+            raise e1.SamplingUnavailable('live_qb_outcome_transition_unavailable:' + decision['action'])
         qb_decision = pre_event.get('qb_decision') if pre_event else None
         scramble = bool(qb_decision and qb_decision.get('action') == 'scramble')
         outcome_intent = 'run' if scramble else called_intent

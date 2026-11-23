@@ -302,7 +302,8 @@ def _decision_resolves_to_event(decision, event):
     )
 
 
-def play(seed, ref, snapshot, *, paired_randomness=False, execution_observer=None, resolved_rosters=None):
+def play(seed, ref, snapshot, *, paired_randomness=False, execution_observer=None, resolved_rosters=None,
+         live_qb_model=None):
     """One SLC game. Returns (record, decisions): the engine record and this game's play-call decisions, in order."""
     if not is_slc(ref):
         raise ValueError('the reference was not loaded with the SLC play-call layer')
@@ -310,6 +311,10 @@ def play(seed, ref, snapshot, *, paired_randomness=False, execution_observer=Non
     previous_ref_observer = getattr(ref, 'execution_observer', None)
     previous_sampler_observer = getattr(sampler, 'execution_observer', None)
     previous_validator = getattr(sampler, 'participant_validator', None)
+    previous_live_qb = getattr(sampler, 'live_qb_model', None)
+    previous_live_allowed = getattr(sampler, 'live_qb_allowed', None)
+    if live_qb_model is not None and resolved_rosters is None:
+        raise ValueError('live_qb_resolved_rosters_required')
     if resolved_rosters is not None:
         import v1_complete_roster
         validator = v1_complete_roster.participant_validator(resolved_rosters)
@@ -321,12 +326,16 @@ def play(seed, ref, snapshot, *, paired_randomness=False, execution_observer=Non
                                                     defense_priors=sampler.defense_priors,
                                                     role_table=sampler.role_table, decision_table=sampler.decision_table,
                                                     share_table=sampler.share_table, playbook_table=sampler.playbook_table,
-                                                    qb_decision_table=sampler.qb_decision_table,
+                                                    qb_decision_table=None if live_qb_model is not None else sampler.qb_decision_table,
                                                     scramble_backoff_enabled=sampler.scramble_backoff_enabled,
                                                     qb_run_role_style_enabled=getattr(
                                                         sampler, 'qb_run_role_style_enabled', False))
     ref.execution_observer = sampler.execution_observer = execution_observer
     sampler.participant_validator = validator
+    sampler.live_qb_model = live_qb_model
+    sampler.live_qb_allowed = ({'A': v1_complete_roster.eligible_ids(resolved_rosters['home']),
+                                'B': v1_complete_roster.eligible_ids(resolved_rosters['away'])}
+                               if live_qb_model is not None else None)
     sampler.decisions.clear()
     sampler.participant_chooser = chooser
     try:
@@ -337,6 +346,8 @@ def play(seed, ref, snapshot, *, paired_randomness=False, execution_observer=Non
         ref.execution_observer = previous_ref_observer
         sampler.execution_observer = previous_sampler_observer
         sampler.participant_validator = previous_validator
+        sampler.live_qb_model = previous_live_qb
+        sampler.live_qb_allowed = previous_live_allowed
     decisions = list(sampler.decisions)
     sampler.decisions.clear()
     validate_decision_outcomes(record, decisions, seed=seed, snapshot=snapshot)
