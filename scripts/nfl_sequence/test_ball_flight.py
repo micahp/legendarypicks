@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from ball_flight import BallFlight, reachable_at
+from ball_flight import BallFlight, MovingPlayer, first_reach, reachable_at
 
 
 def test_flight_endpoints_duration_and_arc():
@@ -41,3 +41,25 @@ def test_reach_depends_on_position_and_height():
     assert not reachable_at(flight, 0.5, x, y, 1, height - 0.1)
     with pytest.raises(ValueError, match='ball_flight_invalid_player_reach'):
         reachable_at(flight, 0.5, x, y, -1, height)
+
+
+def test_first_reach_orders_players_by_motion_and_ball_height():
+    flight = BallFlight(0, 0, 2, 10, 0, 10, 3)
+    defender = MovingPlayer('defender', 5, 2, 0, -4, 0.2, 4)
+    receiver = MovingPlayer('receiver', 8, 0, 0, 0, 0.2, 4)
+    time, ids = first_reach(flight, [receiver, defender])
+    assert ids == ('defender',)
+    assert time < 0.8
+    assert first_reach(flight, [receiver, defender], until=0.1) is None
+    low_defender = MovingPlayer('defender', 5, 2, 0, -4, 0.2, 0)
+    assert first_reach(flight, [receiver, low_defender])[1] == ('receiver',)
+
+
+def test_simultaneous_reach_is_not_resolved_by_input_order():
+    flight = BallFlight(0, 0, 2, 10, 0, 10, 3)
+    one = MovingPlayer('one', 5, 0, 0, 0, 1, 5)
+    two = MovingPlayer('two', 5, 0, 0, 0, 1, 5)
+    assert first_reach(flight, [two, one]) == first_reach(flight, [one, two])
+    assert first_reach(flight, [two, one])[1] == ('one', 'two')
+    with pytest.raises(ValueError, match='ball_flight_duplicate_player'):
+        first_reach(flight, [one, one])
