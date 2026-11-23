@@ -327,6 +327,7 @@ def play(seed, ref, snapshot, *, paired_randomness=False, execution_observer=Non
                                                     role_table=sampler.role_table, decision_table=sampler.decision_table,
                                                     share_table=sampler.share_table, playbook_table=sampler.playbook_table,
                                                     qb_decision_table=None if live_qb_model is not None else sampler.qb_decision_table,
+                                                    live_dropback=live_qb_model is not None,
                                                     scramble_backoff_enabled=sampler.scramble_backoff_enabled,
                                                     qb_run_role_style_enabled=getattr(
                                                         sampler, 'qb_run_role_style_enabled', False))

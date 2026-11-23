@@ -108,7 +108,8 @@ def _by_player_share(players, table, team, role, positions, draw):
 def choose(snapshot, side, intent, seed, index, formation_priors=None, state=None, player_shares=None, defense_priors=None,
            role_table=None, decision_table=None, trick_passer_rate=TRICK_PASSER_RATE, qb_receiver_rate=QB_RECEIVER_RATE,
            share_table=None, playbook_table=None, share_cache=None, qb_decision_table=None,
-           scramble_backoff_enabled=False, qb_receiver_package=False, qb_run_role_style_enabled=False, prepared=None):
+           scramble_backoff_enabled=False, qb_receiver_package=False, qb_run_role_style_enabled=False, prepared=None,
+           live_dropback=False):
     """{'passer': ..., 'receiver': ...} for a dropback, {'rusher': ...} for a run, None otherwise. Chosen before the outcome.
 
     With formation priors and the situation, also the formation and personnel grouping, from the historical shares."""
@@ -121,6 +122,14 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     observed = snapshot['model_reference']['observed_reference']
     base = f"{snapshot['snapshot_sha256']}:{seed}:{index}"
     chosen = {'side': side, 'team': team}
+    if live_dropback and intent == 'dropback':
+        # A live quarterback chooses the target after the snap. Do not draw a
+        # target, passing labels, or a statistical QB action at this stage.
+        chosen['passer'] = _passer(available_players, team, _draw(f'{base}:passer:trick'), 0.0,
+                                   injury_report=roster.get('injury_report'))
+        if prepared is not None:
+            chosen['formation'], chosen['personnel'] = prepared['formation'], prepared['personnel']
+        return chosen
     if share_table is not None:
         chosen['participant_share_model'] = 'dirichlet_multinomial'
     elif player_shares is not None:
@@ -358,7 +367,7 @@ def _by_game_share(candidates, share_table, team, role, game_id, seed_text, draw
 
 def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_priors=None, role_table=None, decision_table=None,
             share_table=None, playbook_table=None, qb_decision_table=None, scramble_backoff_enabled=False,
-            qb_receiver_package=False, qb_run_role_style_enabled=False):
+            qb_receiver_package=False, qb_run_role_style_enabled=False, live_dropback=False):
     """A callable for PlayCallSampler.participant_chooser: called once per scrimmage play, after the intent, before the outcome.
     The decision index counts those calls, so it is the same on every replay of the same game."""
     counter = {'index': 0}
@@ -395,7 +404,7 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
                       share_cache=share_cache, qb_decision_table=qb_decision_table,
                       scramble_backoff_enabled=scramble_backoff_enabled,
                       qb_receiver_package=qb_receiver_package,
-                      qb_run_role_style_enabled=qb_run_role_style_enabled, prepared=prepared)
+                      qb_run_role_style_enabled=qb_run_role_style_enabled, prepared=prepared, live_dropback=live_dropback)
     pick.prepare = prepare
     return pick
 

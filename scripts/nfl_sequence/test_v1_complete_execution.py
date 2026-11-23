@@ -97,3 +97,13 @@ def test_live_qb_runs_after_snap_and_cannot_fall_back_to_a_historical_outcome():
         sampler.sample(random.Random(2), cell([('pass_incomplete', 'pass')]), 'A', 'B', state=STATE)
     assert events == ['call_selection', 'participant_chooser', 'snap', 'live_qb_decision']
     assert sampler.decisions == []
+
+
+def test_live_dropback_chooser_does_not_select_target_before_snap():
+    chooser = pre_event.chooser(SNAPSHOT, 7, live_dropback=True)
+    chosen = chooser('dropback', 'A', STATE)
+    assert chosen['passer']['pos_abb'] == 'QB'
+    assert 'receiver' not in chosen
+    assert 'target_role' not in chosen
+    assert 'labels' not in chosen
+    assert 'qb_decision' not in chosen
