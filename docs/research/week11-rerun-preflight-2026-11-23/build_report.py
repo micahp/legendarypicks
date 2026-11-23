@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Week 11 1000-seed batch: each model's game result distribution against the pregame market lines. Read-only.
+"""Week 11 batch: each model's game result distribution against the pregame market lines. Read-only.
 
 Inputs:
   RUNS/<game_id>/<model>.json   portable runtime output (simulate_portable_pack.py), one per game and model
@@ -8,7 +8,7 @@ Inputs:
 Market: the games.csv lines. spread_line is the home team's margin (positive = home favored). The home win probability is the moneyline pair with the vig removed.
 
 Model: every seed with valid_full_game true, final points (overtime included). A spread or total push counts as not
-over and not covered. The outputs hold no player box scores, so player props are not compared here.
+over and not covered.
 
 Usage: python3 build_report.py --runs DIR --games-csv games.csv --out-dir DIR
 """

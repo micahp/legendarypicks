@@ -63,7 +63,7 @@ def prop_game(conn, game_id):
     away, home = game_id.split('_')[2:4]
     home = 'WSH' if home == 'WAS' else home
     row = conn.execute("select id, start_time from prop_games where league='nfl' and away=? and home=? "
-                       "and date between '2026-11-22' and '2026-11-23'", (away, home)).fetchone()
+                       "and date between '2026-11-19' and '2026-11-24'", (away, home)).fetchone()
     if row is None:
         raise ValueError(f'no prop_games row for {game_id}')
     return row

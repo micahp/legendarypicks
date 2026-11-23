@@ -1105,6 +1105,1862 @@
    "returncode": 0,
    "status": "completed",
    "valid_full_games": 96
+  },
+  {
+   "elapsed_seconds": 235.2,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_CIN_WAS/v1.log",
+   "model": "v1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_CIN_WAS/v1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "FAIL",
+     "WSH Jeremy McNichols in 100 seeds, CIN Tanner Hudson in 71 seeds, WSH Terry McLaurin in 98 seeds, WSH Jaylin Lane in 89 seeds, CIN Erick All Jr. in 27 seeds, WSH Dyami Brown in 29 seeds"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "failed_postflight",
+   "valid_full_games": 95
+  },
+  {
+   "elapsed_seconds": 236.8,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_CIN_WAS/v1.5.log",
+   "model": "v1.5",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_CIN_WAS/v1.5.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "FAIL",
+     "WSH Jeremy McNichols in 99 seeds, CIN Tanner Hudson in 70 seeds, WSH Terry McLaurin in 98 seeds, CIN Erick All Jr. in 41 seeds, WSH Jaylin Lane in 90 seeds, WSH Dyami Brown in 43 seeds"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "failed_postflight",
+   "valid_full_games": 87
+  },
+  {
+   "elapsed_seconds": 432.0,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_CIN_WAS/v2.log",
+   "model": "v2",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_CIN_WAS/v2.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "FAIL",
+     "WSH Jeremy McNichols in 100 seeds, WSH Terry McLaurin in 99 seeds, WSH Dyami Brown in 75 seeds, WSH Jaylin Lane in 47 seeds, CIN Tanner Hudson in 55 seeds, CIN Erick All Jr. in 29 seeds"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "failed_postflight",
+   "valid_full_games": 98
+  },
+  {
+   "elapsed_seconds": 573.8,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_CIN_WAS/v1.6.log",
+   "model": "v1.6",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_CIN_WAS/v1.6.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "FAIL",
+     "WSH Jeremy McNichols in 89 seeds, CIN Tanner Hudson in 64 seeds, WSH Terry McLaurin in 92 seeds, CIN Erick All Jr. in 51 seeds, WSH Jaylin Lane in 39 seeds, WSH Dyami Brown in 61 seeds"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "failed_postflight",
+   "valid_full_games": 96
+  },
+  {
+   "elapsed_seconds": 385.0,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_CIN_WAS/pbv1.log",
+   "model": "pbv1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_CIN_WAS/pbv1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "FAIL",
+     "WSH Jeremy McNichols in 100 seeds, WSH Terry McLaurin in 99 seeds, CIN Erick All Jr. in 37 seeds, WSH Jaylin Lane in 89 seeds, CIN Tanner Hudson in 72 seeds, WSH Dyami Brown in 33 seeds"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "failed_postflight",
+   "valid_full_games": 96
+  },
+  {
+   "elapsed_seconds": 389.6,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_CIN_WAS/pbv1-off.log",
+   "model": "pbv1-off",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_CIN_WAS/pbv1-off.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "FAIL",
+     "WSH Jeremy McNichols in 100 seeds, WSH Terry McLaurin in 99 seeds, CIN Erick All Jr. in 37 seeds, WSH Jaylin Lane in 89 seeds, CIN Tanner Hudson in 72 seeds, WSH Dyami Brown in 33 seeds"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "failed_postflight",
+   "valid_full_games": 96
+  },
+  {
+   "elapsed_seconds": 236.4,
+   "game_id": "2026_11_IND_HOU",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_IND_HOU/v1.log",
+   "model": "v1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_IND_HOU/v1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "IND simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0035710, resolved: 00-0035710"
+    ],
+    [
+     "HOU simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039163, resolved: 00-0039163"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 91
+  },
+  {
+   "elapsed_seconds": 238.6,
+   "game_id": "2026_11_IND_HOU",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_IND_HOU/v1.5.log",
+   "model": "v1.5",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_IND_HOU/v1.5.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "IND simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0035710, resolved: 00-0035710"
+    ],
+    [
+     "HOU simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039163, resolved: 00-0039163"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 95
+  },
+  {
+   "elapsed_seconds": 437.1,
+   "game_id": "2026_11_IND_HOU",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_IND_HOU/v2.log",
+   "model": "v2",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_IND_HOU/v2.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "IND simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0035710, resolved: 00-0035710"
+    ],
+    [
+     "HOU simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039163, resolved: 00-0039163"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 98
+  },
+  {
+   "elapsed_seconds": 531.1,
+   "game_id": "2026_11_IND_HOU",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_IND_HOU/v1.6.log",
+   "model": "v1.6",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_IND_HOU/v1.6.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "IND simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0035710, resolved: 00-0035710"
+    ],
+    [
+     "HOU simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039163, resolved: 00-0039163"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 91
+  },
+  {
+   "elapsed_seconds": 387.3,
+   "game_id": "2026_11_IND_HOU",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_IND_HOU/pbv1.log",
+   "model": "pbv1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_IND_HOU/pbv1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "IND simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0035710, resolved: 00-0035710"
+    ],
+    [
+     "HOU simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039163, resolved: 00-0039163"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 96
+  },
+  {
+   "elapsed_seconds": 377.9,
+   "game_id": "2026_11_IND_HOU",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_IND_HOU/pbv1-off.log",
+   "model": "pbv1-off",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_IND_HOU/pbv1-off.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "IND simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0035710, resolved: 00-0035710"
+    ],
+    [
+     "HOU simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039163, resolved: 00-0039163"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 96
+  },
+  {
+   "elapsed_seconds": 225.3,
+   "game_id": "2026_11_ARI_KC",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_ARI_KC/v1.log",
+   "model": "v1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_ARI_KC/v1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "ARI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0026300, resolved: 00-0026300"
+    ],
+    [
+     "KC simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033873, resolved: 00-0033873"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 90
+  },
+  {
+   "elapsed_seconds": 234.1,
+   "game_id": "2026_11_ARI_KC",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_ARI_KC/v1.5.log",
+   "model": "v1.5",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_ARI_KC/v1.5.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "ARI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0026300, resolved: 00-0026300"
+    ],
+    [
+     "KC simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033873, resolved: 00-0033873"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 91
+  },
+  {
+   "elapsed_seconds": 422.5,
+   "game_id": "2026_11_ARI_KC",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_ARI_KC/v2.log",
+   "model": "v2",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_ARI_KC/v2.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "ARI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0026300, resolved: 00-0026300"
+    ],
+    [
+     "KC simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033873, resolved: 00-0033873"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 99
+  },
+  {
+   "elapsed_seconds": 539.5,
+   "game_id": "2026_11_ARI_KC",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_ARI_KC/v1.6.log",
+   "model": "v1.6",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_ARI_KC/v1.6.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "ARI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0026300, resolved: 00-0026300"
+    ],
+    [
+     "KC simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033873, resolved: 00-0033873"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 97
+  },
+  {
+   "elapsed_seconds": 385.6,
+   "game_id": "2026_11_ARI_KC",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_ARI_KC/pbv1.log",
+   "model": "pbv1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_ARI_KC/pbv1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "ARI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0026300, resolved: 00-0026300"
+    ],
+    [
+     "KC simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033873, resolved: 00-0033873"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 93
+  },
+  {
+   "elapsed_seconds": 382.0,
+   "game_id": "2026_11_ARI_KC",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_ARI_KC/pbv1-off.log",
+   "model": "pbv1-off",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_ARI_KC/pbv1-off.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "ARI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0026300, resolved: 00-0026300"
+    ],
+    [
+     "KC simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033873, resolved: 00-0033873"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 93
+  },
+  {
+   "elapsed_seconds": 236.8,
+   "game_id": "2026_11_BAL_CAR",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_BAL_CAR/v1.log",
+   "model": "v1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_BAL_CAR/v1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "BAL simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033119, resolved: 00-0033119"
+    ],
+    [
+     "CAR simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039150, resolved: 00-0039150"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 90
+  },
+  {
+   "elapsed_seconds": 238.3,
+   "game_id": "2026_11_BAL_CAR",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_BAL_CAR/v1.5.log",
+   "model": "v1.5",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_BAL_CAR/v1.5.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "BAL simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033119, resolved: 00-0033119"
+    ],
+    [
+     "CAR simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039150, resolved: 00-0039150"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 89
+  },
+  {
+   "elapsed_seconds": 442.4,
+   "game_id": "2026_11_BAL_CAR",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_BAL_CAR/v2.log",
+   "model": "v2",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_BAL_CAR/v2.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "BAL simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033119, resolved: 00-0033119"
+    ],
+    [
+     "CAR simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039150, resolved: 00-0039150"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 95
+  },
+  {
+   "elapsed_seconds": 577.7,
+   "game_id": "2026_11_BAL_CAR",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_BAL_CAR/v1.6.log",
+   "model": "v1.6",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_BAL_CAR/v1.6.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "BAL simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033119, resolved: 00-0033119"
+    ],
+    [
+     "CAR simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039150, resolved: 00-0039150"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 95
+  },
+  {
+   "elapsed_seconds": 393.4,
+   "game_id": "2026_11_BAL_CAR",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_BAL_CAR/pbv1.log",
+   "model": "pbv1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_BAL_CAR/pbv1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "BAL simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033119, resolved: 00-0033119"
+    ],
+    [
+     "CAR simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039150, resolved: 00-0039150"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 97
+  },
+  {
+   "elapsed_seconds": 387.0,
+   "game_id": "2026_11_BAL_CAR",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_BAL_CAR/pbv1-off.log",
+   "model": "pbv1-off",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_BAL_CAR/pbv1-off.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "BAL simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033119, resolved: 00-0033119"
+    ],
+    [
+     "CAR simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039150, resolved: 00-0039150"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 97
+  },
+  {
+   "elapsed_seconds": 228.4,
+   "game_id": "2026_11_MIA_BUF",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIA_BUF/v1.log",
+   "model": "v1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIA_BUF/v1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "MIA simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040014, resolved: 00-0040014"
+    ],
+    [
+     "BUF simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0034857, resolved: 00-0034857"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 89
+  },
+  {
+   "elapsed_seconds": 230.5,
+   "game_id": "2026_11_MIA_BUF",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIA_BUF/v1.5.log",
+   "model": "v1.5",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIA_BUF/v1.5.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "MIA simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040014, resolved: 00-0040014"
+    ],
+    [
+     "BUF simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0034857, resolved: 00-0034857"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 98
+  },
+  {
+   "elapsed_seconds": 433.6,
+   "game_id": "2026_11_MIA_BUF",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIA_BUF/v2.log",
+   "model": "v2",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIA_BUF/v2.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "MIA simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040014, resolved: 00-0040014"
+    ],
+    [
+     "BUF simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0034857, resolved: 00-0034857"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 98
+  },
+  {
+   "elapsed_seconds": 540.0,
+   "game_id": "2026_11_MIA_BUF",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIA_BUF/v1.6.log",
+   "model": "v1.6",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIA_BUF/v1.6.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "99 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "MIA simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040014, resolved: 00-0040014"
+    ],
+    [
+     "BUF simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0034857, resolved: 00-0034857"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 98
+  },
+  {
+   "elapsed_seconds": 365.2,
+   "game_id": "2026_11_MIA_BUF",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIA_BUF/pbv1.log",
+   "model": "pbv1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIA_BUF/pbv1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "MIA simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040014, resolved: 00-0040014"
+    ],
+    [
+     "BUF simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0034857, resolved: 00-0034857"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 93
+  },
+  {
+   "elapsed_seconds": 382.5,
+   "game_id": "2026_11_MIA_BUF",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIA_BUF/pbv1-off.log",
+   "model": "pbv1-off",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIA_BUF/pbv1-off.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "MIA simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040014, resolved: 00-0040014"
+    ],
+    [
+     "BUF simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0034857, resolved: 00-0034857"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 93
+  },
+  {
+   "elapsed_seconds": 230.2,
+   "game_id": "2026_11_NO_CHI",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NO_CHI/v1.log",
+   "model": "v1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NO_CHI/v1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "NO simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040743, resolved: 00-0040743"
+    ],
+    [
+     "CHI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039918, resolved: 00-0039918"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 91
+  },
+  {
+   "elapsed_seconds": 238.6,
+   "game_id": "2026_11_NO_CHI",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NO_CHI/v1.5.log",
+   "model": "v1.5",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NO_CHI/v1.5.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "NO simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040743, resolved: 00-0040743"
+    ],
+    [
+     "CHI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039918, resolved: 00-0039918"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 90
+  },
+  {
+   "elapsed_seconds": 437.5,
+   "game_id": "2026_11_NO_CHI",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NO_CHI/v2.log",
+   "model": "v2",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NO_CHI/v2.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "NO simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040743, resolved: 00-0040743"
+    ],
+    [
+     "CHI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039918, resolved: 00-0039918"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 94
+  },
+  {
+   "elapsed_seconds": 538.6,
+   "game_id": "2026_11_NO_CHI",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NO_CHI/v1.6.log",
+   "model": "v1.6",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NO_CHI/v1.6.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "NO simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040743, resolved: 00-0040743"
+    ],
+    [
+     "CHI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039918, resolved: 00-0039918"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 96
+  },
+  {
+   "elapsed_seconds": 398.1,
+   "game_id": "2026_11_NO_CHI",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NO_CHI/pbv1.log",
+   "model": "pbv1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NO_CHI/pbv1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "NO simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040743, resolved: 00-0040743"
+    ],
+    [
+     "CHI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039918, resolved: 00-0039918"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 91
+  },
+  {
+   "elapsed_seconds": 384.3,
+   "game_id": "2026_11_NO_CHI",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NO_CHI/pbv1-off.log",
+   "model": "pbv1-off",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NO_CHI/pbv1-off.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "NO simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040743, resolved: 00-0040743"
+    ],
+    [
+     "CHI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039918, resolved: 00-0039918"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 91
+  },
+  {
+   "elapsed_seconds": 238.3,
+   "game_id": "2026_11_PIT_PHI",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_PIT_PHI/v1.log",
+   "model": "v1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_PIT_PHI/v1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "PIT simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0023459, resolved: 00-0023459"
+    ],
+    [
+     "PHI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039398, resolved: 00-0039398"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 92
+  },
+  {
+   "elapsed_seconds": 244.3,
+   "game_id": "2026_11_PIT_PHI",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_PIT_PHI/v1.5.log",
+   "model": "v1.5",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_PIT_PHI/v1.5.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "PIT simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0023459, resolved: 00-0023459"
+    ],
+    [
+     "PHI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039398, resolved: 00-0039398"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 88
+  },
+  {
+   "elapsed_seconds": 440.9,
+   "game_id": "2026_11_PIT_PHI",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_PIT_PHI/v2.log",
+   "model": "v2",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_PIT_PHI/v2.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "PIT simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0023459, resolved: 00-0023459"
+    ],
+    [
+     "PHI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039398, resolved: 00-0039398"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 97
+  },
+  {
+   "elapsed_seconds": 537.4,
+   "game_id": "2026_11_PIT_PHI",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_PIT_PHI/v1.6.log",
+   "model": "v1.6",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_PIT_PHI/v1.6.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "PIT simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0023459, resolved: 00-0023459"
+    ],
+    [
+     "PHI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039398, resolved: 00-0039398"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 94
+  },
+  {
+   "elapsed_seconds": 403.3,
+   "game_id": "2026_11_PIT_PHI",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_PIT_PHI/pbv1.log",
+   "model": "pbv1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_PIT_PHI/pbv1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "PIT simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0023459, resolved: 00-0023459"
+    ],
+    [
+     "PHI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039398, resolved: 00-0039398"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 94
+  },
+  {
+   "elapsed_seconds": 397.8,
+   "game_id": "2026_11_PIT_PHI",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_PIT_PHI/pbv1-off.log",
+   "model": "pbv1-off",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_PIT_PHI/pbv1-off.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "PIT simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0023459, resolved: 00-0023459"
+    ],
+    [
+     "PHI simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039398, resolved: 00-0039398"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 94
+  },
+  {
+   "elapsed_seconds": 243.0,
+   "game_id": "2026_11_TB_DET",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TB_DET/v1.log",
+   "model": "v1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TB_DET/v1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "TB simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0034855, resolved: 00-0034855"
+    ],
+    [
+     "DET simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033106, resolved: 00-0033106"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 91
+  },
+  {
+   "elapsed_seconds": 239.7,
+   "game_id": "2026_11_TB_DET",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TB_DET/v1.5.log",
+   "model": "v1.5",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TB_DET/v1.5.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "TB simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0034855, resolved: 00-0034855"
+    ],
+    [
+     "DET simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033106, resolved: 00-0033106"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 92
+  },
+  {
+   "elapsed_seconds": 424.8,
+   "game_id": "2026_11_TB_DET",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TB_DET/v2.log",
+   "model": "v2",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TB_DET/v2.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "TB simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0034855, resolved: 00-0034855"
+    ],
+    [
+     "DET simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033106, resolved: 00-0033106"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 100
+  },
+  {
+   "elapsed_seconds": 556.8,
+   "game_id": "2026_11_TB_DET",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TB_DET/v1.6.log",
+   "model": "v1.6",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TB_DET/v1.6.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "TB simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0034855, resolved: 00-0034855"
+    ],
+    [
+     "DET simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033106, resolved: 00-0033106"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 97
+  },
+  {
+   "elapsed_seconds": 385.8,
+   "game_id": "2026_11_TB_DET",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TB_DET/pbv1.log",
+   "model": "pbv1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TB_DET/pbv1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "TB simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0034855, resolved: 00-0034855"
+    ],
+    [
+     "DET simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033106, resolved: 00-0033106"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 97
+  },
+  {
+   "elapsed_seconds": 386.3,
+   "game_id": "2026_11_TB_DET",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TB_DET/pbv1-off.log",
+   "model": "pbv1-off",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TB_DET/pbv1-off.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "TB simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0034855, resolved: 00-0034855"
+    ],
+    [
+     "DET simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033106, resolved: 00-0033106"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 97
+  },
+  {
+   "elapsed_seconds": 240.0,
+   "game_id": "2026_11_TEN_DAL",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TEN_DAL/v1.log",
+   "model": "v1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TEN_DAL/v1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "TEN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040676, resolved: 00-0040676"
+    ],
+    [
+     "DAL simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033077, resolved: 00-0033077"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 94
+  },
+  {
+   "elapsed_seconds": 247.4,
+   "game_id": "2026_11_TEN_DAL",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TEN_DAL/v1.5.log",
+   "model": "v1.5",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TEN_DAL/v1.5.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "TEN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040676, resolved: 00-0040676"
+    ],
+    [
+     "DAL simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033077, resolved: 00-0033077"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 92
+  },
+  {
+   "elapsed_seconds": 453.4,
+   "game_id": "2026_11_TEN_DAL",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TEN_DAL/v2.log",
+   "model": "v2",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TEN_DAL/v2.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "TEN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040676, resolved: 00-0040676"
+    ],
+    [
+     "DAL simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033077, resolved: 00-0033077"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 97
+  },
+  {
+   "elapsed_seconds": 580.4,
+   "game_id": "2026_11_TEN_DAL",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TEN_DAL/v1.6.log",
+   "model": "v1.6",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TEN_DAL/v1.6.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "TEN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040676, resolved: 00-0040676"
+    ],
+    [
+     "DAL simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033077, resolved: 00-0033077"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 93
+  },
+  {
+   "elapsed_seconds": 385.8,
+   "game_id": "2026_11_TEN_DAL",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TEN_DAL/pbv1.log",
+   "model": "pbv1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TEN_DAL/pbv1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "TEN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040676, resolved: 00-0040676"
+    ],
+    [
+     "DAL simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033077, resolved: 00-0033077"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 98
+  },
+  {
+   "elapsed_seconds": 387.5,
+   "game_id": "2026_11_TEN_DAL",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TEN_DAL/pbv1-off.log",
+   "model": "pbv1-off",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_TEN_DAL/pbv1-off.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "TEN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0040676, resolved: 00-0040676"
+    ],
+    [
+     "DAL simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0033077, resolved: 00-0033077"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 98
+  },
+  {
+   "elapsed_seconds": 241.5,
+   "game_id": "2026_11_NYJ_LAC",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NYJ_LAC/v1.log",
+   "model": "v1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NYJ_LAC/v1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "NYJ simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0030565, resolved: 00-0030565"
+    ],
+    [
+     "LAC simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036355, resolved: 00-0036355"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 92
+  },
+  {
+   "elapsed_seconds": 237.9,
+   "game_id": "2026_11_NYJ_LAC",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NYJ_LAC/v1.5.log",
+   "model": "v1.5",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NYJ_LAC/v1.5.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "NYJ simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0030565, resolved: 00-0030565"
+    ],
+    [
+     "LAC simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036355, resolved: 00-0036355"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 94
+  },
+  {
+   "elapsed_seconds": 408.7,
+   "game_id": "2026_11_NYJ_LAC",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NYJ_LAC/v2.log",
+   "model": "v2",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NYJ_LAC/v2.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "NYJ simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0030565, resolved: 00-0030565"
+    ],
+    [
+     "LAC simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036355, resolved: 00-0036355"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 97
+  },
+  {
+   "elapsed_seconds": 520.0,
+   "game_id": "2026_11_NYJ_LAC",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NYJ_LAC/v1.6.log",
+   "model": "v1.6",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NYJ_LAC/v1.6.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "NYJ simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0030565, resolved: 00-0030565"
+    ],
+    [
+     "LAC simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036355, resolved: 00-0036355"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 98
   }
  ],
  "runtime": "/root/lp-slc-portable-runtime/scripts/nfl_sequence/simulate_portable_pack.py",

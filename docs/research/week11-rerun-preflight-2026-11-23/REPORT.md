@@ -1,109 +1,142 @@
-# Week 11 rerun with the roster preflight: MIN at SF
+# Week 11 rerun with the roster preflight: 9 games, graded
 
-Date: 2026-11-23. Game: 2026_11_MIN_SF, Sunday night, kickoff 01:20 UTC. 100 seeds per model, all six models. No grading against the final score in this report.
+Date: 2026-11-23. 100 seeds per game and model, six models (v1, v1.5, v1.6, v2, pbv1, pbv1-off). Every run used a
+snapshot that passed the roster preflight and every run in this report passed the postflight.
+
+Graded: 8 played games against the final scores and the published player stats. MIN at SF is in the market
+comparison but is not graded (no final score at the time of the report). CIN at WAS is not in this report (see below).
+JAX at NYG, LV at DEN and NYJ at LAC were still running.
 
 ## Result
 
-- **All six runs finished before kickoff** (last one at 01:12 UTC) and **all passed the postflight**: no excluded player got stats in any model, and each team's passer was its resolved QB1 (Kirk Cousins, Brock Purdy).
-- **Player props are much closer to the market than in the first week 11 batch.** The mean gap in P(over) is about -0.03 in every model, against -0.13 to -0.18 for MIN_SF in the batch that used month-old rosters. v1.6 has the smallest mean absolute gap (0.156).
-- **Game lines:** v1.6 and v2 are closest to the market (SF -3.5, total 46.5). v1, v1.5 and pbv1 have the game near even with high totals.
-- **Engine gap: fullbacks never get the ball.** Kyle Juszczyk is SF's eligible FB1 and has receptions, receiving-yards and rushing-plus-receiving-yards lines, but no model gives him a touch. The engine's usage shares have no fullback role.
-- **pbv1-off equals pbv1** again (same outcomes and props), as in every earlier batch.
-- 100 seeds per model: each share can be off by about 5 points either way. No model has a proven edge, so these are not betting signals.
+- **No model beats the market on games.** Home-win Brier: market 0.105, best model v2 0.144, then v1.6 0.158 and
+  v1.5 0.159. The market spread missed the final margin by 6.6 points on average; the best model mean (v2) missed by 9.6.
+- **Every model is too cautious with big favorites.** KC (-15.5), BUF (-16.5), HOU (-12.5) and CHI (-11.5) all won.
+  The market gave them 0.84 to 0.91. The models gave them 0.34 to 0.86. Mean margin is 3.4 to 5.2 points short of the
+  spread for every model.
+- **No model beats the market on props.** Prop Brier: market 0.235, v1.6 0.281, v2 0.292, the rest 0.306 to 0.312.
+- **Prop side hit rate** (bet the side where the sim differs from the market): v2 0.536, pbv1 0.525, v1.5 0.523,
+  v1 and v1.6 0.508. Break-even at -110 is 0.524. 610 graded props per model, so one standard error is about 0.020:
+  no model is clearly above break-even.
+- **v1.6 is still closest to the market on props** (mean absolute P(over) gap 0.183, others 0.225 to 0.244).
+  v2 is closest on game lines (mean absolute home-win gap 0.121).
+- **v2 rushing props hit 0.631** (122 props) and v1.6 rushing 0.582. This is the one group above break-even in more
+  than one model. It is one week, so it is a lead to test, not a signal.
+- **pbv1-off equals pbv1** in every number, as in every earlier batch.
+
+## CIN at WAS (Monday night): runs invalid
+
+All six 100-seed runs failed the postflight. Reserve players got stats: Terry McLaurin in 98 of 100 seeds, Jeremy
+McNichols in 100, Tanner Hudson in 71. The snapshot was built at 23:41 UTC, before the fix that passes exclusions to
+the engine (23:53 UTC). The resolution hash did not change, so the preflight passed.
+
+Fixed in `8b92bf26` (on dev): the batch preflight now checks that every excluded depth-chart player is Out in the
+injury report, and a one-seed smoke test for every game and model must pass the postflight before the full runs.
+A rebuilt snapshot that passes the new check is on the fast host at
+`/root/runs/week-11/snapshots/cinwas-fixed-2026-11-23/`. It will run after the Sunday games.
 
 ## Inputs
 
-- Snapshot: `docs/research/model-snapshots-2026/week-11/2026_11_MIN_SF.json`, built from the live 90-minute cutoff capture (`cutoff-snapshots-2026/week-11/2026_11_MIN_SF.json`, saved 23:50 UTC). Cutoff 2026-11-22T23:50:00Z. Roster resolution hash `ef041e89f1d3`, the same file for all six models.
-- Preflight (all PASS): weekly-roster membership, depth chart 8.4 hours old at the cutoff, injury statuses with publish times for this game, resolved QB1 for both teams, no unresolved required role, no player on both teams.
-- Packs: the six packs in `/root/runs/week-11/inputs/models/portable-models-2026-11-19/` on the fast host (v1.6 is the verified pack `6cf1e836`). Seeds 300001 to 300100.
-- Runner: `scripts/nfl_sequence/run_portable_batch.py`, manifest `manifest.week11-preflight-100-ordered.json` (every preflight and postflight table).
-- Game lines: nflverse `games.csv` fetched 2026-11-22 about 22:05 UTC, sha256 `deb5cae20e8c68d2...`: SF -3.5, total 46.5, SF -190, MIN +159, SF no-vig win 0.629.
-- Player props: `props` in `picks.dev.db`, rows captured before kickoff. Line = median over-line across books. Market P(over) = mean no-vig over probability across books quoting both sides at that line.
-- Files here: `game_market_comparison.json` (`build_report.py`), `props_comparison.json` (`props_compare.py`).
+- Snapshots: `/root/runs/week-11/snapshots/rerun-preflight-2026-11-23/` on the fast host. Played games use the
+  90-minute cutoff captures (`docs/research/cutoff-snapshots-2026/week-11/`); depth chart, weekly roster and injury
+  news at or before each cutoff. The new exclusion check passes for all 12 snapshots other than CIN at WAS.
+- Packs: `/root/runs/week-11/inputs/models/portable-models-2026-11-19/`. Seeds 300001 to 300100.
+- Runner: `run_portable_batch.py`, manifest `manifest.week11-preflight-100-ordered.json` (every preflight and
+  postflight table).
+- Game lines and final scores: nflverse `games.csv` fetched 2026-11-23 04:15 UTC (sha256 in `grading.json`). These
+  are closing lines, so MIN at SF now shows SF -4.5, total 44.5 (the earlier MIN at SF report used SF -3.5, 46.5).
+- Player props: `props` in `picks.dev.db`, rows captured before kickoff. Line = median over-line across books. Market
+  P(over) = mean no-vig over probability across books quoting both sides at that line.
+- Actual player stats: nflverse `stats_player_week_2026.parquet` (release modified 2026-11-23 02:33 UTC), joined on
+  gsis id.
+- Files: `game_market_comparison.json` (`build_report.py`), `props_comparison.json` (`props_compare.py`),
+  `grading.json` (`grade.py`).
 
-## Game lines
+## Games: market and models
 
-| model | valid games | SF win | SF margin | SF covers -3.5 | total | over 46.5 |
-|---|---|---|---|---|---|---|
-| v1 | 95 | 0.46 | +0.4 | 0.36 | 50.7 | 0.62 |
-| v1.5 | 99 | 0.54 | +0.4 | 0.43 | 52.3 | 0.72 |
-| v1.6 | 99 | 0.68 | +5.5 | 0.59 | 45.8 | 0.48 |
-| v2 | 100 | 0.60 | +3.3 | 0.55 | 45.4 | 0.51 |
-| pbv1 | 100 | 0.50 | +0.5 | 0.44 | 49.0 | 0.56 |
+Home win probability. Spread is the home margin (positive = home favored).
 
-## Player props by model
+| game | final | spread / total | market | v1 | v1.5 | v1.6 | v2 | pbv1 |
+|---|---|---|---|---|---|---|---|---|
+| ARI at KC | 7-34 | +15.5 / 40.5 | 0.90 | 0.68 | 0.75 | 0.71 | 0.68 | 0.66 |
+| BAL at CAR | 33-35 | +2.5 / 44.5 | 0.56 | 0.37 | 0.43 | 0.41 | 0.56 | 0.45 |
+| IND at HOU | 3-26 | +12.5 / 44.5 | 0.85 | 0.54 | 0.63 | 0.52 | 0.65 | 0.55 |
+| MIA at BUF | 9-26 | +16.5 / 45.5 | 0.91 | 0.69 | 0.68 | 0.86 | 0.85 | 0.74 |
+| MIN at SF | not final | +4.5 / 44.5 | 0.64 | 0.46 | 0.54 | 0.68 | 0.60 | 0.50 |
+| NO at CHI | 13-21 | +11.5 / 47.5 | 0.84 | 0.37 | 0.36 | 0.54 | 0.49 | 0.34 |
+| PIT at PHI | 16-19 | -3.5 / 37.5 | 0.36 | 0.64 | 0.67 | 0.53 | 0.47 | 0.52 |
+| TB at DET | 21-31 | +3.5 / 48.5 | 0.66 | 0.66 | 0.74 | 0.71 | 0.72 | 0.68 |
+| TEN at DAL | 30-51 | +7.5 / 55.5 | 0.75 | 0.77 | 0.79 | 0.75 | 0.70 | 0.74 |
 
-The gap is sim P(over) minus market P(over).
+## Games: grading (8 played games)
 
-| model | props | mean P(over) gap | mean abs gap |
-|---|---|---|---|
-| v1 | 83 | -0.032 | 0.220 |
-| v1.5 | 83 | -0.029 | 0.218 |
-| v1.6 | 83 | -0.029 | 0.156 |
-| v2 | 83 | -0.029 | 0.212 |
-| pbv1 | 83 | -0.034 | 0.218 |
+Brier: lower is better; a coin is 0.25. The market cover and over Brier is 0.25 by construction.
 
-## Player props by market group (players in the sim)
+| model | win Brier | cover Brier | over Brier | winners right | cover side right | total side right | margin error | total error |
+|---|---|---|---|---|---|---|---|---|
+| market | 0.105 | 0.25 | 0.25 | 7 | | | 6.6 | 11.9 |
+| v1 | 0.187 | 0.317 | 0.327 | 6 | 5 | 4 | 11.1 | 15.6 |
+| v1.5 | 0.159 | 0.300 | 0.361 | 6 | 4 | 3 | 10.4 | 15.7 |
+| v1.6 | 0.158 | 0.315 | 0.365 | 7 | 4 | 4 | 9.6 | 15.1 |
+| v2 | 0.144 | 0.319 | 0.350 | 6 | 4 | 4 | 9.6 | 14.4 |
+| pbv1 | 0.191 | 0.314 | 0.339 | 6 | 4 | 2 | 10.9 | 16.2 |
 
-| model | market group | props | mean P(over) gap | mean abs gap |
+Margin and total error: mean absolute difference between the model's mean (or the market line) and the final.
+
+## Props: market comparison (9 games)
+
+Gap = sim P(over) minus market P(over), 757 props per model.
+
+| model | mean gap | mean abs gap |
+|---|---|---|
+| v1 | -0.060 | 0.244 |
+| v1.5 | -0.058 | 0.242 |
+| v1.6 | -0.067 | 0.183 |
+| v2 | -0.070 | 0.225 |
+| pbv1 | -0.063 | 0.244 |
+
+## Props: grading (8 played games)
+
+610 graded props per model. 63 props are ungraded because the player has no published stat row (he did not play:
+for example Carson Beck, Kenneth Walker III, Jalon Daniels, Dalton Kincaid). 1 prop is a push. 280 of 610 went over.
+
+| model | Brier | market Brier | side hits | side hit rate |
 |---|---|---|---|---|
-| v1 | receiving | 31 | -0.105 | 0.262 |
-| v1 | rushing | 12 | -0.079 | 0.173 |
-| v1 | passing | 8 | +0.270 | 0.270 |
-| v1 | touchdowns | 20 | -0.028 | 0.158 |
-| v1 | interceptions | 4 | +0.066 | 0.071 |
-| v1.5 | receiving | 31 | -0.100 | 0.260 |
-| v1.5 | rushing | 12 | -0.077 | 0.171 |
-| v1.5 | passing | 8 | +0.309 | 0.309 |
-| v1.5 | touchdowns | 20 | -0.033 | 0.147 |
-| v1.5 | interceptions | 4 | +0.041 | 0.041 |
-| v1.6 | receiving | 31 | -0.075 | 0.183 |
-| v1.6 | rushing | 12 | +0.059 | 0.224 |
-| v1.6 | passing | 8 | +0.082 | 0.143 |
-| v1.6 | touchdowns | 20 | -0.051 | 0.076 |
-| v1.6 | interceptions | 4 | -0.014 | 0.044 |
-| v2 | receiving | 31 | -0.067 | 0.256 |
-| v2 | rushing | 12 | +0.031 | 0.283 |
-| v2 | passing | 8 | +0.162 | 0.219 |
-| v2 | touchdowns | 20 | -0.070 | 0.118 |
-| v2 | interceptions | 4 | -0.065 | 0.065 |
-| pbv1 | receiving | 31 | -0.110 | 0.259 |
-| pbv1 | rushing | 12 | -0.022 | 0.240 |
-| pbv1 | passing | 8 | +0.219 | 0.219 |
-| pbv1 | touchdowns | 20 | -0.051 | 0.127 |
-| pbv1 | interceptions | 4 | +0.150 | 0.150 |
+| v1 | 0.312 | 0.235 | 310 | 0.508 |
+| v1.5 | 0.306 | 0.235 | 319 | 0.523 |
+| v1.6 | 0.281 | 0.235 | 310 | 0.508 |
+| v2 | 0.292 | 0.235 | 327 | 0.536 |
+| pbv1 | 0.310 | 0.235 | 320 | 0.525 |
 
-## Largest gaps, v1.6
+By market group, v1.6 and v2:
 
-| player | team | market | line | market P(over) | sim mean | sim P(over) | gap |
-|---|---|---|---|---|---|---|---|
-| Kyle Juszczyk | SF | receptions | 0.5 | 0.56 | 0.0 | 0.00 | -0.56 |
-| Deebo Samuel Sr. | SF | rushing_yards | 8.5 | 0.49 | 0.7 | 0.04 | -0.45 |
-| Keenan Allen | SF | receptions | 2.5 | 0.51 | 0.5 | 0.06 | -0.45 |
-| Keenan Allen | SF | receiving_yards | 26.5 | 0.50 | 6.0 | 0.07 | -0.43 |
-| Jauan Jennings | MIN | receptions | 2.5 | 0.45 | 0.8 | 0.06 | -0.39 |
-| Justin Jefferson | MIN | targets | 11.5 | 0.43 | 16.1 | 0.80 | +0.37 |
-| Jauan Jennings | MIN | receiving_yards | 19.5 | 0.51 | 7.8 | 0.14 | -0.37 |
-| Jordan Mason | MIN | rush_attempts | 12 | 0.50 | 7.6 | 0.15 | -0.35 |
-| Aaron Jones | MIN | rushing_receiving_yards | 44.5 | 0.50 | 91.8 | 0.83 | +0.33 |
-| Aaron Jones | MIN | total_rush_attempts | 8.5 | 0.47 | 16.0 | 0.79 | +0.32 |
-| Kirk Cousins | MIN | rushing_yards | 2.5 | 0.49 | 14.8 | 0.81 | +0.32 |
-| Jordan Mason | MIN | receptions | 0.5 | 0.64 | 0.5 | 0.33 | -0.30 |
+| model | group | props | Brier | market Brier | side hit rate |
+|---|---|---|---|---|---|
+| v1.6 | receiving | 268 | 0.305 | 0.248 | 0.478 |
+| v1.6 | rushing | 122 | 0.295 | 0.248 | 0.582 |
+| v1.6 | passing | 71 | 0.303 | 0.248 | 0.437 |
+| v1.6 | touchdowns | 131 | 0.210 | 0.186 | 0.534 |
+| v1.6 | interceptions | 18 | 0.263 | 0.250 | 0.556 |
+| v2 | receiving | 268 | 0.321 | 0.248 | 0.534 |
+| v2 | rushing | 122 | 0.294 | 0.248 | 0.631 |
+| v2 | passing | 71 | 0.275 | 0.248 | 0.479 |
+| v2 | touchdowns | 131 | 0.240 | 0.186 | 0.496 |
+| v2 | interceptions | 18 | 0.298 | 0.250 | 0.444 |
 
-Markets the box scores do not hold were skipped: kicking, field goals, extra points, sacks and longest plays.
+All groups for all models are in `grading.json` (`prop_summary_by_group`). Markets the box scores do not hold were
+skipped: kicking, field goals, extra points, sacks and longest plays.
 
-## Postflight
+## What this does not show
 
-- v1: excluded players receiving stats: 0
-- v1.5: excluded players receiving stats: 0
-- v2: excluded players receiving stats: 0
-- v1.6: excluded players receiving stats: 0
-- pbv1: excluded players receiving stats: 0
-- pbv1-off: excluded players receiving stats: 0
+- One week, 8 graded games. Each share from 100 seeds can be off by about 5 points either way.
+- The sim P(over) is far from the market (mean absolute gap 0.18 to 0.24), and its Brier is worse than the market's
+  in every group. A side hit rate near 0.52 with that calibration is not an edge.
+- Side hit rate assumes -110. It ignores the actual price.
 
 ## Next
 
-1. Add CIN_WAS and the 11 played games to this report as they finish.
-2. Give the fullback a usage role in the engine.
-3. Drop pbv1-off or rebuild it so the switch changes the reference data.
-4. Grade against final scores in a separate step.
+1. Run CIN at WAS on the fixed snapshot (smoke test first), then JAX at NYG, LV at DEN and NYJ at LAC finish.
+2. Grade MIN at SF once the final score is in games.csv.
+3. Find why every model shrinks big favorites (mean margin 3 to 5 points short of the spread).
+4. Give the fullback a usage role in the engine (Kyle Juszczyk gets no touches).
+5. Drop pbv1-off or rebuild it so the switch changes the reference data.
