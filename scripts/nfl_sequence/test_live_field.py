@@ -43,6 +43,7 @@ def test_complete_dropback_from_roster_to_reducer_without_historical_row():
                                  qb_policy=qb_policy, throw=throw, catch=lambda *_: True, allow_synthetic=True)
     assert seen == [(0, -1), (1, 0)]
     assert result['play']['event_type'] == 'pass_complete'
+    assert result['input_classification'] == 'synthetic'
     assert result['state_at_whistle']['yl'] == 46
     assert result['clock_at_whistle'] == 598
     assert {p['player_id'] for p in result['player_statistics']} == {'offense0', 'offense1'}

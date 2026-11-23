@@ -93,11 +93,13 @@ def observations(offense, defense, *, times):
 
 
 def dropback(state, *, offense, defense, resolved, as_of, formation, call, times, qb_policy, throw=None, catch=None,
-             scramble=None, allow_synthetic=False, rating_verifier=None):
+             scramble=None, allow_synthetic=False, rating_verifier=None, formation_verifier=None):
     """Run one named dropback from validated personnel through the whistle reducer."""
     validate_lineups(offense, defense, resolved, as_of, allow_synthetic=allow_synthetic, rating_verifier=rating_verifier)
     if not isinstance(formation, str) or not formation.strip():
         raise ValueError('live_field_formation_required')
+    if not allow_synthetic and (formation_verifier is None or formation_verifier(offense, formation, as_of) is not True):
+        raise ValueError('live_field_formation_not_verified')
     if call != 'dropback':
         raise ValueError('live_field_unsupported_call')
     motion = {p['player_id']: p for p in offense + defense}
@@ -128,8 +130,10 @@ def dropback(state, *, offense, defense, resolved, as_of, formation, call, times
             yield frame
 
     import live_dropback
-    return live_dropback.play(state, observations(offense, defense, times=times), qb_policy,
-                              offense_ids={p['player_id'] for p in offense},
-                              defense_ids={p['player_id'] for p in defense},
-                              throw=checked_throw if throw is not None else None, catch=catch,
-                              scramble=checked_scramble if scramble is not None else None)
+    result = live_dropback.play(state, observations(offense, defense, times=times), qb_policy,
+                                offense_ids={p['player_id'] for p in offense},
+                                defense_ids={p['player_id'] for p in defense},
+                                throw=checked_throw if throw is not None else None, catch=catch,
+                                scramble=checked_scramble if scramble is not None else None)
+    result['input_classification'] = 'synthetic' if allow_synthetic else 'verifier_checked'
+    return result
