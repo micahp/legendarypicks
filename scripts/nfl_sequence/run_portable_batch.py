@@ -9,7 +9,7 @@ team's passer was its resolved QB1. The manifest holds every preflight and postf
 
 Usage (on the host with the packs):
   python3.12 run_portable_batch.py --name NAME --snapshots DIR --packs DIR --runtime simulate_portable_pack.py \\
-      --out DIR --models v1,v1.5,v1.6,v2,pbv1 --seeds 100 [--games G1,G2] [--parallel 2] [--runtime-workers 2]
+      --out DIR --models v1,v1.5,v1.6,v2,pbv1 --seeds 100 [--games G1,G2 (run in this order)] [--parallel 2] [--runtime-workers 2]
 """
 from __future__ import annotations
 
@@ -62,11 +62,13 @@ def main(argv=None):
             raise SystemExit(f'PACKAGE_HASH_MISMATCH: {m}')
     files = sorted(f for f in args.snapshots.glob('*.json') if not f.name.endswith('.streak.json') and f.name != 'manifest.json')
     if args.games:
-        wanted = set(args.games.split(','))
-        files = [f for f in files if f.stem in wanted]
-        missing = wanted - {f.stem for f in files}
+        # run in the order given, so a game that has not kicked off yet can go first
+        order = args.games.split(',')
+        by_name = {f.stem: f for f in files}
+        missing = [g for g in order if g not in by_name]
         if missing:
-            raise SystemExit(f'NO_SNAPSHOT: {sorted(missing)}')
+            raise SystemExit(f'NO_SNAPSHOT: {missing}')
+        files = [by_name[g] for g in order]
 
     snapshots, preflight, blocked = {}, {}, []
     for f in files:
