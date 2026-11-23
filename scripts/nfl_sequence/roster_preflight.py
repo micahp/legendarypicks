@@ -129,6 +129,21 @@ def apply_exclusions(snapshot, resolved):
     return snapshot
 
 
+def exclusions_applied(snapshot, resolved):
+    """Row: every excluded depth-chart player is Out in that side's injury report, the channel the packs obey. A snapshot
+    built before apply_exclusions keeps the same resolution hash, so only this check catches it."""
+    snap = unwrap(snapshot)
+    missing = []
+    for side in ('away', 'home'):
+        roster = snap['rosters'][side]
+        out = {p['gsis_id'] for p in (roster.get('injury_report') or {}).get('players', []) if p['report_status'] == 'Out'}
+        on_depth = {p['gsis_id'] for p in roster['players']}
+        missing += [f"{roster['team']} {p['name']}" for p in resolved[side]['players']
+                    if not p['official_eligible'] and p['gsis_id'] in on_depth and p['gsis_id'] not in out]
+    return ('exclusions reach the engine as Out', 'FAIL' if missing else 'PASS',
+            f'{len(missing)} excluded players not Out: {", ".join(missing[:8])}' if missing else 'all excluded players Out')
+
+
 def resolved_qb1(resolved_team):
     return next(r['gsis_id'] for r in resolved_team['roles'] if r['role'] == 'QB1')
 

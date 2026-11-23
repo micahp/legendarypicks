@@ -797,6 +797,9 @@ class _Game:
         """A kickoff, sampled from the observed kickoff pool, or a safety free kick sampled from the observed safety-kick
         table. A kick that runs the clock out ends the quarter on the return.
         """
+        observer = getattr(self.ref, 'execution_observer', None)
+        if observer is not None:
+            observer('historical_kickoff_selected', {'kind': kind, 'quarter': self.quarter})
         pool = self.ref.safety_kick_pool if kind == 'safety_free_kick' else self.ref.kickoff_pool
         sample = self._rng(f'free_kick:{kind}').choice(pool)
         source = {'game_id': sample['game_id'], 'play_id': sample['play_id'], 'game_date': sample['game_date']}
@@ -1400,6 +1403,9 @@ class _Game:
         """Rule 16 with an observed drive, drawn the way the blocked kicks are: one observed regular-season overtime drive
         ends the possession, scores, or runs the period out. A drive fits the state when its observed time is within the
         clock; a period end fits when its observed time reaches the clock. The Rule 16 possession logic then checks it."""
+        observer = getattr(self.ref, 'execution_observer', None)
+        if observer is not None:
+            observer('historical_overtime_drive_selected', {'quarter': self.quarter, 'clock': self.clock})
         offense, defense, clock = self.offense, self.defense, self.clock
         fits = [d for d in self.ref.overtime_pool
                 if (d['duration'] >= clock if d['outcome'] == 'period_end' else d['duration'] <= clock)]
@@ -1505,7 +1511,8 @@ class _Game:
                                       play_index_start=self.next_play_sequence,
                                       drive_index=len(self.drives) + 1,
                                       paired_random_streams=self.paired_random_streams,
-                                      sampling_guard=timeout_guard if timeout_decisions is None else None, **research)
+                                      sampling_guard=timeout_guard if timeout_decisions is None else None,
+                                      execution_observer=getattr(self.ref, 'execution_observer', None), **research)
         if plays is None:
             self.blocked_attempt = {'drive_index': len(self.drives) + 1, 'offense_team': self.offense,
                                     'quarter_start': start['quarter'], 'clock_start': start['clock'],
@@ -1659,9 +1666,9 @@ class _Game:
             status = 'regulation_end_guarded'  # the simulation reached regulation end, but it is not a complete game
         points = {'A': self.points['A'], 'B': self.points['B']}
         snapshot = self.pregame_snapshot
-        # a full game is valid only on verified input provenance; an exploratory replay stays a statistical game
+        # Snapshot evidence and the legality/completion of the simulated game are separate facts.
         verified = bool((snapshot or {}).get('evaluation', {}).get('verified'))
-        valid_candidate = bool(snapshot and verified and complete and blocker is None and not guarded and not unsupported)
+        valid_candidate = bool(snapshot and complete and blocker is None and not guarded and not unsupported)
         record_mode = ('pregame_full_game' if valid_candidate else 'pregame_statistical_game') if snapshot else 'legal_game_state_first_piece'
         scope_out = scope_out_reasons(blocker, complete) + guard_reasons(guarded)
         rec = {
@@ -1694,6 +1701,7 @@ class _Game:
             'unmodelled_transitions': guarded,
             'two_minute_warnings': two_minute_warnings(self.drives, self.events),
             'valid_full_game': valid_candidate,
+            'snapshot_verified': verified,
             'unsupported_rules': unsupported,
             'rule_capability_limitations': list(UNSUPPORTED_RULES),
             'guards': {r: dict(GUARDS[r]) for r in UNSUPPORTED_RULES},

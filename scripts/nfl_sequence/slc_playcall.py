@@ -409,13 +409,22 @@ class PlayCallSampler:
         if self.streak_league is not None and team in self.current_streak:
             league_streak_shift = streak_splits.shift_for(self.streak_league, streak_splits.LEAGUE, self.current_streak[team])
             p = point_splits.adjust(p, league_streak_shift)  # the league's streak tendency, in log-odds
+        observer = getattr(self, 'execution_observer', None)
+        if observer is not None:
+            observer('call_selection', {'offense': offense, 'down': state['down']})
         if kick_keys and rng.random() < kick_share:
             intent, fallback = KICK_INTENT, 'kick decision: historical share of this situation cell (not yet modelled)'
         else:
             intent = 'dropback' if rng.random() < p else 'run'
             fallback = None
         called_intent = intent
+        if observer is not None:
+            observer('participant_chooser', {'offense': offense, 'called_intent': called_intent,
+                                             'available': self.participant_chooser is not None})
         pre_event = self.participant_chooser(called_intent, offense, state) if self.participant_chooser is not None else None
+        validator = getattr(self, 'participant_validator', None)
+        if validator is not None:
+            validator(offense, pre_event)
         qb_decision = pre_event.get('qb_decision') if pre_event else None
         scramble = bool(qb_decision and qb_decision.get('action') == 'scramble')
         outcome_intent = 'run' if scramble else called_intent

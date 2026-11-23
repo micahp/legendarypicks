@@ -301,13 +301,20 @@ def _decision_resolves_to_event(decision, event):
     )
 
 
-def play(seed, ref, snapshot, *, paired_randomness=False):
+def play(seed, ref, snapshot, *, paired_randomness=False, execution_observer=None, resolved_rosters=None):
     """One SLC game. Returns (record, decisions): the engine record and this game's play-call decisions, in order."""
     if not is_slc(ref):
         raise ValueError('the reference was not loaded with the SLC play-call layer')
     sampler = ref.contextual_sampler
-    sampler.decisions.clear()
-    sampler.participant_chooser = pre_event.chooser(require_snapshot(snapshot), seed,
+    previous_ref_observer = getattr(ref, 'execution_observer', None)
+    previous_sampler_observer = getattr(sampler, 'execution_observer', None)
+    previous_validator = getattr(sampler, 'participant_validator', None)
+    if resolved_rosters is not None:
+        import v1_complete_roster
+        validator = v1_complete_roster.participant_validator(resolved_rosters)
+    else:
+        validator = None
+    chooser = pre_event.chooser(require_snapshot(snapshot), seed,
                                                     formation_priors=sampler.formation_priors,
                                                     player_shares=sampler.player_shares,
                                                     defense_priors=sampler.defense_priors,
@@ -317,11 +324,18 @@ def play(seed, ref, snapshot, *, paired_randomness=False):
                                                     scramble_backoff_enabled=sampler.scramble_backoff_enabled,
                                                     qb_run_role_style_enabled=getattr(
                                                         sampler, 'qb_run_role_style_enabled', False))
+    ref.execution_observer = sampler.execution_observer = execution_observer
+    sampler.participant_validator = validator
+    sampler.decisions.clear()
+    sampler.participant_chooser = chooser
     try:
         record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot),
                               paired_randomness=paired_randomness)
     finally:
         sampler.participant_chooser = None
+        ref.execution_observer = previous_ref_observer
+        sampler.execution_observer = previous_sampler_observer
+        sampler.participant_validator = previous_validator
     decisions = list(sampler.decisions)
     sampler.decisions.clear()
     validate_decision_outcomes(record, decisions, seed=seed, snapshot=snapshot)

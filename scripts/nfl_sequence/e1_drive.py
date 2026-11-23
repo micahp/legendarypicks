@@ -205,7 +205,7 @@ def _credit_field_boundary_yards(event, sampled_yards, yardline):
 
 def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, partial=None, sampling_policy=None,
              score_diff=None, play_index_start=1, drive_index=1, paired_random_streams=None, sampling_guard=None,
-             timeouts=None):
+             timeouts=None, execution_observer=None):
     """`clock` is an optional research clock (clock_d.BoundaryClock). None keeps the E2 runoff from the pool.
     `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence.
     `sampling_policy`, when given, samples events and source plays using the current simulated teams' context.
@@ -235,6 +235,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         if len(plays) >= MAX_PLAYS:
             return halt(f'exceeded {MAX_PLAYS} plays without a terminal')
         play_index = play_index_start + len(plays)
+        if execution_observer is not None:
+            execution_observer('play_start', {'drive_index': drive_index, 'play_index': play_index})
         if paired_random_streams is None:
             event_rng = row_rng = playcall_rng = special_rng = rng
             stream_keys = None
@@ -284,6 +286,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             except SamplingUnavailable as unavailable:
                 return halt(str(unavailable))
         event = selected_event
+        if execution_observer is not None:
+            execution_observer('historical_outcome_selected', {'event': event, 'play_index': play_index})
         if sampling_guard is not None:
             selected_sample = (selected_event, row, runoff, spot)
             rejection = sampling_guard.rejection_reason(selected_sample, st)
@@ -310,6 +314,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         if sampled_yards is not None:
             yards, yardage_boundary_adjustment = _credit_field_boundary_yards(event, sampled_yards, st['yl'])
         try:
+            if execution_observer is not None:
+                execution_observer('apply_play', {'event': event, 'play_index': play_index})
             after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome)
         except reducer.UnmodelledOutcome as blocked:
             return halt(blocked.reason)
@@ -376,6 +382,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             # The sampled source outcome says this kick ends the period. Use this simulated state's exact remaining clock.
             runoff = st['clock']
         clock_raw = st['clock'] - runoff
+        if execution_observer is not None:
+            execution_observer('apply_clock', {'play_index': play_index, 'runoff_seconds': runoff})
         clock_after = max(0, clock_raw)
         quarter_change = False
         terminal = play_terminal
@@ -475,6 +483,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         if row.get('pre_event') is not None:  # SLC: participants chosen before the outcome; absent for the S0 control
             play['outcome']['pre_event'] = row['pre_event']
         plays.append(play)
+        if execution_observer is not None:
+            execution_observer('play_recorded', {'play_index': play_index})
         if (quarter_change and kick_outcome is not None
                 and kick_outcome.get('classification_status') == 'period_expired'):
             # A period-ending blocked kick has no observed next possession or field position. Q1/Q3 continue the game,

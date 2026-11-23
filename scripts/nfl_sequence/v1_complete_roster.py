@@ -36,3 +36,24 @@ def require_participants(resolved_team, selected_ids):
         if player_id not in allowed:
             raise ValueError('v1_complete_roster_ineligible_participant:' + str(player_id))
     return allowed
+
+
+def participant_validator(resolved):
+    """Make a per-play check for the existing SLC pre-event participant chooser.
+
+    This covers the player records that chooser returns. Other selection paths,
+    including defense and special teams, still need their own checks.
+    """
+    allowed = {side: eligible_ids(resolved[side]) for side in ('home', 'away')}
+
+    def validate(offense, pre_event):
+        if offense not in ('A', 'B'):
+            raise ValueError('v1_complete_roster_unknown_offense:' + str(offense))
+        side = 'home' if offense == 'A' else 'away'
+        if pre_event is None:
+            return
+        for value in pre_event.values():
+            if isinstance(value, dict) and 'gsis_id' in value and value['gsis_id'] not in allowed[side]:
+                raise ValueError('v1_complete_roster_ineligible_participant:' + str(value['gsis_id']))
+
+    return validate
