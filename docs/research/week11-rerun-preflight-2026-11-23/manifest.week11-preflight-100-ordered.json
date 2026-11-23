@@ -2961,6 +2961,454 @@
    "returncode": 0,
    "status": "completed",
    "valid_full_games": 98
+  },
+  {
+   "elapsed_seconds": 385.7,
+   "game_id": "2026_11_NYJ_LAC",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NYJ_LAC/pbv1.log",
+   "model": "pbv1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NYJ_LAC/pbv1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "NYJ simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0030565, resolved: 00-0030565"
+    ],
+    [
+     "LAC simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036355, resolved: 00-0036355"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 97
+  },
+  {
+   "elapsed_seconds": 383.3,
+   "game_id": "2026_11_NYJ_LAC",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NYJ_LAC/pbv1-off.log",
+   "model": "pbv1-off",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_NYJ_LAC/pbv1-off.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "NYJ simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0030565, resolved: 00-0030565"
+    ],
+    [
+     "LAC simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036355, resolved: 00-0036355"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 97
+  },
+  {
+   "elapsed_seconds": 235.4,
+   "game_id": "2026_11_JAX_NYG",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_JAX_NYG/v1.log",
+   "model": "v1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_JAX_NYG/v1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "JAX simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036971, resolved: 00-0036971"
+    ],
+    [
+     "NYG simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039923, resolved: 00-0039923"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 91
+  },
+  {
+   "elapsed_seconds": 238.1,
+   "game_id": "2026_11_JAX_NYG",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_JAX_NYG/v1.5.log",
+   "model": "v1.5",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_JAX_NYG/v1.5.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "JAX simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036971, resolved: 00-0036971"
+    ],
+    [
+     "NYG simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039923, resolved: 00-0039923"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 89
+  },
+  {
+   "elapsed_seconds": 403.6,
+   "game_id": "2026_11_JAX_NYG",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_JAX_NYG/v2.log",
+   "model": "v2",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_JAX_NYG/v2.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "JAX simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036971, resolved: 00-0036971"
+    ],
+    [
+     "NYG simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039923, resolved: 00-0039923"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 96
+  },
+  {
+   "elapsed_seconds": 524.8,
+   "game_id": "2026_11_JAX_NYG",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_JAX_NYG/v1.6.log",
+   "model": "v1.6",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_JAX_NYG/v1.6.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "JAX simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036971, resolved: 00-0036971"
+    ],
+    [
+     "NYG simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039923, resolved: 00-0039923"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 96
+  },
+  {
+   "elapsed_seconds": 378.6,
+   "game_id": "2026_11_JAX_NYG",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_JAX_NYG/pbv1.log",
+   "model": "pbv1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_JAX_NYG/pbv1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "JAX simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036971, resolved: 00-0036971"
+    ],
+    [
+     "NYG simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039923, resolved: 00-0039923"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 97
+  },
+  {
+   "elapsed_seconds": 376.2,
+   "game_id": "2026_11_JAX_NYG",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_JAX_NYG/pbv1-off.log",
+   "model": "pbv1-off",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_JAX_NYG/pbv1-off.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "JAX simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036971, resolved: 00-0036971"
+    ],
+    [
+     "NYG simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039923, resolved: 00-0039923"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 97
+  },
+  {
+   "elapsed_seconds": 225.4,
+   "game_id": "2026_11_LV_DEN",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_LV_DEN/v1.log",
+   "model": "v1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_LV_DEN/v1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "LV simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0041562, resolved: 00-0041562"
+    ],
+    [
+     "DEN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039732, resolved: 00-0039732"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 94
+  },
+  {
+   "elapsed_seconds": 231.1,
+   "game_id": "2026_11_LV_DEN",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_LV_DEN/v1.5.log",
+   "model": "v1.5",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_LV_DEN/v1.5.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "LV simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0041562, resolved: 00-0041562"
+    ],
+    [
+     "DEN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039732, resolved: 00-0039732"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 95
+  },
+  {
+   "elapsed_seconds": 415.6,
+   "game_id": "2026_11_LV_DEN",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_LV_DEN/v2.log",
+   "model": "v2",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_LV_DEN/v2.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "LV simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0041562, resolved: 00-0041562"
+    ],
+    [
+     "DEN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039732, resolved: 00-0039732"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 97
+  },
+  {
+   "elapsed_seconds": 523.2,
+   "game_id": "2026_11_LV_DEN",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_LV_DEN/v1.6.log",
+   "model": "v1.6",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_LV_DEN/v1.6.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "LV simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0041562, resolved: 00-0041562"
+    ],
+    [
+     "DEN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039732, resolved: 00-0039732"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 98
+  },
+  {
+   "elapsed_seconds": 371.7,
+   "game_id": "2026_11_LV_DEN",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_LV_DEN/pbv1.log",
+   "model": "pbv1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_LV_DEN/pbv1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "LV simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0041562, resolved: 00-0041562"
+    ],
+    [
+     "DEN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039732, resolved: 00-0039732"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 99
+  },
+  {
+   "elapsed_seconds": 377.5,
+   "game_id": "2026_11_LV_DEN",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_LV_DEN/pbv1-off.log",
+   "model": "pbv1-off",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_LV_DEN/pbv1-off.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "LV simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0041562, resolved: 00-0041562"
+    ],
+    [
+     "DEN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039732, resolved: 00-0039732"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 99
   }
  ],
  "runtime": "/root/lp-slc-portable-runtime/scripts/nfl_sequence/simulate_portable_pack.py",
@@ -2968,5 +3416,5 @@
  "seed_start": 300001,
  "seeds_per_game_model": 100,
  "snapshots": "/root/runs/week-11/snapshots/rerun-preflight-2026-11-23",
- "status": "running"
+ "status": "completed_with_failures"
 }
