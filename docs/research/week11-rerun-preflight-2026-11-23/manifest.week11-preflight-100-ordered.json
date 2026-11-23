@@ -1,0 +1,1116 @@
+{
+ "models": [
+  "v1",
+  "v1.5",
+  "v1.6",
+  "v2",
+  "pbv1",
+  "pbv1-off"
+ ],
+ "name": "week11-preflight-100-ordered",
+ "packages": {
+  "pbv1": {
+   "code_commit": "8a1d984229cdc20f5ad076ebd81edc7f1be90c75",
+   "package": "pbv1--season-2026.slcpkg",
+   "sha256": "774366599e23fda6eb2e91c13abd1284083f116af8ef720a2fccdf99b86ac90f"
+  },
+  "pbv1-off": {
+   "code_commit": "8a1d984229cdc20f5ad076ebd81edc7f1be90c75",
+   "package": "pbv1-off--season-2026.slcpkg",
+   "sha256": "48cca8b62f36d2cd142c5b94230c536b19efa9d6b90bff5129241d4005babb4d"
+  },
+  "v1": {
+   "code_commit": "58ef3861e5f3cc4006ab627102e55bd432ab399d",
+   "package": "v1--season-2026.slcpkg",
+   "sha256": "6286d341b21d69ea90c1fdd18c4837821a93bba8a1750f82dbcf9dd7ac0a6f0a"
+  },
+  "v1.5": {
+   "code_commit": "2eab8a89efffad23c00a1d451ac80e856579ac5a",
+   "package": "v1.5-ind-hou-overtime.slcpack",
+   "sha256": "727820b921ce79e4bcb3e168a3586cca16513715da87d3380e95a298cd7a17c8"
+  },
+  "v1.6": {
+   "code_commit": "1bb3bd50c4df5896e4d693245e48329c20c63254",
+   "package": "v1.6--season-2026.slcpkg",
+   "sha256": "6cf1e83677dc325632c49b2659de3ab04c856fc63d44b19fccc26a6f674f03a2"
+  },
+  "v2": {
+   "code_commit": "8a1d984229cdc20f5ad076ebd81edc7f1be90c75",
+   "package": "v2--season-2026-runtimefix1.slcpkg",
+   "sha256": "97c4a01e9a60c3f6e31c1701d4c954fddd5d6e9938c193bd1aba9218c7d7f5c3"
+  }
+ },
+ "preflight": {
+  "2026_11_ARI_KC": {
+   "file": "/root/runs/week-11/snapshots/rerun-preflight-2026-11-23/2026_11_ARI_KC.json",
+   "file_sha256": "9ad03610067bec951ed50061fcd5014ca48358ae6a69d5d46fb564b4070f1fb6",
+   "roster_resolution_hash": "bfdef92616baefa67324cbfd4a2fddcd736ffe1f8927932579c4eee89f6629c3",
+   "rows": [
+    [
+     "ARI roster membership from the weekly roster",
+     "PASS",
+     "87 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "ARI depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 1.3h before the cutoff"
+    ],
+    [
+     "ARI injury report applies to this game",
+     "PASS",
+     "213 statuses, 0 without a publish time, 0 after the cutoff, 117 dropped as from a previous game"
+    ],
+    [
+     "ARI resolved eligible QB1",
+     "PASS",
+     "Josh Johnson (00-0026300) promoted over Carson Beck [injury_out]"
+    ],
+    [
+     "ARI unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "KC roster membership from the weekly roster",
+     "PASS",
+     "82 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "KC depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 1.3h before the cutoff"
+    ],
+    [
+     "KC injury report applies to this game",
+     "PASS",
+     "213 statuses, 0 without a publish time, 0 after the cutoff, 117 dropped as from a previous game"
+    ],
+    [
+     "KC resolved eligible QB1",
+     "PASS",
+     "Patrick Mahomes (00-0033873)"
+    ],
+    [
+     "KC unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "conflicting player-team memberships",
+     "PASS",
+     "0"
+    ],
+    [
+     "frozen roster resolution matches",
+     "PASS",
+     "bfdef92616ba"
+    ]
+   ]
+  },
+  "2026_11_BAL_CAR": {
+   "file": "/root/runs/week-11/snapshots/rerun-preflight-2026-11-23/2026_11_BAL_CAR.json",
+   "file_sha256": "40ecb8907d59d51cf53fbfa2eb92ce4beabbe1cb4e59ac29498756838457555d",
+   "roster_resolution_hash": "86c3ac3bffce3fb287aa43f693899a7d0ba165055d983646cd6203f8f3d020aa",
+   "rows": [
+    [
+     "BAL roster membership from the weekly roster",
+     "PASS",
+     "84 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "BAL depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 1.3h before the cutoff"
+    ],
+    [
+     "BAL injury report applies to this game",
+     "PASS",
+     "213 statuses, 0 without a publish time, 0 after the cutoff, 117 dropped as from a previous game"
+    ],
+    [
+     "BAL resolved eligible QB1",
+     "PASS",
+     "Jacoby Brissett (00-0033119)"
+    ],
+    [
+     "BAL unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "CAR roster membership from the weekly roster",
+     "PASS",
+     "86 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "CAR depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 1.3h before the cutoff"
+    ],
+    [
+     "CAR injury report applies to this game",
+     "PASS",
+     "213 statuses, 0 without a publish time, 0 after the cutoff, 117 dropped as from a previous game"
+    ],
+    [
+     "CAR resolved eligible QB1",
+     "PASS",
+     "Bryce Young (00-0039150)"
+    ],
+    [
+     "CAR unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "conflicting player-team memberships",
+     "PASS",
+     "0"
+    ],
+    [
+     "frozen roster resolution matches",
+     "PASS",
+     "86c3ac3bffce"
+    ]
+   ]
+  },
+  "2026_11_CIN_WAS": {
+   "file": "/root/runs/week-11/snapshots/rerun-preflight-2026-11-23/2026_11_CIN_WAS.json",
+   "file_sha256": "5503704f87b106c6c8994d09737e38d3fd3fe5bdbf529caf902a35e6b09d4d28",
+   "roster_resolution_hash": "0943c317b7e7a07868a900a35013f4d804b4a00ae6976c86e1323db558ef408c",
+   "rows": [
+    [
+     "CIN roster membership from the weekly roster",
+     "PASS",
+     "75 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "CIN depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 8.5h before the cutoff"
+    ],
+    [
+     "CIN injury report applies to this game",
+     "PASS",
+     "137 statuses, 0 without a publish time, 0 after the cutoff, 220 dropped as from a previous game"
+    ],
+    [
+     "CIN resolved eligible QB1",
+     "PASS",
+     "Joe Burrow (00-0036442)"
+    ],
+    [
+     "CIN unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "WSH roster membership from the weekly roster",
+     "PASS",
+     "83 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "WSH depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 8.5h before the cutoff"
+    ],
+    [
+     "WSH injury report applies to this game",
+     "PASS",
+     "137 statuses, 0 without a publish time, 0 after the cutoff, 220 dropped as from a previous game"
+    ],
+    [
+     "WSH resolved eligible QB1",
+     "PASS",
+     "Jayden Daniels (00-0039910)"
+    ],
+    [
+     "WSH unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "conflicting player-team memberships",
+     "PASS",
+     "0"
+    ],
+    [
+     "frozen roster resolution matches",
+     "PASS",
+     "0943c317b7e7"
+    ]
+   ]
+  },
+  "2026_11_IND_HOU": {
+   "file": "/root/runs/week-11/snapshots/rerun-preflight-2026-11-23/2026_11_IND_HOU.json",
+   "file_sha256": "839518b0011a79fc189a1b2e598e64ce222a14042500a5d2a666a7383d1517ee",
+   "roster_resolution_hash": "671623df51741533b5f13bc7366edbdd7aae53cad65f19c0b2869298c4937bfd",
+   "rows": [
+    [
+     "IND roster membership from the weekly roster",
+     "PASS",
+     "79 players, week 11; 1 depth-chart players not on it: Kenneth Harris"
+    ],
+    [
+     "IND depth chart current",
+     "PASS",
+     "2026-11-19T16:30:49Z, 7.2h before the cutoff"
+    ],
+    [
+     "IND injury report applies to this game",
+     "PASS",
+     "196 statuses, 0 without a publish time, 0 after the cutoff, 146 dropped as from a previous game"
+    ],
+    [
+     "IND resolved eligible QB1",
+     "PASS",
+     "Daniel Jones (00-0035710)"
+    ],
+    [
+     "IND unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "HOU roster membership from the weekly roster",
+     "PASS",
+     "85 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "HOU depth chart current",
+     "PASS",
+     "2026-11-19T16:30:49Z, 7.2h before the cutoff"
+    ],
+    [
+     "HOU injury report applies to this game",
+     "PASS",
+     "196 statuses, 0 without a publish time, 0 after the cutoff, 146 dropped as from a previous game"
+    ],
+    [
+     "HOU resolved eligible QB1",
+     "PASS",
+     "C.J. Stroud (00-0039163)"
+    ],
+    [
+     "HOU unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "conflicting player-team memberships",
+     "PASS",
+     "0"
+    ],
+    [
+     "frozen roster resolution matches",
+     "PASS",
+     "671623df5174"
+    ]
+   ]
+  },
+  "2026_11_JAX_NYG": {
+   "file": "/root/runs/week-11/snapshots/rerun-preflight-2026-11-23/2026_11_JAX_NYG.json",
+   "file_sha256": "e790d03fe2c723d166e34fae69297e3611808788bcf0b289715f719a2733f4a9",
+   "roster_resolution_hash": "1f1a40393119a4bbc2eaf4a3e7054b5357072634a9114b641b985e3badd22382",
+   "rows": [
+    [
+     "JAX roster membership from the weekly roster",
+     "PASS",
+     "85 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "JAX depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 4.7h before the cutoff"
+    ],
+    [
+     "JAX injury report applies to this game",
+     "PASS",
+     "156 statuses, 0 without a publish time, 0 after the cutoff, 191 dropped as from a previous game"
+    ],
+    [
+     "JAX resolved eligible QB1",
+     "PASS",
+     "Trevor Lawrence (00-0036971)"
+    ],
+    [
+     "JAX unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "NYG roster membership from the weekly roster",
+     "PASS",
+     "85 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "NYG depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 4.7h before the cutoff"
+    ],
+    [
+     "NYG injury report applies to this game",
+     "PASS",
+     "156 statuses, 0 without a publish time, 0 after the cutoff, 191 dropped as from a previous game"
+    ],
+    [
+     "NYG resolved eligible QB1",
+     "PASS",
+     "J.J. McCarthy (00-0039923)"
+    ],
+    [
+     "NYG unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "conflicting player-team memberships",
+     "PASS",
+     "0"
+    ],
+    [
+     "frozen roster resolution matches",
+     "PASS",
+     "1f1a40393119"
+    ]
+   ]
+  },
+  "2026_11_LV_DEN": {
+   "file": "/root/runs/week-11/snapshots/rerun-preflight-2026-11-23/2026_11_LV_DEN.json",
+   "file_sha256": "4704e1bfb483331bd9d23dec545bbddb29592ee209937e05e75015857199bbdc",
+   "roster_resolution_hash": "6a7988357ea113ebd2e05796c160110dfc7289987c2bfd76c60b12613cf3ce10",
+   "rows": [
+    [
+     "LV roster membership from the weekly roster",
+     "PASS",
+     "76 players, week 11; 1 depth-chart players not on it: Dalton Wagner"
+    ],
+    [
+     "LV depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 4.7h before the cutoff"
+    ],
+    [
+     "LV injury report applies to this game",
+     "PASS",
+     "156 statuses, 0 without a publish time, 0 after the cutoff, 191 dropped as from a previous game"
+    ],
+    [
+     "LV resolved eligible QB1",
+     "PASS",
+     "Fernando Mendoza (00-0041562)"
+    ],
+    [
+     "LV unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "DEN roster membership from the weekly roster",
+     "PASS",
+     "79 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "DEN depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 4.7h before the cutoff"
+    ],
+    [
+     "DEN injury report applies to this game",
+     "PASS",
+     "156 statuses, 0 without a publish time, 0 after the cutoff, 191 dropped as from a previous game"
+    ],
+    [
+     "DEN resolved eligible QB1",
+     "PASS",
+     "Bo Nix (00-0039732)"
+    ],
+    [
+     "DEN unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "conflicting player-team memberships",
+     "PASS",
+     "0"
+    ],
+    [
+     "frozen roster resolution matches",
+     "PASS",
+     "6a7988357ea1"
+    ]
+   ]
+  },
+  "2026_11_MIA_BUF": {
+   "file": "/root/runs/week-11/snapshots/rerun-preflight-2026-11-23/2026_11_MIA_BUF.json",
+   "file_sha256": "22e9a69f7f6277cabfdcaa390faea0abf95356b769b10c20f74296b577d9359f",
+   "roster_resolution_hash": "6d6fdf0fbe2457b9b985ca8d27effb48f32984cf9fa6183cffe15eeda5b3ad7e",
+   "rows": [
+    [
+     "MIA roster membership from the weekly roster",
+     "PASS",
+     "81 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "MIA depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 1.3h before the cutoff"
+    ],
+    [
+     "MIA injury report applies to this game",
+     "PASS",
+     "213 statuses, 0 without a publish time, 0 after the cutoff, 117 dropped as from a previous game"
+    ],
+    [
+     "MIA resolved eligible QB1",
+     "PASS",
+     "Kyle McCord (00-0040014)"
+    ],
+    [
+     "MIA unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "BUF roster membership from the weekly roster",
+     "PASS",
+     "75 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "BUF depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 1.3h before the cutoff"
+    ],
+    [
+     "BUF injury report applies to this game",
+     "PASS",
+     "213 statuses, 0 without a publish time, 0 after the cutoff, 117 dropped as from a previous game"
+    ],
+    [
+     "BUF resolved eligible QB1",
+     "PASS",
+     "Josh Allen (00-0034857)"
+    ],
+    [
+     "BUF unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "conflicting player-team memberships",
+     "PASS",
+     "0"
+    ],
+    [
+     "frozen roster resolution matches",
+     "PASS",
+     "6d6fdf0fbe24"
+    ]
+   ]
+  },
+  "2026_11_MIN_SF": {
+   "file": "/root/runs/week-11/snapshots/rerun-preflight-2026-11-23/2026_11_MIN_SF.json",
+   "file_sha256": "a603cad2355a6b3d80aa55615361e261d617d5f7bef3724bde31037ce547e2c8",
+   "roster_resolution_hash": "ef041e89f1d345da35a2faf1b52880683da6fb414167f80b6aaa35cf2af56ef9",
+   "rows": [
+    [
+     "MIN roster membership from the weekly roster",
+     "PASS",
+     "80 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "MIN depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 8.6h before the cutoff"
+    ],
+    [
+     "MIN injury report applies to this game",
+     "PASS",
+     "137 statuses, 0 without a publish time, 0 after the cutoff, 219 dropped as from a previous game"
+    ],
+    [
+     "MIN resolved eligible QB1",
+     "PASS",
+     "Kirk Cousins (00-0029604)"
+    ],
+    [
+     "MIN unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "SF roster membership from the weekly roster",
+     "PASS",
+     "87 players, week 11; 1 depth-chart players not on it: James Thompson Jr."
+    ],
+    [
+     "SF depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 8.6h before the cutoff"
+    ],
+    [
+     "SF injury report applies to this game",
+     "PASS",
+     "137 statuses, 0 without a publish time, 0 after the cutoff, 219 dropped as from a previous game"
+    ],
+    [
+     "SF resolved eligible QB1",
+     "PASS",
+     "Brock Purdy (00-0037834)"
+    ],
+    [
+     "SF unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "conflicting player-team memberships",
+     "PASS",
+     "0"
+    ],
+    [
+     "frozen roster resolution matches",
+     "PASS",
+     "ef041e89f1d3"
+    ]
+   ]
+  },
+  "2026_11_NO_CHI": {
+   "file": "/root/runs/week-11/snapshots/rerun-preflight-2026-11-23/2026_11_NO_CHI.json",
+   "file_sha256": "7742f8e65f19caee20f1b184ef7c31af7f276caba141e66c432fe382226edc0d",
+   "roster_resolution_hash": "6e6167cc80c4953338d4b0d5345f351dcf3c0e5c2397c9897aa4caf484ef087c",
+   "rows": [
+    [
+     "NO roster membership from the weekly roster",
+     "PASS",
+     "80 players, week 11; 1 depth-chart players not on it: Myles Cole"
+    ],
+    [
+     "NO depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 1.3h before the cutoff"
+    ],
+    [
+     "NO injury report applies to this game",
+     "PASS",
+     "213 statuses, 0 without a publish time, 0 after the cutoff, 117 dropped as from a previous game"
+    ],
+    [
+     "NO resolved eligible QB1",
+     "PASS",
+     "Tyler Shough (00-0040743)"
+    ],
+    [
+     "NO unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "CHI roster membership from the weekly roster",
+     "PASS",
+     "82 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "CHI depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 1.3h before the cutoff"
+    ],
+    [
+     "CHI injury report applies to this game",
+     "PASS",
+     "213 statuses, 0 without a publish time, 0 after the cutoff, 117 dropped as from a previous game"
+    ],
+    [
+     "CHI resolved eligible QB1",
+     "PASS",
+     "Caleb Williams (00-0039918)"
+    ],
+    [
+     "CHI unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "conflicting player-team memberships",
+     "PASS",
+     "0"
+    ],
+    [
+     "frozen roster resolution matches",
+     "PASS",
+     "6e6167cc80c4"
+    ]
+   ]
+  },
+  "2026_11_NYJ_LAC": {
+   "file": "/root/runs/week-11/snapshots/rerun-preflight-2026-11-23/2026_11_NYJ_LAC.json",
+   "file_sha256": "d85d62e29e09df5aa55a27e8efa75cac20849fddb7bae2459959c7b89674eadc",
+   "roster_resolution_hash": "d135e76b3a4364df83ec79c1056c59802448596abae14fa93e10f9256667b885",
+   "rows": [
+    [
+     "NYJ roster membership from the weekly roster",
+     "PASS",
+     "81 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "NYJ depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 4.4h before the cutoff"
+    ],
+    [
+     "NYJ injury report applies to this game",
+     "PASS",
+     "154 statuses, 0 without a publish time, 0 after the cutoff, 192 dropped as from a previous game"
+    ],
+    [
+     "NYJ resolved eligible QB1",
+     "PASS",
+     "Geno Smith (00-0030565)"
+    ],
+    [
+     "NYJ unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "LAC roster membership from the weekly roster",
+     "PASS",
+     "80 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "LAC depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 4.4h before the cutoff"
+    ],
+    [
+     "LAC injury report applies to this game",
+     "PASS",
+     "154 statuses, 0 without a publish time, 0 after the cutoff, 192 dropped as from a previous game"
+    ],
+    [
+     "LAC resolved eligible QB1",
+     "PASS",
+     "Justin Herbert (00-0036355)"
+    ],
+    [
+     "LAC unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "conflicting player-team memberships",
+     "PASS",
+     "0"
+    ],
+    [
+     "frozen roster resolution matches",
+     "PASS",
+     "d135e76b3a43"
+    ]
+   ]
+  },
+  "2026_11_PIT_PHI": {
+   "file": "/root/runs/week-11/snapshots/rerun-preflight-2026-11-23/2026_11_PIT_PHI.json",
+   "file_sha256": "ab48d01b84403b398b6eae9c35d60f859d47835a80f7e3cef9106e00e80fb910",
+   "roster_resolution_hash": "718486a489a18578f184a51a7a6001657c0afd0d4d4cda338f6e87503b17f124",
+   "rows": [
+    [
+     "PIT roster membership from the weekly roster",
+     "PASS",
+     "80 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "PIT depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 1.3h before the cutoff"
+    ],
+    [
+     "PIT injury report applies to this game",
+     "PASS",
+     "213 statuses, 0 without a publish time, 0 after the cutoff, 117 dropped as from a previous game"
+    ],
+    [
+     "PIT resolved eligible QB1",
+     "PASS",
+     "Aaron Rodgers (00-0023459)"
+    ],
+    [
+     "PIT unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "PHI roster membership from the weekly roster",
+     "PASS",
+     "78 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "PHI depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 1.3h before the cutoff"
+    ],
+    [
+     "PHI injury report applies to this game",
+     "PASS",
+     "213 statuses, 0 without a publish time, 0 after the cutoff, 117 dropped as from a previous game"
+    ],
+    [
+     "PHI resolved eligible QB1",
+     "PASS",
+     "Joe Milton III (00-0039398)"
+    ],
+    [
+     "PHI unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "conflicting player-team memberships",
+     "PASS",
+     "0"
+    ],
+    [
+     "frozen roster resolution matches",
+     "PASS",
+     "718486a489a1"
+    ]
+   ]
+  },
+  "2026_11_TB_DET": {
+   "file": "/root/runs/week-11/snapshots/rerun-preflight-2026-11-23/2026_11_TB_DET.json",
+   "file_sha256": "2816cf0de43ba678e959c7a318d62f6873ebed8453931e10fd43ceea452b95bd",
+   "roster_resolution_hash": "43b8a710699e7432753f18abf6d4465265048e0447edff76052d58ae2ff0cd1a",
+   "rows": [
+    [
+     "TB roster membership from the weekly roster",
+     "PASS",
+     "74 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "TB depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 1.3h before the cutoff"
+    ],
+    [
+     "TB injury report applies to this game",
+     "PASS",
+     "213 statuses, 0 without a publish time, 0 after the cutoff, 117 dropped as from a previous game"
+    ],
+    [
+     "TB resolved eligible QB1",
+     "PASS",
+     "Baker Mayfield (00-0034855)"
+    ],
+    [
+     "TB unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "DET roster membership from the weekly roster",
+     "PASS",
+     "86 players, week 11; 1 depth-chart players not on it: Blake Miller"
+    ],
+    [
+     "DET depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 1.3h before the cutoff"
+    ],
+    [
+     "DET injury report applies to this game",
+     "PASS",
+     "213 statuses, 0 without a publish time, 0 after the cutoff, 117 dropped as from a previous game"
+    ],
+    [
+     "DET resolved eligible QB1",
+     "PASS",
+     "Jared Goff (00-0033106)"
+    ],
+    [
+     "DET unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "conflicting player-team memberships",
+     "PASS",
+     "0"
+    ],
+    [
+     "frozen roster resolution matches",
+     "PASS",
+     "43b8a710699e"
+    ]
+   ]
+  },
+  "2026_11_TEN_DAL": {
+   "file": "/root/runs/week-11/snapshots/rerun-preflight-2026-11-23/2026_11_TEN_DAL.json",
+   "file_sha256": "49b1eeb7fbfb1de6451abb9d28f917e8063a521e0105804173935fd5b1f6bda2",
+   "roster_resolution_hash": "312c61cf1f5ea7194516a8e8d32e2efc213649f6c01fd1f6331a02ff871afce3",
+   "rows": [
+    [
+     "TEN roster membership from the weekly roster",
+     "PASS",
+     "81 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "TEN depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 1.3h before the cutoff"
+    ],
+    [
+     "TEN injury report applies to this game",
+     "PASS",
+     "213 statuses, 0 without a publish time, 0 after the cutoff, 117 dropped as from a previous game"
+    ],
+    [
+     "TEN resolved eligible QB1",
+     "PASS",
+     "Cam Ward (00-0040676)"
+    ],
+    [
+     "TEN unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "DAL roster membership from the weekly roster",
+     "PASS",
+     "79 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "DAL depth chart current",
+     "PASS",
+     "2026-11-22T15:12:52Z, 1.3h before the cutoff"
+    ],
+    [
+     "DAL injury report applies to this game",
+     "PASS",
+     "213 statuses, 0 without a publish time, 0 after the cutoff, 117 dropped as from a previous game"
+    ],
+    [
+     "DAL resolved eligible QB1",
+     "PASS",
+     "Dak Prescott (00-0033077)"
+    ],
+    [
+     "DAL unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "conflicting player-team memberships",
+     "PASS",
+     "0"
+    ],
+    [
+     "frozen roster resolution matches",
+     "PASS",
+     "312c61cf1f5e"
+    ]
+   ]
+  }
+ },
+ "runs": [
+  {
+   "elapsed_seconds": 227.1,
+   "game_id": "2026_11_MIN_SF",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIN_SF/v1.log",
+   "model": "v1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIN_SF/v1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "MIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0029604, resolved: 00-0029604"
+    ],
+    [
+     "SF simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0037834, resolved: 00-0037834"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 93
+  },
+  {
+   "elapsed_seconds": 236.3,
+   "game_id": "2026_11_MIN_SF",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIN_SF/v1.5.log",
+   "model": "v1.5",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIN_SF/v1.5.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "MIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0029604, resolved: 00-0029604"
+    ],
+    [
+     "SF simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0037834, resolved: 00-0037834"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 91
+  },
+  {
+   "elapsed_seconds": 426.9,
+   "game_id": "2026_11_MIN_SF",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIN_SF/v2.log",
+   "model": "v2",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIN_SF/v2.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "MIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0029604, resolved: 00-0029604"
+    ],
+    [
+     "SF simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0037834, resolved: 00-0037834"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 97
+  },
+  {
+   "elapsed_seconds": 531.1,
+   "game_id": "2026_11_MIN_SF",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIN_SF/v1.6.log",
+   "model": "v1.6",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIN_SF/v1.6.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "99 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "MIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0029604, resolved: 00-0029604"
+    ],
+    [
+     "SF simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0037834, resolved: 00-0037834"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 99
+  },
+  {
+   "elapsed_seconds": 383.6,
+   "game_id": "2026_11_MIN_SF",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIN_SF/pbv1.log",
+   "model": "pbv1",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIN_SF/pbv1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "MIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0029604, resolved: 00-0029604"
+    ],
+    [
+     "SF simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0037834, resolved: 00-0037834"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 96
+  },
+  {
+   "elapsed_seconds": 373.7,
+   "game_id": "2026_11_MIN_SF",
+   "log": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIN_SF/pbv1-off.log",
+   "model": "pbv1-off",
+   "output": "/root/runs/week-11/games/rerun-100-seed-preflight-2026-11-23/2026_11_MIN_SF/pbv1-off.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "MIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0029604, resolved: 00-0029604"
+    ],
+    [
+     "SF simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0037834, resolved: 00-0037834"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 96
+  }
+ ],
+ "runtime": "/root/lp-slc-portable-runtime/scripts/nfl_sequence/simulate_portable_pack.py",
+ "schema": "lp-slc-portable-batch-2",
+ "seed_start": 300001,
+ "seeds_per_game_model": 100,
+ "snapshots": "/root/runs/week-11/snapshots/rerun-preflight-2026-11-23",
+ "status": "running"
+}

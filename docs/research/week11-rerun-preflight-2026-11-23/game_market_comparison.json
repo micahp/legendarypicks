@@ -1,0 +1,168 @@
+{
+ "games_csv_sha256": "deb5cae20e8c68d2e874bc65b640cf65bc594daa9e49fa82cf69d9a76903a3e3",
+ "market_lines": {
+  "2026_11_MIN_SF": {
+   "away_moneyline": 159.0,
+   "home_moneyline": -190.0,
+   "home_win_no_vig": 0.6292,
+   "kickoff_et": "2026-11-22 20:20",
+   "spread_line": 3.5,
+   "total_line": 46.5
+  }
+ },
+ "missing_runs": [],
+ "rows": [
+  {
+   "game_id": "2026_11_MIN_SF",
+   "home_cover": 0.3579,
+   "home_win": 0.4632,
+   "home_win_minus_market": -0.166,
+   "margin_minus_spread": -3.1,
+   "mean_margin": 0.4,
+   "mean_total": 50.67,
+   "model": "v1",
+   "over": 0.6211,
+   "pack_sha256": "6286d341b21d69ea90c1fdd18c4837821a93bba8a1750f82dbcf9dd7ac0a6f0a",
+   "requested_games": 100,
+   "source_commit": "58ef3861e5f3cc4006ab627102e55bd432ab399d",
+   "total_minus_line": 4.17,
+   "valid_full_games": 95
+  },
+  {
+   "game_id": "2026_11_MIN_SF",
+   "home_cover": 0.4343,
+   "home_win": 0.5354,
+   "home_win_minus_market": -0.0938,
+   "margin_minus_spread": -3.12,
+   "mean_margin": 0.38,
+   "mean_total": 52.32,
+   "model": "v1.5",
+   "over": 0.7172,
+   "pack_sha256": "727820b921ce79e4bcb3e168a3586cca16513715da87d3380e95a298cd7a17c8",
+   "requested_games": 100,
+   "source_commit": "2eab8a89efffad23c00a1d451ac80e856579ac5a",
+   "total_minus_line": 5.82,
+   "valid_full_games": 99
+  },
+  {
+   "game_id": "2026_11_MIN_SF",
+   "home_cover": 0.5859,
+   "home_win": 0.6768,
+   "home_win_minus_market": 0.0476,
+   "margin_minus_spread": 1.97,
+   "mean_margin": 5.47,
+   "mean_total": 45.82,
+   "model": "v1.6",
+   "over": 0.4848,
+   "pack_sha256": "6cf1e83677dc325632c49b2659de3ab04c856fc63d44b19fccc26a6f674f03a2",
+   "requested_games": 100,
+   "source_commit": "1bb3bd50c4df5896e4d693245e48329c20c63254",
+   "total_minus_line": -0.68,
+   "valid_full_games": 99
+  },
+  {
+   "game_id": "2026_11_MIN_SF",
+   "home_cover": 0.55,
+   "home_win": 0.6,
+   "home_win_minus_market": -0.0292,
+   "margin_minus_spread": -0.21,
+   "mean_margin": 3.29,
+   "mean_total": 45.35,
+   "model": "v2",
+   "over": 0.51,
+   "pack_sha256": "97c4a01e9a60c3f6e31c1701d4c954fddd5d6e9938c193bd1aba9218c7d7f5c3",
+   "requested_games": 100,
+   "source_commit": "8a1d984229cdc20f5ad076ebd81edc7f1be90c75",
+   "total_minus_line": -1.15,
+   "valid_full_games": 100
+  },
+  {
+   "game_id": "2026_11_MIN_SF",
+   "home_cover": 0.44,
+   "home_win": 0.5,
+   "home_win_minus_market": -0.1292,
+   "margin_minus_spread": -3.02,
+   "mean_margin": 0.48,
+   "mean_total": 48.96,
+   "model": "pbv1",
+   "over": 0.56,
+   "pack_sha256": "774366599e23fda6eb2e91c13abd1284083f116af8ef720a2fccdf99b86ac90f",
+   "requested_games": 100,
+   "source_commit": "8a1d984229cdc20f5ad076ebd81edc7f1be90c75",
+   "total_minus_line": 2.46,
+   "valid_full_games": 100
+  },
+  {
+   "game_id": "2026_11_MIN_SF",
+   "home_cover": 0.44,
+   "home_win": 0.5,
+   "home_win_minus_market": -0.1292,
+   "margin_minus_spread": -3.02,
+   "mean_margin": 0.48,
+   "mean_total": 48.96,
+   "model": "pbv1-off",
+   "over": 0.56,
+   "pack_sha256": "48cca8b62f36d2cd142c5b94230c536b19efa9d6b90bff5129241d4005babb4d",
+   "requested_games": 100,
+   "source_commit": "8a1d984229cdc20f5ad076ebd81edc7f1be90c75",
+   "total_minus_line": 2.46,
+   "valid_full_games": 100
+  }
+ ],
+ "summary_by_model": {
+  "pbv1": {
+   "games": 1,
+   "mean_abs_home_win_minus_market": 0.1292,
+   "mean_abs_margin_minus_spread": 3.02,
+   "mean_abs_total_minus_line": 2.46,
+   "mean_margin_minus_spread": -3.02,
+   "mean_total_minus_line": 2.46,
+   "mean_valid_full_games": 100.0
+  },
+  "pbv1-off": {
+   "games": 1,
+   "mean_abs_home_win_minus_market": 0.1292,
+   "mean_abs_margin_minus_spread": 3.02,
+   "mean_abs_total_minus_line": 2.46,
+   "mean_margin_minus_spread": -3.02,
+   "mean_total_minus_line": 2.46,
+   "mean_valid_full_games": 100.0
+  },
+  "v1": {
+   "games": 1,
+   "mean_abs_home_win_minus_market": 0.166,
+   "mean_abs_margin_minus_spread": 3.1,
+   "mean_abs_total_minus_line": 4.17,
+   "mean_margin_minus_spread": -3.1,
+   "mean_total_minus_line": 4.17,
+   "mean_valid_full_games": 95.0
+  },
+  "v1.5": {
+   "games": 1,
+   "mean_abs_home_win_minus_market": 0.0938,
+   "mean_abs_margin_minus_spread": 3.12,
+   "mean_abs_total_minus_line": 5.82,
+   "mean_margin_minus_spread": -3.12,
+   "mean_total_minus_line": 5.82,
+   "mean_valid_full_games": 99.0
+  },
+  "v1.6": {
+   "games": 1,
+   "mean_abs_home_win_minus_market": 0.0476,
+   "mean_abs_margin_minus_spread": 1.97,
+   "mean_abs_total_minus_line": 0.68,
+   "mean_margin_minus_spread": 1.97,
+   "mean_total_minus_line": -0.68,
+   "mean_valid_full_games": 99.0
+  },
+  "v2": {
+   "games": 1,
+   "mean_abs_home_win_minus_market": 0.0292,
+   "mean_abs_margin_minus_spread": 0.21,
+   "mean_abs_total_minus_line": 1.15,
+   "mean_margin_minus_spread": -0.21,
+   "mean_total_minus_line": -1.15,
+   "mean_valid_full_games": 100.0
+  }
+ }
+}
