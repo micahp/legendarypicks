@@ -184,6 +184,17 @@ class Exclusions(unittest.TestCase):
         rows, _ = rp.check(snap)
         self.assertEqual(result(rows, 'ARI injury report applies to this game')[1], 'PASS')
 
+    def test_a_snapshot_built_without_exclusions_fails_the_batch_check(self):
+        # 2026-11-23 CIN at WAS: built before apply_exclusions, same resolution hash, McLaurin (RES) got targets
+        snap = snapshot({BECK: 'Out'})
+        set_status(snap, 'away', 'ARI-WR2', 'RES')
+        resolved = rp.resolve(snap)
+        name, status, detail = rp.exclusions_applied(snap, resolved)
+        self.assertEqual(status, 'FAIL')
+        self.assertIn('1 excluded', detail)
+        rp.apply_exclusions(snap, resolved)
+        self.assertEqual(rp.exclusions_applied(snap, resolved)[1], 'PASS')
+
 
 class EngineSelection(unittest.TestCase):
     def test_the_engine_never_picks_an_out_qb1_as_passer(self):
