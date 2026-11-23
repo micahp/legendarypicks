@@ -20,7 +20,7 @@ def _timestamp(value):
     return parsed
 
 
-def validate_lineups(offense, defense, resolved, as_of):
+def validate_lineups(offense, defense, resolved, as_of, *, allow_synthetic=False, rating_verifier=None):
     cutoff = _timestamp(as_of)
     allowed = {side: v1_complete_roster.eligible_ids(resolved[side]) for side in ('offense', 'defense')}
     all_ids = []
@@ -38,6 +38,15 @@ def validate_lineups(offense, defense, resolved, as_of):
             if p.get('position') not in positions.get(pid, set()) or p.get('assignment') not in assignments:
                 raise ValueError('live_field_missing_assignment:' + pid)
             rating = p.get('speed_rating') or {}
+            kind = rating.get('evidence_type')
+            if kind == 'synthetic':
+                if not allow_synthetic:
+                    raise ValueError('live_field_synthetic_rating_not_allowed:' + pid)
+            elif kind in ('observed', 'estimated'):
+                if rating_verifier is None or rating_verifier(pid, rating, as_of) is not True:
+                    raise ValueError('live_field_rating_not_verified:' + pid)
+            else:
+                raise ValueError('live_field_rating_unsupported:' + pid)
             sha = rating.get('source_sha256', '')
             if (not rating.get('source') or not isinstance(sha, str) or not re.fullmatch(r'[a-f0-9]{64}', sha)
                     or _timestamp(rating.get('observed_at')) > cutoff):
@@ -84,9 +93,9 @@ def observations(offense, defense, *, times):
 
 
 def dropback(state, *, offense, defense, resolved, as_of, formation, call, times, qb_policy, throw=None, catch=None,
-             scramble=None):
+             scramble=None, allow_synthetic=False, rating_verifier=None):
     """Run one named dropback from validated personnel through the whistle reducer."""
-    validate_lineups(offense, defense, resolved, as_of)
+    validate_lineups(offense, defense, resolved, as_of, allow_synthetic=allow_synthetic, rating_verifier=rating_verifier)
     if not isinstance(formation, str) or not formation.strip():
         raise ValueError('live_field_formation_required')
     if call != 'dropback':

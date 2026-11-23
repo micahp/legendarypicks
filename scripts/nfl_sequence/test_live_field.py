@@ -8,7 +8,7 @@ import live_field
 
 
 def fixture():
-    rating = {'source': 'synthetic-test-only', 'source_sha256': 'a' * 64,
+    rating = {'source': 'synthetic-test-only', 'source_sha256': 'a' * 64, 'evidence_type': 'synthetic',
               'observed_at': '2026-11-20T00:00:00Z', 'max_yards_per_second': 2.0}
     offense, defense, resolved = [], [], {}
     for side, lineup in (('offense', offense), ('defense', defense)):
@@ -40,7 +40,7 @@ def test_complete_dropback_from_roster_to_reducer_without_historical_row():
     state = {'quarter': 1, 'clock': 600, 'offense': 'A', 'defense': 'B', 'down': 1, 'togo': 10, 'yl': 50}
     result = live_field.dropback(state, offense=offense, defense=defense, resolved=resolved,
                                  as_of='2026-11-22T00:00:00Z', formation='fixture-formation', call='dropback', times=[0, 1],
-                                 qb_policy=qb_policy, throw=throw, catch=lambda *_: True)
+                                 qb_policy=qb_policy, throw=throw, catch=lambda *_: True, allow_synthetic=True)
     assert seen == [(0, -1), (1, 0)]
     assert result['play']['event_type'] == 'pass_complete'
     assert result['state_at_whistle']['yl'] == 46
@@ -49,7 +49,7 @@ def test_complete_dropback_from_roster_to_reducer_without_historical_row():
     assert 'sampled_from' not in result['play']['outcome']
     replay = live_field.dropback(state, offense=offense, defense=defense, resolved=resolved,
                                  as_of='2026-11-22T00:00:00Z', formation='fixture-formation', call='dropback',
-                                 times=[0, 1], qb_policy=qb_policy, throw=throw, catch=lambda *_: True)
+                                 times=[0, 1], qb_policy=qb_policy, throw=throw, catch=lambda *_: True, allow_synthetic=True)
     assert replay == result
 
 
@@ -58,7 +58,16 @@ def test_lineup_rejects_ineligible_players_and_post_cutoff_ratings():
     invalid = copy.deepcopy(resolved)
     invalid['offense']['players'][0]['official_eligible'] = False
     with pytest.raises(ValueError, match='live_field_ineligible_player'):
-        live_field.validate_lineups(offense, defense, invalid, '2026-11-22T00:00:00Z')
+        live_field.validate_lineups(offense, defense, invalid, '2026-11-22T00:00:00Z', allow_synthetic=True)
     offense[0]['speed_rating']['observed_at'] = '2026-11-23T00:00:00Z'
     with pytest.raises(ValueError, match='live_field_invalid_rating_provenance'):
+        live_field.validate_lineups(offense, defense, resolved, '2026-11-22T00:00:00Z', allow_synthetic=True)
+
+
+def test_synthetic_and_unverified_ratings_are_not_real_evidence():
+    offense, defense, resolved = fixture()
+    with pytest.raises(ValueError, match='live_field_synthetic_rating_not_allowed'):
+        live_field.validate_lineups(offense, defense, resolved, '2026-11-22T00:00:00Z')
+    offense[0]['speed_rating']['evidence_type'] = 'estimated'
+    with pytest.raises(ValueError, match='live_field_rating_not_verified'):
         live_field.validate_lineups(offense, defense, resolved, '2026-11-22T00:00:00Z')
