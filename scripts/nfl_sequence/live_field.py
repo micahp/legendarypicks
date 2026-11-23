@@ -25,6 +25,8 @@ def validate_lineups(offense, defense, resolved, as_of, *, allow_synthetic=False
     allowed = {side: v1_complete_roster.eligible_ids(resolved[side]) for side in ('offense', 'defense')}
     all_ids = []
     for side, lineup in (('offense', offense), ('defense', defense)):
+        if not allow_synthetic and _timestamp(resolved[side].get('as_of_utc')) != cutoff:
+            raise ValueError('live_field_roster_cutoff_mismatch:' + side)
         if len(lineup) != 11:
             raise ValueError('live_field_requires_eleven:' + side)
         positions = {}

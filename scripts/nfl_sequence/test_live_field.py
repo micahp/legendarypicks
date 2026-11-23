@@ -23,7 +23,8 @@ def fixture():
                            'speed_rating': dict(rating), 'reach': 0.3})
             rows.append({'gsis_id': pid, 'pos': pos, 'official_eligible': True, 'membership': 'ACTIVE_ROSTER',
                          'exclusion_reason': None})
-        resolved[side] = {'schema': 'lp-nfl-resolved-roster-2', 'blocks': [], 'players': rows, 'roles': []}
+        resolved[side] = {'schema': 'lp-nfl-resolved-roster-2', 'blocks': [], 'players': rows, 'roles': [],
+                          'as_of_utc': '2026-11-22T00:00:00Z'}
     return offense, defense, resolved
 
 
