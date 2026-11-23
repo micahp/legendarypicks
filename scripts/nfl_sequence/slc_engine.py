@@ -116,6 +116,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    playcall_player_outcomes=player_outcomes, blocker_fixes=fixes,
                    fg_ordinary_cutoff=fg_ordinary_cutoff, timeout_decisions=timeout_decisions)
     ref.contextual_sampler.score_clock_playcalling_enabled = bool(score_clock_playcalling)
+    ref.contextual_sampler.personnel_first = bool(formation)
     ref.pool, lateral_source_filter = exclude_unmodeled_lateral_rows(ref.pool, ref.participants)
     ref.pool, pass_yardage_source_filter = exclude_inconsistent_pass_yardage_rows(ref.pool, ref.participants)
     ref.pool_scope = dict(ref.pool_scope or {})

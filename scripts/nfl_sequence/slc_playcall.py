@@ -178,6 +178,7 @@ class PlayCallSampler:
         # formation-conditioned outcome draws, on when the engine has formation labels and priors (formation_layer)
         self.formation_outcomes = False
         self.formation_priors = None
+        self.personnel_first = False
         self.player_shares = None  # prior-season player shares for the pre-event participant adapter (player_shares)
         # red-zone geometry: inside the 20, draw the outcome only from rows at the state's exact yard line when there are any
         self.exact_yardline = False
@@ -410,18 +411,29 @@ class PlayCallSampler:
             league_streak_shift = streak_splits.shift_for(self.streak_league, streak_splits.LEAGUE, self.current_streak[team])
             p = point_splits.adjust(p, league_streak_shift)  # the league's streak tendency, in log-odds
         observer = getattr(self, 'execution_observer', None)
+        prepared = None
+        if self.personnel_first:
+            prepare = getattr(self.participant_chooser, 'prepare', None)
+            if prepare is None:
+                raise ValueError('personnel_first_requires_participant_preparation')
+            prepared = prepare(offense, state, p)
+            if observer is not None:
+                observer('personnel_formation', {'offense': offense, 'personnel': prepared['personnel'],
+                                                  'formation': prepared['formation']})
         if observer is not None:
             observer('call_selection', {'offense': offense, 'down': state['down']})
         if kick_keys and rng.random() < kick_share:
             intent, fallback = KICK_INTENT, 'kick decision: historical share of this situation cell (not yet modelled)'
         else:
-            intent = 'dropback' if rng.random() < p else 'run'
+            intent = 'dropback' if rng.random() < (prepared['p_dropback'] if prepared is not None else p) else 'run'
             fallback = None
         called_intent = intent
         if observer is not None:
             observer('participant_chooser', {'offense': offense, 'called_intent': called_intent,
                                              'available': self.participant_chooser is not None})
-        pre_event = self.participant_chooser(called_intent, offense, state) if self.participant_chooser is not None else None
+        kwargs = {'prepared': prepared} if prepared is not None else {}
+        pre_event = (self.participant_chooser(called_intent, offense, state, **kwargs)
+                     if self.participant_chooser is not None else None)
         validator = getattr(self, 'participant_validator', None)
         if validator is not None:
             validator(offense, pre_event)

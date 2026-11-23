@@ -108,7 +108,7 @@ def _by_player_share(players, table, team, role, positions, draw):
 def choose(snapshot, side, intent, seed, index, formation_priors=None, state=None, player_shares=None, defense_priors=None,
            role_table=None, decision_table=None, trick_passer_rate=TRICK_PASSER_RATE, qb_receiver_rate=QB_RECEIVER_RATE,
            share_table=None, playbook_table=None, share_cache=None, qb_decision_table=None,
-           scramble_backoff_enabled=False, qb_receiver_package=False, qb_run_role_style_enabled=False):
+           scramble_backoff_enabled=False, qb_receiver_package=False, qb_run_role_style_enabled=False, prepared=None):
     """{'passer': ..., 'receiver': ...} for a dropback, {'rusher': ...} for a run, None otherwise. Chosen before the outcome.
 
     With formation priors and the situation, also the formation and personnel grouping, from the historical shares."""
@@ -324,8 +324,11 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                                                     _draw(f'{base}:rusher:player'))
     if formation_priors is not None and state is not None:
         import formation_layer  # local: the formation layer is optional
-        chosen['formation'], chosen['personnel'] = formation_layer.choose(
-            formation_priors, intent, state['down'], state['togo'], f'{base}:formation', team=team)
+        if prepared is not None:
+            chosen['formation'], chosen['personnel'] = prepared['formation'], prepared['personnel']
+        else:
+            chosen['formation'], chosen['personnel'] = formation_layer.choose(
+                formation_priors, intent, state['down'], state['togo'], f'{base}:formation', team=team)
     if defense_priors is not None and intent == 'dropback':
         import defense_layer
         other = 'away' if side == 'home' else 'home'  # the defense is the other roster's team
@@ -361,9 +364,30 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
     counter = {'index': 0}
     share_cache = {}  # one game and seed: each team's Dirichlet draw is made once and reused by every play
 
-    def pick(intent, offense, state=None):
+    last = {'drive': None, 'offense': None, 'personnel': None}
+
+    def prepare(offense, state, p_dropback):
+        if formation_priors is None:
+            raise ValueError('personnel_first_requires_formation_priors')
+        import formation_layer
         index = counter['index']
         counter['index'] += 1
+        side = 'home' if offense == 'A' else 'away'
+        drive = state.get('drive_index')
+        previous = (last['personnel'] if drive is not None and (last['drive'], last['offense']) == (drive, offense)
+                    else formation_layer.START)
+        base = f"{snapshot['snapshot_sha256']}:{seed}:{index}:formation"
+        personnel, formation, p_given = formation_layer.personnel_first(
+            formation_priors, p_dropback, state, previous, base, team=snapshot['rosters'][side]['team'])
+        last.update(drive=drive, offense=offense, personnel=personnel)
+        return {'index': index, 'personnel': personnel, 'formation': formation, 'p_dropback': p_given}
+
+    def pick(intent, offense, state=None, prepared=None):
+        if prepared is None:
+            index = counter['index']
+            counter['index'] += 1
+        else:
+            index = prepared['index']
         side = 'home' if offense == 'A' else 'away'
         return choose(snapshot, side, intent, seed, index, formation_priors=formation_priors, state=state,
                       player_shares=player_shares, defense_priors=defense_priors, role_table=role_table,
@@ -371,7 +395,8 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
                       share_cache=share_cache, qb_decision_table=qb_decision_table,
                       scramble_backoff_enabled=scramble_backoff_enabled,
                       qb_receiver_package=qb_receiver_package,
-                      qb_run_role_style_enabled=qb_run_role_style_enabled)
+                      qb_run_role_style_enabled=qb_run_role_style_enabled, prepared=prepared)
+    pick.prepare = prepare
     return pick
 
 

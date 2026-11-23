@@ -276,6 +276,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             sampling_state = {'quarter': st['quarter'], 'clock': st['clock'], 'offense': st['offense'],
                               'defense': st['defense'], 'down': st['down'], 'togo': st['togo'],
                               'yl': st['yl'], 'score_diff': score_diff,
+                              'drive_index': drive_index,
                               'field_goal_feasibility': field_goal_distance,
                               '_source_cell_filtered': cell is not source_cell}
             if sampling_guard is not None and sampling_guard.requires_source_filter:
