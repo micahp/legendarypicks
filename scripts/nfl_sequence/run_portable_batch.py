@@ -3,7 +3,9 @@
 
 Before any run, every snapshot must pass roster_preflight.check (resolved eligible QB1, no unresolved required role,
 current depth chart, injury statuses with publish times for this game, weekly-roster membership, no player on two
-teams); one FAIL stops the batch before it starts. Every model reads the same snapshot file, so the same resolved roster
+teams), and every excluded player must be Out in the injury report; one FAIL stops the batch before it starts. Then a
+smoke test runs one seed for every game and model into <out>/smoke with the same postflight; any failure stops the batch
+before the full runs. Every model reads the same snapshot file, so the same resolved roster
 hash. After each run, roster_preflight.postflight checks the player box scores: no excluded player got stats and each
 team's passer was its resolved QB1. The manifest holds every preflight and postflight table and each run's result.
 
@@ -77,6 +79,7 @@ def main(argv=None):
         frozen = roster_preflight.unwrap(snap).get('roster_resolution')
         rows.append(('frozen roster resolution matches', 'PASS' if frozen and frozen['content_hash'] == resolved['content_hash'] else 'FAIL',
                      resolved['content_hash'][:12]))
+        rows.append(roster_preflight.exclusions_applied(snap, resolved))
         print(roster_preflight.render(f'PREFLIGHT {f.stem}', rows), flush=True)
         preflight[f.stem] = {'file': str(f), 'file_sha256': sha256_file(f), 'roster_resolution_hash': resolved['content_hash'],
                              'rows': rows}
@@ -102,16 +105,16 @@ def main(argv=None):
 
     heavy = threading.Semaphore(1)
 
-    def run(game, model):
+    def run(game, model, seeds=args.seeds, root=args.out):
         f, snap, resolved = snapshots[game]
-        folder = args.out / game
+        folder = root / game
         folder.mkdir(parents=True, exist_ok=True)
         output, log = folder / f'{model}.json', folder / f'{model}.log'
         if output.exists():
             return {'game_id': game, 'model': model, 'status': 'skipped_existing_output', 'output': str(output)}
         entry = registry[model]
         cmd = [args.python, str(args.runtime), '--model', model, '--game', game, '--snapshot', str(f),
-               '--pack', str(args.packs / entry['package']), '--pack-sha256', entry['sha256'], '--games', str(args.seeds),
+               '--pack', str(args.packs / entry['package']), '--pack-sha256', entry['sha256'], '--games', str(seeds),
                '--seed-start', str(args.seed_start), '--out', str(output), '--workers', str(args.runtime_workers)]
         start = time.time()
         with log.open('x') as handle:
@@ -119,24 +122,37 @@ def main(argv=None):
                                   env=dict(os.environ, OMP_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1'))
         data = json.loads(output.read_text()) if output.exists() else {}
         post = roster_preflight.postflight(snap, data, resolved) if data else [('run wrote output', 'FAIL', f'exit {proc.returncode}')]
-        ok = proc.returncode == 0 and data.get('simulation', {}).get('requested_games') == args.seeds
+        ok = proc.returncode == 0 and data.get('simulation', {}).get('requested_games') == seeds
         status = 'completed' if ok and not roster_preflight.failed(post) else 'failed_postflight' if ok else 'failed'
         return {'game_id': game, 'model': model, 'status': status, 'returncode': proc.returncode,
                 'valid_full_games': data.get('simulation', {}).get('valid_full_games'), 'postflight': post,
                 'elapsed_seconds': round(time.time() - start, 1), 'output': str(output), 'log': str(log)}
 
-    def job(game, model):
+    def job(game, model, smoke=False):
+        kwargs = {'seeds': 1, 'root': args.out / 'smoke'} if smoke else {}
         if model in HEAVY:
             with heavy:
-                result = run(game, model)
+                result = run(game, model, **kwargs)
         else:
-            result = run(game, model)
+            result = run(game, model, **kwargs)
         with lock:
-            manifest['runs'].append(result)
+            manifest['smoke' if smoke else 'runs'].append(result)
             save()
         bad = roster_preflight.failed(result.get('postflight', []))
         print(time.strftime('%FT%TZ', time.gmtime()), game, model, result['status'], result.get('valid_full_games'),
               '; '.join(f'{n}: {d}' for n, _, d in bad), flush=True)
+
+    # smoke test: one seed for every game and model, postflight included, before any full run
+    manifest['smoke'] = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.parallel) as pool:
+        for future in [pool.submit(job, g, m, True) for g in snapshots for m in models]:
+            future.result()
+    bad_smoke = [f"{r['game_id']} {r['model']}" for r in manifest['smoke'] if r['status'] != 'completed']
+    if bad_smoke:
+        manifest['status'] = 'blocked_by_smoke_test'
+        save()
+        raise SystemExit(f'SMOKE_TEST_FAILED, no full run started: {bad_smoke}')
+    print('SMOKE_TEST_PASSED', len(manifest['smoke']), 'runs', flush=True)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.parallel) as pool:
         for future in [pool.submit(job, g, m) for g in snapshots for m in models]:
