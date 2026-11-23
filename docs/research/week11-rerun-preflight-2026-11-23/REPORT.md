@@ -41,7 +41,11 @@ injury report, and a one-seed smoke test for every game and model must pass the 
   v1.6 seed (one trick pass, Daniels had 36). That was a bug in the check, fixed in `14bacb1a` (on dev): a seed's
   passer is now the player with the most attempts.
 - The second run (`cinwas-current-100b`): smoke test passed for all six models, then all six 100-seed runs passed the
-  postflight. Done 15:12 UTC.
+  postflight. Done 15:12 UTC. The log has no errors.
+- Valid games: the table counts every complete game, overtime included. The runner log and the engine's
+  `simulation.valid_full_games` count regulation games only (v1 91, v1.5 97, v2 94, the rest 98), so they read lower.
+  The same split shows in 75 of the 78 earlier week 11 files. Only v1 and v1.5 lost seeds, 3 each, to engine blocks:
+  missing run or scramble source rows, an unresolved punt outcome, and a kick return outside the field.
 
 Market: CIN -6, total 54.5, WAS no-vig win 0.28. WAS is home.
 
