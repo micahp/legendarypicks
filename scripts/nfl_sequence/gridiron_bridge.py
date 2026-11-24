@@ -20,7 +20,7 @@ import reducer
 import roster_preflight
 import v1_complete_roster
 
-ENGINE_COMMIT = '62f6f6b0adeb588e4fc14b1ce5b89e295e876074'
+ENGINE_COMMIT = 'd375f3f79fdd306f7f8ccfa6f6b87ef282de3da7'
 PLAYBOOK_MANIFEST_SHA256 = '9d4749f817e97f4e3da0b6c5170eae0fa922d8b1b59d608ab4ce9dd990c2e929'
 DEFENSE_POSITIONS = ('LDE', 'LDT', 'RDT', 'RDE', 'MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS')
 DEFENSE_SLOTS = ('LEDGE', 'LDT', 'RDT', 'REDGE', 'MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS')
