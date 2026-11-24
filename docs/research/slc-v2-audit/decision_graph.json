@@ -1,0 +1,558 @@
+{
+ "schema": "slc-v2-decision-graph-1",
+ "control": {
+  "pack": "v2--season-2026-runtimefix1.slcpkg",
+  "pack_sha256": "97c4a01e9a60c3f6e31c1701d4c954fddd5d6e9938c193bd1aba9218c7d7f5c3",
+  "code_commit": "8a1d984229cdc20f5ad076ebd81edc7f1be90c75",
+  "reference_sha256": "13909c65301349b25725d05ebd5c97f820d0e1147864d63da77c252dc1bde633"
+ },
+ "audit_base_commit": "b83d580e",
+ "nodes": [
+  {
+   "id": "G1",
+   "name": "coin toss and half-start kickoffs",
+   "section": "Game level",
+   "kind": "D",
+   "code": "`CoinTossLedger`",
+   "notes": "seeded toss; the winner's choice; half-start kickoffs validated by `validate_half_start`"
+  },
+  {
+   "id": "G2",
+   "name": "kickoff and safety free kick",
+   "section": "Game level",
+   "kind": "T",
+   "code": "`_kick`, `build_kickoff_pool`, safety kick pool",
+   "notes": "**one unconditional draw** of (spot, runoff) from the pool; no onside decision, no score or clock conditioning; the pool keeps only kickoffs after which the receiving team runs the next play, so onside recoveries, kick-return touchdowns and kickoff turnovers cannot occur; no guard for an empty pool (`random.choice` raises); halts `safety_free_kick_not_modelled`"
+  },
+  {
+   "id": "G3",
+   "name": "drive",
+   "section": "Game level",
+   "kind": "T",
+   "code": "`_drive_body` -> `e1_drive.simulate`",
+   "notes": "play loop below; a halt in E1 blocks the game"
+  },
+  {
+   "id": "G4",
+   "name": "penalty check",
+   "section": "Game level",
+   "kind": "C",
+   "code": "`_drive_body` line 1474",
+   "notes": "the pool excludes penalties; a sampled penalty row blocks `penalty_not_modelled`"
+  },
+  {
+   "id": "G5",
+   "name": "two-minute warning",
+   "section": "Game level",
+   "kind": "T",
+   "code": "`_two_minute_stop_plays`, `two_minute_stop`",
+   "notes": "clock stop at 2:00 in Q2 and Q4, also applied to kickoffs"
+  },
+  {
+   "id": "G6",
+   "name": "participants for stats",
+   "section": "Game level",
+   "kind": "A",
+   "code": "`Reference.participants_for`",
+   "notes": "maps the sampled row's participants and the pre-snap choices to the simulated players for statistics"
+  },
+  {
+   "id": "G7",
+   "name": "timeouts",
+   "section": "Game level",
+   "kind": "A/C",
+   "code": "`_apply_timeouts`, `_TimeoutSamplingGuard`",
+   "notes": "**not a decision**: a timeout happens only when the sampled row had one, charged to the mapped team; once a team has none, the guard removes timeout rows from the cell; halts `timeout_team_unresolved`, `timeout_limit_exceeded`, `timeout_sampling_guard_mismatch`, H2"
+  },
+  {
+   "id": "G8",
+   "name": "field goal result",
+   "section": "Game level",
+   "kind": "D",
+   "code": "`_drive_body` 1515-1548; `_resolve_special_teams`",
+   "notes": "make/miss from `kicks['field_goal']` by bucket unless the row carries the result; halts `thin_kick_cell`, `field_goal_outcomes_missing`, distance-model halts"
+  },
+  {
+   "id": "G9",
+   "name": "missed field goal return",
+   "section": "Game level",
+   "kind": "T",
+   "code": "`_missed_field_goal_transition`",
+   "notes": "halt `missed_field_goal_return_pool_unavailable`"
+  },
+  {
+   "id": "G10",
+   "name": "try after touchdown",
+   "section": "Game level",
+   "kind": "D",
+   "code": "`_try_after_touchdown`, `try_policy.p_two`",
+   "notes": "overtime uses the conditional overtime table (`conditional_try_fallback`)"
+  },
+  {
+   "id": "G11",
+   "name": "safety and free kick",
+   "section": "Game level",
+   "kind": "T",
+   "code": "`_drive_body` 1580-1594",
+   "notes": "`safety_free_kick_boundaries` fix"
+  },
+  {
+   "id": "G12",
+   "name": "observed overtime drive",
+   "section": "Game level",
+   "kind": "-",
+   "code": "`_observed_overtime_drive`",
+   "notes": "**dead code**: defined, never called. The overtime drive pool only switches overtime on (`_regulation_over`, line 811)"
+  },
+  {
+   "id": "G13",
+   "name": "overtime",
+   "section": "Game level",
+   "kind": "T",
+   "code": "`_begin_overtime`, then `_drive_body` with quarter 5",
+   "notes": "Rule 16: seeded toss, observed kick-or-receive model, 10-minute period, overtime timeouts; drives are played play by play with the regulation pool and `OVERTIME_FOURTH_DOWN_KICK_SHARE` at 4th down; possession and sudden-death rules in `_overtime_possession`, `_sudden_death_touchdown`"
+  },
+  {
+   "id": "G14",
+   "name": "drive limit and end",
+   "section": "Game level",
+   "kind": "A",
+   "code": "`run`, `record`",
+   "notes": "halts `drive_limit`, `unhandled_terminal:*`"
+  },
+  {
+   "id": "P1",
+   "name": "pool cell",
+   "section": "Play level",
+   "kind": "D",
+   "inputs": "`e0.pool_key(down, togo, yl)` (down, distance bucket, field bucket)",
+   "existing_fallback": "none",
+   "halt": ""
+  },
+  {
+   "id": "P2",
+   "name": "timeout guard filter",
+   "section": "Play level",
+   "kind": "C",
+   "inputs": "cell, state",
+   "existing_fallback": "none",
+   "halt": "H2 `sampling_guard.unavailable_reason()` when it empties a non-empty cell"
+  },
+  {
+   "id": "P3",
+   "name": "thin-cell floor (`MIN_POOL` 50)",
+   "section": "Play level",
+   "kind": "C",
+   "inputs": "cell size",
+   "existing_fallback": "skipped when `allow_sparse_cells` (true in V2)",
+   "halt": "H3 `thin pool cell ... no fallback` (not reachable in V2)"
+  },
+  {
+   "id": "P4",
+   "name": "field-goal feasibility",
+   "section": "Play level",
+   "kind": "C",
+   "inputs": "yl",
+   "existing_fallback": "`long_field_goal_feasibility`",
+   "halt": "H8 attempt beyond ceiling"
+  },
+  {
+   "id": "P5",
+   "name": "overtime 4th-down kick share",
+   "section": "Play level",
+   "kind": "D",
+   "inputs": "quarter 5, down 4",
+   "existing_fallback": "none",
+   "halt": "H4 when the restricted cell is empty"
+  },
+  {
+   "id": "P6",
+   "name": "event shares",
+   "section": "Play level",
+   "kind": "C",
+   "inputs": "cell",
+   "existing_fallback": "none",
+   "halt": "H5 no eligible action"
+  },
+  {
+   "id": "P7",
+   "name": "sampling policy",
+   "section": "Play level",
+   "kind": "D",
+   "inputs": "see S nodes",
+   "existing_fallback": "see S nodes",
+   "halt": "H6 `SamplingUnavailable(...)`"
+  },
+  {
+   "id": "P8",
+   "name": "guard rejection of the drawn row",
+   "section": "Play level",
+   "kind": "C",
+   "inputs": "row",
+   "existing_fallback": "none",
+   "halt": "H7"
+  },
+  {
+   "id": "P9",
+   "name": "special teams resolution",
+   "section": "Play level",
+   "kind": "T",
+   "inputs": "punt, field goal",
+   "existing_fallback": "see G8",
+   "halt": "H9 blocker from the resolver"
+  },
+  {
+   "id": "P10",
+   "name": "yardage credit at the field boundary",
+   "section": "Play level",
+   "kind": "C",
+   "inputs": "sampled yards, yl",
+   "existing_fallback": "`_credit_field_boundary_yards`",
+   "halt": ""
+  },
+  {
+   "id": "P11",
+   "name": "reducer",
+   "section": "Play level",
+   "kind": "T",
+   "inputs": "state, event, yards, spot",
+   "existing_fallback": "none",
+   "halt": "H10 `UnmodelledOutcome`; H11 raises `FootballAssertionError`"
+  },
+  {
+   "id": "P12",
+   "name": "clock",
+   "section": "Play level",
+   "kind": "T",
+   "inputs": "V2 runs no research clock: the runoff is the sampled row's observed runoff",
+   "existing_fallback": "none",
+   "halt": "H12 (research clock only)"
+  },
+  {
+   "id": "P13",
+   "name": "period expiry",
+   "section": "Play level",
+   "kind": "T",
+   "inputs": "clock",
+   "existing_fallback": "",
+   "halt": "H13 blocked kick that ends Q1/Q3"
+  },
+  {
+   "id": "S1",
+   "name": "kick share",
+   "section": "Sampling policy",
+   "kind": "D",
+   "conditioning": "the cell's kick share (or yard-line kernel with the kicker flag); FG feasibility",
+   "support_or_fallback": "`long_field_goal_feasibility` removes infeasible FG keys"
+  },
+  {
+   "id": "S2",
+   "name": "dropback probability",
+   "section": "Sampling policy",
+   "kind": "D",
+   "conditioning": "score-clock logistic artifact (down, togo, yl, score, quarter, clock, team) + season-team-down adjust",
+   "support_or_fallback": ""
+  },
+  {
+   "id": "S3",
+   "name": "point split, team streak, league streak",
+   "section": "Sampling policy",
+   "kind": "M",
+   "conditioning": "log-odds shifts",
+   "support_or_fallback": "named `split_fallbacks` when a bucket or context is missing"
+  },
+  {
+   "id": "S4",
+   "name": "intent draw",
+   "section": "Sampling policy",
+   "kind": "D",
+   "conditioning": "S1-S3",
+   "support_or_fallback": "kick first, then dropback vs run"
+  },
+  {
+   "id": "S5",
+   "name": "pre-snap participants",
+   "section": "Sampling policy",
+   "kind": "D",
+   "conditioning": "`pre_event.choose`: participation-field lineup and personnel, formation prior, coverage prior, QB decision (`qb_decisions.draw`: scramble with its own support ladder exact 10 / down-field 25 / down-distance 25 / field-zone 50 / league; target role shrunk to a prior; QB run-role style, min support 20), decision labels, Dirichlet player shares",
+   "support_or_fallback": "roster and lineup failures raise `ValueError` (snapshot validity); `cell_fallback_from` in the participation field; `playbook_fallback`"
+  },
+  {
+   "id": "S6",
+   "name": "exact outcome rows",
+   "section": "Sampling policy",
+   "kind": "C",
+   "conditioning": "intent, scramble class, legal scramble bounds",
+   "support_or_fallback": ""
+  },
+  {
+   "id": "S7",
+   "name": "outcome backoff",
+   "section": "Sampling policy",
+   "kind": "C",
+   "conditioning": "exact_cell(10) -> down_field(25) -> down_distance(25) -> field_zone -> league_intent",
+   "support_or_fallback": "`run_scramble_backoff`; preserves intent and scramble class"
+  },
+  {
+   "id": "S8",
+   "name": "event weights, exact path",
+   "section": "Sampling policy",
+   "kind": "M",
+   "conditioning": "base counts x formation lift x coverage lift x streak lift x label lift (geometric mean) x team event weight x player event weight",
+   "support_or_fallback": "all-zero -> baseline counts (`all_conditioned_weights_zero_within_selected_intent`)"
+  },
+  {
+   "id": "S9",
+   "name": "event weights, backoff path",
+   "section": "Sampling policy",
+   "kind": "M",
+   "conditioning": "base counts x team event weight x player event weight; formation, coverage, streak and label lifts are **not** applied",
+   "support_or_fallback": "all-zero -> counts"
+  },
+  {
+   "id": "S10",
+   "name": "two-stage pass draw",
+   "section": "Sampling policy",
+   "kind": "D",
+   "conditioning": "`pass_label_mode` conditional, dropback, not scramble",
+   "support_or_fallback": ""
+  },
+  {
+   "id": "S11",
+   "name": "restore sack mass",
+   "section": "Sampling policy",
+   "kind": "M",
+   "conditioning": "`restore_sack_mass` fix only, exact path only",
+   "support_or_fallback": "not in V2"
+  },
+  {
+   "id": "S12",
+   "name": "scramble / non-scramble row filter",
+   "section": "Sampling policy",
+   "kind": "C",
+   "conditioning": "qb decision",
+   "support_or_fallback": "exact path: halts `qb_scramble_source_rows_missing`, `non_scramble_run_source_rows_missing`"
+  },
+  {
+   "id": "S13",
+   "name": "sequential row filters",
+   "section": "Sampling policy",
+   "kind": "C",
+   "conditioning": "formation, coverage, streak, labels (in category order), QB target role, exact yard line (yl <= 20)",
+   "support_or_fallback": "each filter is skipped with a named fallback when it would empty the candidates"
+  },
+  {
+   "id": "S14",
+   "name": "final row draw",
+   "section": "Sampling policy",
+   "kind": "D",
+   "conditioning": "player row weights (and transition groups when enabled)",
+   "support_or_fallback": "**no zero-weight protection**"
+  }
+ ],
+ "edges": [
+  [
+   "G1",
+   "G2"
+  ],
+  [
+   "G2",
+   "G3"
+  ],
+  [
+   "G3",
+   "P1"
+  ],
+  [
+   "P1",
+   "P2"
+  ],
+  [
+   "P2",
+   "P3"
+  ],
+  [
+   "P3",
+   "P4"
+  ],
+  [
+   "P4",
+   "P5"
+  ],
+  [
+   "P5",
+   "P6"
+  ],
+  [
+   "P6",
+   "P7"
+  ],
+  [
+   "P7",
+   "S1"
+  ],
+  [
+   "S1",
+   "S2"
+  ],
+  [
+   "S2",
+   "S3"
+  ],
+  [
+   "S3",
+   "S4"
+  ],
+  [
+   "S4",
+   "S5"
+  ],
+  [
+   "S5",
+   "S6"
+  ],
+  [
+   "S6",
+   "S7"
+  ],
+  [
+   "S7",
+   "S8"
+  ],
+  [
+   "S8",
+   "S9"
+  ],
+  [
+   "S9",
+   "S10"
+  ],
+  [
+   "S10",
+   "S11"
+  ],
+  [
+   "S11",
+   "S12"
+  ],
+  [
+   "S12",
+   "S13"
+  ],
+  [
+   "S13",
+   "S14"
+  ],
+  [
+   "S14",
+   "P8"
+  ],
+  [
+   "P8",
+   "P9"
+  ],
+  [
+   "P9",
+   "P10"
+  ],
+  [
+   "P10",
+   "P11"
+  ],
+  [
+   "P11",
+   "P12"
+  ],
+  [
+   "P12",
+   "P13"
+  ],
+  [
+   "P13",
+   "G4"
+  ],
+  [
+   "G4",
+   "G5"
+  ],
+  [
+   "G5",
+   "G6"
+  ],
+  [
+   "G6",
+   "G7"
+  ],
+  [
+   "G7",
+   "G8"
+  ],
+  [
+   "G8",
+   "G9"
+  ],
+  [
+   "G9",
+   "G10"
+  ],
+  [
+   "G10",
+   "G11"
+  ],
+  [
+   "G11",
+   "G13"
+  ],
+  [
+   "G13",
+   "G14"
+  ],
+  [
+   "S7",
+   "S9"
+  ],
+  [
+   "S6",
+   "S8"
+  ],
+  [
+   "S8",
+   "S10"
+  ],
+  [
+   "S9",
+   "S12"
+  ],
+  [
+   "P9",
+   "G8"
+  ],
+  [
+   "G8",
+   "G9"
+  ],
+  [
+   "P11",
+   "G10"
+  ],
+  [
+   "P11",
+   "G11"
+  ],
+  [
+   "G14",
+   "G13"
+  ],
+  [
+   "G13",
+   "G3"
+  ],
+  [
+   "G11",
+   "G2"
+  ]
+ ],
+ "dead_code": [
+  "G12 game_state._Game._observed_overtime_drive"
+ ]
+}
