@@ -1,0 +1,1176 @@
+{
+ "completion": {
+  "pbv1": {
+   "attempted": 1300,
+   "by_class": {},
+   "by_family": {},
+   "completed": 1300,
+   "completion_pct": 100.0,
+   "failures": 0,
+   "games_with_a_failure": 0
+  },
+  "pbv1-off": {
+   "attempted": 1300,
+   "by_class": {},
+   "by_family": {},
+   "completed": 1300,
+   "completion_pct": 100.0,
+   "failures": 0,
+   "games_with_a_failure": 0
+  },
+  "v1": {
+   "attempted": 1300,
+   "by_class": {
+    "unsupported_cell": 56
+   },
+   "by_family": {
+    "blocked_kick_kicking_recovery_outside_field": 3,
+    "blocked_kick_outcome_unresolved": 4,
+    "blocked_kick_receiving_return_outside_field": 5,
+    "non_scramble_run_source_rows_missing": 10,
+    "playcall_no_run_outcomes_in_cell": 8,
+    "qb_scramble_source_rows_missing": 23,
+    "safety_free_kick_not_modelled": 1,
+    "thin_kick_cell": 2
+   },
+   "completed": 1244,
+   "completion_pct": 95.69,
+   "failures": 56,
+   "games_with_a_failure": 13
+  },
+  "v1.5": {
+   "attempted": 1300,
+   "by_class": {
+    "unsupported_cell": 41
+   },
+   "by_family": {
+    "blocked_kick_kicking_recovery_outside_field": 1,
+    "blocked_kick_outcome_unresolved": 3,
+    "blocked_kick_receiving_return_outside_field": 5,
+    "non_scramble_run_source_rows_missing": 14,
+    "playcall_no_run_outcomes_in_cell": 3,
+    "qb_scramble_source_rows_missing": 14,
+    "safety_free_kick_not_modelled": 1
+   },
+   "completed": 1259,
+   "completion_pct": 96.85,
+   "failures": 41,
+   "games_with_a_failure": 13
+  },
+  "v1.6": {
+   "attempted": 1300,
+   "by_class": {
+    "engine_error": 2
+   },
+   "by_family": {
+    "ILLEGAL_STATE: sack_fumble_lost loss -10 carries the ball past its own goal line": 1,
+    "ILLEGAL_STATE: sack_fumble_lost loss -9 carries the ball past its own goal line": 1
+   },
+   "completed": 1298,
+   "completion_pct": 99.85,
+   "failures": 2,
+   "games_with_a_failure": 2
+  },
+  "v2": {
+   "attempted": 1300,
+   "by_class": {},
+   "by_family": {},
+   "completed": 1300,
+   "completion_pct": 100.0,
+   "failures": 0,
+   "games_with_a_failure": 0
+  }
+ },
+ "engine_error_failures": [
+  {
+   "class": "engine_error",
+   "error": "FootballAssertionError: ILLEGAL_STATE: sack_fumble_lost loss -9 carries the ball past its own goal line; context={'play_index': 85, 'state_before': {'quarter': 3, 'offense': 'A', 'defense': 'B', 'down': 3, 'togo': 8, 'yl': 97, 'clock': 408, 'dir': -1}, 'decision': {'event': 'sack_fumble_lost', 'sampling_decision': {'participants': {'passer': '00-0034857', 'receiver': '00-0039901', 'target_role': 'WR', 'participant_share_model': 'dirichlet_multinomial', 'target_role_prior_used': True, 'target_role_prior_combined': True,",
+   "family": "ILLEGAL_STATE: sack_fumble_lost loss -9 carries the ball past its own goal line",
+   "game_id": "2026_11_MIA_BUF",
+   "model": "v1.6",
+   "seed": 300081
+  },
+  {
+   "class": "engine_error",
+   "error": "FootballAssertionError: ILLEGAL_STATE: sack_fumble_lost loss -10 carries the ball past its own goal line; context={'play_index': 83, 'state_before': {'quarter': 3, 'offense': 'B', 'defense': 'A', 'down': 3, 'togo': 7, 'yl': 92, 'clock': 332, 'dir': 1}, 'decision': {'event': 'sack_fumble_lost', 'sampling_decision': {'participants': {'passer': '00-0029604', 'receiver': '00-0035229', 'target_role': 'TE', 'participant_share_model': 'dirichlet_multinomial', 'target_role_prior_used': True, 'target_role_prior_combined': True,",
+   "family": "ILLEGAL_STATE: sack_fumble_lost loss -10 carries the ball past its own goal line",
+   "game_id": "2026_11_MIN_SF",
+   "model": "v1.6",
+   "seed": 300097
+  }
+ ],
+ "matched_seeds_by_game": {
+  "2026_11_ARI_KC": {
+   "common_seeds": 93,
+   "requested": 100
+  },
+  "2026_11_BAL_CAR": {
+   "common_seeds": 88,
+   "requested": 100
+  },
+  "2026_11_CIN_WAS": {
+   "common_seeds": 94,
+   "requested": 100
+  },
+  "2026_11_IND_HOU": {
+   "common_seeds": 96,
+   "requested": 100
+  },
+  "2026_11_JAX_NYG": {
+   "common_seeds": 88,
+   "requested": 100
+  },
+  "2026_11_LV_DEN": {
+   "common_seeds": 93,
+   "requested": 100
+  },
+  "2026_11_MIA_BUF": {
+   "common_seeds": 93,
+   "requested": 100
+  },
+  "2026_11_MIN_SF": {
+   "common_seeds": 93,
+   "requested": 100
+  },
+  "2026_11_NO_CHI": {
+   "common_seeds": 91,
+   "requested": 100
+  },
+  "2026_11_NYJ_LAC": {
+   "common_seeds": 95,
+   "requested": 100
+  },
+  "2026_11_PIT_PHI": {
+   "common_seeds": 94,
+   "requested": 100
+  },
+  "2026_11_TB_DET": {
+   "common_seeds": 90,
+   "requested": 100
+  },
+  "2026_11_TEN_DAL": {
+   "common_seeds": 95,
+   "requested": 100
+  }
+ },
+ "matched_seeds_total": 1203,
+ "unsupported_cell_failures": [
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_ARI_KC",
+   "model": "v1",
+   "seed": 300014
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 4,
+   "error": null,
+   "family": "playcall_no_run_outcomes_in_cell",
+   "field": "1-9",
+   "game_id": "2026_11_ARI_KC",
+   "model": "v1",
+   "seed": 300026
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_kicking_recovery_outside_field",
+   "error": null,
+   "family": "blocked_kick_kicking_recovery_outside_field",
+   "game_id": "2026_11_ARI_KC",
+   "model": "v1",
+   "seed": 300032
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_receiving_return_outside_field",
+   "error": null,
+   "family": "blocked_kick_receiving_return_outside_field",
+   "game_id": "2026_11_ARI_KC",
+   "model": "v1",
+   "seed": 300053
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_outcome_unresolved:punt:guarded_penalty_fumble_or_review",
+   "error": null,
+   "family": "blocked_kick_outcome_unresolved",
+   "game_id": "2026_11_ARI_KC",
+   "model": "v1",
+   "seed": 300065
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_kicking_recovery_outside_field",
+   "error": null,
+   "family": "blocked_kick_kicking_recovery_outside_field",
+   "game_id": "2026_11_ARI_KC",
+   "model": "v1.5",
+   "seed": 300041
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_ARI_KC",
+   "model": "v1.5",
+   "seed": 300047
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_ARI_KC",
+   "model": "v1.5",
+   "seed": 300065
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 3,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "80-99",
+   "game_id": "2026_11_BAL_CAR",
+   "model": "v1",
+   "seed": 300007
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "thin_kick_cell:field_goal:50+",
+   "error": null,
+   "family": "thin_kick_cell",
+   "game_id": "2026_11_BAL_CAR",
+   "model": "v1",
+   "seed": 300015
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "11+",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_BAL_CAR",
+   "model": "v1",
+   "seed": 300020
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_BAL_CAR",
+   "model": "v1",
+   "seed": 300035
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_kicking_recovery_outside_field",
+   "error": null,
+   "family": "blocked_kick_kicking_recovery_outside_field",
+   "game_id": "2026_11_BAL_CAR",
+   "model": "v1",
+   "seed": 300071
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_BAL_CAR",
+   "model": "v1",
+   "seed": 300087
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_BAL_CAR",
+   "model": "v1.5",
+   "seed": 300022
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_BAL_CAR",
+   "model": "v1.5",
+   "seed": 300048
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 4,
+   "error": null,
+   "family": "playcall_no_run_outcomes_in_cell",
+   "field": "1-9",
+   "game_id": "2026_11_BAL_CAR",
+   "model": "v1.5",
+   "seed": 300060
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "11+",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_BAL_CAR",
+   "model": "v1.5",
+   "seed": 300062
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_BAL_CAR",
+   "model": "v1.5",
+   "seed": 300081
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_BAL_CAR",
+   "model": "v1.5",
+   "seed": 300098
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_outcome_unresolved:punt:guarded_penalty_fumble_or_review",
+   "error": null,
+   "family": "blocked_kick_outcome_unresolved",
+   "game_id": "2026_11_CIN_WAS",
+   "model": "v1",
+   "seed": 300072
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 3,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_CIN_WAS",
+   "model": "v1",
+   "seed": 300076
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_receiving_return_outside_field",
+   "error": null,
+   "family": "blocked_kick_receiving_return_outside_field",
+   "game_id": "2026_11_CIN_WAS",
+   "model": "v1",
+   "seed": 300099
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_CIN_WAS",
+   "model": "v1.5",
+   "seed": 300007
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_receiving_return_outside_field",
+   "error": null,
+   "family": "blocked_kick_receiving_return_outside_field",
+   "game_id": "2026_11_CIN_WAS",
+   "model": "v1.5",
+   "seed": 300037
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "1-3",
+   "down": 4,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_CIN_WAS",
+   "model": "v1.5",
+   "seed": 300089
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 3,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "80-99",
+   "game_id": "2026_11_IND_HOU",
+   "model": "v1",
+   "seed": 300015
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_IND_HOU",
+   "model": "v1",
+   "seed": 300046
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_IND_HOU",
+   "model": "v1.5",
+   "seed": 300007
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_IND_HOU",
+   "model": "v1.5",
+   "seed": 300070
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_JAX_NYG",
+   "model": "v1",
+   "seed": 300007
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_JAX_NYG",
+   "model": "v1",
+   "seed": 300017
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_JAX_NYG",
+   "model": "v1",
+   "seed": 300018
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "11+",
+   "down": 3,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "80-99",
+   "game_id": "2026_11_JAX_NYG",
+   "model": "v1",
+   "seed": 300057
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 4,
+   "error": null,
+   "family": "playcall_no_run_outcomes_in_cell",
+   "field": "1-9",
+   "game_id": "2026_11_JAX_NYG",
+   "model": "v1",
+   "seed": 300060
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_receiving_return_outside_field",
+   "error": null,
+   "family": "blocked_kick_receiving_return_outside_field",
+   "game_id": "2026_11_JAX_NYG",
+   "model": "v1.5",
+   "seed": 300019
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 4,
+   "error": null,
+   "family": "playcall_no_run_outcomes_in_cell",
+   "field": "1-9",
+   "game_id": "2026_11_JAX_NYG",
+   "model": "v1.5",
+   "seed": 300027
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_JAX_NYG",
+   "model": "v1.5",
+   "seed": 300059
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 3,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "80-99",
+   "game_id": "2026_11_JAX_NYG",
+   "model": "v1.5",
+   "seed": 300064
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 3,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_JAX_NYG",
+   "model": "v1.5",
+   "seed": 300072
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_receiving_return_outside_field",
+   "error": null,
+   "family": "blocked_kick_receiving_return_outside_field",
+   "game_id": "2026_11_JAX_NYG",
+   "model": "v1.5",
+   "seed": 300097
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "1-3",
+   "down": 4,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "1-9",
+   "game_id": "2026_11_JAX_NYG",
+   "model": "v1.5",
+   "seed": 300100
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "20-49",
+   "game_id": "2026_11_LV_DEN",
+   "model": "v1",
+   "seed": 300038
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 4,
+   "error": null,
+   "family": "playcall_no_run_outcomes_in_cell",
+   "field": "1-9",
+   "game_id": "2026_11_LV_DEN",
+   "model": "v1",
+   "seed": 300059
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_LV_DEN",
+   "model": "v1",
+   "seed": 300079
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 3,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "80-99",
+   "game_id": "2026_11_LV_DEN",
+   "model": "v1",
+   "seed": 300085
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_receiving_return_outside_field",
+   "error": null,
+   "family": "blocked_kick_receiving_return_outside_field",
+   "game_id": "2026_11_LV_DEN",
+   "model": "v1",
+   "seed": 300096
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_receiving_return_outside_field",
+   "error": null,
+   "family": "blocked_kick_receiving_return_outside_field",
+   "game_id": "2026_11_LV_DEN",
+   "model": "v1.5",
+   "seed": 300039
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "safety_free_kick_not_modelled",
+   "error": null,
+   "family": "safety_free_kick_not_modelled",
+   "game_id": "2026_11_LV_DEN",
+   "model": "v1.5",
+   "seed": 300077
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "thin_kick_cell:field_goal:50+",
+   "error": null,
+   "family": "thin_kick_cell",
+   "game_id": "2026_11_MIA_BUF",
+   "model": "v1",
+   "seed": 300008
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 4,
+   "error": null,
+   "family": "playcall_no_run_outcomes_in_cell",
+   "field": "1-9",
+   "game_id": "2026_11_MIA_BUF",
+   "model": "v1",
+   "seed": 300015
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_outcome_unresolved:field_goal:guarded_penalty_fumble_or_review",
+   "error": null,
+   "family": "blocked_kick_outcome_unresolved",
+   "game_id": "2026_11_MIA_BUF",
+   "model": "v1",
+   "seed": 300028
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "20-49",
+   "game_id": "2026_11_MIA_BUF",
+   "model": "v1",
+   "seed": 300032
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "20-49",
+   "game_id": "2026_11_MIA_BUF",
+   "model": "v1",
+   "seed": 300059
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "20-49",
+   "game_id": "2026_11_MIA_BUF",
+   "model": "v1",
+   "seed": 300078
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "20-49",
+   "game_id": "2026_11_MIA_BUF",
+   "model": "v1.5",
+   "seed": 300078
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_MIN_SF",
+   "model": "v1",
+   "seed": 300015
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "1-3",
+   "down": 1,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "1-9",
+   "game_id": "2026_11_MIN_SF",
+   "model": "v1",
+   "seed": 300037
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_MIN_SF",
+   "model": "v1",
+   "seed": 300059
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "safety_free_kick_not_modelled",
+   "error": null,
+   "family": "safety_free_kick_not_modelled",
+   "game_id": "2026_11_MIN_SF",
+   "model": "v1",
+   "seed": 300070
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_receiving_return_outside_field",
+   "error": null,
+   "family": "blocked_kick_receiving_return_outside_field",
+   "game_id": "2026_11_MIN_SF",
+   "model": "v1",
+   "seed": 300079
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 4,
+   "error": null,
+   "family": "playcall_no_run_outcomes_in_cell",
+   "field": "1-9",
+   "game_id": "2026_11_MIN_SF",
+   "model": "v1.5",
+   "seed": 300049
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "playcall_no_run_outcomes_in_cell",
+   "field": "80-99",
+   "game_id": "2026_11_NO_CHI",
+   "model": "v1",
+   "seed": 300008
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "1-3",
+   "down": 3,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "20-49",
+   "game_id": "2026_11_NO_CHI",
+   "model": "v1",
+   "seed": 300025
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "playcall_no_run_outcomes_in_cell",
+   "field": "80-99",
+   "game_id": "2026_11_NO_CHI",
+   "model": "v1",
+   "seed": 300027
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 4,
+   "error": null,
+   "family": "playcall_no_run_outcomes_in_cell",
+   "field": "1-9",
+   "game_id": "2026_11_NO_CHI",
+   "model": "v1",
+   "seed": 300053
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 3,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "80-99",
+   "game_id": "2026_11_NO_CHI",
+   "model": "v1",
+   "seed": 300065
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_NO_CHI",
+   "model": "v1",
+   "seed": 300086
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_outcome_unresolved:field_goal:guarded_penalty_fumble_or_review",
+   "error": null,
+   "family": "blocked_kick_outcome_unresolved",
+   "game_id": "2026_11_NO_CHI",
+   "model": "v1",
+   "seed": 300098
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_outcome_unresolved:punt:guarded_penalty_fumble_or_review",
+   "error": null,
+   "family": "blocked_kick_outcome_unresolved",
+   "game_id": "2026_11_NO_CHI",
+   "model": "v1.5",
+   "seed": 300016
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_NO_CHI",
+   "model": "v1.5",
+   "seed": 300029
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_NYJ_LAC",
+   "model": "v1",
+   "seed": 300089
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "1-3",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "20-49",
+   "game_id": "2026_11_NYJ_LAC",
+   "model": "v1.5",
+   "seed": 300047
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_receiving_return_outside_field",
+   "error": null,
+   "family": "blocked_kick_receiving_return_outside_field",
+   "game_id": "2026_11_NYJ_LAC",
+   "model": "v1.5",
+   "seed": 300073
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_NYJ_LAC",
+   "model": "v1.5",
+   "seed": 300081
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_NYJ_LAC",
+   "model": "v1.5",
+   "seed": 300082
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "1-3",
+   "down": 3,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_PIT_PHI",
+   "model": "v1",
+   "seed": 300008
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_PIT_PHI",
+   "model": "v1",
+   "seed": 300068
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_PIT_PHI",
+   "model": "v1",
+   "seed": 300094
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "1-3",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "1-9",
+   "game_id": "2026_11_PIT_PHI",
+   "model": "v1.5",
+   "seed": 300002
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "1-3",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_PIT_PHI",
+   "model": "v1.5",
+   "seed": 300010
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "1-3",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_PIT_PHI",
+   "model": "v1.5",
+   "seed": 300050
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "1-9",
+   "game_id": "2026_11_TB_DET",
+   "model": "v1",
+   "seed": 300007
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "1-3",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "20-49",
+   "game_id": "2026_11_TB_DET",
+   "model": "v1",
+   "seed": 300057
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_TB_DET",
+   "model": "v1",
+   "seed": 300079
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 2,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_TB_DET",
+   "model": "v1",
+   "seed": 300083
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "1-3",
+   "down": 3,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "20-49",
+   "game_id": "2026_11_TB_DET",
+   "model": "v1",
+   "seed": 300098
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_outcome_unresolved:punt:guarded_penalty_fumble_or_review",
+   "error": null,
+   "family": "blocked_kick_outcome_unresolved",
+   "game_id": "2026_11_TB_DET",
+   "model": "v1.5",
+   "seed": 300024
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "1-3",
+   "down": 4,
+   "error": null,
+   "family": "qb_scramble_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_TB_DET",
+   "model": "v1.5",
+   "seed": 300027
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_TB_DET",
+   "model": "v1.5",
+   "seed": 300050
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 3,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "50-79",
+   "game_id": "2026_11_TB_DET",
+   "model": "v1.5",
+   "seed": 300051
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_outcome_unresolved:field_goal:guarded_penalty_fumble_or_review",
+   "error": null,
+   "family": "blocked_kick_outcome_unresolved",
+   "game_id": "2026_11_TB_DET",
+   "model": "v1.5",
+   "seed": 300080
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "7-10",
+   "down": 4,
+   "error": null,
+   "family": "playcall_no_run_outcomes_in_cell",
+   "field": "80-99",
+   "game_id": "2026_11_TEN_DAL",
+   "model": "v1",
+   "seed": 300051
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_receiving_return_outside_field",
+   "error": null,
+   "family": "blocked_kick_receiving_return_outside_field",
+   "game_id": "2026_11_TEN_DAL",
+   "model": "v1",
+   "seed": 300074
+  },
+  {
+   "class": "unsupported_cell",
+   "detail": "blocked_kick_kicking_recovery_outside_field",
+   "error": null,
+   "family": "blocked_kick_kicking_recovery_outside_field",
+   "game_id": "2026_11_TEN_DAL",
+   "model": "v1",
+   "seed": 300087
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "4-6",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_TEN_DAL",
+   "model": "v1.5",
+   "seed": 300009
+  },
+  {
+   "class": "unsupported_cell",
+   "distance": "11+",
+   "down": 4,
+   "error": null,
+   "family": "non_scramble_run_source_rows_missing",
+   "field": "10-19",
+   "game_id": "2026_11_TEN_DAL",
+   "model": "v1.5",
+   "seed": 300018
+  }
+ ]
+}

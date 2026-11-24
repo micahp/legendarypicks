@@ -1,0 +1,1296 @@
+{
+ "game_shift": {
+  "pbv1": {
+   "home_win_change": {
+    "max_abs": 0.0256,
+    "mean_abs": 0.0109
+   },
+   "mean_margin_change": {
+    "max_abs": 0.66,
+    "mean_abs": 0.1838
+   },
+   "mean_total_change": {
+    "max_abs": 0.6,
+    "mean_abs": 0.2623
+   }
+  },
+  "pbv1-off": {
+   "home_win_change": {
+    "max_abs": 0.0256,
+    "mean_abs": 0.0109
+   },
+   "mean_margin_change": {
+    "max_abs": 0.66,
+    "mean_abs": 0.1838
+   },
+   "mean_total_change": {
+    "max_abs": 0.6,
+    "mean_abs": 0.2623
+   }
+  },
+  "v1": {
+   "home_win_change": {
+    "max_abs": 0.0158,
+    "mean_abs": 0.0076
+   },
+   "mean_margin_change": {
+    "max_abs": 0.43,
+    "mean_abs": 0.2146
+   },
+   "mean_total_change": {
+    "max_abs": 0.61,
+    "mean_abs": 0.1708
+   }
+  },
+  "v1.5": {
+   "home_win_change": {
+    "max_abs": 0.0165,
+    "mean_abs": 0.0071
+   },
+   "mean_margin_change": {
+    "max_abs": 0.67,
+    "mean_abs": 0.1615
+   },
+   "mean_total_change": {
+    "max_abs": 0.85,
+    "mean_abs": 0.2538
+   }
+  },
+  "v1.6": {
+   "home_win_change": {
+    "max_abs": 0.0204,
+    "mean_abs": 0.0077
+   },
+   "mean_margin_change": {
+    "max_abs": 0.53,
+    "mean_abs": 0.2231
+   },
+   "mean_total_change": {
+    "max_abs": 0.61,
+    "mean_abs": 0.3
+   }
+  },
+  "v2": {
+   "home_win_change": {
+    "max_abs": 0.0237,
+    "mean_abs": 0.0108
+   },
+   "mean_margin_change": {
+    "max_abs": 0.56,
+    "mean_abs": 0.2562
+   },
+   "mean_total_change": {
+    "max_abs": 0.69,
+    "mean_abs": 0.2423
+   }
+  }
+ },
+ "game_summary": {
+  "pbv1": {
+   "brier_cover": {
+    "change": 0.0058,
+    "full": 0.3236,
+    "matched": 0.3294
+   },
+   "brier_home_win": {
+    "change": 0.0078,
+    "full": 0.234,
+    "matched": 0.2418
+   },
+   "brier_over": {
+    "change": -0.0008,
+    "full": 0.2919,
+    "matched": 0.2911
+   },
+   "mean_abs_margin_error": {
+    "change": 0.13,
+    "full": 11.49,
+    "matched": 11.62
+   },
+   "mean_abs_total_error": {
+    "change": 0.05,
+    "full": 13.57,
+    "matched": 13.62
+   },
+   "winner_right": {
+    "change": 1,
+    "full": 7,
+    "matched": 8
+   }
+  },
+  "pbv1-off": {
+   "brier_cover": {
+    "change": 0.0058,
+    "full": 0.3236,
+    "matched": 0.3294
+   },
+   "brier_home_win": {
+    "change": 0.0078,
+    "full": 0.234,
+    "matched": 0.2418
+   },
+   "brier_over": {
+    "change": -0.0008,
+    "full": 0.2919,
+    "matched": 0.2911
+   },
+   "mean_abs_margin_error": {
+    "change": 0.13,
+    "full": 11.49,
+    "matched": 11.62
+   },
+   "mean_abs_total_error": {
+    "change": 0.05,
+    "full": 13.57,
+    "matched": 13.62
+   },
+   "winner_right": {
+    "change": 1,
+    "full": 7,
+    "matched": 8
+   }
+  },
+  "v1": {
+   "brier_cover": {
+    "change": -0.001,
+    "full": 0.3333,
+    "matched": 0.3323
+   },
+   "brier_home_win": {
+    "change": -0.0036,
+    "full": 0.2329,
+    "matched": 0.2293
+   },
+   "brier_over": {
+    "change": -0.001,
+    "full": 0.2892,
+    "matched": 0.2882
+   },
+   "mean_abs_margin_error": {
+    "change": -0.1,
+    "full": 11.32,
+    "matched": 11.22
+   },
+   "mean_abs_total_error": {
+    "change": -0.06,
+    "full": 13.41,
+    "matched": 13.35
+   },
+   "winner_right": {
+    "change": 0,
+    "full": 7,
+    "matched": 7
+   }
+  },
+  "v1.5": {
+   "brier_cover": {
+    "change": 0.0051,
+    "full": 0.3255,
+    "matched": 0.3306
+   },
+   "brier_home_win": {
+    "change": 0.0013,
+    "full": 0.2103,
+    "matched": 0.2116
+   },
+   "brier_over": {
+    "change": 0.0004,
+    "full": 0.287,
+    "matched": 0.2874
+   },
+   "mean_abs_margin_error": {
+    "change": 0.08,
+    "full": 11.1,
+    "matched": 11.18
+   },
+   "mean_abs_total_error": {
+    "change": -0.04,
+    "full": 13.17,
+    "matched": 13.13
+   },
+   "winner_right": {
+    "change": 0,
+    "full": 8,
+    "matched": 8
+   }
+  },
+  "v1.6": {
+   "brier_cover": {
+    "change": -0.0077,
+    "full": 0.2951,
+    "matched": 0.2874
+   },
+   "brier_home_win": {
+    "change": -0.0042,
+    "full": 0.1976,
+    "matched": 0.1934
+   },
+   "brier_over": {
+    "change": -0.0055,
+    "full": 0.3501,
+    "matched": 0.3446
+   },
+   "mean_abs_margin_error": {
+    "change": -0.08,
+    "full": 10.03,
+    "matched": 9.95
+   },
+   "mean_abs_total_error": {
+    "change": -0.09,
+    "full": 13.61,
+    "matched": 13.52
+   },
+   "winner_right": {
+    "change": 0,
+    "full": 9,
+    "matched": 9
+   }
+  },
+  "v2": {
+   "brier_cover": {
+    "change": -0.0047,
+    "full": 0.3066,
+    "matched": 0.3019
+   },
+   "brier_home_win": {
+    "change": -0.0022,
+    "full": 0.1813,
+    "matched": 0.1791
+   },
+   "brier_over": {
+    "change": -0.0067,
+    "full": 0.3446,
+    "matched": 0.3379
+   },
+   "mean_abs_margin_error": {
+    "change": -0.03,
+    "full": 10.13,
+    "matched": 10.1
+   },
+   "mean_abs_total_error": {
+    "change": -0.21,
+    "full": 13.01,
+    "matched": 12.8
+   },
+   "winner_right": {
+    "change": 0,
+    "full": 8,
+    "matched": 8
+   }
+  }
+ },
+ "per_game": [
+  {
+   "game_id": "2026_11_ARI_KC",
+   "games_full": 100,
+   "games_matched": 93,
+   "home_cover_change": -0.0242,
+   "home_win_change": -0.0256,
+   "mean_margin_change": -0.66,
+   "mean_total_change": -0.15,
+   "model": "pbv1",
+   "over_change": -0.0066
+  },
+  {
+   "game_id": "2026_11_ARI_KC",
+   "games_full": 100,
+   "games_matched": 93,
+   "home_cover_change": -0.0242,
+   "home_win_change": -0.0256,
+   "mean_margin_change": -0.66,
+   "mean_total_change": -0.15,
+   "model": "pbv1-off",
+   "over_change": -0.0066
+  },
+  {
+   "game_id": "2026_11_ARI_KC",
+   "games_full": 95,
+   "games_matched": 93,
+   "home_cover_change": 0.003,
+   "home_win_change": 0.004,
+   "mean_margin_change": 0.2,
+   "mean_total_change": 0.08,
+   "model": "v1",
+   "over_change": 0.0062
+  },
+  {
+   "game_id": "2026_11_ARI_KC",
+   "games_full": 97,
+   "games_matched": 93,
+   "home_cover_change": -0.0014,
+   "home_win_change": 0.0001,
+   "mean_margin_change": 0.06,
+   "mean_total_change": -0.5,
+   "model": "v1.5",
+   "over_change": -0.0107
+  },
+  {
+   "game_id": "2026_11_ARI_KC",
+   "games_full": 100,
+   "games_matched": 93,
+   "home_cover_change": 0.0005,
+   "home_win_change": 0.0104,
+   "mean_margin_change": 0.23,
+   "mean_total_change": -0.27,
+   "model": "v1.6",
+   "over_change": -0.0226
+  },
+  {
+   "game_id": "2026_11_ARI_KC",
+   "games_full": 100,
+   "games_matched": 93,
+   "home_cover_change": 0.002,
+   "home_win_change": -0.0026,
+   "mean_margin_change": -0.03,
+   "mean_total_change": -0.54,
+   "model": "v2",
+   "over_change": -0.0094
+  },
+  {
+   "game_id": "2026_11_BAL_CAR",
+   "games_full": 100,
+   "games_matched": 88,
+   "home_cover_change": -0.0009,
+   "home_win_change": -0.0068,
+   "mean_margin_change": 0.15,
+   "mean_total_change": 0.6,
+   "model": "pbv1",
+   "over_change": 0.0145
+  },
+  {
+   "game_id": "2026_11_BAL_CAR",
+   "games_full": 100,
+   "games_matched": 88,
+   "home_cover_change": -0.0009,
+   "home_win_change": -0.0068,
+   "mean_margin_change": 0.15,
+   "mean_total_change": 0.6,
+   "model": "pbv1-off",
+   "over_change": 0.0145
+  },
+  {
+   "game_id": "2026_11_BAL_CAR",
+   "games_full": 94,
+   "games_matched": 88,
+   "home_cover_change": 0.0089,
+   "home_win_change": 0.0141,
+   "mean_margin_change": 0.25,
+   "mean_total_change": 0.07,
+   "model": "v1",
+   "over_change": 0.0048
+  },
+  {
+   "game_id": "2026_11_BAL_CAR",
+   "games_full": 94,
+   "games_matched": 88,
+   "home_cover_change": 0.0027,
+   "home_win_change": 0.0063,
+   "mean_margin_change": 0.14,
+   "mean_total_change": -0.8,
+   "model": "v1.5",
+   "over_change": -0.015
+  },
+  {
+   "game_id": "2026_11_BAL_CAR",
+   "games_full": 100,
+   "games_matched": 88,
+   "home_cover_change": -0.0164,
+   "home_win_change": -0.0123,
+   "mean_margin_change": -0.44,
+   "mean_total_change": -0.14,
+   "model": "v1.6",
+   "over_change": 0.0118
+  },
+  {
+   "game_id": "2026_11_BAL_CAR",
+   "games_full": 100,
+   "games_matched": 88,
+   "home_cover_change": -0.0014,
+   "home_win_change": -0.0145,
+   "mean_margin_change": -0.38,
+   "mean_total_change": -0.27,
+   "model": "v2",
+   "over_change": -0.0105
+  },
+  {
+   "game_id": "2026_11_CIN_WAS",
+   "games_full": 100,
+   "games_matched": 94,
+   "home_cover_change": 0.0138,
+   "home_win_change": 0.0117,
+   "mean_margin_change": 0.08,
+   "mean_total_change": -0.17,
+   "model": "pbv1",
+   "over_change": -0.0157
+  },
+  {
+   "game_id": "2026_11_CIN_WAS",
+   "games_full": 100,
+   "games_matched": 94,
+   "home_cover_change": 0.0138,
+   "home_win_change": 0.0117,
+   "mean_margin_change": 0.08,
+   "mean_total_change": -0.17,
+   "model": "pbv1-off",
+   "over_change": -0.0157
+  },
+  {
+   "game_id": "2026_11_CIN_WAS",
+   "games_full": 97,
+   "games_matched": 94,
+   "home_cover_change": 0.0032,
+   "home_win_change": -0.0018,
+   "mean_margin_change": 0.11,
+   "mean_total_change": -0.1,
+   "model": "v1",
+   "over_change": -0.0065
+  },
+  {
+   "game_id": "2026_11_CIN_WAS",
+   "games_full": 97,
+   "games_matched": 94,
+   "home_cover_change": 0.0045,
+   "home_win_change": -0.0011,
+   "mean_margin_change": -0.02,
+   "mean_total_change": 0.31,
+   "model": "v1.5",
+   "over_change": 0.0012
+  },
+  {
+   "game_id": "2026_11_CIN_WAS",
+   "games_full": 100,
+   "games_matched": 94,
+   "home_cover_change": 0.0136,
+   "home_win_change": 0.0028,
+   "mean_margin_change": 0.16,
+   "mean_total_change": 0.61,
+   "model": "v1.6",
+   "over_change": 0.0198
+  },
+  {
+   "game_id": "2026_11_CIN_WAS",
+   "games_full": 100,
+   "games_matched": 94,
+   "home_cover_change": 0.0006,
+   "home_win_change": 0.0191,
+   "mean_margin_change": 0.56,
+   "mean_total_change": -0.04,
+   "model": "v2",
+   "over_change": 0.0009
+  },
+  {
+   "game_id": "2026_11_IND_HOU",
+   "games_full": 100,
+   "games_matched": 96,
+   "home_cover_change": 0.0008,
+   "home_win_change": 0.0021,
+   "mean_margin_change": -0.27,
+   "mean_total_change": 0.16,
+   "model": "pbv1",
+   "over_change": 0.0038
+  },
+  {
+   "game_id": "2026_11_IND_HOU",
+   "games_full": 100,
+   "games_matched": 96,
+   "home_cover_change": 0.0008,
+   "home_win_change": 0.0021,
+   "mean_margin_change": -0.27,
+   "mean_total_change": 0.16,
+   "model": "pbv1-off",
+   "over_change": 0.0038
+  },
+  {
+   "game_id": "2026_11_IND_HOU",
+   "games_full": 98,
+   "games_matched": 96,
+   "home_cover_change": -0.0159,
+   "home_win_change": -0.0096,
+   "mean_margin_change": -0.29,
+   "mean_total_change": 0.15,
+   "model": "v1",
+   "over_change": 0.0093
+  },
+  {
+   "game_id": "2026_11_IND_HOU",
+   "games_full": 98,
+   "games_matched": 96,
+   "home_cover_change": -0.0049,
+   "home_win_change": -0.0077,
+   "mean_margin_change": -0.18,
+   "mean_total_change": -0.08,
+   "model": "v1.5",
+   "over_change": -0.0078
+  },
+  {
+   "game_id": "2026_11_IND_HOU",
+   "games_full": 100,
+   "games_matched": 96,
+   "home_cover_change": 0.0079,
+   "home_win_change": 0.0008,
+   "mean_margin_change": 0.25,
+   "mean_total_change": -0.25,
+   "model": "v1.6",
+   "over_change": -0.0038
+  },
+  {
+   "game_id": "2026_11_IND_HOU",
+   "games_full": 100,
+   "games_matched": 96,
+   "home_cover_change": 0.0008,
+   "home_win_change": 0.0167,
+   "mean_margin_change": 0.22,
+   "mean_total_change": -0.31,
+   "model": "v2",
+   "over_change": -0.0162
+  },
+  {
+   "game_id": "2026_11_JAX_NYG",
+   "games_full": 100,
+   "games_matched": 88,
+   "home_cover_change": -0.0059,
+   "home_win_change": -0.015,
+   "mean_margin_change": -0.47,
+   "mean_total_change": 0.36,
+   "model": "pbv1",
+   "over_change": 0.0291
+  },
+  {
+   "game_id": "2026_11_JAX_NYG",
+   "games_full": 100,
+   "games_matched": 88,
+   "home_cover_change": -0.0059,
+   "home_win_change": -0.015,
+   "mean_margin_change": -0.47,
+   "mean_total_change": 0.36,
+   "model": "pbv1-off",
+   "over_change": 0.0291
+  },
+  {
+   "game_id": "2026_11_JAX_NYG",
+   "games_full": 95,
+   "games_matched": 88,
+   "home_cover_change": 0.0275,
+   "home_win_change": 0.0158,
+   "mean_margin_change": 0.29,
+   "mean_total_change": -0.61,
+   "model": "v1",
+   "over_change": -0.0128
+  },
+  {
+   "game_id": "2026_11_JAX_NYG",
+   "games_full": 93,
+   "games_matched": 88,
+   "home_cover_change": -0.0029,
+   "home_win_change": -0.0121,
+   "mean_margin_change": -0.17,
+   "mean_total_change": 0.17,
+   "model": "v1.5",
+   "over_change": -0.0007
+  },
+  {
+   "game_id": "2026_11_JAX_NYG",
+   "games_full": 100,
+   "games_matched": 88,
+   "home_cover_change": 0.0086,
+   "home_win_change": 0.0073,
+   "mean_margin_change": 0.53,
+   "mean_total_change": -0.54,
+   "model": "v1.6",
+   "over_change": -0.0164
+  },
+  {
+   "game_id": "2026_11_JAX_NYG",
+   "games_full": 100,
+   "games_matched": 88,
+   "home_cover_change": 0.0214,
+   "home_win_change": 0.0109,
+   "mean_margin_change": 0.37,
+   "mean_total_change": -0.69,
+   "model": "v2",
+   "over_change": -0.0318
+  },
+  {
+   "game_id": "2026_11_LV_DEN",
+   "games_full": 100,
+   "games_matched": 93,
+   "home_cover_change": -0.0006,
+   "home_win_change": -0.0003,
+   "mean_margin_change": 0.01,
+   "mean_total_change": -0.14,
+   "model": "pbv1",
+   "over_change": -0.0101
+  },
+  {
+   "game_id": "2026_11_LV_DEN",
+   "games_full": 100,
+   "games_matched": 93,
+   "home_cover_change": -0.0006,
+   "home_win_change": -0.0003,
+   "mean_margin_change": 0.01,
+   "mean_total_change": -0.14,
+   "model": "pbv1-off",
+   "over_change": -0.0101
+  },
+  {
+   "game_id": "2026_11_LV_DEN",
+   "games_full": 95,
+   "games_matched": 93,
+   "home_cover_change": -0.0019,
+   "home_win_change": -0.0043,
+   "mean_margin_change": -0.24,
+   "mean_total_change": -0.23,
+   "model": "v1",
+   "over_change": -0.0082
+  },
+  {
+   "game_id": "2026_11_LV_DEN",
+   "games_full": 98,
+   "games_matched": 93,
+   "home_cover_change": -0.0313,
+   "home_win_change": -0.0104,
+   "mean_margin_change": -0.67,
+   "mean_total_change": 0.14,
+   "model": "v1.5",
+   "over_change": -0.0074
+  },
+  {
+   "game_id": "2026_11_LV_DEN",
+   "games_full": 100,
+   "games_matched": 93,
+   "home_cover_change": 0.0186,
+   "home_win_change": -0.0058,
+   "mean_margin_change": 0.23,
+   "mean_total_change": 0.1,
+   "model": "v1.6",
+   "over_change": -0.0029
+  },
+  {
+   "game_id": "2026_11_LV_DEN",
+   "games_full": 100,
+   "games_matched": 93,
+   "home_cover_change": -0.0067,
+   "home_win_change": 0.0082,
+   "mean_margin_change": 0.16,
+   "mean_total_change": -0.02,
+   "model": "v2",
+   "over_change": -0.0037
+  },
+  {
+   "game_id": "2026_11_MIA_BUF",
+   "games_full": 100,
+   "games_matched": 93,
+   "home_cover_change": -0.0134,
+   "home_win_change": -0.0088,
+   "mean_margin_change": -0.22,
+   "mean_total_change": 0.21,
+   "model": "pbv1",
+   "over_change": 0.0106
+  },
+  {
+   "game_id": "2026_11_MIA_BUF",
+   "games_full": 100,
+   "games_matched": 93,
+   "home_cover_change": -0.0134,
+   "home_win_change": -0.0088,
+   "mean_margin_change": -0.22,
+   "mean_total_change": 0.21,
+   "model": "pbv1-off",
+   "over_change": 0.0106
+  },
+  {
+   "game_id": "2026_11_MIA_BUF",
+   "games_full": 94,
+   "games_matched": 93,
+   "home_cover_change": 0.002,
+   "home_win_change": -0.0033,
+   "mean_margin_change": 0.04,
+   "mean_total_change": -0.21,
+   "model": "v1",
+   "over_change": -0.0043
+  },
+  {
+   "game_id": "2026_11_MIA_BUF",
+   "games_full": 99,
+   "games_matched": 93,
+   "home_cover_change": -0.0186,
+   "home_win_change": -0.0101,
+   "mean_margin_change": -0.32,
+   "mean_total_change": 0.14,
+   "model": "v1.5",
+   "over_change": -0.0108
+  },
+  {
+   "game_id": "2026_11_MIA_BUF",
+   "games_full": 99,
+   "games_matched": 93,
+   "home_cover_change": 0.0,
+   "home_win_change": 0.0016,
+   "mean_margin_change": -0.27,
+   "mean_total_change": -0.24,
+   "model": "v1.6",
+   "over_change": -0.0068
+  },
+  {
+   "game_id": "2026_11_MIA_BUF",
+   "games_full": 100,
+   "games_matched": 93,
+   "home_cover_change": 0.0118,
+   "home_win_change": -0.0005,
+   "mean_margin_change": -0.44,
+   "mean_total_change": -0.1,
+   "model": "v2",
+   "over_change": -0.0101
+  },
+  {
+   "game_id": "2026_11_MIN_SF",
+   "games_full": 100,
+   "games_matched": 93,
+   "home_cover_change": 0.0086,
+   "home_win_change": 0.0161,
+   "mean_margin_change": 0.09,
+   "mean_total_change": 0.51,
+   "model": "pbv1",
+   "over_change": 0.0144
+  },
+  {
+   "game_id": "2026_11_MIN_SF",
+   "games_full": 100,
+   "games_matched": 93,
+   "home_cover_change": 0.0086,
+   "home_win_change": 0.0161,
+   "mean_margin_change": 0.09,
+   "mean_total_change": 0.51,
+   "model": "pbv1-off",
+   "over_change": 0.0144
+  },
+  {
+   "game_id": "2026_11_MIN_SF",
+   "games_full": 95,
+   "games_matched": 93,
+   "home_cover_change": -0.0042,
+   "home_win_change": -0.0008,
+   "mean_margin_change": -0.02,
+   "mean_total_change": -0.04,
+   "model": "v1",
+   "over_change": 0.0031
+  },
+  {
+   "game_id": "2026_11_MIN_SF",
+   "games_full": 99,
+   "games_matched": 93,
+   "home_cover_change": 0.0127,
+   "home_win_change": -0.0085,
+   "mean_margin_change": 0.13,
+   "mean_total_change": -0.85,
+   "model": "v1.5",
+   "over_change": -0.015
+  },
+  {
+   "game_id": "2026_11_MIN_SF",
+   "games_full": 99,
+   "games_matched": 93,
+   "home_cover_change": 0.0143,
+   "home_win_change": 0.0006,
+   "mean_margin_change": 0.12,
+   "mean_total_change": 0.33,
+   "model": "v1.6",
+   "over_change": 0.0224
+  },
+  {
+   "game_id": "2026_11_MIN_SF",
+   "games_full": 100,
+   "games_matched": 93,
+   "home_cover_change": 0.0169,
+   "home_win_change": 0.0237,
+   "mean_margin_change": 0.51,
+   "mean_total_change": -0.09,
+   "model": "v2",
+   "over_change": 0.0091
+  },
+  {
+   "game_id": "2026_11_NO_CHI",
+   "games_full": 100,
+   "games_matched": 91,
+   "home_cover_change": -0.0041,
+   "home_win_change": -0.0103,
+   "mean_margin_change": -0.25,
+   "mean_total_change": -0.44,
+   "model": "pbv1",
+   "over_change": -0.0203
+  },
+  {
+   "game_id": "2026_11_NO_CHI",
+   "games_full": 100,
+   "games_matched": 91,
+   "home_cover_change": -0.0041,
+   "home_win_change": -0.0103,
+   "mean_margin_change": -0.25,
+   "mean_total_change": -0.44,
+   "model": "pbv1-off",
+   "over_change": -0.0203
+  },
+  {
+   "game_id": "2026_11_NO_CHI",
+   "games_full": 93,
+   "games_matched": 91,
+   "home_cover_change": 0.0011,
+   "home_win_change": 0.008,
+   "mean_margin_change": 0.32,
+   "mean_total_change": -0.22,
+   "model": "v1",
+   "over_change": -0.0137
+  },
+  {
+   "game_id": "2026_11_NO_CHI",
+   "games_full": 98,
+   "games_matched": 91,
+   "home_cover_change": 0.0055,
+   "home_win_change": 0.0165,
+   "mean_margin_change": 0.07,
+   "mean_total_change": -0.04,
+   "model": "v1.5",
+   "over_change": -0.0102
+  },
+  {
+   "game_id": "2026_11_NO_CHI",
+   "games_full": 100,
+   "games_matched": 91,
+   "home_cover_change": -0.0062,
+   "home_win_change": 0.0204,
+   "mean_margin_change": -0.17,
+   "mean_total_change": -0.38,
+   "model": "v1.6",
+   "over_change": -0.0084
+  },
+  {
+   "game_id": "2026_11_NO_CHI",
+   "games_full": 100,
+   "games_matched": 91,
+   "home_cover_change": -0.0201,
+   "home_win_change": 0.0045,
+   "mean_margin_change": -0.16,
+   "mean_total_change": -0.2,
+   "model": "v2",
+   "over_change": -0.0053
+  },
+  {
+   "game_id": "2026_11_NYJ_LAC",
+   "games_full": 100,
+   "games_matched": 95,
+   "home_cover_change": 0.0147,
+   "home_win_change": 0.0189,
+   "mean_margin_change": 0.03,
+   "mean_total_change": 0.13,
+   "model": "pbv1",
+   "over_change": 0.0016
+  },
+  {
+   "game_id": "2026_11_NYJ_LAC",
+   "games_full": 100,
+   "games_matched": 95,
+   "home_cover_change": 0.0147,
+   "home_win_change": 0.0189,
+   "mean_margin_change": 0.03,
+   "mean_total_change": 0.13,
+   "model": "pbv1-off",
+   "over_change": 0.0016
+  },
+  {
+   "game_id": "2026_11_NYJ_LAC",
+   "games_full": 99,
+   "games_matched": 95,
+   "home_cover_change": -0.0124,
+   "home_win_change": -0.0068,
+   "mean_margin_change": -0.2,
+   "mean_total_change": 0.09,
+   "model": "v1",
+   "over_change": 0.0044
+  },
+  {
+   "game_id": "2026_11_NYJ_LAC",
+   "games_full": 96,
+   "games_matched": 95,
+   "home_cover_change": -0.0026,
+   "home_win_change": -0.0022,
+   "mean_margin_change": 0.05,
+   "mean_total_change": -0.02,
+   "model": "v1.5",
+   "over_change": -0.0051
+  },
+  {
+   "game_id": "2026_11_NYJ_LAC",
+   "games_full": 100,
+   "games_matched": 95,
+   "home_cover_change": -0.0089,
+   "home_win_change": -0.0111,
+   "mean_margin_change": -0.11,
+   "mean_total_change": -0.17,
+   "model": "v1.6",
+   "over_change": -0.0068
+  },
+  {
+   "game_id": "2026_11_NYJ_LAC",
+   "games_full": 100,
+   "games_matched": 95,
+   "home_cover_change": 0.0126,
+   "home_win_change": 0.0189,
+   "mean_margin_change": 0.21,
+   "mean_total_change": 0.47,
+   "model": "v2",
+   "over_change": 0.0111
+  },
+  {
+   "game_id": "2026_11_PIT_PHI",
+   "games_full": 100,
+   "games_matched": 94,
+   "home_cover_change": -0.0111,
+   "home_win_change": -0.0094,
+   "mean_margin_change": 0.04,
+   "mean_total_change": 0.18,
+   "model": "pbv1",
+   "over_change": -0.0104
+  },
+  {
+   "game_id": "2026_11_PIT_PHI",
+   "games_full": 100,
+   "games_matched": 94,
+   "home_cover_change": -0.0111,
+   "home_win_change": -0.0094,
+   "mean_margin_change": 0.04,
+   "mean_total_change": 0.18,
+   "model": "pbv1-off",
+   "over_change": -0.0104
+  },
+  {
+   "game_id": "2026_11_PIT_PHI",
+   "games_full": 97,
+   "games_matched": 94,
+   "home_cover_change": -0.0092,
+   "home_win_change": -0.0115,
+   "mean_margin_change": -0.2,
+   "mean_total_change": 0.1,
+   "model": "v1",
+   "over_change": 0.0018
+  },
+  {
+   "game_id": "2026_11_PIT_PHI",
+   "games_full": 97,
+   "games_matched": 94,
+   "home_cover_change": -0.0083,
+   "home_win_change": -0.0105,
+   "mean_margin_change": -0.04,
+   "mean_total_change": -0.06,
+   "model": "v1.5",
+   "over_change": 0.0018
+  },
+  {
+   "game_id": "2026_11_PIT_PHI",
+   "games_full": 100,
+   "games_matched": 94,
+   "home_cover_change": 0.0083,
+   "home_win_change": 0.0126,
+   "mean_margin_change": 0.18,
+   "mean_total_change": -0.19,
+   "model": "v1.6",
+   "over_change": -0.0168
+  },
+  {
+   "game_id": "2026_11_PIT_PHI",
+   "games_full": 100,
+   "games_matched": 94,
+   "home_cover_change": 0.0064,
+   "home_win_change": -0.0019,
+   "mean_margin_change": 0.01,
+   "mean_total_change": -0.27,
+   "model": "v2",
+   "over_change": -0.0238
+  },
+  {
+   "game_id": "2026_11_TB_DET",
+   "games_full": 100,
+   "games_matched": 90,
+   "home_cover_change": -0.0044,
+   "home_win_change": -0.0133,
+   "mean_margin_change": -0.05,
+   "mean_total_change": -0.32,
+   "model": "pbv1",
+   "over_change": -0.0044
+  },
+  {
+   "game_id": "2026_11_TB_DET",
+   "games_full": 100,
+   "games_matched": 90,
+   "home_cover_change": -0.0044,
+   "home_win_change": -0.0133,
+   "mean_margin_change": -0.05,
+   "mean_total_change": -0.32,
+   "model": "pbv1-off",
+   "over_change": -0.0044
+  },
+  {
+   "game_id": "2026_11_TB_DET",
+   "games_full": 95,
+   "games_matched": 90,
+   "home_cover_change": 0.0199,
+   "home_win_change": 0.0146,
+   "mean_margin_change": 0.43,
+   "mean_total_change": -0.14,
+   "model": "v1",
+   "over_change": -0.0164
+  },
+  {
+   "game_id": "2026_11_TB_DET",
+   "games_full": 95,
+   "games_matched": 90,
+   "home_cover_change": 0.0006,
+   "home_win_change": -0.0035,
+   "mean_margin_change": -0.15,
+   "mean_total_change": 0.07,
+   "model": "v1.5",
+   "over_change": -0.003
+  },
+  {
+   "game_id": "2026_11_TB_DET",
+   "games_full": 100,
+   "games_matched": 90,
+   "home_cover_change": 0.0033,
+   "home_win_change": 0.0122,
+   "mean_margin_change": 0.02,
+   "mean_total_change": -0.46,
+   "model": "v1.6",
+   "over_change": 0.0011
+  },
+  {
+   "game_id": "2026_11_TB_DET",
+   "games_full": 100,
+   "games_matched": 90,
+   "home_cover_change": 0.0044,
+   "home_win_change": 0.0133,
+   "mean_margin_change": 0.13,
+   "mean_total_change": 0.14,
+   "model": "v2",
+   "over_change": 0.0044
+  },
+  {
+   "game_id": "2026_11_TEN_DAL",
+   "games_full": 100,
+   "games_matched": 95,
+   "home_cover_change": 0.01,
+   "home_win_change": -0.0032,
+   "mean_margin_change": 0.07,
+   "mean_total_change": -0.04,
+   "model": "pbv1",
+   "over_change": 0.0053
+  },
+  {
+   "game_id": "2026_11_TEN_DAL",
+   "games_full": 100,
+   "games_matched": 95,
+   "home_cover_change": 0.01,
+   "home_win_change": -0.0032,
+   "mean_margin_change": 0.07,
+   "mean_total_change": -0.04,
+   "model": "pbv1-off",
+   "over_change": 0.0053
+  },
+  {
+   "game_id": "2026_11_TEN_DAL",
+   "games_full": 97,
+   "games_matched": 95,
+   "home_cover_change": -0.0089,
+   "home_win_change": -0.0048,
+   "mean_margin_change": -0.2,
+   "mean_total_change": 0.18,
+   "model": "v1",
+   "over_change": 0.0028
+  },
+  {
+   "game_id": "2026_11_TEN_DAL",
+   "games_full": 98,
+   "games_matched": 95,
+   "home_cover_change": 0.0049,
+   "home_win_change": 0.0038,
+   "mean_margin_change": 0.1,
+   "mean_total_change": -0.12,
+   "model": "v1.5",
+   "over_change": 0.0039
+  },
+  {
+   "game_id": "2026_11_TEN_DAL",
+   "games_full": 100,
+   "games_matched": 95,
+   "home_cover_change": 0.0053,
+   "home_win_change": -0.0026,
+   "mean_margin_change": 0.19,
+   "mean_total_change": 0.22,
+   "model": "v1.6",
+   "over_change": 0.0032
+  },
+  {
+   "game_id": "2026_11_TEN_DAL",
+   "games_full": 100,
+   "games_matched": 95,
+   "home_cover_change": 0.0032,
+   "home_win_change": 0.0053,
+   "mean_margin_change": 0.15,
+   "mean_total_change": 0.01,
+   "model": "v2",
+   "over_change": 0.0037
+  }
+ ],
+ "projections": {
+  "pbv1": {
+   "max_abs_p_over_change": 0.0464,
+   "mean_abs_p_over_change": 0.0077,
+   "mean_abs_sim_mean_change": 0.241,
+   "mean_abs_sim_mean_change_over_line": 0.0227,
+   "props": 1280,
+   "side_flips_vs_market": 20
+  },
+  "pbv1-off": {
+   "max_abs_p_over_change": 0.0464,
+   "mean_abs_p_over_change": 0.0077,
+   "mean_abs_sim_mean_change": 0.241,
+   "mean_abs_sim_mean_change_over_line": 0.0227,
+   "props": 1280,
+   "side_flips_vs_market": 20
+  },
+  "v1": {
+   "max_abs_p_over_change": 0.0386,
+   "mean_abs_p_over_change": 0.0052,
+   "mean_abs_sim_mean_change": 0.156,
+   "mean_abs_sim_mean_change_over_line": 0.0156,
+   "props": 1280,
+   "side_flips_vs_market": 6
+  },
+  "v1.5": {
+   "max_abs_p_over_change": 0.0343,
+   "mean_abs_p_over_change": 0.0065,
+   "mean_abs_sim_mean_change": 0.18,
+   "mean_abs_sim_mean_change_over_line": 0.0185,
+   "props": 1280,
+   "side_flips_vs_market": 18
+  },
+  "v1.6": {
+   "max_abs_p_over_change": 0.0465,
+   "mean_abs_p_over_change": 0.0092,
+   "mean_abs_sim_mean_change": 0.255,
+   "mean_abs_sim_mean_change_over_line": 0.022,
+   "props": 1280,
+   "side_flips_vs_market": 20
+  },
+  "v2": {
+   "max_abs_p_over_change": 0.0464,
+   "mean_abs_p_over_change": 0.0086,
+   "mean_abs_sim_mean_change": 0.226,
+   "mean_abs_sim_mean_change_over_line": 0.0237,
+   "props": 1280,
+   "side_flips_vs_market": 20
+  }
+ },
+ "prop_summary": {
+  "pbv1": {
+   "brier": {
+    "change": 0.0001,
+    "full": 0.322,
+    "matched": 0.3221
+   },
+   "side_hit_rate": {
+    "change": 0.0053,
+    "full": 0.4989,
+    "matched": 0.5042
+   },
+   "side_hits": {
+    "change": 5,
+    "full": 470,
+    "matched": 475
+   }
+  },
+  "pbv1-off": {
+   "brier": {
+    "change": 0.0001,
+    "full": 0.322,
+    "matched": 0.3221
+   },
+   "side_hit_rate": {
+    "change": 0.0053,
+    "full": 0.4989,
+    "matched": 0.5042
+   },
+   "side_hits": {
+    "change": 5,
+    "full": 470,
+    "matched": 475
+   }
+  },
+  "v1": {
+   "brier": {
+    "change": 0.0003,
+    "full": 0.3214,
+    "matched": 0.3217
+   },
+   "side_hit_rate": {
+    "change": 0.0021,
+    "full": 0.5,
+    "matched": 0.5021
+   },
+   "side_hits": {
+    "change": 2,
+    "full": 471,
+    "matched": 473
+   }
+  },
+  "v1.5": {
+   "brier": {
+    "change": 0.0004,
+    "full": 0.3164,
+    "matched": 0.3168
+   },
+   "side_hit_rate": {
+    "change": -0.0042,
+    "full": 0.5106,
+    "matched": 0.5064
+   },
+   "side_hits": {
+    "change": -4,
+    "full": 481,
+    "matched": 477
+   }
+  },
+  "v1.6": {
+   "brier": {
+    "change": -0.0014,
+    "full": 0.2837,
+    "matched": 0.2823
+   },
+   "side_hit_rate": {
+    "change": 0.0074,
+    "full": 0.5149,
+    "matched": 0.5223
+   },
+   "side_hits": {
+    "change": 7,
+    "full": 485,
+    "matched": 492
+   }
+  },
+  "v2": {
+   "brier": {
+    "change": 0.0007,
+    "full": 0.3065,
+    "matched": 0.3072
+   },
+   "side_hit_rate": {
+    "change": -0.0021,
+    "full": 0.5244,
+    "matched": 0.5223
+   },
+   "side_hits": {
+    "change": -2,
+    "full": 494,
+    "matched": 492
+   }
+  }
+ }
+}

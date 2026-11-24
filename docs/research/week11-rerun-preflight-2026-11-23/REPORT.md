@@ -61,6 +61,153 @@ Props, 91 per model with prices on both sides: mean P(over) gap -0.06 to -0.08; 
 others 0.211 to 0.215. Jacory Croskey-Merritt (WSH RB) has lines but is RESERVE in the nflverse weekly roster, so the
 sims give him nothing. Lines come from rows captured before 15:12 UTC; they can still move before kickoff.
 
+## Seed completion and failures (13 games)
+
+A seed is completed when the game reaches a legal end (regulation or overtime). Every seed below was attempted. Source:
+`seed_completion.json` (`matched_seeds.py`).
+
+| model | attempted | completed | completion | failures | unsupported cell | engine error | games with a failure |
+|---|---|---|---|---|---|---|---|
+| v1 | 1,300 | 1,244 | 95.69% | 56 | 56 | 0 | 13 |
+| v1.5 | 1,300 | 1,259 | 96.85% | 41 | 41 | 0 | 13 |
+| v1.6 | 1,300 | 1,298 | 99.85% | 2 | 0 | 2 | 2 |
+| v2 | 1,300 | 1,300 | 100% | 0 | 0 | 0 | 0 |
+| pbv1 | 1,300 | 1,300 | 100% | 0 | 0 | 0 | 0 |
+| pbv1-off | 1,300 | 1,300 | 100% | 0 | 0 | 0 | 0 |
+
+Two failure classes, logged separately:
+
+- **Unsupported cell** (v1, v1.5): the engine has no historical rows for the play it must draw, so it stops the seed
+  on purpose. Issue: `docs/issues/slc-v1-v15-unsupported-cells.md`.
+- **Engine error** (v1.6): a sack fumble row moves the ball behind the offense's own goal line, and the reducer raises.
+  Issue: `docs/issues/slc-v16-sack-fumble-own-end-zone-error.md`.
+
+### v1 and v1.5 failures by transition type
+
+Field is yards to the opponent goal (`1-9` is the red zone, `80-99` is deep in its own end). Kick blocks do not record
+the field state.
+
+| transition | down | distance | field | v1 | v1.5 |
+|---|---|---|---|---|---|
+| QB scramble, no scramble rows | 1 | 1-3 | 1-9 | 1 | 0 |
+| | 2 | 1-3 | 1-9 | 0 | 1 |
+| | 2 | 1-3 | 20-49 | 1 | 1 |
+| | 2 | 1-3 | 50-79 | 0 | 2 |
+| | 2 | 4-6 | 10-19 | 2 | 1 |
+| | 2 | 4-6 | 50-79 | 0 | 1 |
+| | 2 | 7-10 | 1-9 | 1 | 0 |
+| | 2 | 7-10 | 10-19 | 2 | 0 |
+| | 2 | 7-10 | 20-49 | 2 | 1 |
+| | 2 | 7-10 | 50-79 | 6 | 4 |
+| | 2 | 11+ | 10-19 | 1 | 0 |
+| | 3 | 1-3 | 10-19 | 1 | 0 |
+| | 3 | 1-3 | 20-49 | 2 | 0 |
+| | 3 | 7-10 | 80-99 | 3 | 0 |
+| | 3 | 11+ | 80-99 | 1 | 0 |
+| | 4 | 1-3 | 1-9 | 0 | 1 |
+| | 4 | 1-3 | 50-79 | 0 | 2 |
+| Designed run, no non-scramble run rows | 3 | 4-6 | 50-79 | 1 | 2 |
+| | 3 | 4-6 | 80-99 | 1 | 1 |
+| | 4 | 4-6 | 10-19 | 6 | 9 |
+| | 4 | 4-6 | 20-49 | 2 | 0 |
+| | 4 | 11+ | 10-19 | 0 | 2 |
+| Run called, no run outcomes in the cell | 4 | 4-6 | 80-99 | 2 | 0 |
+| | 4 | 7-10 | 1-9 | 5 | 3 |
+| | 4 | 7-10 | 80-99 | 1 | 0 |
+| Blocked kick return lands outside the field | | | | 5 | 5 |
+| Blocked kick recovery by the kicking team outside the field | | | | 3 | 1 |
+| Kick row with a penalty, fumble or review, unresolved (punt) | | | | 2 | 2 |
+| Kick row with a penalty, fumble or review, unresolved (field goal) | | | | 2 | 1 |
+| Field goal 50+ cell too thin | | | | 2 | 0 |
+| Safety free kick at a quarter end | | | | 1 | 1 |
+| **Total** | | | | **56** | **41** |
+
+Scrimmage cells: 41 of 56 for v1 and 31 of 41 for v1.5; the other 15 and 10 are kicks. 4th down is 16 of v1's and 17
+of v1.5's. Scrambles are the largest single type (23 and 14).
+
+### How the newer models handle the same cells
+
+The engine code is the same in all models (`slc_playcall.py`, `game_state.py`, `reducer.py`). The difference is five
+opt-in fixes, `e2_reference.BLOCKER_FIXES`, chosen when the pack is built. Each week 11 pack was loaded on the fast host
+on 2026-11-23 and its `reference.blocker_fixes` read: v1 and v1.5 have none; v1.6 and v2 have all five. pbv1 shares
+v2's code commit and its pack audit log lists all five.
+
+- `run_scramble_backoff`: when the exact cell has no rows for the chosen play class (scramble, designed run), the engine
+  keeps the play class and widens the cell in steps: exact cell (at least 10 rows), same down and field bucket (25),
+  same down and distance (25), same field bucket (50), all league plays of that class (50). It also allows sparse cells.
+  This covers all three scrimmage block types above.
+- `long_field_goal_feasibility`: a long field goal uses a fitted distance model, not the thin 50+ cell.
+- `blocked_kick_source_audit` and `blocked_kick_geometry`: blocked kicks draw from an audited outcome file, and only
+  among outcomes that end legally at the live field position. This covers the outside-the-field blocks.
+- `safety_free_kick_boundaries`: a safety at a quarter end gets its free kick.
+
+In week 11, v1.6, v2 and both pbv1 models had 0 unsupported-cell failures in 1,300 seeds each, while v1 and v1.5 had 56
+and 41. A backoff draw is a wider-cell guess, not the exact
+situation: the newer models finish these plays with less specific data, they do not have more data.
+
+### v1.6 engine errors and PR #49
+
+| game | seed | state | play | ends at |
+|---|---|---|---|---|
+| MIA at BUF | 300081 | Q3, 3rd and 8, 97 to go to the goal | sack fumble, -9 | 6 yards deep in its own end zone |
+| MIN at SF | 300097 | Q3, 3rd and 7, 92 to go to the goal | sack fumble, -10 | 2 yards deep in its own end zone |
+
+PR #49 (merge `a716c649`, 2026-11-17) is about this exact state. It is not in v1.6 (pack code `1bb3bd50`) or in dev.
+It is in the v1.7 pack (`1ca59e0d`). With only `own_end_zone='resolve'`, these two seeds become a named block
+(`own_end_zone_fumble_recovery_unresolved`) and still do not complete. With the geometry filter or the recovery model
+from the same line, they continue. So the #49 line addresses both failures, but it must be ported as a new, separately
+versioned v1.6 build. It was not rerun here. Details in the issue file.
+
+The same guard is in every week 11 model. The reducer code for v1, v1.5, v1.6, v2 and pbv1 has no own-end-zone option,
+so this state always stops the seed. Only v1.6 reached it in week 11 (2 of 1,300 seeds). The other models can reach it too.
+
+## Matched-seed sensitivity
+
+A sensitivity check, not a correction for selection bias. For each game, keep only the seeds that all six models
+completed: 1,203 of 1,300 (88 to 96 per game). Then rerun the same report, props and grading scripts. The all-seed
+numbers were rerun first, and they reproduce the published grading exactly. Source: `sensitivity.json`
+(`sensitivity.py`).
+
+A seed number is not the same game in two models, so this does not remove "the same" games. It also cannot show what a
+failed seed would have produced. It shows how much each number moves when every model uses the same seed set.
+
+Games (12 graded):
+
+| model | win Brier all / matched | cover Brier change | over Brier change | margin error change | total error change |
+|---|---|---|---|---|---|
+| v1 | 0.233 / 0.229 | -0.001 | -0.001 | -0.10 | -0.06 |
+| v1.5 | 0.210 / 0.212 | +0.005 | +0.000 | +0.08 | -0.04 |
+| v1.6 | 0.198 / 0.193 | -0.008 | -0.006 | -0.08 | -0.09 |
+| v2 | 0.181 / 0.179 | -0.005 | -0.007 | -0.03 | -0.21 |
+| pbv1 | 0.234 / 0.242 | +0.006 | -0.001 | +0.13 | +0.05 |
+
+Mean change per game (13 games, mean absolute / largest): home win 0.007 to 0.011 / up to 0.026; mean margin 0.16 to
+0.26 points / up to 0.67; mean total 0.17 to 0.30 points / up to 0.85.
+
+Props (942 graded per model) and player projections (1,280 props per model):
+
+| model | prop Brier all / matched | side hit rate all / matched | P(over) change, mean / max | sim mean change, share of line | sides that flip |
+|---|---|---|---|---|---|
+| v1 | 0.321 / 0.322 | 0.500 / 0.502 | 0.005 / 0.039 | 1.6% | 6 |
+| v1.5 | 0.316 / 0.317 | 0.511 / 0.506 | 0.007 / 0.034 | 1.9% | 18 |
+| v1.6 | 0.284 / 0.282 | 0.515 / 0.522 | 0.009 / 0.047 | 2.2% | 20 |
+| v2 | 0.307 / 0.307 | 0.524 / 0.522 | 0.009 / 0.046 | 2.4% | 20 |
+| pbv1 | 0.322 / 0.322 | 0.499 / 0.504 | 0.008 / 0.046 | 2.3% | 20 |
+
+Result:
+
+- No ranking changes. Market still beats every model; v2 then v1.6 are still best on win Brier; v1.6 is still best on
+  prop Brier.
+- v1 and v1.5 do not move more than the models that lost no seeds. v2 and pbv1 completed every seed, so their shift is
+  only from using fewer seeds, and it is the same size or larger. So the measured effect of the dropped seeds is within
+  the noise of dropping about 8% of seeds at random.
+- The size of that noise matters: up to 0.85 points on a game total and up to 0.047 on one prop P(over), from 7 or 8
+  fewer seeds. Single props near the market line can change side (6 to 20 per model).
+- What this cannot measure: the failed seeds stop in rare, high-leverage states (4th down, scrambles, blocked kicks,
+  sack fumbles deep in its own end). Their outcomes are missing, not observed. If those games end differently from the
+  rest, the bias is in v1 and v1.5's tails (late 4th-down drives, defensive scores), and matching does not show it. The
+  only clean measure is a separately versioned build that completes them.
+
 ## Inputs
 
 - Snapshots: `/root/runs/week-11/snapshots/rerun-preflight-2026-11-23/` on the fast host, from the 90-minute cutoff
