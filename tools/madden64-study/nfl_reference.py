@@ -49,8 +49,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--output", type=Path, required=True)
 args = parser.parse_args()
 result = {"retrieved_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(), "tables": {}}
-for kind in ("passing", "rushing", "downs", "scoring"):
-    url = f"https://www.nfl.com/stats/team-stats/offense/{kind}/1996/reg/all"
+sources = {kind: f"https://www.nfl.com/stats/team-stats/offense/{kind}/1996/reg/all"
+           for kind in ("passing", "rushing", "downs", "scoring")}
+sources.update({f"special_{kind}": f"https://www.nfl.com/stats/team-stats/special-teams/{kind}/1996/reg/all"
+                for kind in ("field-goals", "scoring")})
+for kind, url in sources.items():
     request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(request, timeout=30) as response:
         data = response.read()
@@ -66,4 +69,4 @@ for kind in ("passing", "rushing", "downs", "scoring"):
                               "headers": rows[0], "rows": rows[1:]}
 args.output.parent.mkdir(parents=True, exist_ok=True)
 args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
-print(f"Captured four 30-team tables in {args.output}")
+print(f"Captured {len(sources)} 30-team tables in {args.output}")
