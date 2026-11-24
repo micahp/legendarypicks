@@ -1,0 +1,162 @@
+{
+ "artifact": "/root/slc-ceg-data/artifacts/ceg-sel-e-2026w11.pkl",
+ "seeds_per_game": 40,
+ "games": [
+  {
+   "game_id": "2026_11_IND_HOU",
+   "home": "HOU",
+   "away": "IND",
+   "seeds": 40,
+   "completed": 40,
+   "home_win": 0.4375,
+   "mean_margin": 0.25,
+   "mean_total": 37.2,
+   "home_cover": 0.15,
+   "over": 0.325
+  },
+  {
+   "game_id": "2026_11_MIA_BUF",
+   "home": "BUF",
+   "away": "MIA",
+   "seeds": 40,
+   "completed": 40,
+   "home_win": 0.5,
+   "mean_margin": 0.4,
+   "mean_total": 42.15,
+   "home_cover": 0.075,
+   "over": 0.35
+  },
+  {
+   "game_id": "2026_11_BAL_CAR",
+   "home": "CAR",
+   "away": "BAL",
+   "seeds": 40,
+   "completed": 40,
+   "home_win": 0.675,
+   "mean_margin": 2.8,
+   "mean_total": 39.95,
+   "home_cover": 0.625,
+   "over": 0.275
+  },
+  {
+   "game_id": "2026_11_NO_CHI",
+   "home": "CHI",
+   "away": "NO",
+   "seeds": 40,
+   "completed": 40,
+   "home_win": 0.5,
+   "mean_margin": 1.5,
+   "mean_total": 42.85,
+   "home_cover": 0.25,
+   "over": 0.4
+  },
+  {
+   "game_id": "2026_11_TEN_DAL",
+   "home": "DAL",
+   "away": "TEN",
+   "seeds": 40,
+   "completed": 40,
+   "home_win": 0.65,
+   "mean_margin": 2.0,
+   "mean_total": 43.7,
+   "home_cover": 0.4,
+   "over": 0.2
+  },
+  {
+   "game_id": "2026_11_TB_DET",
+   "home": "DET",
+   "away": "TB",
+   "seeds": 40,
+   "completed": 40,
+   "home_win": 0.425,
+   "mean_margin": -0.42,
+   "mean_total": 40.48,
+   "home_cover": 0.375,
+   "over": 0.25
+  },
+  {
+   "game_id": "2026_11_ARI_KC",
+   "home": "KC",
+   "away": "ARI",
+   "seeds": 40,
+   "completed": 40,
+   "home_win": 0.5625,
+   "mean_margin": 1.7,
+   "mean_total": 41.55,
+   "home_cover": 0.075,
+   "over": 0.475
+  },
+  {
+   "game_id": "2026_11_PIT_PHI",
+   "home": "PHI",
+   "away": "PIT",
+   "seeds": 40,
+   "completed": 40,
+   "home_win": 0.525,
+   "mean_margin": 0.15,
+   "mean_total": 39.55,
+   "home_cover": 0.575,
+   "over": 0.575
+  },
+  {
+   "game_id": "2026_11_NYJ_LAC",
+   "home": "LAC",
+   "away": "NYJ",
+   "seeds": 40,
+   "completed": 40,
+   "home_win": 0.5,
+   "mean_margin": 0.53,
+   "mean_total": 41.33,
+   "home_cover": 0.425,
+   "over": 0.4
+  },
+  {
+   "game_id": "2026_11_LV_DEN",
+   "home": "DEN",
+   "away": "LV",
+   "seeds": 40,
+   "completed": 40,
+   "home_win": 0.6,
+   "mean_margin": 2.02,
+   "mean_total": 40.67,
+   "home_cover": 0.225,
+   "over": 0.425
+  },
+  {
+   "game_id": "2026_11_JAX_NYG",
+   "home": "NYG",
+   "away": "JAX",
+   "seeds": 40,
+   "completed": 40,
+   "home_win": 0.475,
+   "mean_margin": 0.15,
+   "mean_total": 39.65,
+   "home_cover": 0.675,
+   "over": 0.25
+  },
+  {
+   "game_id": "2026_11_MIN_SF",
+   "home": "SF",
+   "away": "MIN",
+   "seeds": 40,
+   "completed": 40,
+   "home_win": 0.375,
+   "mean_margin": -2.33,
+   "mean_total": 38.62,
+   "home_cover": 0.275,
+   "over": 0.275
+  },
+  {
+   "game_id": "2026_11_CIN_WAS",
+   "home": "WAS",
+   "away": "CIN",
+   "seeds": 40,
+   "completed": 40,
+   "home_win": 0.4375,
+   "mean_margin": -2.9,
+   "mean_total": 42.75,
+   "home_cover": 0.55,
+   "over": 0.25
+  }
+ ]
+}

@@ -30,11 +30,11 @@ pandas' file readers and `sqlite3.connect` raise, then plays. 20 of 20 games com
 - **Rules interface:** every play goes through the v2 reducer, the CEG clock, the quarter, halftime, regulation and
   overtime logic of the drive loop, and `check_drive`.
 
-## First realism read (20 games, not an evaluation)
+## First realism read (20 games, not an evaluation; built before the Phase 3 out-of-bounds fix)
 
 Points 36.7 per game (NFL about 45), about 67 plays per team-game including 5.2 enforced fouls, 295 yards, 3.7 punts,
 2.15 sacks, 0.8 interceptions, 1 overtime game and 1 tie. Scoring is low. Phase 7 measures realism on a larger run
-against 2025.
+against 2025, with artifacts rebuilt after that fix (Phase 7 report).
 
 ## Simplifications, stated
 

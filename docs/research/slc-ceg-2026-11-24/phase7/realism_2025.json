@@ -1,0 +1,73 @@
+{
+ "points": {
+  "simulated": 20.105,
+  "observed_2025": 23.013,
+  "ratio": 0.874
+ },
+ "plays": {
+  "simulated": 67.56,
+  "observed_2025": 65.882,
+  "ratio": 1.025
+ },
+ "penalty_plays": {
+  "simulated": 4.93,
+  "observed_2025": 6.362,
+  "ratio": 0.775
+ },
+ "yards": {
+  "simulated": 303.11,
+  "observed_2025": 321.039,
+  "ratio": 0.944
+ },
+ "sack": {
+  "simulated": 2.27,
+  "observed_2025": 2.366,
+  "ratio": 0.96
+ },
+ "interception": {
+  "simulated": 0.72,
+  "observed_2025": 0.699,
+  "ratio": 1.031
+ },
+ "fumble_lost": {
+  "simulated": 0.47,
+  "observed_2025": 0.456,
+  "ratio": 1.031
+ },
+ "punt": {
+  "simulated": 3.71,
+  "observed_2025": 3.553,
+  "ratio": 1.044
+ },
+ "field_goal_attempt": {
+  "simulated": 1.78,
+  "observed_2025": 2.0,
+  "ratio": 0.89
+ },
+ "field_goals": {
+  "simulated": 1.48,
+  "observed_2025": 1.711,
+  "ratio": 0.865
+ },
+ "touchdowns": {
+  "simulated": 2.24,
+  "observed_2025": 2.564,
+  "ratio": 0.874
+ },
+ "drives_per_game": {
+  "simulated": 20.72,
+  "observed_2025": 21.121,
+  "ratio": 0.981
+ },
+ "overtime_share": {
+  "simulated": 0.063,
+  "observed_2025": 0.051,
+  "ratio": 1.224
+ },
+ "_meta": {
+  "sim_games": 300,
+  "blocked": 0,
+  "ties": 5,
+  "observed_games": 272
+ }
+}
