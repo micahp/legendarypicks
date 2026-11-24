@@ -1,0 +1,310 @@
+{
+ "chosen": {
+  "K11_int_return": 100,
+  "K12_fumble_return": 1,
+  "K1_onside": 1,
+  "K2_kickoff": 300,
+  "K3_onside_recovery": 1,
+  "K4_punt": 300,
+  "K5_field_goal": 300,
+  "K6_try_choice": 30,
+  "K7_try_success": 1,
+  "K8a_pre_snap": 300,
+  "K8b_live": 300,
+  "K9_penalty_type": 3
+ },
+ "counts": {
+  "kickoff_other_left_out": 8,
+  "pre_snap_enforcement_checked": 11393,
+  "pre_snap_enforcement_exact": 11338,
+  "pre_snap_enforcement_half_distance_zone": 1596,
+  "punt_other_left_out": 1
+ },
+ "final": {
+  "K10_overtime_fourth_down_2022_2025": {
+   "C_intent": 0.55483,
+   "C_minus_rule": [
+    -0.45954,
+    -0.63033,
+    -0.26663
+   ],
+   "n": 93,
+   "observed": {
+    "designed_run": 8,
+    "dropback": 12,
+    "field_goal": 25,
+    "punt": 48
+   },
+   "v2_rule": 1.01437
+  },
+  "confirmation_2025": {
+   "K11_int_return": {
+    "B": 2.82108,
+    "C": 2.79042,
+    "C_minus_B": [
+     -0.03066,
+     -0.05095,
+     -0.00937
+    ],
+    "n": 361
+   },
+   "K12_fumble_return": {
+    "B": 0.4669,
+    "C": 0.41467,
+    "C_minus_B": [
+     -0.05223,
+     -0.10942,
+     0.01293
+    ],
+    "n": 216
+   },
+   "K1_onside": {
+    "B": 0.09365,
+    "C": 0.03992,
+    "C_minus_B": [
+     -0.05373,
+     -0.07005,
+     -0.03886
+    ],
+    "n": 2493
+   },
+   "K2_kickoff": {
+    "B_prior_regime": 3.52661,
+    "C_minus_B": [
+     -0.36478,
+     -0.40418,
+     -0.32603
+    ],
+    "C_regime_adapted": 3.16183,
+    "n": 2445,
+    "touchback_share": 0.233
+   },
+   "K3_onside_recovery": {
+    "B": 0.35194,
+    "C": 0.35194,
+    "C_minus_B": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "n": 47
+   },
+   "K4_punt": {
+    "B": 3.58244,
+    "C": 3.56625,
+    "C_minus_B": [
+     -0.01618,
+     -0.03511,
+     0.00134
+    ],
+    "n": 1757
+   },
+   "K5_field_goal": {
+    "B": 0.42182,
+    "C": 0.4245,
+    "C_minus_B": [
+     0.00269,
+     -0.00649,
+     0.01141
+    ],
+    "n": 1084
+   },
+   "K6_try_choice": {
+    "B": 0.30177,
+    "C": 0.2648,
+    "C_minus_B": [
+     -0.03697,
+     -0.05332,
+     -0.02223
+    ],
+    "n": 1373
+   },
+   "K7_try_success": {
+    "B": 0.21934,
+    "C": 0.21934,
+    "C_minus_B": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "n": 1373
+   },
+   "K8a_pre_snap": {
+    "B": 0.25609,
+    "C": 0.24919,
+    "C_minus_B": [
+     -0.0069,
+     -0.00777,
+     -0.006
+    ],
+    "n": 43051
+   },
+   "K8b_live": {
+    "B": 0.13464,
+    "C": 0.12503,
+    "C_minus_B": [
+     -0.00961,
+     -0.0109,
+     -0.00831
+    ],
+    "n": 40536
+   },
+   "K9_penalty_type": {
+    "B": 1.73288,
+    "C": 1.58755,
+    "C_minus_B": [
+     -0.14533,
+     -0.16136,
+     -0.13136
+    ],
+    "n": 3461
+   }
+  },
+  "examined_2026": {
+   "K11_int_return": {
+    "B": 2.85416,
+    "C": 2.83123,
+    "C_minus_B": [
+     -0.02293,
+     -0.05502,
+     0.00877
+    ],
+    "n": 228
+   },
+   "K12_fumble_return": {
+    "B": 0.33378,
+    "C": 0.30165,
+    "C_minus_B": [
+     -0.03213,
+     -0.09094,
+     0.04252
+    ],
+    "n": 151
+   },
+   "K1_onside": {
+    "B": 0.08762,
+    "C": 0.0396,
+    "C_minus_B": [
+     -0.04801,
+     -0.06695,
+     -0.0312
+    ],
+    "n": 1497
+   },
+   "K2_kickoff": {
+    "B_prior_regime": 3.2096,
+    "C_minus_B": [
+     0.00695,
+     -0.0062,
+     0.02067
+    ],
+    "C_regime_adapted": 3.21656,
+    "n": 1471,
+    "touchback_share": 0.179
+   },
+   "K3_onside_recovery": {
+    "B": 0.16908,
+    "C": 0.16908,
+    "C_minus_B": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "n": 26
+   },
+   "K4_punt": {
+    "B": 3.59645,
+    "C": 3.55775,
+    "C_minus_B": [
+     -0.0387,
+     -0.07107,
+     -0.0102
+    ],
+    "n": 1116
+   },
+   "K5_field_goal": {
+    "B": 0.41966,
+    "C": 0.42654,
+    "C_minus_B": [
+     0.00688,
+     -0.00384,
+     0.02009
+    ],
+    "n": 683
+   },
+   "K6_try_choice": {
+    "B": 0.29849,
+    "C": 0.26547,
+    "C_minus_B": [
+     -0.03301,
+     -0.0491,
+     -0.01595
+    ],
+    "n": 817
+   },
+   "K7_try_success": {
+    "B": 0.22692,
+    "C": 0.22692,
+    "C_minus_B": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "n": 817
+   },
+   "K8a_pre_snap": {
+    "B": 0.27901,
+    "C": 0.27145,
+    "C_minus_B": [
+     -0.00756,
+     -0.00852,
+     -0.00657
+    ],
+    "n": 26430
+   },
+   "K8b_live": {
+    "B": 0.13888,
+    "C": 0.12819,
+    "C_minus_B": [
+     -0.0107,
+     -0.01264,
+     -0.00874
+    ],
+    "n": 24728
+   },
+   "K9_penalty_type": {
+    "B": 1.7342,
+    "C": 1.60895,
+    "C_minus_B": [
+     -0.12525,
+     -0.14094,
+     -0.10853
+    ],
+    "n": 2318
+   }
+  },
+  "exit_check": {
+   "fg_distances": 58,
+   "fg_made_monotone_share": 0.509,
+   "fg_rows_sum_to_1": true,
+   "punt_classes_legal": true,
+   "punt_rows_sum_to_1": true,
+   "punt_spots": 99
+  }
+ },
+ "n_by_component": {
+  "K11_int_return": 1783,
+  "K12_fumble_return": 1108,
+  "K1_onside": 11893,
+  "K2_kickoff": 11679,
+  "K3_onside_recovery": 206,
+  "K4_punt": 8868,
+  "K5_field_goal": 4993,
+  "K6_try_choice": 6119,
+  "K7_try_success": 6119,
+  "K8a_pre_snap": 201151,
+  "K8b_live": 189487,
+  "K9_penalty_type": 15413
+ },
+ "stage": "final"
+}
