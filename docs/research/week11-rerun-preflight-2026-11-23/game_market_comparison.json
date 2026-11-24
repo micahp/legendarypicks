@@ -1,5 +1,5 @@
 {
- "games_csv_sha256": "9f652100805204bf2ff3c79cf217a2e4a1b2acc4b691215d2f00d30a3ba21fa1",
+ "games_csv_sha256": "f3a6752c5f671bd26f271146b7d92b22defd3d8deb84a307a7cac6bda189930a",
  "market_lines": {
   "2026_11_ARI_KC": {
    "away_moneyline": 850.0,
@@ -18,9 +18,9 @@
    "total_line": 44.5
   },
   "2026_11_CIN_WAS": {
-   "away_moneyline": -295.0,
-   "home_moneyline": 240.0,
-   "home_win_no_vig": 0.2825,
+   "away_moneyline": -292.0,
+   "home_moneyline": 238.0,
+   "home_win_no_vig": 0.2843,
    "kickoff_et": "2026-11-23 20:15",
    "spread_line": -6.0,
    "total_line": 54.5
@@ -304,7 +304,7 @@
    "game_id": "2026_11_CIN_WAS",
    "home_cover": 0.433,
    "home_win": 0.2784,
-   "home_win_minus_market": -0.0041,
+   "home_win_minus_market": -0.0059,
    "margin_minus_spread": -2.04,
    "mean_margin": -8.04,
    "mean_total": 53.03,
@@ -320,7 +320,7 @@
    "game_id": "2026_11_CIN_WAS",
    "home_cover": 0.4742,
    "home_win": 0.299,
-   "home_win_minus_market": 0.0165,
+   "home_win_minus_market": 0.0147,
    "margin_minus_spread": 0.39,
    "mean_margin": -5.61,
    "mean_total": 50.93,
@@ -336,7 +336,7 @@
    "game_id": "2026_11_CIN_WAS",
    "home_cover": 0.38,
    "home_win": 0.21,
-   "home_win_minus_market": -0.0725,
+   "home_win_minus_market": -0.0743,
    "margin_minus_spread": -2.1,
    "mean_margin": -8.1,
    "mean_total": 49.28,
@@ -352,7 +352,7 @@
    "game_id": "2026_11_CIN_WAS",
    "home_cover": 0.51,
    "home_win": 0.3,
-   "home_win_minus_market": 0.0175,
+   "home_win_minus_market": 0.0157,
    "margin_minus_spread": 1.0,
    "mean_margin": -5.0,
    "mean_total": 45.82,
@@ -368,7 +368,7 @@
    "game_id": "2026_11_CIN_WAS",
    "home_cover": 0.55,
    "home_win": 0.35,
-   "home_win_minus_market": 0.0675,
+   "home_win_minus_market": 0.0657,
    "margin_minus_spread": 1.12,
    "mean_margin": -4.88,
    "mean_total": 51.56,
@@ -384,7 +384,7 @@
    "game_id": "2026_11_CIN_WAS",
    "home_cover": 0.55,
    "home_win": 0.35,
-   "home_win_minus_market": 0.0675,
+   "home_win_minus_market": 0.0657,
    "margin_minus_spread": 1.12,
    "mean_margin": -4.88,
    "mean_total": 51.56,
@@ -1360,7 +1360,7 @@
  "summary_by_model": {
   "pbv1": {
    "games": 13,
-   "mean_abs_home_win_minus_market": 0.1587,
+   "mean_abs_home_win_minus_market": 0.1586,
    "mean_abs_margin_minus_spread": 5.41,
    "mean_abs_total_minus_line": 4.56,
    "mean_margin_minus_spread": -3.08,
@@ -1369,7 +1369,7 @@
   },
   "pbv1-off": {
    "games": 13,
-   "mean_abs_home_win_minus_market": 0.1587,
+   "mean_abs_home_win_minus_market": 0.1586,
    "mean_abs_margin_minus_spread": 5.41,
    "mean_abs_total_minus_line": 4.56,
    "mean_margin_minus_spread": -3.08,
@@ -1378,7 +1378,7 @@
   },
   "v1": {
    "games": 13,
-   "mean_abs_home_win_minus_market": 0.1782,
+   "mean_abs_home_win_minus_market": 0.1783,
    "mean_abs_margin_minus_spread": 6.25,
    "mean_abs_total_minus_line": 3.93,
    "mean_margin_minus_spread": -3.05,
@@ -1387,7 +1387,7 @@
   },
   "v1.5": {
    "games": 13,
-   "mean_abs_home_win_minus_market": 0.1564,
+   "mean_abs_home_win_minus_market": 0.1562,
    "mean_abs_margin_minus_spread": 5.69,
    "mean_abs_total_minus_line": 4.47,
    "mean_margin_minus_spread": -2.49,
@@ -1396,7 +1396,7 @@
   },
   "v1.6": {
    "games": 13,
-   "mean_abs_home_win_minus_market": 0.1158,
+   "mean_abs_home_win_minus_market": 0.116,
    "mean_abs_margin_minus_spread": 4.65,
    "mean_abs_total_minus_line": 5.0,
    "mean_margin_minus_spread": -2.88,
@@ -1405,7 +1405,7 @@
   },
   "v2": {
    "games": 13,
-   "mean_abs_home_win_minus_market": 0.1031,
+   "mean_abs_home_win_minus_market": 0.103,
    "mean_abs_margin_minus_spread": 3.98,
    "mean_abs_total_minus_line": 5.14,
    "mean_margin_minus_spread": -2.95,

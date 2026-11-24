@@ -57,9 +57,29 @@ Market: CIN -6, total 54.5, WAS no-vig win 0.28. WAS is home.
 | v2 | 100 | 0.30 | -5.0 | 0.51 | 45.8 | 0.18 |
 | pbv1 | 100 | 0.35 | -4.9 | 0.55 | 51.6 | 0.42 |
 
-Props, 91 per model with prices on both sides: mean P(over) gap -0.06 to -0.08; mean absolute gap v1.6 0.127, the
-others 0.211 to 0.215. Jacory Croskey-Merritt (WSH RB) has lines but is RESERVE in the nflverse weekly roster, so the
-sims give him nothing. Lines come from rows captured before 15:12 UTC; they can still move before kickoff.
+Props, 97 per model with prices on both sides, from every row captured before kickoff (01:15 UTC): mean P(over) gap
+-0.05 to -0.07; mean absolute gap v1.6 0.126, the others 0.212 to 0.215. Jacory Croskey-Merritt (WSH RB) has lines but is
+RESERVE in the nflverse weekly roster, so the sims give him nothing.
+
+### CIN at WAS: graded (game lines)
+
+Final: **WAS 22, CIN 20.** WAS, a 6-point home underdog (no-vig 0.28), won outright. Total 42, under 54.5.
+
+| model | WAS win | WAS covers +6 | over 54.5 | winner right | cover side right | total side right |
+|---|---|---|---|---|---|---|
+| market | 0.28 | 0.50 | 0.50 | no | | |
+| v1 | 0.28 | 0.43 | 0.46 | no | no | yes |
+| v1.5 | 0.30 | 0.47 | 0.37 | no | no | yes |
+| v1.6 | 0.21 | 0.38 | 0.31 | no | no | yes |
+| v2 | 0.30 | 0.51 | 0.18 | no | yes | yes |
+| pbv1 | 0.35 | 0.55 | 0.42 | no | yes | yes |
+
+Every model and the market had CIN winning. Every model had the under, and v2 was the most sure of it (0.18 over).
+v2 and pbv1 had WAS covering.
+
+**Props: not graded yet.** nflverse last updated its player stats and play-by-play at 21:30 UTC on 11-23, before
+kickoff, and Pro Football Reference refuses this host (HTTP 403). The 97 MNF props per model are graded when nflverse
+publishes the week 11 Monday stats.
 
 ## Seed completion and failures (13 games)
 
@@ -225,6 +245,20 @@ Result:
   games present), joined on gsis id.
 - Files: `game_market_comparison.json` (`build_report.py`), `props_comparison.json` (`props_compare.py`),
   `grading.json` (`grade.py`).
+
+## Games: grading with CIN at WAS (13 games)
+
+| model | win Brier | cover Brier | over Brier | winners right | cover side right | total side right | margin error | total error |
+|---|---|---|---|---|---|---|---|---|
+| market | 0.183 | 0.25 | 0.25 | 9 | | | 7.8 | 10.8 |
+| v1 | 0.255 | 0.332 | 0.284 | 7 | 6 | 8 | 11.2 | 13.2 |
+| v1.5 | 0.232 | 0.322 | 0.276 | 8 | 5 | 8 | 10.8 | 12.8 |
+| v1.6 | 0.230 | 0.302 | 0.331 | 9 | 6 | 7 | 10.0 | 13.1 |
+| v2 | 0.205 | 0.302 | 0.321 | 8 | 7 | 7 | 9.9 | 12.3 |
+| pbv1 | 0.249 | 0.314 | 0.283 | 7 | 6 | 6 | 11.1 | 13.3 |
+
+Same ranking as the 12-game table: no model beats the market; v2 is best on win Brier, then v1.6. The 12-game tables
+below are unchanged (the rerun with the new games.csv reproduces every 12-game row exactly).
 
 ## Games: market and models
 
