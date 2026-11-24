@@ -1,4 +1,137 @@
 {
+ "charting": {
+  "columns": {
+   "date_pulled": {
+    "dtype": "datetime64[ns, UTC]",
+    "timing": "provenance"
+   },
+   "ftn_game_id": {
+    "dtype": "int32",
+    "timing": "source_field"
+   },
+   "ftn_play_id": {
+    "dtype": "int32",
+    "timing": "source_field"
+   },
+   "ftn_source_file": {
+    "dtype": "object",
+    "timing": "provenance"
+   },
+   "game_id": {
+    "dtype": "object",
+    "timing": "key"
+   },
+   "is_catchable_ball": {
+    "dtype": "bool",
+    "timing": "outcome_label"
+   },
+   "is_contested_ball": {
+    "dtype": "bool",
+    "timing": "outcome_label"
+   },
+   "is_created_reception": {
+    "dtype": "bool",
+    "timing": "outcome_label"
+   },
+   "is_drop": {
+    "dtype": "bool",
+    "timing": "outcome_label"
+   },
+   "is_interception_worthy": {
+    "dtype": "bool",
+    "timing": "outcome_label"
+   },
+   "is_motion": {
+    "dtype": "bool",
+    "timing": "offense_pre_snap"
+   },
+   "is_no_huddle": {
+    "dtype": "bool",
+    "timing": "offense_pre_snap"
+   },
+   "is_play_action": {
+    "dtype": "bool",
+    "timing": "play_design"
+   },
+   "is_qb_fault_sack": {
+    "dtype": "bool",
+    "timing": "outcome_label"
+   },
+   "is_qb_out_of_pocket": {
+    "dtype": "bool",
+    "timing": "qb_execution"
+   },
+   "is_qb_sneak": {
+    "dtype": "bool",
+    "timing": "play_design"
+   },
+   "is_rpo": {
+    "dtype": "bool",
+    "timing": "play_design"
+   },
+   "is_screen_pass": {
+    "dtype": "bool",
+    "timing": "play_design"
+   },
+   "is_throw_away": {
+    "dtype": "bool",
+    "timing": "qb_execution"
+   },
+   "is_trick_play": {
+    "dtype": "object",
+    "timing": "play_design"
+   },
+   "n_blitzers": {
+    "dtype": "int32",
+    "timing": "defense_execution"
+   },
+   "n_defense_box": {
+    "dtype": "int32",
+    "timing": "defense_pre_snap"
+   },
+   "n_offense_backfield": {
+    "dtype": "float64",
+    "timing": "offense_pre_snap"
+   },
+   "n_pass_rushers": {
+    "dtype": "float64",
+    "timing": "defense_execution"
+   },
+   "play_id": {
+    "dtype": "int64",
+    "timing": "key"
+   },
+   "qb_location": {
+    "dtype": "string",
+    "timing": "offense_pre_snap"
+   },
+   "qb_location_raw": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "read_thrown": {
+    "dtype": "object",
+    "timing": "qb_execution"
+   },
+   "season": {
+    "dtype": "int32",
+    "timing": "source_field"
+   },
+   "starting_hash": {
+    "dtype": "object",
+    "timing": "pre_snap_state"
+   },
+   "week": {
+    "dtype": "int32",
+    "timing": "source_field"
+   }
+  },
+  "key": [
+   "game_id",
+   "play_id"
+  ],
+  "source": "nflverse ftn_charting"
+ },
  "decision": {
   "columns": {
    "away_team": {
@@ -339,6 +472,127 @@
    "play_id"
   ]
  },
+ "participation": {
+  "columns": {
+   "defenders_in_box": {
+    "dtype": "float64",
+    "timing": "source_field"
+   },
+   "defense_coverage_type": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "defense_man_zone_type": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "defense_names": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "defense_numbers": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "defense_personnel": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "defense_players": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "defense_positions": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "game_id": {
+    "dtype": "object",
+    "timing": "key"
+   },
+   "n_defense": {
+    "dtype": "int32",
+    "timing": "source_field"
+   },
+   "n_offense": {
+    "dtype": "int32",
+    "timing": "source_field"
+   },
+   "ngs_air_yards": {
+    "dtype": "float64",
+    "timing": "source_field"
+   },
+   "number_of_pass_rushers": {
+    "dtype": "float64",
+    "timing": "source_field"
+   },
+   "offense_formation": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "offense_names": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "offense_numbers": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "offense_personnel": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "offense_players": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "offense_positions": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "old_game_id": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "participation_source_file": {
+    "dtype": "object",
+    "timing": "provenance"
+   },
+   "play_id": {
+    "dtype": "int64",
+    "timing": "key"
+   },
+   "players_on_play": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "possession_team": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "route": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "season": {
+    "dtype": "int64",
+    "timing": "source_field"
+   },
+   "time_to_throw": {
+    "dtype": "float64",
+    "timing": "source_field"
+   },
+   "was_pressure": {
+    "dtype": "object",
+    "timing": "source_field"
+   }
+  },
+  "key": [
+   "game_id",
+   "play_id"
+  ],
+  "source": "nflverse pbp_participation"
+ },
  "people": {
   "columns": {
    "fumbled_1_player_id": {
@@ -534,5 +788,82 @@
    "game_id",
    "play_id"
   ]
+ },
+ "snap_counts": {
+  "columns": {
+   "defense_pct": {
+    "dtype": "float64",
+    "timing": "source_field"
+   },
+   "defense_snaps": {
+    "dtype": "float64",
+    "timing": "source_field"
+   },
+   "game_id": {
+    "dtype": "object",
+    "timing": "key"
+   },
+   "game_type": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "offense_pct": {
+    "dtype": "float64",
+    "timing": "source_field"
+   },
+   "offense_snaps": {
+    "dtype": "float64",
+    "timing": "source_field"
+   },
+   "opponent": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "pfr_game_id": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "pfr_player_id": {
+    "dtype": "object",
+    "timing": "key"
+   },
+   "player": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "position": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "season": {
+    "dtype": "int32",
+    "timing": "source_field"
+   },
+   "snap_source_file": {
+    "dtype": "object",
+    "timing": "provenance"
+   },
+   "st_pct": {
+    "dtype": "float64",
+    "timing": "source_field"
+   },
+   "st_snaps": {
+    "dtype": "float64",
+    "timing": "source_field"
+   },
+   "team": {
+    "dtype": "object",
+    "timing": "source_field"
+   },
+   "week": {
+    "dtype": "int32",
+    "timing": "source_field"
+   }
+  },
+  "key": [
+   "game_id",
+   "pfr_player_id"
+  ],
+  "source": "nflverse snap_counts"
  }
 }

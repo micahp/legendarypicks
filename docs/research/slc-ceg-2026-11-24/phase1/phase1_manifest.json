@@ -120,11 +120,17 @@
   }
  },
  "gaps": [
-  "pbp_participation has no 2026 file (nflverse release, checked 2026-11-24): formation and personnel labels exist for 2022-2025 only",
   "nflverse has no onside_kick column: kickoff_onside is read from the play description",
-  "the play-by-play has the game clock only at snaps: live-play duration is observed directly only for plays after which the clock stops (clock_stop_class == stopped)"
+  "the play-by-play has the game clock only at snaps: live-play duration is observed directly only for plays after which the clock stops (clock_stop_class == stopped)",
+  "personnel groupings, offense formation and coverage per play: nflverse pbp_participation and our nfl_hist_participation end at 2025; not published for 2026",
+  "FTN charting 2026: weeks with no FTN row [] (not pulled yet on 2026-11-24); those plays have every FTN field unknown, never False"
  ],
  "inputs": {
+  "ftn_charting_2022.parquet": "2846ef9bcc5f7298a5c783fb9a5edc85b3820c0b4943bf60a1217398e412985b",
+  "ftn_charting_2023.parquet": "162f0f48a8fca23f86a334c78e27f8daa7443e6b383beada0416b65c593b2c0e",
+  "ftn_charting_2024.parquet": "9396c95effac1a81cc30efcf9c4c87ab89855548ae605404318ae949d4356119",
+  "ftn_charting_2025.parquet": "2ee4b11962f4c91d426e0edeca5bbded078616ce0efab0710aa2b40b4cfad898",
+  "ftn_charting_2026.parquet": "bb72c788f63b5d4882d11a5a57dc6f59b401897bc2dcc99d6ba50290ab2404b3",
   "games.csv": "81c304b959266965e69b92ab743e97672b86fb451a7b87fdd8b3abe1c6d47ff2",
   "pbp_participation_2022.parquet": "5f8d349316bf68de487ee0eb926706e65f5a8e37078c1faa37cb07cda2bf9e5e",
   "pbp_participation_2023.parquet": "b157736972248e6f71e0c5ad6c1010b71375a500a63944dc4956c65de263e5a6",
@@ -468,6 +474,16 @@
   }
  },
  "tables": {
+  "charting": {
+   "duplicate_keys": 0,
+   "key": [
+    "game_id",
+    "play_id"
+   ],
+   "path": "/root/slc-ceg-data/phase1-2026-11-24/charting.parquet",
+   "rows": 210838,
+   "sha256": "a2e386076f322bd6361a41c5983d8cbc79f335237a65d3bce157dcc4ca97a3d4"
+  },
   "decision": {
    "duplicate_keys": 0,
    "path": "/root/slc-ceg-data/phase1-2026-11-24/decision.parquet",
@@ -480,6 +496,16 @@
    "rows": 225829,
    "sha256": "ec2442b127d3fac203a85bc09365e1b0fd2609f855284ef906c57edf44cf9daa"
   },
+  "participation": {
+   "duplicate_keys": 0,
+   "key": [
+    "game_id",
+    "play_id"
+   ],
+   "path": "/root/slc-ceg-data/phase1-2026-11-24/participation.parquet",
+   "rows": 187421,
+   "sha256": "9345ce941bad8f6e83ca52348d6e2ea7ed6b25afb312e34e0a5643b092a62ff4"
+  },
   "people": {
    "duplicate_keys": 0,
    "path": "/root/slc-ceg-data/phase1-2026-11-24/people.parquet",
@@ -491,6 +517,16 @@
    "path": "/root/slc-ceg-data/phase1-2026-11-24/post.parquet",
    "rows": 225829,
    "sha256": "e764a8e11b40474042d7e98a558f6f93b842909e688297823b1f96e363dede91"
+  },
+  "snap_counts": {
+   "duplicate_keys": 0,
+   "key": [
+    "game_id",
+    "pfr_player_id"
+   ],
+   "path": "/root/slc-ceg-data/phase1-2026-11-24/snap_counts.parquet",
+   "rows": 121277,
+   "sha256": "10aff90a7f554a2d90d808df2ae05f3a8ae33f62185d81c791cceb373930abe2"
   }
  },
  "views": {
