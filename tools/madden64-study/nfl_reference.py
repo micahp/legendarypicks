@@ -53,6 +53,7 @@ sources = {kind: f"https://www.nfl.com/stats/team-stats/offense/{kind}/1996/reg/
            for kind in ("passing", "rushing", "downs", "scoring")}
 sources.update({f"special_{kind}": f"https://www.nfl.com/stats/team-stats/special-teams/{kind}/1996/reg/all"
                 for kind in ("field-goals", "scoring")})
+sources["defense_scoring"] = "https://www.nfl.com/stats/team-stats/defense/scoring/1996/reg/all"
 for kind, url in sources.items():
     request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(request, timeout=30) as response:
