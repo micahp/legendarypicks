@@ -71,6 +71,11 @@ Timer-backed services verified with `LP_DB_PATH` set to `picks.dev.db`:
 - NFL: `legendarypicks-nfl-grade.service`, `legendarypicks-nfl-lock.service`, `legendarypicks-nfl-preview.service`, `legendarypicks-nfl-schedule.service`.
 - NBA: `legendarypicks-nba-model-data.service`, `legendarypicks-nba-model-grade.service`, `legendarypicks-nba-model-lock.service`, `legendarypicks-nba-model-preview.service`.
 
+## Research
+
+- [Research index](docs/research/README.md) — entry point for modeling strategy, literature reviews, simulation architecture, experiment results, and research decisions.
+- [Sports simulation and generative modeling literature review](docs/research/SPORTS-SIMULATION-GENERATIVE-MODELING-LITERATURE-REVIEW-2026-11-24.md) — external methodology and proposed research directions for SLC and other sports.
+
 ## Key documents
 
 - [`ORIENTATION.md`](ORIENTATION.md) — current architecture and safe onboarding path.
