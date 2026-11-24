@@ -1,0 +1,9 @@
+{
+  "frame": 161452,
+  "description": "Three-minute exhibition, transcribed 0:00 team statistics; team 0 Green Bay, team 1 Seattle. Possession time in seconds.",
+  "source": "Local screenshots q3box.png and q3box3.png through q3box21.png; ROM, states and screenshots kept outside repository.",
+  "teams": {
+    "0": {"0": 140, "1": 80, "2": 60, "3": 1, "4": 6, "5": 2, "6": 0, "7": 0, "10": 181, "11": 406, "12": 3, "57": 10},
+    "1": {"0": 35, "1": 22, "2": 13, "3": 2, "4": 7, "5": 2, "6": 1, "7": 0, "10": 99, "11": 314, "12": 2, "57": 0}
+  }
+}

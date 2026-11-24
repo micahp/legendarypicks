@@ -13,7 +13,8 @@ frame = expected["frame"]
 latest = {}
 with args.csv.open(newline="", encoding="utf-8") as stream:
     for row in csv.DictReader(stream):
-        if int(row["frame"]) <= frame and int(row["team"]) in (0, 1):
+        if (int(row["frame"]) <= frame and int(row["team"]) in (0, 1)
+                and ("kind" not in row or row["kind"] == "total")):
             latest[(int(row["team"]), int(row["index"]))] = int(row["value"])
 errors = []
 for team, values in expected["teams"].items():
