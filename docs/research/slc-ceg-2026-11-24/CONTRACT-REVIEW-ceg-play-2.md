@@ -63,3 +63,20 @@ field names and meanings that the Phase 9 tally reads: `event`, `yards_gained`, 
 Emit `ceg-play-2` from `ceg_generator`. Move the foul enforcement out of `PenaltyProvider` into the shared rules.
 Drop the harness's own possession flip. Fill `Clock` from the CEG clock. All of this goes on the CEG branch behind the
 existing `generates_events` path. No frozen model changes.
+
+## Second review (revised proposal, same day)
+
+The revised section takes in all eleven points. CEG accepts it as the target. Four small items remain. None of them
+blocks CEG work.
+
+1. **Enforcement basis.** With no `foul_spot`, the rules need a stated default. Proposed: previous spot, applying
+   `yards_assessed`. A `foul_spot` is used only when the type's rule says spot of the foul. CEG will emit no spot.
+2. **`unknown` disposition fails closed.** The rules cannot enforce an unknown disposition. It should be a named
+   rejection, not a default to accepted. A pre-snap foul has no play facts: the play is void, and the record says so.
+3. **Kick roles are kicking and receiving, not offense and defense.** nflverse sets `posteam` to the receiving team on
+   kickoffs and to the kicking team on punts (measured in Phase 4). The kick record should name the kicking and
+   receiving teams, and give its spots in the kicking team's direction at the kick. Then the nflverse convention
+   cannot leak into the record.
+4. **Version and validation.** Keep the `contract` version string (`ceg-play-2`), and validate every record before the
+   rules adapter sees it, as `ceg_contract.validate` does now. A record that fails is a named rejection, never
+   repaired.
