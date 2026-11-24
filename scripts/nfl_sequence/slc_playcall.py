@@ -254,6 +254,12 @@ class PlayCallSampler:
         # QB-specific pre-event target-role and scramble choices, off unless explicitly loaded.
         self.qb_decision_table = None
         self.qb_run_role_style_enabled = False
+        # V2 layer ablation research switches (SLC-V2-LAYER-ABLATION-SPEC-2026-11-24). Off by default. The first skips every
+        # optional event and row weight (formation, coverage, streak and label lifts, team event weights, player event and
+        # row weights); the second skips every optional row filter (formation, coverage, streak, labels, QB target role,
+        # exact yard line). Neither touches the scramble-class filter, which defines the selected intent.
+        self.research_disable_event_multipliers = False
+        self.research_disable_row_filters = False
         # Per-player event and joint yards/touchdown outcome profiles, off unless explicitly loaded.
         self.player_outcome_table = None
         self.player_outcome_roles = None
@@ -433,6 +439,10 @@ class PlayCallSampler:
         entry = self._entry(cell, cache=not state.get('_source_cell_filtered', False))
         self._current_team_outcome_fallbacks = []
         self._current_transition_fallbacks = []
+        self._two_stage_fallback = None
+        row_weight_fallback = None
+        no_mult = getattr(self, 'research_disable_event_multipliers', False)
+        no_filter = getattr(self, 'research_disable_row_filters', False)
         # the kick decision's counts: the whole cell, or with the flag the cell's rows weighted by yard line near the snap
         kick_base = entry['base'] if fg_rule is None else kicker_field_goals.kernel_counts(entry, int(state['yl']))
         total = sum(kick_base.values())
@@ -507,6 +517,12 @@ class PlayCallSampler:
         labels = pre_event.get('labels') if pre_event else None
         use_labels = bool(labels) and self.decision_outcomes
         use_player_outcomes = self.player_outcome_table is not None
+        # Each of these layers is both a multiplier and a row filter; the research switches can remove one side only.
+        filter_formation, filter_coverage = use_formation and not no_filter, use_coverage and not no_filter
+        filter_streak, filter_labels = use_streak and not no_filter, use_labels and not no_filter
+        if no_mult:
+            use_formation = use_coverage = use_streak = use_labels = use_player_outcomes = False
+        use_team_outcomes = self.team_outcomes is not None and not no_mult
         target = e0.pool_key(int(state['down']), state['togo'], state['yl'])
         exact_outcome_rows = None
         backoff_candidates, outcome_fallback = (None, None)
@@ -525,7 +541,7 @@ class PlayCallSampler:
             weights = [counts[key[1]] for key in keys]
             if self.trace_outcome_probabilities:
                 probability_trace.append(_event_probability_stage('base_sparse_backoff', keys, weights))
-            if self.team_outcomes is not None:
+            if use_team_outcomes:
                 weights = [weight * self._outcome_weight(key[1], offense, defense, entry['key'] or target)
                            for weight, key in zip(weights, keys)]
                 if self.trace_outcome_probabilities:
@@ -611,7 +627,7 @@ class PlayCallSampler:
                     weight *= decision_layer.geometric_mean([self._label_lift(entry, k, decision_layer.label_key(c, v))
                                                              for c, v in active_labels])
                 stage_values['decision_labels'].append(weight)
-                if self.team_outcomes is not None:  # team splits weight which outcome type is drawn within the intent
+                if use_team_outcomes:  # team splits weight which outcome type is drawn within the intent
                     weight *= self._outcome_weight(k[1], offense, defense, entry['key'])
                 stage_values['team_event_weights'].append(weight)
                 if self.transition_strength is not None:
@@ -635,7 +651,7 @@ class PlayCallSampler:
                               or (stage_name == 'coverage' and use_coverage)
                               or (stage_name == 'league_streak' and use_streak)
                               or (stage_name == 'decision_labels' and use_labels)
-                              or (stage_name == 'team_event_weights' and self.team_outcomes is not None)
+                              or (stage_name == 'team_event_weights' and use_team_outcomes)
                               or (stage_name == 'transition_strength' and self.transition_strength is not None)
                               or (stage_name == 'player_event_weights' and use_player_outcomes))
                     if active:
@@ -648,7 +664,7 @@ class PlayCallSampler:
                 outcome_weight_fallback = 'all_conditioned_weights_zero_within_selected_intent'
                 if self.trace_outcome_probabilities:
                     probability_trace.append(_event_probability_stage('all_zero_weights_fallback', keys, weights))
-        if (self.team_outcomes is None and self.transition_strength is None and not use_formation and not use_coverage and not use_streak and not use_labels
+        if (not use_team_outcomes and self.transition_strength is None and not use_formation and not use_coverage and not use_streak and not use_labels
                 and not use_player_outcomes):
             if fallback_by_key is None:
                 key = rng.choices(keys, weights=[choice_base[k] for k in keys])[0]  # the unchanged baseline draw
@@ -710,25 +726,29 @@ class PlayCallSampler:
                 candidates = [c for c in candidates if c[1].get('qb_scramble') != 1]
                 if not candidates:
                     raise e1.SamplingUnavailable(f'non_scramble_run_source_rows_missing:{entry["key"]}')
-        if use_formation:
+        filter_counts = [('event_candidates', len(candidates))]
+        if filter_formation:
             matched = [c for c in candidates if c[1].get('formation', UNKNOWN) == formation]
             if matched:
                 candidates = matched
             else:
                 formation_fallback = 'no_source_rows_for_chosen_formation'
-        if use_coverage:
+            filter_counts.append(('formation', len(candidates)))
+        if filter_coverage:
             matched = [c for c in candidates if c[1].get('coverage', UNKNOWN) == coverage]
             if matched:
                 candidates = matched
             else:
                 coverage_fallback = 'no_source_rows_for_chosen_coverage'
-        if use_streak:
+            filter_counts.append(('coverage', len(candidates)))
+        if filter_streak:
             matched = [c for c in candidates if c[1].get('streak') == streak_bucket]
             if matched:
                 candidates = matched
             else:
                 streak_fallback = 'no_source_rows_for_current_streak'
-        if use_labels and self.decision_filter:  # the row takes each drawn label in category order, where the cell has such a row
+            filter_counts.append(('streak', len(candidates)))
+        if filter_labels and self.decision_filter:  # the row takes each drawn label in category order, where the cell has such a row
             for cat in decision_layer.CATS:
                 value = labels.get(cat)
                 if value is None:
@@ -739,10 +759,11 @@ class PlayCallSampler:
                     labels_matched.append(cat)
                 else:
                     labels_unmatched.append(cat)
+            filter_counts.append(('labels', len(candidates)))
         qb_target_role_conditioned = False
         qb_target_role_fallback = None
         if (self.qb_decision_table is not None and called_intent == 'dropback' and not scramble and qb_decision
-                and key[1] in ('pass_complete', 'pass_incomplete', 'interception')):
+                and key[1] in ('pass_complete', 'pass_incomplete', 'interception') and not no_filter):
             import qb_decisions
             target_role = qb_decision.get('target_role')
             matched = [c for c in candidates
@@ -752,15 +773,17 @@ class PlayCallSampler:
                 qb_target_role_conditioned = True
             else:
                 qb_target_role_fallback = 'no_target_identity_match_in_event_cell'
+            filter_counts.append(('qb_target_role', len(candidates)))
         exact_yardline_conditioned = False
         exact_yardline_fallback = None
-        if self.exact_yardline and state.get('yl') is not None and int(state['yl']) <= 20:
+        if self.exact_yardline and state.get('yl') is not None and int(state['yl']) <= 20 and not no_filter:
             exact = [c for c in candidates if c[1].get('yardline_100') is not None and int(c[1]['yardline_100']) == int(state['yl'])]
             if exact:
                 candidates = exact  # a touchdown flag then comes from the same distance the state is at
                 exact_yardline_conditioned = True
             else:
                 exact_yardline_fallback = 'no_source_rows_at_exact_yardline'
+            filter_counts.append(('exact_yardline', len(candidates)))
         row_weights = None
         if use_player_outcomes:
             import player_outcomes
@@ -779,15 +802,25 @@ class PlayCallSampler:
                                                    candidate_transition_groups[transition]) /
                                       len(candidate_transition_groups[transition])
                                       for transition, weight in zip(transition_keys, transition_weights)]
-            chosen_transition = rng.choices(transition_keys, weights=transition_weights, k=1)[0]
+            if any(weight > 0 for weight in transition_weights):
+                chosen_transition = rng.choices(transition_keys, weights=transition_weights, k=1)[0]
+            else:  # zero-weight guard: the same candidates, uniformly (recorded)
+                chosen_transition = rng.choice(transition_keys)
+                row_weight_fallback = 'all_row_weights_zero'
             eligible = candidate_transition_groups[chosen_transition]
-            if row_weights is not None:
-                event, row, runoff, spot = rng.choices(
-                    eligible, weights=[weights_by_identity[id(candidate)] for candidate in eligible], k=1)[0]
+            eligible_weights = ([weights_by_identity[id(candidate)] for candidate in eligible]
+                                if row_weights is not None else None)
+            if eligible_weights is not None and any(weight > 0 for weight in eligible_weights):
+                event, row, runoff, spot = rng.choices(eligible, weights=eligible_weights, k=1)[0]
             else:
+                if eligible_weights is not None:
+                    row_weight_fallback = 'all_row_weights_zero'
                 event, row, runoff, spot = rng.choice(eligible)
-        elif row_weights is not None:
+        elif row_weights is not None and any(weight > 0 for weight in row_weights):
             event, row, runoff, spot = rng.choices(candidates, weights=row_weights, k=1)[0]
+        elif row_weights is not None:  # zero-weight guard: the same candidates, uniformly (recorded)
+            row_weight_fallback = 'all_row_weights_zero'
+            event, row, runoff, spot = rng.choice(candidates)
         else:
             event, row, runoff, spot = rng.choice(candidates)
         if pre_event is not None:
@@ -811,6 +844,13 @@ class PlayCallSampler:
             'team_transition_fallbacks': sorted(set(self._current_transition_fallbacks)),
             'split_fallbacks': split_fallbacks,
             'outcome_weight_fallback': outcome_weight_fallback,
+            'row_weight_fallback': row_weight_fallback,
+            'two_stage_pass_fallback': self._two_stage_fallback,
+            'sampling_path': ('sparse_backoff:' + str(outcome_fallback)) if backoff_candidates is not None else 'exact_cell',
+            'exact_outcome_rows': (len(exact_outcome_rows) if exact_outcome_rows is not None else None),
+            'backoff_effective_sample_size': (round(backoff_ess, 3) if backoff_ess is not None else None),
+            'row_filter_counts': filter_counts,
+            'research_switches': {'disable_event_multipliers': bool(no_mult), 'disable_row_filters': bool(no_filter)},
             'point_split_applied': self.point_shifts is not None and team in self.layer.team_index,
             'team_streak_split_applied': self.streak_shifts is not None and team in self.current_streak,
             'league_streak_split_applied': self.streak_league is not None and team in self.current_streak,
@@ -1014,6 +1054,9 @@ class PlayCallSampler:
                 conditional_weights = [weight * decision_layer.geometric_mean([
                     self._label_lift(entry, keys[i], decision_layer.label_key(cat, value))
                     for cat, value in applicable]) for weight, i in zip(conditional_weights, ix)]
+        if not any(weight > 0 for weight in conditional_weights):  # zero-weight guard (recorded)
+            conditional_weights = [weights[i] for i in ix]
+            self._two_stage_fallback = 'all_conditional_pass_weights_zero'
         return keys[rng.choices(ix, weights=conditional_weights)[0]]
 
     def _lift(self, entry, key, value, table):

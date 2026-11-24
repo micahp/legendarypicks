@@ -651,3 +651,67 @@ class SackSubstitutionRate(unittest.TestCase):
     def test_the_observed_file_is_pinned_by_sha256(self):
         self.assertEqual(hashlib.sha256(slc.OBS_SACK_CELLS_PATH.read_bytes()).hexdigest(),
                          slc.OBS_SACK_CELLS_SHA256)
+
+
+class AblationGuards(unittest.TestCase):
+    """SLC-V2-LAYER-ABLATION-SPEC-2026-11-24: the zero-weight draw guard and the two research switches."""
+
+    OUTCOME_TABLE = {
+        'base_events': {'qb': {'pass_complete': 100, 'pass_incomplete': 100},
+                        'receiver': {'pass_complete': 100, 'pass_incomplete': 100}, 'rusher': {}},
+        'event_counts': {'qb': {'AQBGOOD': {'pass_complete': 100}, 'AQBBAD': {'pass_incomplete': 100}},
+                         'receiver': {'AWRGOOD': {'pass_complete': 100}, 'AWRBAD': {'pass_incomplete': 100}},
+                         'rusher': {}},
+        'base_results': {'qb': {}, 'receiver': {}, 'rusher': {}},
+        'row_stats': {},
+    }
+
+    def _sampler(self, passer, receiver):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(100.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        sampler.player_outcome_table = self.OUTCOME_TABLE
+        sampler.participant_chooser = lambda *_: {'passer': {'gsis_id': passer}, 'receiver': {'gsis_id': receiver}}
+        return sampler
+
+    def test_all_zero_row_weights_draw_uniformly_and_are_recorded(self):
+        import player_outcomes
+        sampler = self._sampler('AQBGOOD', 'AWRGOOD')
+        pool = cell([('pass_complete', 'pass'), ('pass_complete', 'pass'), ('pass_incomplete', 'pass')])
+        original = player_outcomes.row_weight
+        player_outcomes.row_weight = lambda *args, **kwargs: 0.0
+        try:
+            sampler.sample(random.Random(3), pool, 'A', 'B', state=STATE)
+        finally:
+            player_outcomes.row_weight = original
+        self.assertEqual(sampler.decisions[-1]['row_weight_fallback'], 'all_row_weights_zero')
+
+    def test_ordinary_draws_record_no_row_weight_fallback(self):
+        sampler = self._sampler('AQBGOOD', 'AWRGOOD')
+        pool = cell([('pass_complete', 'pass'), ('pass_incomplete', 'pass')])
+        sampler.sample(random.Random(3), pool, 'A', 'B', state=STATE)
+        decision = sampler.decisions[-1]
+        self.assertIsNone(decision['row_weight_fallback'])
+        self.assertEqual(decision['sampling_path'], 'exact_cell')
+        self.assertEqual(decision['research_switches'], {'disable_event_multipliers': False, 'disable_row_filters': False})
+
+    def test_disabling_event_multipliers_removes_the_player_effect(self):
+        pool = cell([('pass_complete', 'pass'), ('pass_incomplete', 'pass')])
+        counts = []
+        for passer, receiver in (('AQBGOOD', 'AWRGOOD'), ('AQBBAD', 'AWRBAD')):
+            sampler = self._sampler(passer, receiver)
+            sampler.research_disable_event_multipliers = True
+            counts.append(sum(sampler.sample(random.Random(seed), pool, 'A', 'B', state=STATE)[0] == 'pass_complete'
+                              for seed in range(200)))
+            self.assertFalse(any(d['player_outcomes_conditioned'] for d in sampler.decisions))
+        self.assertEqual(counts[0], counts[1])  # the same seeds and no player weight: identical draws
+
+    def test_disabling_row_filters_skips_the_exact_yardline_filter(self):
+        rows = cell([('run', 'run'), ('run', 'run')])
+        rows[0][1]['yardline_100'] = 10
+        rows[1][1]['yardline_100'] = 15  # the same field bucket as the 10, a different yard line
+        state = dict(STATE, yl=10)
+        for disabled in (False, True):
+            sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(-30.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+            sampler.exact_yardline = True
+            sampler.research_disable_row_filters = disabled
+            sampler.sample(random.Random(1), rows, 'A', 'B', state=state)
+            self.assertEqual(sampler.decisions[-1]['exact_yardline_conditioned'], not disabled)
