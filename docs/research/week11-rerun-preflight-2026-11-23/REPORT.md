@@ -1,14 +1,16 @@
-# Week 11 rerun with the roster preflight: 12 games, graded
+# Week 11 rerun with the roster preflight: 13 games graded, Monday props pending
 
 Date: 2026-11-23. 100 seeds per game and model, six models (v1, v1.5, v1.6, v2, pbv1, pbv1-off). Every run used a
 snapshot that passed the roster preflight, and every run in this report passed the postflight.
 
-Graded: all 12 Sunday and Thursday games against the final scores and the published player stats. CIN at WAS
-(Monday night) was rerun on a current snapshot after the first runs failed (see below). It is compared to the market
-but not graded: it kicks off 2026-11-24 01:15 UTC.
+Graded: all 13 games against the final scores. The 12 Thursday and Sunday games are also graded on player props.
+CIN at WAS (Monday night) was rerun on a current snapshot after the first runs failed (see below). Its game lines are
+graded (WAS 22, CIN 20). Its 97 props per model wait for nflverse to publish the Monday player stats.
 
 ## Result
 
+- **With CIN at WAS (13 games), the ranking is the same.** Home-win Brier: market 0.183, v2 0.205, v1.6 0.230. Every
+  model and the market had CIN winning; WAS won 22 to 20. The numbers below are the 12 games graded on props too.
 - **No model beats the market on games.** Home-win Brier: market 0.155, best model v2 0.181, then v1.6 0.198. The
   market spread missed the final margin by 7.8 points on average; the best model mean (v1.6) missed by 10.0.
 - **Every model is too cautious with big favorites.** The five favorites of 10 or more points (KC, HOU, DEN, BUF, CHI)
@@ -24,7 +26,9 @@ but not graded: it kicks off 2026-11-24 01:15 UTC.
   v2 is closest on game lines (mean absolute home-win gap 0.110, v1.6 0.120).
 - **pbv1-off equals pbv1** in every number, as in every earlier batch.
 
-## CIN at WAS (Monday night): runs invalid
+## CIN at WAS (Monday night)
+
+### First runs: invalid
 
 All six 100-seed runs failed the postflight. Reserve players got stats: Terry McLaurin in 98 of 100 seeds, Jeremy
 McNichols in 100, Tanner Hudson in 71. The snapshot was built at 23:41 UTC on 11-22, before the fix that passes
@@ -346,7 +350,8 @@ skipped: kicking, field goals, extra points, sacks and longest plays.
 
 ## Next
 
-1. Grade CIN at WAS after the game.
+1. Grade the 97 CIN at WAS props per model when nflverse publishes the Monday player stats.
 2. Find why every model shrinks big favorites (mean margin about 3 points short of the spread).
 3. Give the fullback a usage role in the engine (Kyle Juszczyk gets no touches).
-4. Drop pbv1-off or rebuild it so the switch changes the reference data.
+4. pbv1-off: audited (`docs/research/pbv1-off-audit-2026-11-23/`). The switch is label-only, so pbv1-off is out of the
+   default weekly batch and kept as a research ablation.
