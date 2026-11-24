@@ -1,0 +1,9 @@
+{
+  "frame": 207731,
+  "description": "Manually transcribed 0:00 team statistics; team 0 Green Bay, team 1 Seattle. Possession time in seconds.",
+  "source": "Local screenshots finalbox.png and fbox4.png through fbox20.png; ROM, states and screenshots kept outside repository.",
+  "teams": {
+    "0": {"0": 179, "1": 172, "2": 7, "3": 1, "4": 11, "5": 2, "6": 1, "7": 0, "10": 308, "11": 558, "12": 7, "57": 2},
+    "1": {"0": 82, "1": 63, "2": 19, "3": 2, "4": 8, "5": 0, "6": 0, "7": 0, "10": 153, "11": 642, "12": 3, "57": 6}
+  }
+}
