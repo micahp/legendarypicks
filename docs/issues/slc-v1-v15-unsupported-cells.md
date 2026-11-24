@@ -33,8 +33,8 @@ and v1.5:
 
 The engine has five opt-in fixes for these (`e2_reference.BLOCKER_FIXES`): `run_scramble_backoff`,
 `long_field_goal_feasibility`, `blocked_kick_source_audit`, `blocked_kick_geometry` and `safety_free_kick_boundaries`.
-Each week 11 pack was loaded on 2026-11-23 and its `reference.blocker_fixes` read: v1 and v1.5 have none; v1.6 and v2
-have all five. pbv1 shares v2's code commit and its audit log lists all five.
+Each week 11 pack was loaded on 2026-11-23 and its `reference.blocker_fixes` read: v1 and v1.5 have none; v1.6, v2
+and pbv1 have all five.
 
 ## What to do
 

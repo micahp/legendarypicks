@@ -129,8 +129,7 @@ of v1.5's. Scrambles are the largest single type (23 and 14).
 
 The engine code is the same in all models (`slc_playcall.py`, `game_state.py`, `reducer.py`). The difference is five
 opt-in fixes, `e2_reference.BLOCKER_FIXES`, chosen when the pack is built. Each week 11 pack was loaded on the fast host
-on 2026-11-23 and its `reference.blocker_fixes` read: v1 and v1.5 have none; v1.6 and v2 have all five. pbv1 shares
-v2's code commit and its pack audit log lists all five.
+on 2026-11-23 and its `reference.blocker_fixes` read: v1 and v1.5 have none; v1.6, v2 and pbv1 have all five.
 
 - `run_scramble_backoff`: when the exact cell has no rows for the chosen play class (scramble, designed run), the engine
   keeps the play class and widens the cell in steps: exact cell (at least 10 rows), same down and field bucket (25),
