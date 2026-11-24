@@ -9,8 +9,12 @@ from __future__ import annotations
 import hashlib
 import math
 import random
+from dataclasses import asdict
 from pathlib import Path
 
+import ceg_contract
+import event_expansion_rules
+from event_expansion import EventExpansionSwitches
 import game_state
 import gridiron_bridge
 import participation_field
@@ -98,6 +102,10 @@ class AutonomousGameExecution:
         self.ratings_path = ratings_path
         self.coaching_profiles = coaching_profiles or {}
         self.session = gridiron_bridge.GridironSession(self.engine_root)
+        self.event_switches = EventExpansionSwitches()
+        self.event_manifest_sha256 = hashlib.sha256(
+            f'{self.session.commit}:{gridiron_bridge.PLAYBOOK_MANIFEST_SHA256}:{participation_sha256}'.encode()
+        ).hexdigest()
         self.play_index = 0
         self._play_prior_cache = {}
         self.current_score_diff = 0
@@ -112,6 +120,10 @@ class AutonomousGameExecution:
 
     def timeout_model(self, remaining, points):
         return AutonomousTimeoutDecisions(self, remaining, points)
+
+    def apply_event(self, state, event_record):
+        return event_expansion_rules.apply_scrimmage_play(
+            state, event_record, switches=self.event_switches)
 
     def _decision_seed(self, play_index, purpose):
         material = f'{self.seed}:{play_index}:{purpose}'.encode()
@@ -239,15 +251,27 @@ class AutonomousGameExecution:
             raise ValueError('gridiron_result_classification_unsupported:' + str(reason))
         if reason not in ('tackle', 'out_of_bounds', 'incomplete', 'sack', 'touchdown', 'interception', 'safety'):
             raise ValueError('gridiron_terminal_unsupported:' + str(reason))
-        if outcome.get('is_touchdown') and outcome.get('turnover'):
-            raise ValueError('autonomous_defensive_touchdown_requires_ceg_play_2')
-        gain = math.floor(outcome['yards_gained']) if event in ('run', 'pass_complete', 'sack') else 0
+        if event == 'interception':
+            interception_at = interception.get('at')
+            if not isinstance(interception_at, dict) or not isinstance(interception_at.get('x'), (int, float)):
+                raise ValueError('gridiron_interception_location_missing')
+            catch_x = _clamp(interception_at['x'], 0, 100)
+            gain = int(round((catch_x - los_x) * direction))
+        elif event in ('run', 'pass_complete', 'sack'):
+            if outcome.get('is_touchdown'):
+                gain = state['yl']
+            elif reason == 'safety':
+                gain = state['yl'] - 100
+            else:
+                gain = math.floor(outcome['yards_gained'])
+        else:
+            gain = 0
         spot = None
+        event_record = self._ceg_play(call, result, event, gain, state, direction, los_x,
+                                      final_x, reason, interception, caught, thrown)
         if event == 'interception':
             receiving_yl = final_x if direction == 1 else 100 - final_x
             spot = int(round(receiving_yl))
-            if not 1 <= spot <= 99:
-                raise ValueError('gridiron_interception_dead_ball_requires_ceg_play_2')
         elapsed = max(1, math.ceil(outcome['elapsed_seconds']))
         dead = 0 if reason in ('out_of_bounds', 'incomplete', 'touchdown', 'safety') else 27
         row = {'game_id': self.snapshot['schedule']['game_id'], 'play_id': int(context['play_index']),
@@ -263,15 +287,104 @@ class AutonomousGameExecution:
         if decision_note:
             row['decision_note'] = {**decision_note, 'play_family': family,
                                     'executable_concept': call['offense']['call']['concept']}
-        if elapsed + dead >= state['clock']:
-            runoff = state['clock']
-        else:
-            runoff = elapsed + dead
+        runoff = elapsed + dead
         execution = {'schema_version': result['schema_version'], 'call': call,
                      'result': result, 'provenance': provenance, 'timing': timing,
+                     'ceg_event': asdict(event_record),
                      'viewer': 'gridiron_result.trajectory.frames'}
         return {'event': event, 'row': row, 'clock_runoff_seconds': runoff, 'spot': spot,
-                'execution': execution}
+                'execution': execution, 'event_record': event_record}
+
+    def _ceg_play(self, call, result, event, yards, state, direction, los_x, final_x, reason,
+                  interception, caught, thrown):
+        outcome = result['result']
+        players = result.get('participants', {})
+        offense_players = call['offense']['lineup']
+        passer_id = None if event == 'run' and outcome.get('carrier_id') != offense_players['QB'] else offense_players['QB']
+        rusher_id = outcome.get('carrier_id') if event == 'run' else None
+        receiver_id = (caught.get('player_id') if caught else
+                       thrown.get('target_id') if thrown else None)
+        interceptor_id = players.get('interceptor')
+        sacker_ids = players.get('sackers') or []
+        call_intent = 'designed_run' if call['offense']['call']['family'] == 'run' else 'dropback'
+        ceg_event = ('scramble' if event == 'run' and call_intent == 'dropback' else event)
+        touchdown = bool(outcome.get('is_touchdown'))
+        scoring = None
+        possession = None
+        roles = ceg_contract.PlayerRolesV2(
+            passer=(ceg_contract.PlayerRoleV2.named(passer_id) if passer_id else ceg_contract.PlayerRoleV2.none()),
+            rusher=(ceg_contract.PlayerRoleV2.named(rusher_id) if rusher_id else ceg_contract.PlayerRoleV2.none()),
+            receiver=(ceg_contract.PlayerRoleV2.named(receiver_id) if receiver_id else ceg_contract.PlayerRoleV2.none()),
+            interceptor=(ceg_contract.PlayerRoleV2.named(interceptor_id) if interceptor_id else ceg_contract.PlayerRoleV2.none()),
+            sacker=(ceg_contract.PlayerRoleV2.named(sacker_ids[0]) if sacker_ids else ceg_contract.PlayerRoleV2.none()))
+
+        if ceg_event == 'interception':
+            caught_spot = _clamp(interception['at']['x'], 0, 100)
+            turnover_spot = int(round(100 - caught_spot if direction == 1 else caught_spot))
+            dead_x = _clamp(final_x, 0, 100)
+            dead_spot = int(round(100 - dead_x if direction == 1 else dead_x))
+            return_yards = dead_spot - turnover_spot
+            if touchdown and dead_spot != 100:
+                raise ValueError(
+                    f'gridiron_defensive_touchdown_spot_mismatch:direction={direction},'
+                    f'final_x={final_x},interception_x={caught_spot},dead={dead_spot},'
+                    f'turnover={turnover_spot},reason={reason}')
+            return_safety = not touchdown and dead_spot == 0 and turnover_spot > 0
+            if not touchdown and reason == 'safety' and dead_spot != 0:
+                raise ValueError('gridiron_interception_safety_spot_mismatch')
+            if not touchdown and not return_safety and dead_spot == 100:
+                raise ValueError('gridiron_interception_goal_line_needs_touchdown')
+            touchback = not touchdown and not return_safety and dead_spot == 0
+            possession = ceg_contract.PossessionV2(
+                team='defense', how='interception',
+                turnover_spot_yardline_100=turnover_spot,
+                dead_ball_yardline_100=dead_spot, return_yards=return_yards,
+                returner=ceg_contract.PlayerRoleV2.named(interceptor_id),
+                touchback=touchback,
+                next_possession_yardline_100=20 if touchback else None)
+            if touchdown:
+                scoring = ceg_contract.ScoringV2('touchdown', 'defense')
+            elif return_safety or reason == 'safety':
+                scoring = ceg_contract.ScoringV2('safety', 'offense')
+        elif touchdown:
+            scoring = ceg_contract.ScoringV2('touchdown', 'offense')
+        elif reason == 'safety':
+            scoring = ceg_contract.ScoringV2('safety', 'defense')
+            possession = ceg_contract.PossessionV2(
+                team='offense', how='kept', dead_ball_yardline_100=100)
+
+        air_yards = yac = None
+        if event == 'pass_complete':
+            catch = caught.get('at') if caught else None
+            if not isinstance(catch, dict) or not isinstance(catch.get('x'), (int, float)):
+                raise ValueError('gridiron_completion_location_missing')
+            air_yards = int(round((catch['x'] - los_x) * direction))
+            yac = yards - air_yards
+
+        provenance = ceg_contract.ProvenanceV2(
+            generator='gridiron.autonomous_from_snap', version=result['schema_version'],
+            manifest_sha256=self.event_manifest_sha256,
+            components=('authored_assignments', 'bounded_player_movement', 'live_ball_interaction'),
+            draw_ids=(str(call['play_id']),))
+        call_provenance = ceg_contract.ProvenanceV2(
+            generator='slc.autonomous_playcall', version='v1',
+            manifest_sha256=self.event_manifest_sha256,
+            components=('team_season_playbook_prior', 'situation_policy'),
+            draw_ids=(str(call['seed']),))
+        return ceg_contract.GeneratedPlayV2(
+            contract=ceg_contract.CONTRACT_V2_VERSION,
+            call=ceg_contract.PlayCallV2(call_intent, provenance=call_provenance),
+            event=ceg_event, yards_gained=yards, air_yards=air_yards,
+            yards_after_catch=yac, possession=possession, scoring=scoring,
+            provenance=provenance,
+            clock=ceg_contract.ClockV2(
+                runoff_seconds=max(1, math.ceil(outcome['elapsed_seconds'])) +
+                (0 if reason in ('out_of_bounds', 'incomplete', 'touchdown', 'safety') else 27),
+                live_seconds=max(1, math.ceil(outcome['elapsed_seconds'])),
+                dead_ball_seconds=(0 if reason in ('out_of_bounds', 'incomplete', 'touchdown', 'safety') else 27),
+                stop_class=('stopped' if reason in ('out_of_bounds', 'incomplete', 'touchdown', 'safety')
+                            else 'running')),
+            out_of_bounds=reason == 'out_of_bounds', players=roles)
 
     def _participants(self, call, result, event, state):
         side = state['offense']

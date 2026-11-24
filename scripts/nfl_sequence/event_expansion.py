@@ -30,18 +30,18 @@ SWITCH_NAMES = (
 
 @dataclass(frozen=True)
 class EventExpansionSwitches:
-    interception_returns: bool = False
-    fumble_returns: bool = False
-    pre_snap_penalties: bool = False
-    live_ball_penalties: bool = False
-    sack_fumble_transitions: bool = False
-    own_end_zone_recovery: bool = False
-    punt_return_events: bool = False
-    overtime_fourth_down_policy: bool = False
-    turnover_terminal_events: bool = False
-    kneel_events: bool = False
-    spike_events: bool = False
-    timeout_decisions: bool = False
+    interception_returns: bool = True
+    fumble_returns: bool = True
+    pre_snap_penalties: bool = True
+    live_ball_penalties: bool = True
+    sack_fumble_transitions: bool = True
+    own_end_zone_recovery: bool = True
+    punt_return_events: bool = True
+    overtime_fourth_down_policy: bool = True
+    turnover_terminal_events: bool = True
+    kneel_events: bool = True
+    spike_events: bool = True
+    timeout_decisions: bool = True
 
     def __post_init__(self):
         for name, enabled in asdict(self).items():
@@ -69,4 +69,4 @@ class EventExpansionSwitches:
         return {'model_id': MODEL_BASE + '+' + suffix, 'config_sha256': digest, 'config': config}
 
 
-FROZEN_CONTROL = EventExpansionSwitches()
+FROZEN_CONTROL = EventExpansionSwitches.from_enabled(())

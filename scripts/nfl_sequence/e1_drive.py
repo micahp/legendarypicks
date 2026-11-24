@@ -206,7 +206,7 @@ def _credit_field_boundary_yards(event, sampled_yards, yardline):
 
 def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, partial=None, sampling_policy=None,
              score_diff=None, play_index_start=1, drive_index=1, paired_random_streams=None, sampling_guard=None,
-             timeouts=None, execution_observer=None, event_source=None):
+             timeouts=None, execution_observer=None, event_source=None, event_applier=None):
     """`clock` is an optional research clock (clock_d.BoundaryClock). None keeps the E2 runoff from the pool.
     `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence.
     `sampling_policy`, when given, samples events and source plays using the current simulated teams' context.
@@ -261,9 +261,12 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         key = (st['down'], e0.ydstogo_bucket(st['togo']), e0.yardline_bucket(st['yl']))
         generated = None
         if event_source is not None:
-            generated = event_source(dict(st), {'play_index': play_index, 'drive_index': drive_index,
-                                                'direction': dir_of(st['offense'], st['quarter']),
-                                                'score_diff': score_diff})
+            try:
+                generated = event_source(dict(st), {'play_index': play_index, 'drive_index': drive_index,
+                                                    'direction': dir_of(st['offense'], st['quarter']),
+                                                    'score_diff': score_diff})
+            except (AssertionError, ValueError) as invalid:
+                return halt('autonomous_event_generation_invalid:' + str(invalid))
             if not isinstance(generated, dict):
                 raise TypeError('autonomous event source must return an object')
             selected_event = generated.get('event')
@@ -350,10 +353,22 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         try:
             if execution_observer is not None:
                 execution_observer('apply_play', {'event': event, 'play_index': play_index})
-            after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome)
+            event_record = generated.get('event_record') if generated is not None else None
+            if event_record is not None:
+                if event_applier is None:
+                    return halt('autonomous_event_transition_adapter_missing')
+                applied = event_applier(st, event_record)
+                after, play_terminal = applied.state_after, applied.terminal
+                flags = {**reducer._no_flags(), **applied.flags}
+                if applied.scoring_team is not None:
+                    flags['scoring_team'] = applied.scoring_team
+            else:
+                after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome)
         except reducer.UnmodelledOutcome as blocked:
             return halt(blocked.reason)
         except (AssertionError, ValueError) as invalid:
+            if generated is not None and generated.get('event_record') is not None:
+                return halt('autonomous_event_transition_unsupported:' + str(invalid))
             policy_decisions = getattr(sampling_policy, 'decisions', None)
             sampled_decision = policy_decisions[-1] if isinstance(policy_decisions, list) and policy_decisions else None
             context = {
@@ -623,7 +638,9 @@ def check_drive(plays, terminal):
             if p['field'][side]['dir'] not in (None, 1, -1):
                 raise AssertionError(f'play {i + 1}: direction {side} is not +1 or -1')
         changed = sb['offense_team'] != sa['offense_team']
-        if changed != (o['turnover'] or o['punt']):
+        defensive_touchdown = (sa.get('end_of_drive') == 'touchdown' and o['touchdown']
+                                and o['turnover'] and o.get('scoring_team') == sb['defense_team'])
+        if changed != (o['turnover'] or o['punt']) and not defensive_touchdown:
             raise AssertionError(f'play {i + 1}: possession change does not match the turnover or punt flag')
         if o['touchdown'] != (sa.get('end_of_drive') == 'touchdown'):
             raise AssertionError(f'play {i + 1}: touchdown flag and terminal disagree')

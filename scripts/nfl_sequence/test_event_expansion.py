@@ -4,6 +4,13 @@ from event_expansion import EventExpansionSwitches, FROZEN_CONTROL
 
 
 class EventExpansionSwitchesTest(unittest.TestCase):
+    def test_expanded_runtime_defaults_every_built_in_mechanism_on(self):
+        self.assertEqual(EventExpansionSwitches().enabled(), (
+            'interception_returns', 'fumble_returns', 'pre_snap_penalties', 'live_ball_penalties',
+            'sack_fumble_transitions', 'own_end_zone_recovery', 'punt_return_events',
+            'overtime_fourth_down_policy', 'turnover_terminal_events', 'kneel_events',
+            'spike_events', 'timeout_decisions'))
+
     def test_frozen_control_has_every_expansion_disabled(self):
         self.assertEqual(FROZEN_CONTROL.enabled(), ())
         self.assertEqual(FROZEN_CONTROL.model_identity()['model_id'],

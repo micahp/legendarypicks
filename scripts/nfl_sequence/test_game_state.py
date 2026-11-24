@@ -15,6 +15,9 @@ import e2_reference as er  # noqa: E402
 import game_stats  # noqa: E402
 import rules_matrix as rm  # noqa: E402
 import football_assertions  # noqa: E402
+import ceg_contract  # noqa: E402
+import event_expansion_rules  # noqa: E402
+from event_expansion import EventExpansionSwitches  # noqa: E402
 
 
 class StaticPool:
@@ -2265,6 +2268,72 @@ class AutonomousGameLifecycle(unittest.TestCase):
         self.assertEqual(record['stats']['player'][0]['rushing']['td'], 1)
         self.assertTrue(any(k['kind'] == 'half_start' and k['quarter'] == 3 for k in record['kickoffs']))
         self.assertTrue(any(p['outcome'].get('quarter_change') for d in record['drives'] for p in d['plays']))
+        gs.validate_game(record)
+
+    def test_ceg_interception_return_touchdown_completes_full_game_with_shared_rules(self):
+        class Source(self.Source):
+            def event_source(source, state, context):
+                interception = context['play_index'] == 1
+                player = f"{state['offense']}-RB"
+                provenance = ceg_contract.ProvenanceV2(
+                    'controlled-autonomous-fixture', 'test', 'c' * 64,
+                    components=('live_execution_fixture',), draw_ids=(str(context['play_index']),))
+                if interception:
+                    call = ceg_contract.PlayCallV2('dropback', provenance=provenance)
+                    roles = ceg_contract.PlayerRolesV2(
+                        passer=ceg_contract.PlayerRoleV2.named('A-QB'),
+                        receiver=ceg_contract.PlayerRoleV2.named('A-WR'),
+                        interceptor=ceg_contract.PlayerRoleV2.named('B-DB'))
+                    event_record = ceg_contract.GeneratedPlayV2(
+                        ceg_contract.CONTRACT_V2_VERSION, call, 'interception', 0, provenance,
+                        ceg_contract.ClockV2(1, 1, 0, 'stopped'),
+                        possession=ceg_contract.PossessionV2(
+                            'defense', 'interception', turnover_spot_yardline_100=30,
+                            dead_ball_yardline_100=100, return_yards=70,
+                            returner=ceg_contract.PlayerRoleV2.named('B-DB')),
+                        scoring=ceg_contract.ScoringV2('touchdown', 'defense'), players=roles)
+                    event, play_type, yards, live, stopped = 'interception', 'pass', 0, 1, True
+                    participants = {
+                        'passer_id': 'A-QB', 'passer_team': 'AAA', 'passer_side': 'A',
+                        'receiver_id': 'A-WR', 'receiver_team': 'AAA', 'receiver_side': 'A',
+                        'interceptor_id': 'B-DB', 'attribution': 'autonomous_execution',
+                        'timeout': False, 'out_of_bounds': False,
+                    }
+                else:
+                    call = ceg_contract.PlayCallV2('designed_run', provenance=provenance)
+                    roles = ceg_contract.PlayerRolesV2(rusher=ceg_contract.PlayerRoleV2.named(player))
+                    event_record = ceg_contract.GeneratedPlayV2(
+                        ceg_contract.CONTRACT_V2_VERSION, call, 'run', 0, provenance,
+                        ceg_contract.ClockV2(700, 700, 0, 'stopped'), players=roles)
+                    event, play_type, yards, live, stopped = 'run', 'run', 0, 700, True
+                    participants = {
+                        'passer_id': None, 'receiver_id': None, 'rusher_id': player,
+                        'rusher_team': state['offense'], 'rusher_side': state['offense'],
+                        'attribution': 'autonomous_execution', 'timeout': False,
+                        'out_of_bounds': False,
+                    }
+                return {'event': event, 'event_record': event_record,
+                        'clock_runoff_seconds': live,
+                        'row': {'game_id': 'ceg-fixture', 'play_id': context['play_index'],
+                                'play_type': play_type, 'yards_gained': yards,
+                                'live_elapsed_seconds': live, 'dead_ball_seconds': 0,
+                                'clock_stopped': stopped, 'out_of_bounds': False,
+                                'participants': participants}}
+
+            def apply_event(_source, state, event_record):
+                return event_expansion_rules.apply_scrimmage_play(
+                    state, event_record, switches=EventExpansionSwitches())
+
+        record = gs.play_game(41, ref({}, []), winner_choice='receive', winner='A',
+                              execution_source=Source(), max_drives=80)
+        self.assertEqual(record['status'], 'complete_regulation')
+        self.assertEqual(record['points']['B'], 7)
+        self.assertTrue(any(d.get('touchdown_scored_by') == 'B' for d in record['drives']))
+        scored_play = next(p for d in record['drives'] for p in d['plays']
+                           if p['outcome'].get('touchdown'))
+        self.assertEqual(scored_play['event_type'], 'interception')
+        self.assertTrue(scored_play['outcome']['turnover'])
+        self.assertEqual(record['mode'], 'autonomous_full_game')
         gs.validate_game(record)
 
 

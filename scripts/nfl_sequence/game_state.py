@@ -1593,7 +1593,11 @@ class _Game:
                                       if self.execution_source is None else None,
                                       execution_observer=getattr(self.ref, 'execution_observer', None),
                                       event_source=(self.execution_source.event_source
-                                                    if self.execution_source is not None else None), **research)
+                                                    if self.execution_source is not None else None),
+                                      event_applier=(self.execution_source.apply_event
+                                                     if self.execution_source is not None and
+                                                     hasattr(self.execution_source, 'apply_event') else None),
+                                      **research)
         if plays is None:
             self.blocked_attempt = {'drive_index': len(self.drives) + 1, 'offense_team': self.offense,
                                     'quarter_start': start['quarter'], 'clock_start': start['clock'],

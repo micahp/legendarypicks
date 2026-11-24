@@ -299,7 +299,7 @@ class PossessionV2:
     recovered_by: PlayerRoleV2 = field(default_factory=_none_role_v2)
     fumble_spot_yardline_100: Optional[float] = None
     touchback: bool = False
-    next_yardline_100: Optional[float] = None  # in the team-with-possession frame
+    next_possession_yardline_100: Optional[float] = None  # in the team-with-possession frame
 
 
 @dataclass(frozen=True)
@@ -487,12 +487,12 @@ def _v2_possession(possession, play):
                         ('recovery', possession.recovery_spot_yardline_100),
                         ('dead_ball', possession.dead_ball_yardline_100),
                         ('fumble', possession.fumble_spot_yardline_100),
-                        ('next', possession.next_yardline_100)):
+                        ('next_possession', possession.next_possession_yardline_100)):
         if spot is not None and (not _v2_number(spot) or not 0 <= spot <= 100):
             _v2_fail('possession_' + label + '_spot_invalid')
-    if possession.next_yardline_100 is not None \
-            and (type(possession.next_yardline_100) is not int
-                 or not 1 <= possession.next_yardline_100 <= 99):
+    if possession.next_possession_yardline_100 is not None \
+            and (type(possession.next_possession_yardline_100) is not int
+                 or not 1 <= possession.next_possession_yardline_100 <= 99):
         _v2_fail('possession_next_spot_invalid')
     if possession.return_yards is not None and type(possession.return_yards) is not int:
         _v2_fail('possession_return_yards_invalid')
@@ -537,11 +537,11 @@ def _v2_possession(possession, play):
     if possession.touchback:
         if (possession.team != 'defense' or possession.how not in ('interception', 'fumble_recovery')
                 or possession.dead_ball_yardline_100 != 0 or possession.return_yards != 0
-                or possession.next_yardline_100 is None or play.scoring is not None):
+                or possession.next_possession_yardline_100 is None or play.scoring is not None):
             _v2_fail('defensive_touchback_needs_end_zone_dead_ball_and_restart_facts')
-    elif possession.next_yardline_100 is not None:
+    elif possession.next_possession_yardline_100 is not None:
         if possession.dead_ball_yardline_100 is None \
-                or possession.next_yardline_100 != 100 - possession.dead_ball_yardline_100:
+                or possession.next_possession_yardline_100 != 100 - possession.dead_ball_yardline_100:
             _v2_fail('next_possession_spot_disagrees_with_dead_ball_spot')
     if play.scoring is not None and play.scoring.kind == 'touchdown' \
             and play.scoring.team == 'defense' and possession.team != 'defense':
@@ -753,7 +753,9 @@ def validate_v2(state, play, require_clock=True):
             _v2_fail('play_yardage_crosses_end_line')
         if end == 0:
             boundary = 'opponent_goal_line'
-            if play.scoring is None or play.scoring.kind != 'touchdown' or play.scoring.team != 'offense':
+            if (play.event in ('run', 'scramble', 'pass_complete')
+                    and (play.scoring is None or play.scoring.kind != 'touchdown'
+                         or play.scoring.team != 'offense')):
                 _v2_fail('goal_line_gain_needs_offensive_touchdown_fact')
         elif end == 100:
             boundary = 'own_goal_line'

@@ -157,7 +157,7 @@ def _defensive_recovery(before, play):
     if possession.touchback:
         if dead_spot != 0 or play.scoring is not None:
             raise UnsupportedEventTransition('defensive_touchback_fact_disagrees_with_dead_ball')
-        restart = possession.next_yardline_100
+        restart = possession.next_possession_yardline_100
         after = {'offense': before['defense'], 'defense': before['offense'], 'down': 1,
                  'togo': min(10, restart), 'yl': restart}
         flags['touchback'] = True

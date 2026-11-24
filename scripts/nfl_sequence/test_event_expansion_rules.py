@@ -88,7 +88,7 @@ class EventExpansionRulesTests(unittest.TestCase):
             'defense', 'interception', turnover_spot_yardline_100=0,
             dead_ball_yardline_100=0, return_yards=0,
             returner=c.PlayerRoleV2.unmodelled('interceptor'),
-            touchback=True, next_yardline_100=20)
+            touchback=True, next_possession_yardline_100=20)
         interception = record(
             call=c.PlayCallV2('dropback'), event='interception', yards_gained=0,
             air_yards=None, yards_after_catch=None, possession=possession,
@@ -179,6 +179,21 @@ class EventExpansionRulesTests(unittest.TestCase):
                                     'penalty_nominal_yards_disagree_with_rule:offense:'):
             apply_scrimmage_play(S, call,
                                  EventExpansionSwitches.from_enabled(('live_ball_penalties',)))
+
+    def test_dpi_is_enabled_by_default_and_enforces_its_foul_spot_with_nominal_zero(self):
+        penalty = c.PenaltyV2(
+            'live_ball', (c.PenaltyFoulV2(
+                'defensive_pass_interference', 'defense', 0, foul_spot=0),),
+            'accepted', automatic_first_down=True, provenance=P)
+        incomplete = record(
+            call=c.PlayCallV2('dropback'), event='pass_incomplete', yards_gained=0,
+            penalty=penalty,
+            players=c.PlayerRolesV2(passer=c.PlayerRoleV2.named('qb1')))
+        result = apply_scrimmage_play(S, incomplete, EventExpansionSwitches())
+        self.assertEqual(result.state_after,
+                         {'offense': 'A', 'defense': 'B', 'down': 1, 'togo': 1, 'yl': 1.0})
+        self.assertTrue(result.penalty_enforcement['accepted'])
+        self.assertEqual(result.penalty_enforcement['yards'], 39.0)
 
     def test_offsetting_penalties_fail_until_joint_enforcement_exists(self):
         penalty = c.PenaltyV2(

@@ -236,7 +236,7 @@ class CegPlay2Contract(unittest.TestCase):
             'defense', 'interception', turnover_spot_yardline_100=0,
             dead_ball_yardline_100=0, return_yards=0,
             returner=c.PlayerRoleV2.unmodelled('interceptor'), touchback=True,
-            next_yardline_100=20)
+            next_possession_yardline_100=20)
         record = play(event='interception', yards_gained=0, air_yards=None,
                       yards_after_catch=None, possession=possession,
                       players=c.PlayerRolesV2(passer=c.PlayerRoleV2.named('qb1'),
