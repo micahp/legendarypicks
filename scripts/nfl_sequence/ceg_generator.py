@@ -43,11 +43,11 @@ def state_frame(states):
 
 
 class Generator:
-    def __init__(self, tables, chosen, arm):
+    def __init__(self, tables, chosen, arm, seasons=(2022, 2023, 2024)):
         d = p2.load(tables)
         post = pd.read_parquet(tables / 'post.parquet', columns=p2.KEY + ['return_yards'])
         d = d.merge(post, on=p2.KEY, how='left')
-        train = d[d.season.isin([2022, 2023, 2024])]
+        train = d[d.season.isin(list(seasons))]
         comps = p2.components(train)
         # the drive loop's own field-goal rule (field_goal_feasibility), so a generated attempt is never one it refuses
         import field_goal_feasibility as fgf
