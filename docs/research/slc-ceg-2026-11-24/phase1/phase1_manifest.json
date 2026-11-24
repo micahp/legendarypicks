@@ -1,0 +1,674 @@
+{
+ "audits": {
+  "boundary_censoring": {
+   "note": "a touchdown gain is right-censored at yardline_100: the gain distribution is observed only up to the goal line",
+   "offensive_touchdowns": 6094,
+   "touchdown_yards_equal_yardline_100": 6084
+  },
+  "clock": {
+   "runoff_by_stop_class": {
+    "running": {
+     "median": 38.0,
+     "n": 123188,
+     "p90": 44.0
+    },
+    "stopped": {
+     "median": 5.0,
+     "n": 81049,
+     "p90": 10.0
+    }
+   },
+   "runoff_status": {
+    "last_snap_of_game": 1302,
+    "last_snap_of_quarter": 3988,
+    "negative": 37,
+    "same_quarter": 204237
+   },
+   "snaps_followed_by_a_timeout_row": 9163,
+   "timeout_rows": 9660
+  },
+  "penalties": {
+   "first_down_by_penalty": 4533,
+   "on_live_plays": 4130,
+   "on_no_play_rows": 11770,
+   "penalty_rows": 15900,
+   "penalty_type_missing": 0,
+   "penalty_yards_missing": 0,
+   "snaps": 209564,
+   "top_types": {
+    "Defensive Holding": 886,
+    "Defensive Offside": 715,
+    "Defensive Pass Interference": 1297,
+    "Delay of Game": 830,
+    "Face Mask": 416,
+    "False Start": 3071,
+    "Illegal Contact": 354,
+    "Illegal Formation": 410,
+    "Neutral Zone Infraction": 417,
+    "Offensive Holding": 3043,
+    "Roughing the Passer": 459,
+    "Unnecessary Roughness": 819
+   }
+  },
+  "turnovers": {
+   "fumble_recovery_team_missing": 257,
+   "fumble_return_touchdowns": 85,
+   "fumbles": 2969,
+   "fumbles_lost": 1345,
+   "fumbles_recovered_by_offense": 1624,
+   "interceptions": 1924,
+   "pick_six": 160,
+   "turnover_return_yards_missing": 0,
+   "turnovers_with_next_snap_by_defense": 3077
+  },
+  "yardage_support": {
+   "designed_run": {
+    "ge_60": 87,
+    "le_minus_15": 7,
+    "max": 93.0,
+    "min": -34.0,
+    "n": 62337,
+    "q0001": -8.0,
+    "q9990": 64.66400000000431,
+    "reached_opponent_goal_line": 2200,
+    "reached_own_goal_line": 18
+   },
+   "dropback": {
+    "ge_60": 218,
+    "le_minus_15": 123,
+    "max": 98.0,
+    "min": -24.0,
+    "n": 90780,
+    "q0001": -15.0,
+    "q9990": 68.221000000005,
+    "reached_opponent_goal_line": 3721,
+    "reached_own_goal_line": 25
+   },
+   "kneel": {
+    "ge_60": 0,
+    "le_minus_15": 0,
+    "max": 0.0,
+    "min": -7.0,
+    "n": 2031,
+    "q0001": -5.0,
+    "q9990": 0.0,
+    "reached_opponent_goal_line": 0,
+    "reached_own_goal_line": 0
+   },
+   "scramble": {
+    "ge_60": 3,
+    "le_minus_15": 0,
+    "max": 62.0,
+    "min": -1.0,
+    "n": 4684,
+    "q0001": 0.0,
+    "q9990": 47.0,
+    "reached_opponent_goal_line": 163,
+    "reached_own_goal_line": 0
+   },
+   "spike": {
+    "ge_60": 0,
+    "le_minus_15": 0,
+    "max": 0.0,
+    "min": 0.0,
+    "n": 347,
+    "q0001": 0.0,
+    "q9990": 0.0,
+    "reached_opponent_goal_line": 0,
+    "reached_own_goal_line": 0
+   }
+  }
+ },
+ "gaps": [
+  "pbp_participation has no 2026 file (nflverse release, checked 2026-11-24): formation and personnel labels exist for 2022-2025 only",
+  "nflverse has no onside_kick column: kickoff_onside is read from the play description",
+  "the play-by-play has the game clock only at snaps: live-play duration is observed directly only for plays after which the clock stops (clock_stop_class == stopped)"
+ ],
+ "inputs": {
+  "games.csv": "81c304b959266965e69b92ab743e97672b86fb451a7b87fdd8b3abe1c6d47ff2",
+  "pbp_participation_2022.parquet": "5f8d349316bf68de487ee0eb926706e65f5a8e37078c1faa37cb07cda2bf9e5e",
+  "pbp_participation_2023.parquet": "b157736972248e6f71e0c5ad6c1010b71375a500a63944dc4956c65de263e5a6",
+  "pbp_participation_2024.parquet": "5e8cf1f6a11bb2be573c3db1533c28a5658907302d1ad45ca769a4ca35890d7c",
+  "pbp_participation_2025.parquet": "3b26b9487267f011fdbafbce133800ce964c963fdb8b27725abf65663cc46e0f",
+  "play_by_play_2022.parquet": "167dff9290b11a47822157443af586877b38de1b6a90e41f95ac52e524cf4bb3",
+  "play_by_play_2023.parquet": "e8200fde627d460975cfe5d91c355702fcf931b747671d4e5eb972270265ec88",
+  "play_by_play_2024.parquet": "6e6996601f9c29dd10c8d6a15eca255b836ba1dd4718f12bfb69137da1e07c1e",
+  "play_by_play_2025.parquet": "6b7f629136def21702592bf7d70876d746aafe3207c675d9920632e9d7fd6d2d",
+  "play_by_play_2026.parquet": "d8782243a144a98dccd5fa91cb379b6004a697f49966d0209da5d875a3928692",
+  "roster_weekly_2022.parquet": "063c0da93f612811e1c4a4c12727a56fd2716197864795f15aa2f10a591b00c0",
+  "roster_weekly_2023.parquet": "0fa5abf9b462a087ecb17f3268ed7233ce9935e95d77be94ad6bac66adf8e281",
+  "roster_weekly_2024.parquet": "4b144e8eda5a159f36037b02e8b7d5a7861acb65b0816b0a063244992038dcf8",
+  "roster_weekly_2025.parquet": "a8764c947bfe6a9d8f122a194e3f026973c8efcc8a3456c67cbfac4371c20342",
+  "roster_weekly_2026.parquet": "556b31c02605efe65723d844d61688d0eb9b8aeaeb2e09266f1e936ed92b54f2",
+  "snap_counts_2022.parquet": "3cfde83eb6d859e3477aba4238fa2fb8e0592a5fc5ab8b26128fce085d4b7fea",
+  "snap_counts_2023.parquet": "97873cab365dfb39286bc1de3ac772fa4b51f09cce52ae5f8317e006cc007f62",
+  "snap_counts_2024.parquet": "9ec66a0c755939b329d4eba3f90e716bb874b5a6544f325ba220f003991ff99f",
+  "snap_counts_2025.parquet": "47220218fecda7af7ee5b0272a8ecce7c1bfb1f4e1f0a2c8c90047571728ce20",
+  "snap_counts_2026.parquet": "cfbe0260477f668c30ccd10d3976a0d9b7b1cf7732e1a2684c43fbf314f86ea1",
+  "stats_player_week_2022.parquet": "64c1684938b029d68e33d7852cbee918266c8ac7f30b4c097c0a8912b4384e52",
+  "stats_player_week_2023.parquet": "ac776fbd7c9fefdb4069b72304f4c5fa05ae417acd49f6e4e27be14b9d7a4bbc",
+  "stats_player_week_2024.parquet": "847569d194ca3d96b5efcf91e6eac5e18780fc47568a713fd545a82d29d155c1",
+  "stats_player_week_2025.parquet": "2a461becaa9adb3c93a3074a3a31f1e960162a50163371a2d34e28393b5fff10",
+  "stats_player_week_2026.parquet": "0be2a210459aed58a9216e5e45054bf898a45358c0ab8a9c129e3c6b84033e71"
+ },
+ "periods": [
+  {
+   "name": "development",
+   "seasons": [
+    2022,
+    2023,
+    2024
+   ],
+   "use": "fit and model selection"
+  },
+  {
+   "name": "confirmation",
+   "seasons": [
+    2025
+   ],
+   "use": "one pre-registered check of the selected models"
+  },
+  {
+   "name": "examined_2026",
+   "season": 2026,
+   "use": "already read by earlier experiments (week 11 batch, opportunity step 1); not an untouched holdout",
+   "weeks": "1-11"
+  },
+  {
+   "name": "prospective_2026",
+   "season": 2026,
+   "use": "games not yet played on 2026-11-24; forecasts frozen before kickoff",
+   "weeks": "12 and later"
+  }
+ ],
+ "play_class_by_season": {
+  "2022": {
+   "admin": 1440,
+   "designed_run": 14043,
+   "dropback": 20299,
+   "extra_point": 1257,
+   "field_goal": 1105,
+   "kickoff": 2841,
+   "kneel": 442,
+   "no_play": 2429,
+   "punt": 2294,
+   "scramble": 959,
+   "spike": 63,
+   "timeout": 2134,
+   "two_point": 128
+  },
+  "2023": {
+   "admin": 1443,
+   "designed_run": 13734,
+   "dropback": 20644,
+   "extra_point": 1243,
+   "field_goal": 1107,
+   "kickoff": 2838,
+   "kneel": 454,
+   "no_play": 2500,
+   "punt": 2352,
+   "scramble": 1096,
+   "spike": 69,
+   "timeout": 2053,
+   "two_point": 132
+  },
+  "2024": {
+   "admin": 1446,
+   "designed_run": 13872,
+   "dropback": 19897,
+   "extra_point": 1308,
+   "field_goal": 1166,
+   "kickoff": 2955,
+   "kneel": 437,
+   "no_play": 2809,
+   "punt": 2119,
+   "scramble": 1133,
+   "spike": 75,
+   "timeout": 2127,
+   "two_point": 148
+  },
+  "2025": {
+   "admin": 1445,
+   "designed_run": 13714,
+   "dropback": 19639,
+   "extra_point": 1330,
+   "field_goal": 1140,
+   "kickoff": 2927,
+   "kneel": 452,
+   "no_play": 2583,
+   "punt": 2042,
+   "scramble": 1149,
+   "spike": 80,
+   "timeout": 2140,
+   "two_point": 130
+  },
+  "2026": {
+   "admin": 831,
+   "designed_run": 7899,
+   "dropback": 11478,
+   "extra_point": 757,
+   "field_goal": 685,
+   "kickoff": 1696,
+   "kneel": 250,
+   "no_play": 1702,
+   "punt": 1237,
+   "scramble": 591,
+   "spike": 61,
+   "timeout": 1206,
+   "two_point": 74
+  }
+ },
+ "reconciliation": {
+  "final_scores_vs_games_csv": {
+   "final_score_mismatches": [],
+   "games_in_pbp": 1250,
+   "games_missing_from_pbp": [],
+   "games_with_final_score": 1250
+  },
+  "team_week_counts_vs_stats_player_week": {
+   "2022": {
+    "carries": {
+     "exact": 539,
+     "largest_differences": [
+      [
+       2022,
+       8,
+       "LV",
+       -1
+      ],
+      [
+       2022,
+       14,
+       "DET",
+       -1
+      ],
+      [
+       2022,
+       14,
+       "NYG",
+       -1
+      ]
+     ],
+     "team_weeks_compared": 542,
+     "team_weeks_ours": 542,
+     "team_weeks_published": 542,
+     "total_ours": 14767,
+     "total_published": 14770,
+     "within_1": 542
+    },
+    "pass_attempts": {
+     "exact": 542,
+     "largest_differences": [],
+     "team_weeks_compared": 542,
+     "team_weeks_ours": 542,
+     "team_weeks_published": 542,
+     "total_ours": 18069,
+     "total_published": 18069,
+     "within_1": 542
+    },
+    "targets": {
+     "exact": 542,
+     "largest_differences": [],
+     "team_weeks_compared": 542,
+     "team_weeks_ours": 542,
+     "team_weeks_published": 542,
+     "total_ours": 17306,
+     "total_published": 17306,
+     "within_1": 542
+    }
+   },
+   "2023": {
+    "carries": {
+     "exact": 544,
+     "largest_differences": [],
+     "team_weeks_compared": 544,
+     "team_weeks_ours": 544,
+     "team_weeks_published": 544,
+     "total_ours": 14606,
+     "total_published": 14606,
+     "within_1": 544
+    },
+    "pass_attempts": {
+     "exact": 544,
+     "largest_differences": [],
+     "team_weeks_compared": 544,
+     "team_weeks_ours": 544,
+     "team_weeks_published": 544,
+     "total_ours": 18315,
+     "total_published": 18315,
+     "within_1": 544
+    },
+    "targets": {
+     "exact": 544,
+     "largest_differences": [],
+     "team_weeks_compared": 544,
+     "team_weeks_ours": 544,
+     "team_weeks_published": 544,
+     "total_ours": 17483,
+     "total_published": 17483,
+     "within_1": 544
+    }
+   },
+   "2024": {
+    "carries": {
+     "exact": 543,
+     "largest_differences": [
+      [
+       2024,
+       15,
+       "HOU",
+       -1
+      ]
+     ],
+     "team_weeks_compared": 544,
+     "team_weeks_ours": 544,
+     "team_weeks_published": 544,
+     "total_ours": 14686,
+     "total_published": 14687,
+     "within_1": 544
+    },
+    "pass_attempts": {
+     "exact": 544,
+     "largest_differences": [],
+     "team_weeks_compared": 544,
+     "team_weeks_ours": 544,
+     "team_weeks_published": 544,
+     "total_ours": 17811,
+     "total_published": 17811,
+     "within_1": 544
+    },
+    "targets": {
+     "exact": 544,
+     "largest_differences": [],
+     "team_weeks_compared": 544,
+     "team_weeks_ours": 544,
+     "team_weeks_published": 544,
+     "total_ours": 17013,
+     "total_published": 17013,
+     "within_1": 544
+    }
+   },
+   "2025": {
+    "carries": {
+     "exact": 544,
+     "largest_differences": [],
+     "team_weeks_compared": 544,
+     "team_weeks_ours": 544,
+     "team_weeks_published": 544,
+     "total_ours": 14601,
+     "total_published": 14601,
+     "within_1": 544
+    },
+    "pass_attempts": {
+     "exact": 542,
+     "largest_differences": [
+      [
+       2025,
+       2,
+       "PIT",
+       -1
+      ],
+      [
+       2025,
+       3,
+       "LA",
+       -1
+      ]
+     ],
+     "team_weeks_compared": 544,
+     "team_weeks_ours": 544,
+     "team_weeks_published": 544,
+     "total_ours": 17437,
+     "total_published": 17439,
+     "within_1": 544
+    },
+    "targets": {
+     "exact": 544,
+     "largest_differences": [],
+     "team_weeks_compared": 544,
+     "team_weeks_ours": 544,
+     "team_weeks_published": 544,
+     "total_ours": 16609,
+     "total_published": 16609,
+     "within_1": 544
+    }
+   },
+   "2026": {
+    "carries": {
+     "exact": 326,
+     "largest_differences": [],
+     "team_weeks_compared": 326,
+     "team_weeks_ours": 326,
+     "team_weeks_published": 326,
+     "total_ours": 8740,
+     "total_published": 8740,
+     "within_1": 326
+    },
+    "pass_attempts": {
+     "exact": 326,
+     "largest_differences": [],
+     "team_weeks_compared": 326,
+     "team_weeks_ours": 326,
+     "team_weeks_published": 326,
+     "total_ours": 10754,
+     "total_published": 10754,
+     "within_1": 326
+    },
+    "targets": {
+     "exact": 326,
+     "largest_differences": [],
+     "team_weeks_compared": 326,
+     "team_weeks_ours": 326,
+     "team_weeks_published": 326,
+     "total_ours": 10258,
+     "total_published": 10258,
+     "within_1": 326
+    }
+   }
+  }
+ },
+ "tables": {
+  "decision": {
+   "duplicate_keys": 0,
+   "path": "/root/slc-ceg-data/phase1-2026-11-24/decision.parquet",
+   "rows": 225829,
+   "sha256": "339e7a6c5d8bb0514fa547f17ec896c409c6e9c18bf80d763cdd7af0ca600525"
+  },
+  "labels": {
+   "duplicate_keys": 0,
+   "path": "/root/slc-ceg-data/phase1-2026-11-24/labels.parquet",
+   "rows": 225829,
+   "sha256": "ec2442b127d3fac203a85bc09365e1b0fd2609f855284ef906c57edf44cf9daa"
+  },
+  "people": {
+   "duplicate_keys": 0,
+   "path": "/root/slc-ceg-data/phase1-2026-11-24/people.parquet",
+   "rows": 225829,
+   "sha256": "2d19dce3a3f199555d2eeb1c3fb78cfa2b3d94d909bc0aa10b8e027dec0b4346"
+  },
+  "post": {
+   "duplicate_keys": 0,
+   "path": "/root/slc-ceg-data/phase1-2026-11-24/post.parquet",
+   "rows": 225829,
+   "sha256": "e764a8e11b40474042d7e98a558f6f93b842909e688297823b1f96e363dede91"
+  }
+ },
+ "views": {
+  "clock_events": {
+   "denominator": "snap followed by a snap in the same quarter",
+   "filter": "play_class in ('designed_run','dropback','scramble','spike','kneel','punt','field_goal','kickoff','extra_point','two_point','no_play')",
+   "rows_by_season": {
+    "2022": 45860,
+    "2023": 46169,
+    "2024": 45919,
+    "2025": 45186,
+    "2026": 26430
+   },
+   "rows_by_season_type": {
+    "POST": 8413,
+    "REG": 201151
+   },
+   "targets": "runoff to the next snap, clock-stop class, timeout before the next snap"
+  },
+  "designed_runs": {
+   "denominator": "designed carry (scrambles and kneels excluded)",
+   "filter": "play_class == 'designed_run'",
+   "rows_by_season": {
+    "2022": 14043,
+    "2023": 13734,
+    "2024": 13872,
+    "2025": 13714,
+    "2026": 7899
+   },
+   "rows_by_season_type": {
+    "POST": 2483,
+    "REG": 60779
+   },
+   "targets": "yards, fumble"
+  },
+  "dropbacks": {
+   "denominator": "dropback",
+   "filter": "play_class in ('dropback','scramble')",
+   "rows_by_season": {
+    "2022": 21258,
+    "2023": 21740,
+    "2024": 21030,
+    "2025": 20788,
+    "2026": 12069
+   },
+   "rows_by_season_type": {
+    "POST": 4063,
+    "REG": 92822
+   },
+   "targets": "pass attempt, sack, scramble, no attempt"
+  },
+  "pass_attempts": {
+   "denominator": "pass attempt (sacks excluded)",
+   "filter": "play_class == 'dropback' and pass_attempt == 1 and sack != 1",
+   "rows_by_season": {
+    "2022": 18943,
+    "2023": 19185,
+    "2024": 18505,
+    "2025": 18287,
+    "2026": 10693
+   },
+   "rows_by_season_type": {
+    "POST": 3566,
+    "REG": 82047
+   },
+   "targets": "complete, incomplete, interception; receiver; air yards"
+  },
+  "pass_completions": {
+   "denominator": "completion",
+   "filter": "complete_pass == 1",
+   "rows_by_season": {
+    "2022": 12199,
+    "2023": 12427,
+    "2024": 12136,
+    "2025": 11749,
+    "2026": 6867
+   },
+   "rows_by_season_type": {
+    "POST": 2252,
+    "REG": 53126
+   },
+   "targets": "yards after catch, fumble"
+  },
+  "penalties": {
+   "denominator": "snap (every play class, including no_play)",
+   "filter": "play_class in ('designed_run','dropback','scramble','spike','kneel','punt','field_goal','kickoff','extra_point','two_point','no_play')",
+   "rows_by_season": {
+    "2022": 45860,
+    "2023": 46169,
+    "2024": 45919,
+    "2025": 45186,
+    "2026": 26430
+   },
+   "rows_by_season_type": {
+    "POST": 8413,
+    "REG": 201151
+   },
+   "targets": "penalty, type, team, yards, first down by penalty"
+  },
+  "play_decisions": {
+   "denominator": "scrimmage snap with a play call (pre-snap penalties are in penalties)",
+   "filter": "play_class in ('designed_run','dropback','scramble','spike','kneel','punt','field_goal')",
+   "rows_by_season": {
+    "2022": 39205,
+    "2023": 39456,
+    "2024": 38699,
+    "2025": 38216,
+    "2026": 22201
+   },
+   "rows_by_season_type": {
+    "POST": 7209,
+    "REG": 170568
+   },
+   "targets": "intent: run, dropback (dropback or scramble), punt, field goal, kneel, spike"
+  },
+  "scrambles": {
+   "denominator": "QB scramble",
+   "filter": "play_class == 'scramble'",
+   "rows_by_season": {
+    "2022": 959,
+    "2023": 1096,
+    "2024": 1133,
+    "2025": 1149,
+    "2026": 591
+   },
+   "rows_by_season_type": {
+    "POST": 246,
+    "REG": 4682
+   },
+   "targets": "yards, fumble"
+  },
+  "special_teams": {
+   "denominator": "kick",
+   "filter": "play_class in ('kickoff','punt','field_goal','extra_point')",
+   "rows_by_season": {
+    "2022": 7497,
+    "2023": 7540,
+    "2024": 7548,
+    "2025": 7439,
+    "2026": 4375
+   },
+   "rows_by_season_type": {
+    "POST": 1374,
+    "REG": 33025
+   },
+   "targets": "result, distance, return, touchback, block, recovering team"
+  },
+  "strategic_decisions": {
+   "denominator": "fourth-down snap with a call, or a post-TD try",
+   "filter": "(down == 4 and play_class in ('designed_run','dropback','scramble','punt','field_goal')) or play_class in ('extra_point','two_point')",
+   "rows_by_season": {
+    "2022": 5453,
+    "2023": 5597,
+    "2024": 5453,
+    "2025": 5457,
+    "2026": 3164
+   },
+   "rows_by_season_type": {
+    "POST": 1004,
+    "REG": 24120
+   },
+   "targets": "go, punt or field goal; extra point or two-point"
+  },
+  "turnovers": {
+   "denominator": "interception or fumble (lost or not)",
+   "filter": "interception == 1 or fumble == 1",
+   "rows_by_season": {
+    "2022": 1108,
+    "2023": 1101,
+    "2024": 1063,
+    "2025": 976,
+    "2026": 618
+   },
+   "rows_by_season_type": {
+    "POST": 208,
+    "REG": 4658
+   },
+   "targets": "recovering team, return yards, defensive touchdown"
+  }
+ }
+}

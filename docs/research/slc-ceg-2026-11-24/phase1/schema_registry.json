@@ -1,0 +1,538 @@
+{
+ "decision": {
+  "columns": {
+   "away_team": {
+    "dtype": "object",
+    "timing": "pre_snap"
+   },
+   "defteam": {
+    "dtype": "object",
+    "timing": "pre_snap"
+   },
+   "defteam_score": {
+    "dtype": "float64",
+    "timing": "pre_snap"
+   },
+   "defteam_timeouts_remaining": {
+    "dtype": "float64",
+    "timing": "pre_snap"
+   },
+   "down": {
+    "dtype": "float64",
+    "timing": "pre_snap"
+   },
+   "fixed_drive": {
+    "dtype": "float64",
+    "timing": "pre_snap"
+   },
+   "game_date": {
+    "dtype": "object",
+    "timing": "key"
+   },
+   "game_id": {
+    "dtype": "object",
+    "timing": "key"
+   },
+   "game_seconds_remaining": {
+    "dtype": "float64",
+    "timing": "pre_snap"
+   },
+   "goal_to_go": {
+    "dtype": "float64",
+    "timing": "pre_snap"
+   },
+   "half_seconds_remaining": {
+    "dtype": "float64",
+    "timing": "pre_snap"
+   },
+   "home_team": {
+    "dtype": "object",
+    "timing": "pre_snap"
+   },
+   "play_id": {
+    "dtype": "int64",
+    "timing": "key"
+   },
+   "posteam": {
+    "dtype": "object",
+    "timing": "pre_snap"
+   },
+   "posteam_score": {
+    "dtype": "float64",
+    "timing": "pre_snap"
+   },
+   "posteam_timeouts_remaining": {
+    "dtype": "float64",
+    "timing": "pre_snap"
+   },
+   "posteam_type": {
+    "dtype": "object",
+    "timing": "pre_snap"
+   },
+   "qtr": {
+    "dtype": "float64",
+    "timing": "pre_snap"
+   },
+   "quarter_seconds_remaining": {
+    "dtype": "float64",
+    "timing": "pre_snap"
+   },
+   "roof": {
+    "dtype": "object",
+    "timing": "pre_snap"
+   },
+   "score_differential": {
+    "dtype": "float64",
+    "timing": "pre_snap"
+   },
+   "season": {
+    "dtype": "int32",
+    "timing": "key"
+   },
+   "season_type": {
+    "dtype": "object",
+    "timing": "key"
+   },
+   "surface": {
+    "dtype": "object",
+    "timing": "pre_snap"
+   },
+   "temp": {
+    "dtype": "float64",
+    "timing": "pre_snap"
+   },
+   "week": {
+    "dtype": "int32",
+    "timing": "key"
+   },
+   "wind": {
+    "dtype": "float64",
+    "timing": "pre_snap"
+   },
+   "xpass": {
+    "dtype": "float64",
+    "timing": "pre_snap"
+   },
+   "yardline_100": {
+    "dtype": "float64",
+    "timing": "pre_snap"
+   },
+   "ydstogo": {
+    "dtype": "float64",
+    "timing": "pre_snap"
+   }
+  },
+  "key": [
+   "game_id",
+   "play_id"
+  ]
+ },
+ "labels": {
+  "columns": {
+   "aborted_play": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "complete_pass": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "defensive_touchdown": {
+    "dtype": "bool",
+    "timing": "derived"
+   },
+   "dropback_outcome": {
+    "dtype": "object",
+    "timing": "derived"
+   },
+   "extra_point_result": {
+    "dtype": "object",
+    "timing": "realized_event"
+   },
+   "field_goal_result": {
+    "dtype": "object",
+    "timing": "realized_event"
+   },
+   "first_down": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "first_down_penalty": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "fixed_drive_result": {
+    "dtype": "object",
+    "timing": "realized_event"
+   },
+   "fumble": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "fumble_lost": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "fumble_recovery_1_team": {
+    "dtype": "object",
+    "timing": "realized_event"
+   },
+   "game_date": {
+    "dtype": "object",
+    "timing": "key"
+   },
+   "game_id": {
+    "dtype": "object",
+    "timing": "key"
+   },
+   "incomplete_pass": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "interception": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "kickoff_onside": {
+    "dtype": "bool",
+    "timing": "derived"
+   },
+   "no_huddle": {
+    "dtype": "float64",
+    "timing": "offense_choice"
+   },
+   "own_kickoff_recovery": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "pass_attempt": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "pass_location": {
+    "dtype": "object",
+    "timing": "offense_choice"
+   },
+   "penalty": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "penalty_team": {
+    "dtype": "object",
+    "timing": "realized_event"
+   },
+   "penalty_type": {
+    "dtype": "object",
+    "timing": "realized_event"
+   },
+   "play_class": {
+    "dtype": "object",
+    "timing": "derived"
+   },
+   "play_id": {
+    "dtype": "int64",
+    "timing": "key"
+   },
+   "play_type": {
+    "dtype": "object",
+    "timing": "realized_event"
+   },
+   "play_type_nfl": {
+    "dtype": "object",
+    "timing": "realized_event"
+   },
+   "punt_blocked": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "qb_dropback": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "qb_kneel": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "qb_scramble": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "qb_spike": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "replay_or_challenge": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "run_gap": {
+    "dtype": "object",
+    "timing": "offense_choice"
+   },
+   "run_location": {
+    "dtype": "object",
+    "timing": "offense_choice"
+   },
+   "rush_attempt": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "sack": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "safety": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "season": {
+    "dtype": "int32",
+    "timing": "key"
+   },
+   "season_type": {
+    "dtype": "object",
+    "timing": "key"
+   },
+   "shotgun": {
+    "dtype": "float64",
+    "timing": "offense_choice"
+   },
+   "td_team": {
+    "dtype": "object",
+    "timing": "realized_event"
+   },
+   "timeout": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "timeout_team": {
+    "dtype": "object",
+    "timing": "realized_event"
+   },
+   "touchback": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "touchdown": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "turnover": {
+    "dtype": "bool",
+    "timing": "derived"
+   },
+   "two_point_attempt": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "two_point_conv_result": {
+    "dtype": "object",
+    "timing": "realized_event"
+   },
+   "week": {
+    "dtype": "int32",
+    "timing": "key"
+   }
+  },
+  "key": [
+   "game_id",
+   "play_id"
+  ]
+ },
+ "people": {
+  "columns": {
+   "fumbled_1_player_id": {
+    "dtype": "object",
+    "timing": "identity"
+   },
+   "game_date": {
+    "dtype": "object",
+    "timing": "key"
+   },
+   "game_id": {
+    "dtype": "object",
+    "timing": "key"
+   },
+   "interception_player_id": {
+    "dtype": "object",
+    "timing": "identity"
+   },
+   "kicker_player_id": {
+    "dtype": "object",
+    "timing": "identity"
+   },
+   "kickoff_returner_player_id": {
+    "dtype": "object",
+    "timing": "identity"
+   },
+   "passer_player_id": {
+    "dtype": "object",
+    "timing": "identity"
+   },
+   "play_id": {
+    "dtype": "int64",
+    "timing": "key"
+   },
+   "punt_returner_player_id": {
+    "dtype": "object",
+    "timing": "identity"
+   },
+   "punter_player_id": {
+    "dtype": "object",
+    "timing": "identity"
+   },
+   "receiver_player_id": {
+    "dtype": "object",
+    "timing": "identity"
+   },
+   "rusher_player_id": {
+    "dtype": "object",
+    "timing": "identity"
+   },
+   "season": {
+    "dtype": "int32",
+    "timing": "key"
+   },
+   "season_type": {
+    "dtype": "object",
+    "timing": "key"
+   },
+   "week": {
+    "dtype": "int32",
+    "timing": "key"
+   }
+  },
+  "key": [
+   "game_id",
+   "play_id"
+  ]
+ },
+ "post": {
+  "columns": {
+   "air_yards": {
+    "dtype": "float64",
+    "timing": "intermediate"
+   },
+   "boundary": {
+    "dtype": "object",
+    "timing": "derived"
+   },
+   "clock_runoff_seconds": {
+    "dtype": "float64",
+    "timing": "derived"
+   },
+   "clock_stop_class": {
+    "dtype": "object",
+    "timing": "derived"
+   },
+   "end_yardline_100": {
+    "dtype": "float64",
+    "timing": "derived"
+   },
+   "game_date": {
+    "dtype": "object",
+    "timing": "key"
+   },
+   "game_id": {
+    "dtype": "object",
+    "timing": "key"
+   },
+   "kick_distance": {
+    "dtype": "float64",
+    "timing": "intermediate"
+   },
+   "next_down": {
+    "dtype": "float64",
+    "timing": "derived"
+   },
+   "next_game_seconds_remaining": {
+    "dtype": "float64",
+    "timing": "derived"
+   },
+   "next_play_id": {
+    "dtype": "float64",
+    "timing": "derived"
+   },
+   "next_posteam": {
+    "dtype": "object",
+    "timing": "derived"
+   },
+   "next_qtr": {
+    "dtype": "float64",
+    "timing": "derived"
+   },
+   "next_yardline_100": {
+    "dtype": "float64",
+    "timing": "derived"
+   },
+   "next_ydstogo": {
+    "dtype": "float64",
+    "timing": "derived"
+   },
+   "out_of_bounds": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "penalty_yards": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   },
+   "play_id": {
+    "dtype": "int64",
+    "timing": "key"
+   },
+   "possession_changed": {
+    "dtype": "object",
+    "timing": "derived"
+   },
+   "return_yards": {
+    "dtype": "float64",
+    "timing": "intermediate"
+   },
+   "runoff_status": {
+    "dtype": "object",
+    "timing": "derived"
+   },
+   "season": {
+    "dtype": "int32",
+    "timing": "key"
+   },
+   "season_type": {
+    "dtype": "object",
+    "timing": "key"
+   },
+   "timeout_before_next_snap": {
+    "dtype": "object",
+    "timing": "derived"
+   },
+   "timeout_before_next_snap_team": {
+    "dtype": "object",
+    "timing": "derived"
+   },
+   "total_away_score": {
+    "dtype": "float64",
+    "timing": "transition"
+   },
+   "total_home_score": {
+    "dtype": "float64",
+    "timing": "transition"
+   },
+   "week": {
+    "dtype": "int32",
+    "timing": "key"
+   },
+   "yards_after_catch": {
+    "dtype": "float64",
+    "timing": "intermediate"
+   },
+   "yards_gained": {
+    "dtype": "float64",
+    "timing": "realized_event"
+   }
+  },
+  "key": [
+   "game_id",
+   "play_id"
+  ]
+ }
+}
