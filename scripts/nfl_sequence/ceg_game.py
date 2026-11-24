@@ -109,7 +109,7 @@ def build(args):
     special['krec_spot'] = int(kof[~kof.kickoff_onside & kof.next_posteam.eq(kof.defteam)].next_yardline_100.median())
     pen = fr['K9_penalty_type']
     pen = pen[pen.season.le(2024)]
-    special['penalty_yards'] = {t: g.penalty_yards.dropna().astype(int).tolist() for t, g in pen.groupby('y')}
+    special['penalty_yards'] = penalty_yard_lists(pen)
     pen2 = fr['K9_penalty_type'][fr['K9_penalty_type'].season.le(2024)]
     lab_fd = pd.read_parquet(T / 'labels.parquet', columns=KEY + ['first_down_penalty'])
     pen2 = pen2.merge(lab_fd, on=KEY)
@@ -174,6 +174,25 @@ def margin9(s):
     return '>=15'
 
 
+# Fouls whose yards run to a spot (to the 1 at most), with no half-distance. Backlog E13.
+SPOT_FOULS = ('Defensive Pass Interference',)
+
+
+def penalty_yard_lists(pen):
+    """{foul type: yards} learned only from fouls snapped between the 31-yard lines (backlog E13).
+
+    nflverse penalty_yards are the enforced yards, after half-distance. Between the 31s half-distance cannot cut a foul
+    of 30 yards or less, so these are the full yards; PenaltyProvider then applies half-distance once. A type with no
+    such foul keeps all its rows.
+    """
+    mid = pen[pen.yardline_100.between(31, 69)]
+    out = {}
+    for t, g in pen.groupby('y'):
+        m = mid[mid.y.eq(t)].penalty_yards.dropna()
+        out[t] = (m if len(m) else g.penalty_yards.dropna()).astype(int).tolist()
+    return out
+
+
 class PenaltyProvider:
     """Wraps the Phase 3 harness provider: pre-snap fouls before the play, live fouls after it (K8a, K8b, K9)."""
     generates_events = True
@@ -191,6 +210,11 @@ class PenaltyProvider:
         if side == 'offense':
             y = min(abs(yards), (100 - yl) // 2) if abs(yards) > (100 - yl) / 2 else abs(yards)
             new_yl, new_togo, first = min(99, yl + y), togo + y, False
+        elif typ in SPOT_FOULS:
+            y = min(abs(yards), yl - 1)  # to the spot, at most the 1; no half-distance
+            new_yl = max(1, yl - y)
+            first = rng.random() < self.sp['first_down_rate'].get(typ, 0.0) or togo - y <= 0
+            new_togo = min(10, new_yl) if first else togo - y
         else:
             y = min(abs(yards), yl // 2) if abs(yards) > yl / 2 else abs(yards)
             new_yl = max(1, yl - y)

@@ -101,7 +101,7 @@ class Runtime:
                    'K8b': cat('K8b_live', 'C', int(ch4['K8b_live'])),
                    'K9': cat('K9_penalty_type', 'C', int(ch4['K9_penalty_type']))}
         pen = tr['K9_penalty_type']
-        special['penalty_yards'] = {t: g.penalty_yards.dropna().astype(int).tolist() for t, g in pen.groupby('y')}
+        special['penalty_yards'] = cgm.penalty_yard_lists(pen)
         fd = pen.merge(pd.read_parquet(T / 'labels.parquet', columns=KEY + ['first_down_penalty']), on=KEY)
         special['first_down_rate'] = {t: float(g.first_down_penalty.eq(1).mean()) for t, g in fd.groupby('y')}
         self.special = special
