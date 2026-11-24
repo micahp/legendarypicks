@@ -128,3 +128,40 @@ by running the validator. Six smaller items follow.
   drive tests included.
 - Kick facts: CEG resolves punts and field goals in the game loop after the drive terminal. To attach `KickV2` to
   the play, CEG moves the K4 and K5 draws into the provider. That is CEG work. It needs no contract change.
+
+## Fourth review: V2 commit `b83d580e` (local, not pushed)
+
+Checked by running the validator and the adapter, not by reading only. The 60-test suite passes. The `ceg-play-1`
+part is identical to CEG's file. `reducer.py`, `e1_drive.py`, `game_state.py` and `penalty_enforcement.py` are
+unchanged against `8a1d9842`.
+
+**Closed:** all nine third-review items, the second-review items, and the bridge questions:
+- a designed run needs a rusher (`designed_run_rusher_role_required`);
+- a present clock passes with `require_clock=False`;
+- a punt recovered by the kicking team is refused (`kicking_team_recovery_only_supported_for_kickoffs`);
+- a safety on a kick is `kick_safety_unsupported`;
+- a `disposition` of `unknown` is refused;
+- a punt return touchdown in the kicking-team frame (dead ball 100) passes for the receiving team and is refused for
+  the kicking team;
+- foul names: `penalty_event_mapping.py` maps source labels to the 16 V1.7 rule keys exactly and fails closed;
+- `yards_assessed` is checked against the nominal yards (`penalty_nominal_yards_disagree_with_rule`);
+- an interception touchback: `PossessionV2.touchback` and `next_yardline_100` give the new offense its 20, behind the
+  `turnover_terminal_events` switch.
+
+**Remaining gaps**
+
+1. **Foul types outside the 16 fail closed.** That is correct, but CEG's K9 model draws every nflverse foul type
+   (for example Unnecessary Roughness and Face Mask). CEG must limit K9 to the 16 or the rules catalog must grow. The
+   share of real fouls outside the 16 should be measured before either choice.
+2. **A second frame.** `next_yardline_100` is "in the team-with-possession frame". Every other scrimmage spot is in
+   the snap-offense frame. Either express it in the snap-offense frame, or name the field after its frame (for
+   example `next_snap_yardline_100_new_offense`), so no reader applies the wrong flip.
+3. **Floats in the types, integers in the adapter.** The types say `float`, but the adapter refuses a non-integer
+   spot (`..._must_be_integer_yardline_for_frozen_v2`). State the integer rule in the contract, or the validator will
+   pass records that the adapter refuses.
+4. **Pass interference needs a spot.** Its nominal yards are 0 and the spot decides the yards. CEG models no foul
+   spot (E13), so CEG cannot emit it until E13 is done.
+5. **Still not integrated, unchanged:** no caller in `e1_drive` or `game_state`; the reducer has no defensive
+   touchdown; offsetting fouls, more than one foul, fouls on kicks, and fouls on scoring or possession-change plays are
+   rejected.
+6. **Not pushed.** The V1 bridge and CEG cannot pin `b83d580e` until it is on the remote.
