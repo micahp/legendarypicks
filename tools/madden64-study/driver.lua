@@ -85,14 +85,17 @@ while true do
           local down = memory.read_s32_be(0x89544, "RDRAM")
           local distance = memory.read_s32_be(0x89548, "RDRAM")
           local yard = memory.read_s32_be(0x8954c, "RDRAM")
-          if q == 4 and clock == 0 then saw_fourth_zero = true end
+          if q == 4 and clock == 0 and not saw_fourth_zero then
+            saw_fourth_zero = true
+            if c == "game" then savestate.save(a .. ".zero.state") end
+          end
           local state = string.format("%d,%d,%d,%d,%d", q, clock, down, distance, yard)
           if previous.state ~= state then
             out:write(string.format("%d,%s,-1,state,0,0\n", emu.framecount(), state))
             previous.state = state
           end
           for team = 0, 1 do
-            for _, index in ipairs({0,1,2,3,4,5,6,7,10,11,12,57}) do
+            for _, index in ipairs({0,1,2,3,4,5,6,7,8,9,10,11,12,15,16,17,18,19,20,21,22,57}) do
               local key = team * 100 + index
               local value = memory.read_u16_be(0x82d22 + team * 0x214c + 2 * index, "RDRAM")
               if previous[key] ~= value then
@@ -124,7 +127,7 @@ while true do
       elseif c == "record" then
         local count = assert(tonumber(b), "record requires a frame count")
         local out = assert(io.open(a, "w"))
-        local indices = {0,1,2,3,4,5,6,7,10,11,12,57}
+        local indices = {0,1,2,3,4,5,6,7,8,9,10,11,12,15,16,17,18,19,20,21,22,57}
         out:write("frame,team,index,value,rng\n")
         local previous = {}
         for frame = 1, count do
