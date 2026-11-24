@@ -1,0 +1,481 @@
+{
+ "arm": "C",
+ "failure_cells": {
+  "1|1-3|1-9": {
+   "boundaries": {
+    "opponent_goal_line": 113
+   },
+   "events": {
+    "field_goal_attempt": 1,
+    "interception": 4,
+    "kneel": 14,
+    "pass_complete": 76,
+    "pass_incomplete": 51,
+    "run": 276,
+    "sack": 5,
+    "scramble": 5
+   },
+   "plays": 432,
+   "refusals": 0,
+   "states": 144
+  },
+  "2|1-3|1-9": {
+   "boundaries": {
+    "opponent_goal_line": 118
+   },
+   "events": {
+    "field_goal_attempt": 1,
+    "interception": 3,
+    "kneel": 7,
+    "pass_complete": 79,
+    "pass_incomplete": 48,
+    "run": 280,
+    "sack": 6,
+    "scramble": 6,
+    "spike": 2
+   },
+   "plays": 432,
+   "refusals": 0,
+   "states": 144
+  },
+  "2|1-3|20-49": {
+   "boundaries": {
+    "opponent_goal_line": 27
+   },
+   "events": {
+    "field_goal_attempt": 21,
+    "interception": 19,
+    "kneel": 1,
+    "pass_complete": 425,
+    "pass_incomplete": 230,
+    "run": 826,
+    "sack": 39,
+    "scramble": 37,
+    "spike": 22
+   },
+   "plays": 1620,
+   "refusals": 0,
+   "states": 540
+  },
+  "2|1-3|50-79": {
+   "boundaries": {
+    "opponent_goal_line": 9
+   },
+   "events": {
+    "interception": 24,
+    "kneel": 1,
+    "pass_complete": 468,
+    "pass_incomplete": 233,
+    "run": 800,
+    "sack": 50,
+    "scramble": 41,
+    "spike": 3
+   },
+   "plays": 1620,
+   "refusals": 0,
+   "states": 540
+  },
+  "2|11+|10-19": {
+   "boundaries": {
+    "opponent_goal_line": 73
+   },
+   "events": {
+    "field_goal_attempt": 22,
+    "interception": 17,
+    "kneel": 56,
+    "pass_complete": 310,
+    "pass_incomplete": 164,
+    "run": 196,
+    "sack": 26,
+    "scramble": 19
+   },
+   "plays": 810,
+   "refusals": 0,
+   "states": 270
+  },
+  "2|4-6|10-19": {
+   "boundaries": {
+    "opponent_goal_line": 55
+   },
+   "events": {
+    "field_goal_attempt": 4,
+    "interception": 4,
+    "kneel": 1,
+    "pass_complete": 157,
+    "pass_incomplete": 85,
+    "run": 265,
+    "sack": 7,
+    "scramble": 14,
+    "spike": 3
+   },
+   "plays": 540,
+   "refusals": 0,
+   "states": 180
+  },
+  "2|4-6|50-79": {
+   "boundaries": {
+    "opponent_goal_line": 8,
+    "own_goal_line": 1
+   },
+   "events": {
+    "field_goal_attempt": 2,
+    "interception": 26,
+    "kneel": 11,
+    "pass_complete": 559,
+    "pass_incomplete": 279,
+    "run": 638,
+    "sack": 58,
+    "scramble": 45,
+    "spike": 2
+   },
+   "plays": 1620,
+   "refusals": 0,
+   "states": 540
+  },
+  "2|7-10|1-9": {
+   "boundaries": {
+    "opponent_goal_line": 19
+   },
+   "events": {
+    "interception": 1,
+    "kneel": 5,
+    "pass_complete": 40,
+    "pass_incomplete": 21,
+    "run": 32,
+    "sack": 5,
+    "scramble": 4
+   },
+   "plays": 108,
+   "refusals": 0,
+   "states": 36
+  },
+  "2|7-10|10-19": {
+   "boundaries": {
+    "opponent_goal_line": 76
+   },
+   "events": {
+    "field_goal_attempt": 8,
+    "interception": 13,
+    "kneel": 15,
+    "pass_complete": 268,
+    "pass_incomplete": 124,
+    "run": 255,
+    "sack": 16,
+    "scramble": 21
+   },
+   "plays": 720,
+   "refusals": 0,
+   "states": 240
+  },
+  "2|7-10|20-49": {
+   "boundaries": {
+    "opponent_goal_line": 41
+   },
+   "events": {
+    "field_goal_attempt": 37,
+    "interception": 33,
+    "kneel": 64,
+    "pass_complete": 804,
+    "pass_incomplete": 380,
+    "run": 702,
+    "sack": 80,
+    "scramble": 55,
+    "spike": 5
+   },
+   "plays": 2160,
+   "refusals": 0,
+   "states": 720
+  },
+  "2|7-10|50-79": {
+   "boundaries": {
+    "opponent_goal_line": 7,
+    "own_goal_line": 3
+   },
+   "events": {
+    "interception": 36,
+    "kneel": 71,
+    "pass_complete": 843,
+    "pass_incomplete": 381,
+    "run": 679,
+    "sack": 92,
+    "scramble": 58
+   },
+   "plays": 2160,
+   "refusals": 0,
+   "states": 720
+  },
+  "3|1-3|10-19": {
+   "boundaries": {
+    "opponent_goal_line": 51
+   },
+   "events": {
+    "field_goal_attempt": 6,
+    "interception": 6,
+    "kneel": 1,
+    "pass_complete": 136,
+    "pass_incomplete": 88,
+    "run": 269,
+    "sack": 14,
+    "scramble": 13,
+    "spike": 7
+   },
+   "plays": 540,
+   "refusals": 0,
+   "states": 180
+  },
+  "3|1-3|20-49": {
+   "boundaries": {
+    "opponent_goal_line": 24
+   },
+   "events": {
+    "field_goal_attempt": 32,
+    "interception": 24,
+    "kneel": 3,
+    "pass_complete": 416,
+    "pass_incomplete": 275,
+    "run": 759,
+    "sack": 55,
+    "scramble": 47,
+    "spike": 9
+   },
+   "plays": 1620,
+   "refusals": 0,
+   "states": 540
+  },
+  "3|11+|80-99": {
+   "boundaries": {
+    "opponent_goal_line": 2,
+    "own_goal_line": 220
+   },
+   "events": {
+    "interception": 154,
+    "kneel": 463,
+    "pass_complete": 2968,
+    "pass_incomplete": 1597,
+    "run": 1275,
+    "sack": 488,
+    "scramble": 255
+   },
+   "plays": 7200,
+   "refusals": 0,
+   "states": 2400
+  },
+  "3|4-6|50-79": {
+   "boundaries": {
+    "opponent_goal_line": 4
+   },
+   "events": {
+    "field_goal_attempt": 1,
+    "interception": 34,
+    "kneel": 11,
+    "pass_complete": 685,
+    "pass_incomplete": 473,
+    "run": 202,
+    "sack": 141,
+    "scramble": 73
+   },
+   "plays": 1620,
+   "refusals": 0,
+   "states": 540
+  },
+  "3|4-6|80-99": {
+   "boundaries": {
+    "own_goal_line": 28
+   },
+   "events": {
+    "interception": 31,
+    "kneel": 9,
+    "pass_complete": 474,
+    "pass_incomplete": 323,
+    "run": 119,
+    "sack": 83,
+    "scramble": 41
+   },
+   "plays": 1080,
+   "refusals": 0,
+   "states": 360
+  },
+  "3|7-10|80-99": {
+   "boundaries": {
+    "own_goal_line": 43
+   },
+   "events": {
+    "interception": 33,
+    "kneel": 43,
+    "pass_complete": 592,
+    "pass_incomplete": 402,
+    "run": 198,
+    "sack": 115,
+    "scramble": 57
+   },
+   "plays": 1440,
+   "refusals": 0,
+   "states": 480
+  },
+  "4|1-3|1-9": {
+   "boundaries": {
+    "opponent_goal_line": 82
+   },
+   "events": {
+    "field_goal_attempt": 181,
+    "interception": 2,
+    "kneel": 3,
+    "pass_complete": 74,
+    "pass_incomplete": 40,
+    "punt": 1,
+    "run": 122,
+    "sack": 4,
+    "scramble": 5
+   },
+   "plays": 432,
+   "refusals": 0,
+   "states": 144
+  },
+  "4|1-3|50-79": {
+   "boundaries": {
+    "opponent_goal_line": 1
+   },
+   "events": {
+    "field_goal_attempt": 1,
+    "interception": 6,
+    "pass_complete": 153,
+    "pass_incomplete": 91,
+    "punt": 1044,
+    "run": 290,
+    "sack": 19,
+    "scramble": 16
+   },
+   "plays": 1620,
+   "refusals": 0,
+   "states": 540
+  },
+  "4|11+|10-19": {
+   "boundaries": {
+    "opponent_goal_line": 16
+   },
+   "events": {
+    "field_goal_attempt": 710,
+    "interception": 4,
+    "pass_complete": 38,
+    "pass_incomplete": 40,
+    "punt": 2,
+    "sack": 10,
+    "scramble": 6
+   },
+   "plays": 810,
+   "refusals": 0,
+   "states": 270
+  },
+  "4|4-6|10-19": {
+   "boundaries": {
+    "opponent_goal_line": 13
+   },
+   "events": {
+    "field_goal_attempt": 455,
+    "interception": 2,
+    "pass_complete": 46,
+    "pass_incomplete": 28,
+    "punt": 2,
+    "run": 3,
+    "sack": 3,
+    "scramble": 1
+   },
+   "plays": 540,
+   "refusals": 0,
+   "states": 180
+  },
+  "4|4-6|20-49": {
+   "boundaries": {
+    "opponent_goal_line": 17
+   },
+   "events": {
+    "field_goal_attempt": 729,
+    "interception": 12,
+    "kneel": 1,
+    "pass_complete": 238,
+    "pass_incomplete": 148,
+    "punt": 395,
+    "run": 48,
+    "sack": 32,
+    "scramble": 17
+   },
+   "plays": 1620,
+   "refusals": 0,
+   "states": 540
+  },
+  "4|4-6|80-99": {
+   "boundaries": {
+    "own_goal_line": 2
+   },
+   "events": {
+    "interception": 3,
+    "pass_complete": 49,
+    "pass_incomplete": 35,
+    "punt": 979,
+    "run": 1,
+    "sack": 6,
+    "scramble": 7
+   },
+   "plays": 1080,
+   "refusals": 0,
+   "states": 360
+  },
+  "4|7-10|1-9": {
+   "boundaries": {
+    "opponent_goal_line": 5
+   },
+   "events": {
+    "field_goal_attempt": 88,
+    "kneel": 2,
+    "pass_complete": 7,
+    "pass_incomplete": 9,
+    "scramble": 2
+   },
+   "plays": 108,
+   "refusals": 0,
+   "states": 36
+  },
+  "4|7-10|80-99": {
+   "boundaries": {
+    "own_goal_line": 3
+   },
+   "events": {
+    "interception": 1,
+    "pass_complete": 14,
+    "pass_incomplete": 16,
+    "punt": 1393,
+    "run": 7,
+    "sack": 9
+   },
+   "plays": 1440,
+   "refusals": 0,
+   "states": 480
+  }
+ },
+ "failure_cells_total": {
+  "plays": 33372,
+  "refusals": 0,
+  "states": 11124
+ },
+ "grid": {
+  "boundaries": {
+   "opponent_goal_line": 2795,
+   "own_goal_line": 189
+  },
+  "events": {
+   "field_goal_attempt": 4482,
+   "interception": 641,
+   "kneel": 1887,
+   "pass_complete": 17127,
+   "pass_incomplete": 9121,
+   "punt": 7948,
+   "run": 19091,
+   "sack": 2159,
+   "scramble": 1486,
+   "spike": 210
+  },
+  "plays": 64152,
+  "refusals": 0,
+  "states": 21384
+ }
+}
