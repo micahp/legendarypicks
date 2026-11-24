@@ -1,0 +1,277 @@
+{
+ "seasons": [
+  2022,
+  2023,
+  2024
+ ],
+ "sides": {
+  "offense": {
+   "points_per_drive": {
+    "split_r": 0.627,
+    "reliability": 0.771,
+    "sd_observed": 0.459,
+    "sd_true": 0.403
+   },
+   "pass_rate": {
+    "split_r": 0.623,
+    "reliability": 0.767,
+    "sd_observed": 0.0463,
+    "sd_true": 0.0405,
+    "n_per_team_half": 572,
+    "predicts_other_half_points_per_drive_r": -0.115,
+    "team_halves": 96
+   },
+   "sack_rate": {
+    "split_r": 0.474,
+    "reliability": 0.643,
+    "sd_observed": 0.0214,
+    "sd_true": 0.0171,
+    "n_per_team_half": 310,
+    "predicts_other_half_points_per_drive_r": -0.34,
+    "team_halves": 96
+   },
+   "scramble_rate": {
+    "split_r": 0.762,
+    "reliability": 0.865,
+    "sd_observed": 0.0255,
+    "sd_true": 0.0237,
+    "n_per_team_half": 310,
+    "predicts_other_half_points_per_drive_r": 0.096,
+    "team_halves": 96
+   },
+   "air_yards_per_target": {
+    "split_r": 0.516,
+    "reliability": 0.681,
+    "sd_observed": 0.9615,
+    "sd_true": 0.7933,
+    "n_per_team_half": 265,
+    "predicts_other_half_points_per_drive_r": 0.094,
+    "team_halves": 96
+   },
+   "completion_rate": {
+    "split_r": 0.337,
+    "reliability": 0.504,
+    "sd_observed": 0.0382,
+    "sd_true": 0.0271,
+    "n_per_team_half": 265,
+    "predicts_other_half_points_per_drive_r": 0.262,
+    "team_halves": 96
+   },
+   "interception_rate": {
+    "split_r": 0.167,
+    "reliability": 0.286,
+    "sd_observed": 0.0097,
+    "sd_true": 0.0052,
+    "n_per_team_half": 265,
+    "predicts_other_half_points_per_drive_r": -0.154,
+    "team_halves": 96
+   },
+   "yac_per_completion": {
+    "split_r": 0.432,
+    "reliability": 0.603,
+    "sd_observed": 0.6813,
+    "sd_true": 0.5292,
+    "n_per_team_half": 179,
+    "predicts_other_half_points_per_drive_r": 0.314,
+    "team_halves": 96
+   },
+   "yards_per_carry": {
+    "split_r": 0.363,
+    "reliability": 0.533,
+    "sd_observed": 0.5561,
+    "sd_true": 0.406,
+    "n_per_team_half": 204,
+    "predicts_other_half_points_per_drive_r": 0.35,
+    "team_halves": 96
+   },
+   "run_explosive_rate": {
+    "split_r": 0.335,
+    "reliability": 0.502,
+    "sd_observed": 0.0268,
+    "sd_true": 0.019,
+    "n_per_team_half": 204,
+    "predicts_other_half_points_per_drive_r": 0.216,
+    "team_halves": 96
+   },
+   "run_stuff_rate": {
+    "split_r": 0.3,
+    "reliability": 0.461,
+    "sd_observed": 0.0354,
+    "sd_true": 0.024,
+    "n_per_team_half": 204,
+    "predicts_other_half_points_per_drive_r": -0.232,
+    "team_halves": 96
+   },
+   "fumble_rate": {
+    "split_r": 0.023,
+    "reliability": 0.046,
+    "sd_observed": 0.0076,
+    "sd_true": 0.0016,
+    "n_per_team_half": 421,
+    "predicts_other_half_points_per_drive_r": -0.193,
+    "team_halves": 96
+   },
+   "third_fourth_conversion": {
+    "split_r": 0.517,
+    "reliability": 0.681,
+    "sd_observed": 0.0578,
+    "sd_true": 0.0477,
+    "n_per_team_half": 118,
+    "predicts_other_half_points_per_drive_r": 0.535,
+    "team_halves": 96
+   },
+   "yards_per_play": {
+    "split_r": 0.637,
+    "reliability": 0.778,
+    "sd_observed": 0.5763,
+    "sd_true": 0.5084,
+    "n_per_team_half": 518,
+    "predicts_other_half_points_per_drive_r": 0.6,
+    "team_halves": 96
+   },
+   "red_zone_td_rate": {
+    "split_r": 0.142,
+    "reliability": 0.249,
+    "sd_observed": 0.0997,
+    "sd_true": 0.0498,
+    "n_per_team_half": 33,
+    "predicts_other_half_points_per_drive_r": 0.392,
+    "team_halves": 96
+   }
+  },
+  "defense": {
+   "points_per_drive": {
+    "split_r": 0.139,
+    "reliability": 0.244,
+    "sd_observed": 0.364,
+    "sd_true": 0.18
+   },
+   "pass_rate": {
+    "split_r": 0.4,
+    "reliability": 0.571,
+    "sd_observed": 0.0432,
+    "sd_true": 0.0327,
+    "n_per_team_half": 574,
+    "predicts_other_half_points_per_drive_r": -0.153,
+    "team_halves": 96
+   },
+   "sack_rate": {
+    "split_r": 0.196,
+    "reliability": 0.327,
+    "sd_observed": 0.0158,
+    "sd_true": 0.009,
+    "n_per_team_half": 315,
+    "predicts_other_half_points_per_drive_r": -0.125,
+    "team_halves": 96
+   },
+   "scramble_rate": {
+    "split_r": 0.165,
+    "reliability": 0.283,
+    "sd_observed": 0.0148,
+    "sd_true": 0.0079,
+    "n_per_team_half": 315,
+    "predicts_other_half_points_per_drive_r": 0.066,
+    "team_halves": 96
+   },
+   "air_yards_per_target": {
+    "split_r": 0.513,
+    "reliability": 0.678,
+    "sd_observed": 0.8619,
+    "sd_true": 0.7096,
+    "n_per_team_half": 267,
+    "predicts_other_half_points_per_drive_r": -0.016,
+    "team_halves": 96
+   },
+   "completion_rate": {
+    "split_r": 0.26,
+    "reliability": 0.413,
+    "sd_observed": 0.0363,
+    "sd_true": 0.0233,
+    "n_per_team_half": 267,
+    "predicts_other_half_points_per_drive_r": 0.082,
+    "team_halves": 96
+   },
+   "interception_rate": {
+    "split_r": 0.097,
+    "reliability": 0.178,
+    "sd_observed": 0.0102,
+    "sd_true": 0.0043,
+    "n_per_team_half": 267,
+    "predicts_other_half_points_per_drive_r": -0.065,
+    "team_halves": 96
+   },
+   "yac_per_completion": {
+    "split_r": 0.107,
+    "reliability": 0.193,
+    "sd_observed": 0.5733,
+    "sd_true": 0.2518,
+    "n_per_team_half": 178,
+    "predicts_other_half_points_per_drive_r": 0.019,
+    "team_halves": 96
+   },
+   "yards_per_carry": {
+    "split_r": 0.375,
+    "reliability": 0.545,
+    "sd_observed": 0.537,
+    "sd_true": 0.3964,
+    "n_per_team_half": 204,
+    "predicts_other_half_points_per_drive_r": 0.152,
+    "team_halves": 96
+   },
+   "run_explosive_rate": {
+    "split_r": 0.318,
+    "reliability": 0.483,
+    "sd_observed": 0.0264,
+    "sd_true": 0.0183,
+    "n_per_team_half": 204,
+    "predicts_other_half_points_per_drive_r": 0.069,
+    "team_halves": 96
+   },
+   "run_stuff_rate": {
+    "split_r": 0.336,
+    "reliability": 0.503,
+    "sd_observed": 0.0398,
+    "sd_true": 0.0283,
+    "n_per_team_half": 204,
+    "predicts_other_half_points_per_drive_r": -0.136,
+    "team_halves": 96
+   },
+   "fumble_rate": {
+    "split_r": -0.027,
+    "reliability": -0.054,
+    "sd_observed": 0.0068,
+    "sd_true": 0.0,
+    "n_per_team_half": 421,
+    "predicts_other_half_points_per_drive_r": -0.031,
+    "team_halves": 96
+   },
+   "third_fourth_conversion": {
+    "split_r": 0.047,
+    "reliability": 0.089,
+    "sd_observed": 0.0486,
+    "sd_true": 0.0145,
+    "n_per_team_half": 119,
+    "predicts_other_half_points_per_drive_r": 0.073,
+    "team_halves": 96
+   },
+   "yards_per_play": {
+    "split_r": 0.231,
+    "reliability": 0.375,
+    "sd_observed": 0.4562,
+    "sd_true": 0.2793,
+    "n_per_team_half": 516,
+    "predicts_other_half_points_per_drive_r": 0.116,
+    "team_halves": 96
+   },
+   "red_zone_td_rate": {
+    "split_r": 0.075,
+    "reliability": 0.14,
+    "sd_observed": 0.0892,
+    "sd_true": 0.0334,
+    "n_per_team_half": 34,
+    "predicts_other_half_points_per_drive_r": 0.044,
+    "team_halves": 96
+   }
+  }
+ }
+}
