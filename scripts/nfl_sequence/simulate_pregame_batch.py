@@ -1060,6 +1060,7 @@ def run_batch(args):
                 contextual_bandwidth=args.context_bandwidth,
                 contextual_min_effective_games=args.context_min_source_games,
                 safety_kick_table=safety_kick_table)
+    ref.geometry_filter = bool(args.slc_geometry_filter)
     require_overtime_reference(ref)
     reference_seconds = time.monotonic() - reference_started
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
@@ -1431,6 +1432,9 @@ def main(argv=None):
     ap.add_argument('--playcall-artifact',
                     help='SLC v1: the frozen score-clock play-call artifact, fitted before the game season; the pool is cut to '
                          'the weeks before the game. Omit for the S0 control')
+    ap.add_argument('--slc-geometry-filter', action='store_true',
+                    help='leave out fumble source rows whose net gain crosses a goal line at the live state '
+                         '(sack fumble behind its own goal line); off keeps the frozen V1.6 sampling')
     ap.add_argument('--slc-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],
                     help='SLC blocker fix (all fixes default on with --playcall-artifact)')
     ap.add_argument('--slc-disable-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],

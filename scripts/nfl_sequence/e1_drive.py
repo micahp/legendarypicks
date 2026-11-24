@@ -262,12 +262,31 @@ def _credit_field_boundary_yards(event, sampled_yards, yardline):
     return sampled_yards, None
 
 
+def _turnover_geometry_eligible(sample, state):
+    """Reject turnover samples whose implied net gain crosses a goal line.
+
+    A clean next-offense snap does not identify the fumble spot or recovery in either end zone, so a transition of this
+    class cannot be moved to a simulated field position where its net gain crosses a goal line. With the geometry
+    filter on, only these source rows are left out of the draw. Ported from the V1.7 line (3b8e8890).
+    """
+    event, row, _runoff, _spot = sample
+    if event not in ('fumble_lost', 'sack_fumble_lost'):
+        return True
+    yards = row.get('yards_gained')
+    if type(yards) not in (int, float):
+        return False
+    destination = state['yl'] - yards
+    return 0 < destination < 100
+
+
 def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, partial=None, sampling_policy=None,
-             score_diff=None, play_index_start=1, drive_index=1, paired_random_streams=None, sampling_guard=None):
+             score_diff=None, play_index_start=1, drive_index=1, paired_random_streams=None, sampling_guard=None,
+             geometry_filter=False):
     """`clock` is an optional research clock (clock_d.BoundaryClock). None keeps the E2 runoff from the pool.
     `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence.
     `sampling_policy`, when given, samples events and source plays using the current simulated teams' context.
-    `sampling_guard` may remove source rows that are illegal in the live simulation state."""
+    `sampling_guard` may remove source rows that are illegal in the live simulation state.
+    `geometry_filter` leaves out turnover source rows whose net gain crosses a goal line at the live state."""
     rng = random.Random(seed)
     start_offense, start_defense = start['offense'], start['defense']
     start_quarter, start_dir = start['quarter'], start['dir']
@@ -309,7 +328,15 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                 stream_keys['clock_runoff'] = paired_random_streams.key('clock_runoff', drive_index, play_index)
         key = (st['down'], e0.ydstogo_bucket(st['togo']), e0.yardline_bucket(st['yl']))
         source_cell = pool.get(key, [])
-        cell = sampling_guard.filter_cell(source_cell, st) if sampling_guard is not None else source_cell
+        geometry_rejections = 0
+        if geometry_filter:
+            legal_cell = [sample for sample in source_cell if _turnover_geometry_eligible(sample, st)]
+            geometry_rejections = len(source_cell) - len(legal_cell)
+        else:
+            legal_cell = source_cell
+        if geometry_filter and not legal_cell and source_cell:
+            return halt('goal_line_fumble_source_cell_has_no_geometrically_legal_outcome')
+        cell = sampling_guard.filter_cell(legal_cell, st) if sampling_guard is not None else legal_cell
         if not cell and source_cell:
             return halt(sampling_guard.unavailable_reason())
         if len(cell) < MIN_POOL and not getattr(sampling_policy, 'allow_sparse_cells', False):
@@ -329,8 +356,14 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                               'defense': st['defense'], 'down': st['down'], 'togo': st['togo'],
                               'yl': st['yl'], 'score_diff': score_diff,
                               'field_goal_feasibility': field_goal_distance,
-                              '_source_cell_filtered': cell is not source_cell}
-            if sampling_guard is not None and sampling_guard.requires_source_filter:
+                              '_source_cell_filtered': cell is not source_cell or geometry_rejections > 0}
+            if geometry_filter:
+                def source_row_filter(sample, target_state):
+                    return (_turnover_geometry_eligible(sample, target_state)
+                            and (sampling_guard is None or not sampling_guard.requires_source_filter
+                                 or sampling_guard.permits(sample, target_state)))
+                sampling_state['_source_row_filter'] = source_row_filter
+            elif sampling_guard is not None and sampling_guard.requires_source_filter:
                 sampling_state['_source_row_filter'] = sampling_guard.permits
             try:
                 selected_event, row, runoff, spot = sampling_policy.sample(
@@ -338,6 +371,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             except SamplingUnavailable as unavailable:
                 return halt(str(unavailable))
         event = selected_event
+        if geometry_filter and not _turnover_geometry_eligible((selected_event, row, runoff, spot), st):
+            return halt('goal_line_fumble_geometry_requires_source_conditional')
         if sampling_guard is not None:
             selected_sample = (selected_event, row, runoff, spot)
             rejection = sampling_guard.rejection_reason(selected_sample, st)
