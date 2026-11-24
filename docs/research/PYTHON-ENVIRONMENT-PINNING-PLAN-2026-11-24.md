@@ -20,6 +20,14 @@ rules. A frozen model rebuilt or rerun under another stack can give different nu
 2026-11-24 a CEG smoke test gave identical draws on both hosts, but that is one check on one code path, not a
 guarantee.
 
+## Decision (Micah, 2026-11-24): one standard stack
+
+Pick one stack and use it everywhere, unless a runner truly needs another. The standard:
+Python 3.12.3, pandas 3.1.1, numpy 2.4.4, pyarrow 26.0.1. It is the fast host's current SLC runner stack, the one the
+week 11 frozen-model batches ran on. This box has only Python 3.8, so it gets a `uv`-managed Python 3.12 venv; the
+system Python is not touched. The one exception for now: the Legendary Picks backend venv on this box (Python 3.8,
+pandas 1.5.3) serves the web app, so changing it is a production change and is decided separately.
+
 ## The plan
 
 1. **One environment per runner, in its own directory.**
