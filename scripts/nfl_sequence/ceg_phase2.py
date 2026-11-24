@@ -232,23 +232,30 @@ class AirYards(Categorical):
     """Air yards as integer classes; a target deeper than 10 yards into the end zone is impossible (masked)."""
 
     def __init__(self, levels, k):
-        super().__init__(levels, k, classes=list(range(-20, 91)),
-                         mask=lambda f, p, cls: _renorm(p * (np.array(cls)[None, :] <= f.yardline_100.to_numpy()[:, None] + 10)))
+        super().__init__(levels, k, classes=list(range(-20, 91)), mask=air_mask)
+
+
+def air_mask(f, p, cls):
+    return _renorm(p * (np.array(cls)[None, :] <= f.yardline_100.to_numpy()[:, None] + 10))
 
 
 def _renorm(p):
     return p / p.sum(axis=1, keepdims=True)
 
 
-def fg_mask(threshold):
-    def mask(f, p, cls):
+class fg_mask:
+    """A field goal is legal only up to the threshold yardline. A class (not a closure) so a fitted model can be saved."""
+
+    def __init__(self, threshold):
+        self.threshold = threshold
+
+    def __call__(self, f, p, cls):
         if 'field_goal' in cls:
             j = cls.index('field_goal')
             p = p.copy()
-            p[f.yardline_100.to_numpy() > threshold, j] = 0
+            p[f.yardline_100.to_numpy() > self.threshold, j] = 0
             p = _renorm(p)
         return p
-    return mask
 
 
 # ---------------------------------------------------------------- specs

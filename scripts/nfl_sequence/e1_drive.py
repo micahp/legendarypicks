@@ -298,15 +298,18 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                     'clock_quarter_end_hazard', drive_index, play_index)
                 stream_keys['clock_runoff'] = paired_random_streams.key('clock_runoff', drive_index, play_index)
         key = e0.pool_key(st['down'], st['togo'], st['yl'])
-        source_cell = pool.get(key, [])
+        # SLC-CEG: a provider that generates events (generates_events = True) reads no historical cell. Everything
+        # after the draw (reducer, clock, checks) is unchanged. Frozen samplers never set it.
+        generates = bool(getattr(sampling_policy, 'generates_events', False))
+        source_cell = [] if generates else pool.get(key, [])
         cell = sampling_guard.filter_cell(source_cell, st) if sampling_guard is not None else source_cell
         if not cell and source_cell:
             return halt(sampling_guard.unavailable_reason())
-        if len(cell) < MIN_POOL and not getattr(sampling_policy, 'allow_sparse_cells', False):
+        if not generates and len(cell) < MIN_POOL and not getattr(sampling_policy, 'allow_sparse_cells', False):
             return halt(f'thin pool cell {key} ({len(cell)} observed plays, floor {MIN_POOL}); no fallback')
         field_goal_distance = fg_feasibility.evaluate(  # research flag kicker_field_goals: the record rule
             st['yl'], rule=fg_feasibility.RECORD_RULE if getattr(sampling_policy, 'fg_kicker', None) is not None else None)
-        if ot_fourth_down_kick_share is not None and st['quarter'] == 5 and st['down'] == 4:
+        if not generates and ot_fourth_down_kick_share is not None and st['quarter'] == 5 and st['down'] == 4:
             # Overtime calibration: a fourth down is a field-goal attempt with this probability when one is eligible,
             # otherwise the cell is restricted to go-for-it and punt rows. Regulation never takes this branch.
             kick_rows = [x for x in cell if x[0] == 'field_goal_attempt' and field_goal_distance['eligible']]
@@ -318,7 +321,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                 return halt('no overtime fourth-down action remains after the kick-share calibration')
         shares = Counter(ev for ev, _, _, _ in cell
                          if ev != 'field_goal_attempt' or field_goal_distance['eligible'])
-        if not shares:
+        if not shares and not generates:
             return halt('no eligible scrimmage or special-teams actions remain in this cell')
         if sampling_policy is None:
             selected_event = event_rng.choices(EVENTS, weights=[shares[e] for e in EVENTS])[0]

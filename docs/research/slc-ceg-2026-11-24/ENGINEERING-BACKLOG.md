@@ -1,0 +1,20 @@
+# SLC-CEG engineering backlog
+
+Started 2026-11-24 (Phase 3 review). Each item names what is wrong or missing now and what done means. Items close in
+the phase that fixes them; closed items stay listed with their commit.
+
+| id | item | now | done when |
+|---|---|---|---|
+| E1 | Parameter-only portable artifacts | Components are refit from the Phase 1 tables at every run (`ceg_phase2`, `ceg_clock`). Nothing is packed. | Each component writes its fitted counts and k to a versioned JSON artifact (the plan's section 13 fields), with the training-data hashes; the generator loads only artifacts; a run with the Phase 1 tables absent completes. |
+| E2 | Real provenance | `Provenance` carries a fixed generator name, `'phase2'`, `'tune_2024'` and the seed. | It carries the artifact ids and sha256 of every component used, and each draw's stream key, so a play can be replayed exactly. |
+| E3 | Official throwaway target attribution | 630 of 3,447 FTN throwaways (18%) still carry an official receiver; the generator gives a throwaway no receiver. | The generator draws P(official receiver credited given a throwaway) so official target counts reconcile, and a target model states whether it predicts official or intended targets. |
+| E4 | Turnover geometry | The v2 reducer has no defensive scrimmage touchdown; the harness gives the new offense the ball at its 1 and counts it. Interception spot = catch point, fumble spot = end of the run. | The reducer takes a recovery, a return and a dead-ball spot or a defensive touchdown (the V1.7 PR #49 resolver is the reference), and the generator's `Possession` goes through it unchanged. |
+| E5 | Return-model evaluation | Interception and fumble returns use an arm B league model censored at the end zone, not evaluated. | Returns are a pre-registered component (B and C) scored like Phase 2, including pick-sixes and fumble-return touchdowns. |
+| E6 | Expanded legal-state coverage | The Phase 2 grid covers scrimmage states only, with no clock, timeouts or overtime. | The grid adds quarter, clock, timeouts left and overtime, and every special-teams and try state (Phase 4), with 0 refusals through the real loop. |
+| E7 | Model D overtime rules | `clock_d.oob_clock_restart` and the two-minute stop cover Q2 and Q4 only; the 2025 data shows both rules in overtime too. | Documented in the Phase 3 report; CEG applies them in overtime. Model D stays frozen. |
+| E8 | Timeouts-remaining convention | nflverse's count on a snap already subtracts the timeouts taken after it; 1.2% of offense callers would read 4 left and are capped at 3. | Confirmed against a second source, or the convention documented in the Phase 1 schema registry. |
+| E9 | Situation-cell estimator limits | k = 300 (the top of the grid) for 10 of 11 Phase 2 components. | Regularized multinomial regression and generalized additive models are pre-registered as challengers, tuned on 2022-2024 only, and scored on a period not yet examined. Not retuned against 2025. |
+| E10 | Native event interface | The drive loop gets the generated play through the old `(event, record, runoff, spot)` tuple, behind `generates_events`. | `e1_drive` and `game_state` take a `GeneratedPlay` directly (Phase 5), and `participants_for` reads its facts instead of a source-play lookup. |
+| E11 | Distance-monotone field goals | Arm C's 1-yard field-goal cells rise with distance on 51% of steps (Phase 4). | A monotone-in-distance make model (isotonic or a logistic in distance), pre-registered and scored against B. |
+| E12 | Timeout under-prediction | Phase 3 arm C expects 1,253 first timeouts in 2025 against 1,433 observed (672 against 790 in the last 2:00 of Q2 and Q4). | A timeout model with the clock running at the decision and the score-and-time interaction as a regression term, scored on a period not yet examined. |
+

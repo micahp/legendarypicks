@@ -49,12 +49,19 @@ class Generator:
         d = d.merge(post, on=p2.KEY, how='left')
         train = d[d.season.isin([2022, 2023, 2024])]
         comps = p2.components(train)
-        self.fg = int(train[train.play_class.eq('field_goal')].yardline_100.max()) + 3
-        self.arm, self.m = arm, {}
+        # the drive loop's own field-goal rule (field_goal_feasibility), so a generated attempt is never one it refuses
+        import field_goal_feasibility as fgf
+        ceiling = max(y for y in range(1, 100) if fgf.evaluate(y)['eligible'])
+        self.fg = min(int(train[train.play_class.eq('field_goal')].yardline_100.max()) + 3, ceiling)
+        # arm: 'B', 'C', or a dict {component: 'B' or 'C'} (a selective composition)
+        arms = arm if isinstance(arm, dict) else {name: arm for name in ARM_COMPONENTS}
+        self.arm = 'sel' if isinstance(arm, dict) else arm
+        self.arms, self.m = arms, {}
         for name in ARM_COMPONENTS:
             f, kind = comps[name]
-            k = int(chosen[name]['C_k']) if arm == 'C' else 1
-            m = p2.model(name, kind, arm, k, fg_threshold=self.fg)
+            a = arms[name]
+            k = int(chosen[name]['C_k']) if a == 'C' else 1
+            m = p2.model(name, kind, a, k, fg_threshold=self.fg)
             self.m[name] = m.fit(f) if kind == 'gain' else m.fit(f, 'air' if kind == 'air' else 'y')
         kneel = train[train.play_class.eq('kneel') & train.yards_gained.notna()].assign(
             gain=lambda x: x.yards_gained.astype(int), L=lambda x: x.yardline_100.astype(int))
@@ -68,9 +75,23 @@ class Generator:
         ret['L'] = (100 - (ret.yardline_100 - moved)).clip(1, 99).astype(int)
         self.m['return_yards'] = p2.Gain([[]], 1).fit(ret)
 
+    def set_teams(self, offense, defense):
+        """Arm E: team ratio tables {component: (classes, {'off': {team: r}, 'def': {team: r}})} set in self.team."""
+        self.teams_now = (offense, defense)
+
     def _cat(self, name, row):
         m = self.m[name]
         p = m.predict(row)[0]
+        team = getattr(self, 'team', None)
+        now = getattr(self, 'teams_now', None)
+        if team and now and name in team:
+            classes, tables = team[name]
+            assert list(classes) == list(m.classes)
+            for side, code in (('off', now[0]), ('def', now[1])):
+                r = tables.get(side, {}).get(code)
+                if r is not None:
+                    p = p * r
+            p = p / p.sum()
         if not np.isfinite(p).all() or abs(p.sum() - 1) > 1e-9:
             raise cc.ContractViolation(f'{name}: improper distribution {p}')
         return m.classes, p

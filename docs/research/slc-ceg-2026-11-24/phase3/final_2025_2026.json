@@ -1,0 +1,189 @@
+{
+ "chosen": {
+  "dead": {
+   "B": 1,
+   "C": 100
+  },
+  "live": {
+   "B": 1,
+   "C": 300
+  },
+  "oob": 300,
+  "timeout_first": 300,
+  "timeout_more": 300
+ },
+ "counts": {
+  "censored_quarter_end": 4209,
+  "censored_two_minute": 2023,
+  "running": 110239,
+  "snaps": 153589,
+  "stopped": 43350,
+  "timeout_conflicts_first": 0,
+  "timeout_conflicts_more": 0,
+  "timeout_opportunities": 145054,
+  "timeout_team_unmatched": 0,
+  "timeouts_in_opportunities": 6673
+ },
+ "final": {
+  "confirmation_2025": {
+   "live": {
+    "B": 2.12143,
+    "C": 2.07643,
+    "C_minus_B": [
+     -0.045,
+     -0.0529,
+     -0.03709
+    ],
+    "n": 9119
+   },
+   "oob": {
+    "B": 0.36283,
+    "C": 0.36104,
+    "C_minus_B": [
+     -0.00179,
+     -0.00268,
+     -0.00093
+    ],
+    "n": 23532
+   },
+   "timeout_first": {
+    "B": 0.21838,
+    "C": 0.16402,
+    "C_minus_B": [
+     -0.05436,
+     -0.05794,
+     -0.05046
+    ],
+    "n": 31014
+   },
+   "timeout_first_expected_vs_observed": {
+    "all": [
+     1253.1,
+     1433
+    ],
+    "last_2_minutes_q2_q4": [
+     673.1,
+     790
+    ]
+   },
+   "timeout_more": {
+    "B": 0.11467,
+    "C": 0.10395,
+    "C_minus_B": [
+     -0.01072,
+     -0.01726,
+     -0.00413
+    ],
+    "n": 1464
+   },
+   "total_runoff": {
+    "B": 3.12513,
+    "C": 3.03192,
+    "C_minus_B": [
+     -0.09321,
+     -0.09936,
+     -0.08704
+    ],
+    "censored": 1326,
+    "median_abs_error_of_median": {
+     "B": 3.0,
+     "C": 2.0
+    },
+    "n": 32816
+   },
+   "vs_model_d": {
+    "C": 3.05118,
+    "C_minus_D": [
+     0.0156,
+     -0.15323,
+     0.1656
+    ],
+    "model_d": 3.03558,
+    "n": 32304
+   }
+  },
+  "examined_2026": {
+   "live": {
+    "B": 2.09418,
+    "C": 2.05092,
+    "C_minus_B": [
+     -0.04327,
+     -0.05368,
+     -0.03375
+    ],
+    "n": 5625
+   },
+   "oob": {
+    "B": 0.35061,
+    "C": 0.34969,
+    "C_minus_B": [
+     -0.00092,
+     -0.00213,
+     0.0003
+    ],
+    "n": 14190
+   },
+   "timeout_first": {
+    "B": 0.21311,
+    "C": 0.15772,
+    "C_minus_B": [
+     -0.05539,
+     -0.06037,
+     -0.05048
+    ],
+    "n": 18864
+   },
+   "timeout_first_expected_vs_observed": {
+    "all": [
+     758.9,
+     845
+    ],
+    "last_2_minutes_q2_q4": [
+     410.6,
+     488
+    ]
+   },
+   "timeout_more": {
+    "B": 0.13673,
+    "C": 0.12911,
+    "C_minus_B": [
+     -0.00762,
+     -0.0155,
+     0.00018
+    ],
+    "n": 868
+   },
+   "total_runoff": {
+    "B": 3.11041,
+    "C": 3.02241,
+    "C_minus_B": [
+     -0.088,
+     -0.09548,
+     -0.08025
+    ],
+    "censored": 829,
+    "median_abs_error_of_median": {
+     "B": 3.0,
+     "C": 2.0
+    },
+    "n": 19975
+   },
+   "vs_model_d": {
+    "C": 3.04199,
+    "C_minus_D": [
+     0.00621,
+     -0.20076,
+     0.18224
+    ],
+    "model_d": 3.03578,
+    "n": 19665
+   }
+  },
+  "live_run_sources_median_seconds": {
+   "followed_by_timeout": 8.0,
+   "late_out_of_bounds": 6.0,
+   "touchdown": 5.0
+  }
+ },
+ "stage": "final"
+}
