@@ -101,6 +101,14 @@ class Generator:
         cols = m.levels[-1]
         kk = tuple(row.iloc[0][c] for c in cols)
         h = m.hazard([tuple(kk[:len(c)]) for c in m.levels])
+        shifts = getattr(self, 'gain_team', {}).get(name)
+        now = getattr(self, 'teams_now', None)
+        if shifts and now:
+            # Phase 8: logit h_E = logit h_C - b_off(offense) - b_def(defense)
+            b = shifts.get('off', {}).get(now[0], 0.0) + shifts.get('def', {}).get(now[1], 0.0)
+            if b:
+                hc = np.clip(h, 1e-12, 1 - 1e-12)
+                h = 1 / (1 + np.exp(-(np.log(hc) - np.log1p(-hc) - b)))
         p, td = m.pmf(h, int(L))
         total = p.sum() + td
         if not np.isfinite(total) or abs(total - 1) > 1e-9:
