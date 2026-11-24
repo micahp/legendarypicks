@@ -8,6 +8,7 @@
 --   seed <decimal>                             write candidate RNG word (experimental)
 --   record <path.csv> <frames>                 sample candidate team counters each frame
 --   hookrecord <path.csv> <frames>             capture raw staged records at candidate routine
+--   game <path.csv> <maxframes>                stop on experimental end transition
 --   dumpram <path>                             first 0x90000 bytes of N64 RDRAM
 local W = "E:/emu/madden64/"
 client.SetSoundOn(false)
@@ -41,7 +42,7 @@ while true do
         local seed = tonumber(a)
         assert(seed and seed >= 0 and seed <= 0xFFFFFFFF, "invalid RNG seed")
         memory.write_u32_be(0x87998, seed, "RDRAM")
-      elseif c == "hookrecord" then
+      elseif c == "hookrecord" or c == "game" then
         local count = assert(tonumber(b), "hookrecord requires a frame count")
         local out = assert(io.open(a, "w"))
         out:write("frame,quarter,clock,down,distance,yard,team,kind,index,value\n")
@@ -76,6 +77,7 @@ while true do
         end, 0x80025b10, "madden_event_prepare")
         assert(hook, "execution hook registration failed")
         local previous = {}
+        local saw_fourth_zero, stopped = false, false
         for frame = 1, count do
           emu.frameadvance()
           local q = memory.read_s32_be(0x89538, "RDRAM")
@@ -83,6 +85,7 @@ while true do
           local down = memory.read_s32_be(0x89544, "RDRAM")
           local distance = memory.read_s32_be(0x89548, "RDRAM")
           local yard = memory.read_s32_be(0x8954c, "RDRAM")
+          if q == 4 and clock == 0 then saw_fourth_zero = true end
           local state = string.format("%d,%d,%d,%d,%d", q, clock, down, distance, yard)
           if previous.state ~= state then
             out:write(string.format("%d,%s,-1,state,0,0\n", emu.framecount(), state))
@@ -98,13 +101,26 @@ while true do
               end
             end
           end
-          if frame % 600 == 0 then out:flush() end
+          if frame % 600 == 0 then
+            out:flush()
+            local progress = assert(io.open(W .. "hook-progress.txt", "w"))
+            progress:write(string.format("%d/%d frame=%d q=%d clock=%d hits=%d\n", frame, count, emu.framecount(), q, clock, hits))
+            progress:close()
+          end
+          if c == "game" and saw_fourth_zero and q == 6 then
+            out:flush()
+            client.screenshot(a .. ".end.png")
+            savestate.save(a .. ".end.state")
+            stopped = true
+            break
+          end
         end
         assert(event.unregisterbyid(hook), "execution hook unregister failed")
         out:close()
         local status = assert(io.open(W .. "hookrecord-status.txt", "w"))
-        status:write("frames=", count, " hits=", hits, "\n")
+        status:write("limit=", count, " hits=", hits, " candidate_end=", tostring(stopped), "\n")
         status:close()
+        if c == "game" then assert(stopped, "no candidate end transition before frame limit") end
       elseif c == "record" then
         local count = assert(tonumber(b), "record requires a frame count")
         local out = assert(io.open(a, "w"))
