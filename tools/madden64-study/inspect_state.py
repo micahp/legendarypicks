@@ -9,6 +9,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("state", type=Path)
 parser.add_argument("--zstd", required=True, help="Path to BizHawk's libzstd.dll")
 parser.add_argument("--ram-dump", type=Path, help="Optional independent RDRAM dump to compare")
+parser.add_argument("--players", action="store_true", help="Print nonzero candidate player counters")
 args = parser.parse_args()
 with zipfile.ZipFile(args.state) as archive:
     compressed = archive.read("Core.bin.zst")
@@ -41,3 +42,9 @@ for team in range(2):
     base = 0x82d22 + 0x214c * team
     indices = (0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 57)
     print(f"team {team}: " + " ".join(f"{i}={u16(base + 2 * i)}" for i in indices))
+    if args.players:
+        for player in range(45):
+            row = 0x81876 + 0x214c * team + 94 * player
+            stats = {i: struct.unpack_from(">h", ram, row + 2 * i)[0] for i in (3, 4, 5, 9, 10)}
+            if any(stats.values()):
+                print(f"  player-row {player}: " + " ".join(f"{i}={v}" for i, v in stats.items()))
