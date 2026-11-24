@@ -20,13 +20,30 @@ rules. A frozen model rebuilt or rerun under another stack can give different nu
 2026-11-24 a CEG smoke test gave identical draws on both hosts, but that is one check on one code path, not a
 guarantee.
 
-## Decision (Micah, 2026-11-24): one standard stack
+## Decision (Micah, 2026-11-24): one standard stack, the backend's
 
-Pick one stack and use it everywhere, unless a runner truly needs another. The standard:
-Python 3.12.3, pandas 3.1.1, numpy 2.4.4, pyarrow 26.0.1. It is the fast host's current SLC runner stack, the one the
-week 11 frozen-model batches ran on. This box has only Python 3.8, so it gets a `uv`-managed Python 3.12 venv; the
-system Python is not touched. The one exception for now: the Legendary Picks backend venv on this box (Python 3.8,
-pandas 1.5.3) serves the web app, so changing it is a production change and is decided separately.
+Micah first agreed to one stack, then chose the longest-standing one: the Legendary Picks backend venv
+(installed 2026-06-15). The standard is its full pinned package list (69 packages: pandas 1.5.3, numpy 1.24.4,
+pyarrow 17.0.0, scipy 1.10.1 and the rest), on CPython 3.8.20 (the backend has 3.8.10; patch level only).
+
+## Done on 2026-11-24
+
+- `/root/envs/lp-standard` built with `uv` on both vmi2215705 and the fast host vmi3108149, from
+  `/root/envs/lp-standard.requirements.lock` (the backend's `pip freeze`). The two package lists are identical.
+- `lp-python` (`/usr/local/bin/lp-python`) runs that environment on both hosts.
+- pip refuses installs outside a virtual environment on both hosts (`/root/.config/pip/pip.conf`,
+  `require-virtualenv = true`); a `--user` install was tested and refused.
+- `/root/AGENTS.md` on both hosts has a "Python environment" section: use `lp-python`; a failed import means the
+  wrong Python, not a missing package; never install; ask Micah for a new package; leave the backend venv alone.
+  Codex reads AGENTS.md; Claude Code (including Haiku) loads it as project instructions; the pip guard covers any
+  other harness (for example DeepSeek) that does not read it.
+- Nothing was removed. The fast host's `/root/.local` pandas 3.1.1 and `/root/slc-week1-7/.venv` still exist.
+
+## Still to do
+
+1. Exact-match test of the frozen SLC packs on `lp-standard` against the saved week 11 results (they ran on pandas
+   3.1.1). Only if every output matches, switch `run_portable_batch.py`'s `--python` default to `lp-python`.
+2. Then, with Micah's OK, remove the `/root/.local` pandas install and retire `/root/slc-week1-7/.venv`.
 
 ## The plan
 
