@@ -1,5 +1,5 @@
 {
-  "retrieved_utc": "2026-11-24T21:23:32.718464+00:00",
+  "retrieved_utc": "2026-11-24T21:26:28.094970+00:00",
   "tables": {
     "passing": {
       "url": "https://www.nfl.com/stats/team-stats/offense/passing/1996/reg/all",
@@ -2295,6 +2295,198 @@
           "70.6",
           "36",
           "100",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "defense_scoring": {
+      "url": "https://www.nfl.com/stats/team-stats/defense/scoring/1996/reg/all",
+      "sha256_html": "c3ece290b2bad296b4bd6e7b3f9564f555c0f0394d018fc6f08bff774b7fe374",
+      "headers": [
+        "Team",
+        "FR TD",
+        "SFTY",
+        "INT TD"
+      ],
+      "rows": [
+        [
+          "Panthers Panthers",
+          "3",
+          "2",
+          "0"
+        ],
+        [
+          "Eagles Eagles",
+          "3",
+          "1",
+          "1"
+        ],
+        [
+          "Bears Bears",
+          "2",
+          "1",
+          "1"
+        ],
+        [
+          "Patriots Patriots",
+          "2",
+          "1",
+          "2"
+        ],
+        [
+          "Steelers Steelers",
+          "2",
+          "0",
+          "3"
+        ],
+        [
+          "Bills Bills",
+          "1",
+          "0",
+          "0"
+        ],
+        [
+          "Bengals Bengals",
+          "1",
+          "0",
+          "2"
+        ],
+        [
+          "Cowboys Cowboys",
+          "1",
+          "0",
+          "0"
+        ],
+        [
+          "Lions Lions",
+          "1",
+          "0",
+          "2"
+        ],
+        [
+          "Chiefs Chiefs",
+          "1",
+          "1",
+          "0"
+        ],
+        [
+          "Raiders Raiders",
+          "1",
+          "2",
+          "2"
+        ],
+        [
+          "Saints Saints",
+          "1",
+          "0",
+          "0"
+        ],
+        [
+          "Giants Giants",
+          "1",
+          "2",
+          "3"
+        ],
+        [
+          "Jets Jets",
+          "1",
+          "0",
+          "2"
+        ],
+        [
+          "Cardinals Cardinals",
+          "1",
+          "0",
+          "1"
+        ],
+        [
+          "49ers 49ers",
+          "1",
+          "4",
+          "1"
+        ],
+        [
+          "Redskins Redskins",
+          "1",
+          "0",
+          "1"
+        ],
+        [
+          "Falcons Falcons",
+          "0",
+          "0",
+          "0"
+        ],
+        [
+          "Ravens Ravens",
+          "0",
+          "0",
+          "1"
+        ],
+        [
+          "Broncos Broncos",
+          "0",
+          "0",
+          "1"
+        ],
+        [
+          "Packers Packers",
+          "0",
+          "1",
+          "3"
+        ],
+        [
+          "Oilers Oilers",
+          "0",
+          "2",
+          "1"
+        ],
+        [
+          "Colts Colts",
+          "0",
+          "1",
+          "4"
+        ],
+        [
+          "Jaguars Jaguars",
+          "0",
+          "0",
+          "0"
+        ],
+        [
+          "Rams Rams",
+          "0",
+          "1",
+          "4"
+        ],
+        [
+          "Dolphins Dolphins",
+          "0",
+          "1",
+          "3"
+        ],
+        [
+          "Vikings Vikings",
+          "0",
+          "0",
+          "1"
+        ],
+        [
+          "Chargers Chargers",
+          "0",
+          "0",
+          "1"
+        ],
+        [
+          "Seahawks Seahawks",
+          "0",
+          "0",
+          "1"
+        ],
+        [
+          "Buccaneers Buccaneers",
+          "0",
           "0",
           "0"
         ]
