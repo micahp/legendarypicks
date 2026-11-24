@@ -18,11 +18,12 @@ hooks = set()
 with args.csv.open(newline="", encoding="utf-8") as stream:
     for row in csv.DictReader(stream):
         frame, quarter, clock = int(row["frame"]), int(row["quarter"]), int(row["clock"])
+        if end_frame is not None and frame > end_frame:
+            break
         if quarter == 4 and clock == 0:
             saw_fourth_zero = True
-        if row["kind"] == "state" and saw_fourth_zero and quarter == 6:
+        if row["kind"] == "state" and saw_fourth_zero and quarter == 6 and end_frame is None:
             end_frame = frame
-            break
         if row["kind"] == "total":
             team, index, value = int(row["team"]), int(row["index"]), int(row["value"])
             totals[(team, index)] = value

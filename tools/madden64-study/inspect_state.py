@@ -1,6 +1,7 @@
 """Inspect candidate RDRAM values in a BizHawk Mupen state; layout is version-specific."""
 import argparse
 import ctypes
+import json
 import struct
 import zipfile
 from pathlib import Path
@@ -12,6 +13,12 @@ parser.add_argument("--ram-dump", type=Path, help="Optional independent RDRAM du
 parser.add_argument("--players", action="store_true", help="Print nonzero candidate player counters")
 args = parser.parse_args()
 with zipfile.ZipFile(args.state) as archive:
+    version = archive.read("BizVersion.txt").decode("utf-8").strip()
+    if version != "Version 2.11.1":
+        raise SystemExit(f"Unverified BizHawk state version: {version}")
+    sync = json.loads(archive.read("SyncSettings.json"))["o"]
+    if "Nintendo.N64.N64SyncSettings" not in sync.get("$type", "") or sync.get("Core") != 1:
+        raise SystemExit("Unverified N64 core or state settings")
     compressed = archive.read("Core.bin.zst")
 lib = ctypes.CDLL(args.zstd)
 lib.ZSTD_decompress.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_void_p, ctypes.c_size_t]
