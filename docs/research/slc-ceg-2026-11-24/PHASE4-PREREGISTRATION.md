@@ -23,8 +23,9 @@ Every season is its own kickoff regime. So kickoff components never pool seasons
 | K5 field goal | made, missed, blocked | attempt, no penalty | kick distance in 5-yard bins | 10-yard, then 5-yard, then 1-yard |
 | K6 try choice | two-point or extra point | post-touchdown try | league | score margin after the touchdown (from the scoring team: -15 or less ... +15 or more, 9 bins) x time bucket |
 | K7 try success | made | extra point; two-point | by kind | by kind (B only) |
-| K8 penalty | none, offense pre-snap, defense pre-snap, offense live, defense live | snap (every play class) | league | play class (no_play counts as pre-snap) x down x distance bucket |
-| K9 penalty type | the 15 most common types, then other | penalty | by category | category x play class |
+| K8a pre-snap foul | none, offense, defense | snap (every play class) | league | down x distance bucket x field zone |
+| K8b live foul | none, offense, defense | snap with a play (not no_play) | league | play class x down x distance bucket |
+| K9 penalty type | the 15 most common types, then other | penalty | by phase and side | phase and side x play class (pre-snap: none) |
 | K10 overtime 4th down | intent | overtime 4th-down snap with a call | v2's rule: field goal at 0.9 when eligible, else run, dropback, punt at the Phase 2 arm C shares | the Phase 2 arm C intent model, unchanged |
 | K11 interception return | return yards, censored at the end zone (pick-six) | interception | league | field zone of the catch point |
 | K12 fumble return | return yards, censored | fumble lost | league | field zone of the fumble |
@@ -33,6 +34,10 @@ Not fitted, documented priors (too rare to evaluate): blocked-kick recovery side
 blocked field goals in 2022 to 2026), safety free kicks (62 safeties), and penalty enforcement, which stays with the rules
 core. A penalty enforcement check is reported: for live fouls, the share where the next snap equals the line of
 scrimmage moved by the penalty yards.
+
+**Amendment, 2026-11-24, before any Phase 4 score:** the first K8 conditioned on play class with `no_play` counted as
+pre-snap. A `no_play` row is a pre-snap foul, so that leaks the label. K8 is split into K8a (pre-snap, by situation, every
+snap) and K8b (live, by play class, snaps with a play), in the order a generator draws them.
 
 ## Selection, periods, metrics
 
