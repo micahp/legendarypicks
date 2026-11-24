@@ -25,8 +25,10 @@ with args.csv.open(newline="", encoding="utf-8") as stream:
             staged[key] += value
             first_event.setdefault(key, frame)
 
-# Possession seconds change continuously outside this staging routine.
-keys = [key for key in initial if key[1] <= 22 and key[1] != 11]
+# Possession seconds and red-zone fields can change outside this routine.
+# These indices have only been checked in the pilot logs; mismatch fails loudly.
+covered = set(range(11)) | {12, 21, 22}
+keys = [key for key in initial if key[1] in covered]
 if not keys:
     raise SystemExit("No sampled counters found")
 errors = []
