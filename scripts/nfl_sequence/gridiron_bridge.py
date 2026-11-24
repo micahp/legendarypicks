@@ -22,8 +22,35 @@ import v1_complete_roster
 
 ENGINE_COMMIT = '221ad20e56b6f1ef013292d9ece3b75d7adec799'
 PLAYBOOK_MANIFEST_SHA256 = '9d4749f817e97f4e3da0b6c5170eae0fa922d8b1b59d608ab4ce9dd990c2e929'
-DEFENSE_POSITIONS = ('LDE', 'LDT', 'RDT', 'RDE', 'MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS')
 DEFENSE_SLOTS = ('LEDGE', 'LDT', 'RDT', 'REDGE', 'MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS')
+DEFENSE_POSITION_CANDIDATES = {
+    'LEDGE': ('LDE', 'RDE', 'DE', 'EDGE', 'LOLB', 'ROLB', 'OLB'),
+    'LDT': ('LDT', 'NT', 'DT', 'RDT'),
+    'RDT': ('RDT', 'NT', 'DT', 'LDT'),
+    'REDGE': ('RDE', 'LDE', 'DE', 'EDGE', 'ROLB', 'LOLB', 'OLB'),
+    'MLB': ('MLB', 'ILB', 'RILB', 'LILB'),
+    'WLB': ('WLB', 'SLB', 'RILB', 'LILB', 'OLB'),
+    'NB': ('NB', 'CB', 'LCB', 'RCB', 'SS', 'FS', 'S'),
+    'LCB': ('LCB', 'CB', 'RCB'),
+    'RCB': ('RCB', 'CB', 'LCB'),
+    'SS': ('SS', 'S', 'FS'),
+    'FS': ('FS', 'S', 'SS'),
+}
+
+
+def _defensive_lineup(resolved, roster):
+    """Resolve authored nickel roles against equivalent roster position labels."""
+    allowed = v1_complete_roster.eligible_ids(resolved)
+    selected = {}
+    for slot in DEFENSE_SLOTS:
+        choices = [p for p in roster if p.get('gsis_id') in allowed and p.get('gsis_id') not in selected
+                   and p.get('pos_abb') in DEFENSE_POSITION_CANDIDATES[slot]
+                   and type(p.get('pos_rank')) is int and p['pos_rank'] > 0]
+        if not choices:
+            raise ValueError('gridiron_live_defense_role_unresolved:' + slot)
+        choices.sort(key=lambda p: (p['pos_rank'], p['gsis_id']))
+        selected[choices[0]['gsis_id']] = slot
+    return selected
 
 
 def _sha(path):
@@ -59,26 +86,60 @@ def _profile(path, manifest_path, season, team):
             'manifest_sha256': _sha(manifest_path), 'use': 'prior_season_aggregate_only'}
 
 
-def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_path, *, seed, family, state):
+_RATING_CACHE = {}
+
+
+def _ratings(path):
+    if path is None:
+        return {}, {}
+    path = Path(path)
+    key = (str(path.resolve()), path.stat().st_mtime_ns)
+    if key not in _RATING_CACHE:
+        payload = json.loads(path.read_text())
+        rows = payload.get('players', {})
+        _RATING_CACHE.clear()
+        _RATING_CACHE[key] = ({row['gsis']: row for row in rows.values() if row.get('gsis')},
+                              {'dataset': path.name, 'season': payload.get('meta', {}).get('season'),
+                               'through_week': payload.get('meta', {}).get('through_week'),
+                               'source': 'estimated_player_ratings_and_measurables'})
+    return _RATING_CACHE[key]
+
+
+def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_path, *, seed, family, state,
+               ratings_path=None):
     snapshot = pregame_snapshot.load_frozen_snapshot(snapshot_path)
     checks, resolved = roster_preflight.check(snapshot)
     if roster_preflight.failed(checks) or roster_preflight.exclusions_applied(snapshot, resolved)[1] != 'PASS':
         raise ValueError('gridiron_roster_preflight_failed')
     if snapshot['schedule']['game_id'] != '2026_11_MIN_SF':
         raise ValueError('gridiron_bridge_game_not_supported')
+    team_by_side = {'home': snapshot['schedule']['home_team'], 'away': snapshot['schedule']['away_team']}
+    if state['offense'] in ('A', 'B'):
+        offense_team = team_by_side['home' if state['offense'] == 'A' else 'away']
+        defense_team = team_by_side['home' if state['defense'] == 'A' else 'away']
+    else:
+        offense_team, defense_team = state['offense'], state['defense']
+    side_by_team = {team: side for side, team in team_by_side.items()}
+    if offense_team not in side_by_team or defense_team not in side_by_team or offense_team == defense_team:
+        raise ValueError('gridiron_bridge_team_identity_mismatch')
+    offense_side, defense_side = side_by_team[offense_team], side_by_team[defense_team]
     if family not in ('run', 'pass', 'prior'):
         raise ValueError('gridiron_bridge_family_unsupported')
     season = int(snapshot['schedule']['season'])
-    prior = _profile(profile_path, manifest_path, season, 'MIN')
+    selected_profile_path = profile_path.get(offense_team) if isinstance(profile_path, dict) else profile_path
+    if selected_profile_path is None:
+        raise ValueError('gridiron_team_playbook_profile_missing:' + offense_team)
+    prior = _profile(selected_profile_path, manifest_path, season, offense_team)
     selection = 'explicit_supported_concept'
     if family == 'prior':
         family = 'pass' if random.Random(f'slc-gridiron-prior:{seed}').random() < prior['pass_rate'] else 'run'
         selection = 'seeded_prior_season_team_pass_rate'
-    field = participation_field.Field.load(field_path, field_hash)
-    roster = snapshot['rosters']['away']['players']
-    selected = live_participation.advance(field, team='MIN', season=season, resolved=resolved['away'],
+    field = (field_path if isinstance(field_path, participation_field.Field)
+             else participation_field.Field.load(field_path, field_hash))
+    roster = snapshot['rosters'][offense_side]['players']
+    selected = live_participation.advance(field, team=offense_team, season=season, resolved=resolved[offense_side],
                                            roster=roster, group='11', seed=seed)
-    allowed = v1_complete_roster.eligible_ids(resolved['away'])
+    allowed = v1_complete_roster.eligible_ids(resolved[offense_side])
     players = {selected['qb1']: 'QB', **selected['slots']}
     for role in ('LT', 'LG', 'C', 'RG', 'RT'):
         rows = [p for p in roster if p['gsis_id'] in allowed and p['gsis_id'] not in players
@@ -96,32 +157,51 @@ def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_pat
     if len(players) != 11 or len(receivers) != 3:
         raise ValueError('gridiron_offensive_group_unsupported')
     slots.update({f'WR{i + 1}': pid for i, pid in enumerate(receivers)})
-    defense = live_participation.defense_lineup(resolved=resolved['home'], roster=snapshot['rosters']['home']['players'],
-                                                positions=DEFENSE_POSITIONS)['players']
-    dslots = {slot: next(pid for pid, value in defense.items() if value == role)
-              for slot, role in zip(DEFENSE_SLOTS, DEFENSE_POSITIONS)}
+    dslots = _defensive_lineup(resolved[defense_side], snapshot['rosters'][defense_side]['players'])
+    dslots = {slot: next(pid for pid, value in dslots.items() if value == slot) for slot in DEFENSE_SLOTS}
     ids = list(slots.values()) + list(dslots.values())
     if len(ids) != 22 or len(set(ids)) != 22:
         raise ValueError('gridiron_lineup_not_unique')
     # Gridiron uses absolute x despite the contract field's name. For +x offense,
     # LP's offense-relative yardline_100 maps to 100 - yardline_100.
-    x = 100 - int(state['yl'])
+    direction = state.get('offense_direction', 1)
+    if direction not in (-1, 1):
+        raise ValueError('gridiron_bridge_offense_direction_invalid')
+    x = 100 - int(state['yl']) if direction == 1 else int(state['yl'])
+    rating_rows, rating_source = _ratings(ratings_path)
+    rating_ids = {}
+    player_profiles = {}
+    for pid in ids:
+        record = rating_rows.get(pid, {})
+        ratings = dict(record.get('ratings', {}))
+        if family == 'pass':
+            for name in ('IBL', 'BCV', 'TRK', 'CIT'):
+                ratings.pop(name, None)
+            if pid != slots['QB']:
+                ratings.pop('THA', None)
+        player_profiles[pid] = {'ratings': ratings,
+                                 'physics': ({'mass': record['physics']['mass']}
+                                             if record.get('physics', {}).get('mass') else {})}
+        if ratings:
+            rating_ids[pid] = rating_source
     call = {'schema_version': 'gridiron.autonomous-play.v1', 'mode': 'autonomous_from_snap',
-            'play_id': f"{snapshot['schedule']['game_id']}:{family}:{seed}", 'seed': str(seed),
+            'play_id': f"{snapshot['schedule']['game_id']}:{offense_team}:{family}:{seed}", 'seed': str(seed),
             'situation': {'quarter': state['quarter'], 'clock_seconds': state['clock'], 'down': state['down'],
-                          'yards_to_go': state['togo'], 'yardline_100': x, 'offense_direction': 1,
+                          'yards_to_go': state['togo'], 'yardline_100': x, 'offense_direction': direction,
                           'ball_lateral_yards': 160 / 6},
-            'offense': {'team': 'MIN', 'formation': 'singleback_11',
-                        'call': {'family': family, 'concept': 'inside_zone' if family == 'run' else 'slant_flat',
+            'offense': {'team': offense_team, 'formation': 'singleback_11',
+                        'call': {'family': family, 'concept': 'inside_zone' if family == 'run' else 'assigned',
                                  'direction': 'right', 'snap_type': 'under_center' if family == 'run' else 'shotgun'},
                         'lineup': slots},
-            'defense': {'team': 'SF', 'call': {'front': 'nickel_over', 'coverage': 'cover_1', 'run_fit': 'spill_force'},
+            'defense': {'team': defense_team, 'call': {'front': 'nickel_over', 'coverage': 'cover_1', 'run_fit': 'spill_force'},
                         'lineup': dslots},
-            'player_profiles': {pid: {'ratings': {}, 'physics': {}} for pid in ids}}
+            'player_profiles': player_profiles}
     return call, {'snapshot_sha256': snapshot['snapshot_sha256'], 'snapshot_verified': snapshot['evaluation']['verified'],
                   'participation_sha256': field_hash, 'playbook_prior': prior,
                   'lineup_selection': selected, 'attribute_source': 'gridiron_authored_archetype_defaults',
-                  'concept_selection': selection, 'formation_selection': 'explicit_11_personnel'}
+                  'concept_selection': selection, 'formation_selection': 'explicit_11_personnel',
+                  'player_rating_sources': rating_ids,
+                  'player_rating_coverage': len(rating_ids) / len(ids)}
 
 
 def _validate_result(call, result):
@@ -172,6 +252,9 @@ class GridironSession:
         if call.get('offense', {}).get('call', {}).get('family') == 'run' and 'assignments' not in call:
             direction = call['offense']['call']['direction']
             call['assignments'] = self.request('example_run_assignments', direction=direction)['value']
+        elif call.get('offense', {}).get('call', {}).get('concept') == 'assigned' and 'assignments' not in call:
+            call['assignments'] = self.request(
+                'example_assignments', concept='slant_flat', coverage='zone')['value']
         start = time.monotonic()
         response = self.request('play', call=call)
         return _validate_result(call, response['value']), {'engine_commit': self.commit,

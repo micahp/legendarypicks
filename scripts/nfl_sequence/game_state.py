@@ -742,7 +742,8 @@ class _Game:
         self.paired_random_streams = paired_random_streams
         self.execution_source = execution_source
         self._paired_rng_indices = Counter()
-        self.clock_draws = (ref.clock_model.for_game(seed, paired_random_streams=paired_random_streams)
+        self.clock_draws = (None if execution_source is not None else
+                            ref.clock_model.for_game(seed, paired_random_streams=paired_random_streams)
                             if ref.clock_model is not None and paired_random_streams is not None else
                             ref.clock_model.for_game(seed) if ref.clock_model is not None else None)
         self.kickoffs = ledger.half_start_kickoffs()
@@ -1119,7 +1120,7 @@ class _Game:
             play['state_before']['home_timeouts'] = self.timeouts['A']
             play['state_before']['away_timeouts'] = self.timeouts['B']
             decision = play['outcome'].get('timeout_decision')
-            if getattr(self.ref, 'timeout_policy', None) is not None:
+            if getattr(self.ref, 'timeout_policy', None) is not None or getattr(self, 'execution_source', None) is not None:
                 # the decided timeout replaces the source play's flag, which another game's coach called
                 caller = (decision or {}).get('caller_team')
                 part['timeout'] = caller is not None
@@ -1573,8 +1574,10 @@ class _Game:
         sampler = self.ref.contextual_sampler
         timeout_guard = _TimeoutSamplingGuard(getattr(self.ref, 'participants', {}), self.timeouts)
         timeout_policy = getattr(self.ref, 'timeout_policy', None)
-        timeout_decisions = (_TimeoutDecisions(timeout_policy, getattr(self.ref, 'participants', {}), self.timeouts,
-                                               self.points) if timeout_policy is not None else None)
+        timeout_decisions = (self.execution_source.timeout_model(self.timeouts, self.points)
+                             if self.execution_source is not None and hasattr(self.execution_source, 'timeout_model')
+                             else _TimeoutDecisions(timeout_policy, getattr(self.ref, 'participants', {}), self.timeouts,
+                                                    self.points) if timeout_policy is not None else None)
         if timeout_decisions is not None:
             research['timeouts'] = timeout_decisions
         decision_log = getattr(sampler, 'decisions', None)
@@ -1987,6 +1990,17 @@ def _validate_game_impl(record):
         baseline = missed_field_goal_spot(kick_spot)
         if result.get('baseline_yardline_100') != baseline:
             raise AssertionError(f"missed field goal in drive {drive['index']} has the wrong no-return baseline")
+        if str(record.get('mode', '')).startswith('autonomous_'):
+            if result.get('status') == 'period_expired':
+                if (drive['end_clock'] != 0 or drive['end_quarter'] not in (2, 4)
+                        or result.get('receiving_start_yardline_100') is not None):
+                    raise AssertionError(f"missed field goal in drive {drive['index']} has an invalid period-expiry transition")
+                continue
+            if (result.get('status') != 'rule_spot_no_return'
+                    or result.get('receiving_start_yardline_100') != baseline
+                    or result.get('spot_adjustment_yards') != 0):
+                raise AssertionError(f"autonomous missed field goal in drive {drive['index']} has an invalid generated spot")
+            continue
         if result.get('status') == 'period_expired':
             if (drive['end_clock'] != 0 or drive['end_quarter'] not in (2, 4)
                     or result.get('receiving_start_yardline_100') is not None):
@@ -2017,22 +2031,31 @@ def _validate_game_impl(record):
             event, outcome = play['event_type'], play['outcome']
             if outcome.get('field_goal_attempt'):
                 before = play.get('state_before') or {}
-                feasibility = fg_feasibility.evaluate(before.get('yardline_100'))
-                if not feasibility['eligible']:
-                    raise AssertionError(
-                        f"drive {drive['index']} play {play['sequence']} attempts a field goal beyond the "
-                        f"historical feasibility ceiling ({feasibility['kick_distance_yards']} yards)")
-                recorded_feasibility = outcome.get('field_goal_feasibility')
-                source = outcome.get('field_goal_result_source')
-                if record.get('valid_full_game') and recorded_feasibility != feasibility:
-                    raise AssertionError(
-                        f"drive {drive['index']} play {play['sequence']} lacks current-state field-goal feasibility evidence")
-                if record.get('valid_full_game') and not isinstance(source, dict):
-                    raise AssertionError(
-                        f"drive {drive['index']} play {play['sequence']} lacks distance-aware field-goal result evidence")
-                if source is not None and not _field_goal_source_is_current(source, feasibility):
-                    raise AssertionError(
-                        f"drive {drive['index']} play {play['sequence']} field-goal result uses stale distance or source data")
+                if str(record.get('mode', '')).startswith('autonomous_'):
+                    generated = outcome.get('field_goal_execution')
+                    if (not isinstance(generated, dict) or generated.get('result') not in ('made', 'missed')
+                            or generated.get('kick_distance_yards') != before.get('yardline_100', 0) + 17
+                            or not isinstance(generated.get('make_probability'), (int, float))
+                            or not 0 <= generated['make_probability'] <= 1):
+                        raise AssertionError(
+                            f"drive {drive['index']} play {play['sequence']} lacks generated field-goal evidence")
+                else:
+                    feasibility = fg_feasibility.evaluate(before.get('yardline_100'))
+                    if not feasibility['eligible']:
+                        raise AssertionError(
+                            f"drive {drive['index']} play {play['sequence']} attempts a field goal beyond the "
+                            f"historical feasibility ceiling ({feasibility['kick_distance_yards']} yards)")
+                    recorded_feasibility = outcome.get('field_goal_feasibility')
+                    source = outcome.get('field_goal_result_source')
+                    if record.get('valid_full_game') and recorded_feasibility != feasibility:
+                        raise AssertionError(
+                            f"drive {drive['index']} play {play['sequence']} lacks current-state field-goal feasibility evidence")
+                    if record.get('valid_full_game') and not isinstance(source, dict):
+                        raise AssertionError(
+                            f"drive {drive['index']} play {play['sequence']} lacks distance-aware field-goal result evidence")
+                    if source is not None and not _field_goal_source_is_current(source, feasibility):
+                        raise AssertionError(
+                            f"drive {drive['index']} play {play['sequence']} field-goal result uses stale distance or source data")
             blocked = outcome.get('blocked_kick')
             if event not in ('blocked_punt', 'blocked_field_goal'):
                 if blocked or outcome.get('field_goal_result') == 'blocked':

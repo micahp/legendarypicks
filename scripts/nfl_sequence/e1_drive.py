@@ -296,27 +296,26 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                              if ev != 'field_goal_attempt' or field_goal_distance['eligible'])
             if not shares:
                 return halt('no eligible scrimmage or special-teams actions remain in this cell')
-        if event_source is not None:
-            pass
-        elif sampling_policy is None:
-            selected_event = event_rng.choices(EVENTS, weights=[shares[e] for e in EVENTS])[0]
-            cands = sorted([x for x in cell if x[0] == selected_event],
-                           key=lambda x: (x[1]['game_id'], x[1]['play_id']))
-            _, row, runoff, spot = row_rng.choice(cands)
-        else:
-            sampling_state = {'quarter': st['quarter'], 'clock': st['clock'], 'offense': st['offense'],
-                              'defense': st['defense'], 'down': st['down'], 'togo': st['togo'],
-                              'yl': st['yl'], 'score_diff': score_diff,
-                              'drive_index': drive_index,
-                              'field_goal_feasibility': field_goal_distance,
-                              '_source_cell_filtered': cell is not source_cell}
-            if sampling_guard is not None and sampling_guard.requires_source_filter:
-                sampling_state['_source_row_filter'] = sampling_guard.permits
-            try:
-                selected_event, row, runoff, spot = sampling_policy.sample(
-                    playcall_rng, cell, offense=st['offense'], defense=st['defense'], state=sampling_state)
-            except SamplingUnavailable as unavailable:
-                return halt(str(unavailable))
+        if event_source is None:
+            if sampling_policy is None:
+                selected_event = event_rng.choices(EVENTS, weights=[shares[e] for e in EVENTS])[0]
+                cands = sorted([x for x in cell if x[0] == selected_event],
+                               key=lambda x: (x[1]['game_id'], x[1]['play_id']))
+                _, row, runoff, spot = row_rng.choice(cands)
+            else:
+                sampling_state = {'quarter': st['quarter'], 'clock': st['clock'], 'offense': st['offense'],
+                                  'defense': st['defense'], 'down': st['down'], 'togo': st['togo'],
+                                  'yl': st['yl'], 'score_diff': score_diff,
+                                  'drive_index': drive_index,
+                                  'field_goal_feasibility': field_goal_distance,
+                                  '_source_cell_filtered': cell is not source_cell}
+                if sampling_guard is not None and sampling_guard.requires_source_filter:
+                    sampling_state['_source_row_filter'] = sampling_guard.permits
+                try:
+                    selected_event, row, runoff, spot = sampling_policy.sample(
+                        playcall_rng, cell, offense=st['offense'], defense=st['defense'], state=sampling_state)
+                except SamplingUnavailable as unavailable:
+                    return halt(str(unavailable))
         event = selected_event
         if execution_observer is not None:
             execution_observer('live_outcome_generated' if event_source is not None else 'historical_outcome_selected',
