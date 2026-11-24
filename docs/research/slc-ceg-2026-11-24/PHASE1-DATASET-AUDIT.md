@@ -24,8 +24,21 @@ Outputs in `phase1/`: `phase1_manifest.json` (inputs, tables, views, reconciliat
 
 nflverse releases fetched 2026-11-24 into `/root/slc-ceg-data/raw-2026-11-24/`: play-by-play, snap counts, weekly
 rosters and weekly player stats for 2022 to 2026; participation for 2022 to 2025; `games.csv`. sha256 of every file is in
-`phase1_manifest.json`. **Gap:** nflverse publishes no 2026 participation file, so formation and personnel labels exist
-for 2022 to 2025 only.
+`phase1_manifest.json`.
+
+**2026 personnel and formation (corrected 2026-11-24).** Two sources, checked by listing every nflverse release and our
+database tables:
+
+- *Personnel groupings, offense formation and defensive coverage per play* (nflverse `pbp_participation`, our
+  `nfl_hist_participation`): both end at 2025. Not published for 2026.
+- *FTN charting* (nflverse `ftn_charting_2026.parquet`, sha256 `bb72c788f63b...`, pulled 2026-11-24 00:01 UTC): published
+  for 2026. Every completed game through week 10 (151 of 163); the 12 week 11 games were not pulled yet. Per play: QB
+  location (shotgun or under center), backfield count, box count, no huddle, motion, play action, screen, RPO, trick
+  play, throwaway, interception-worthy, drop, blitzers, pass rushers. It joins to 18,488 of 19,968 2026 scrimmage plays;
+  every miss is a week 11 play. It also gives a throwaway label that the play-by-play does not have.
+- *Snap counts* per player and game are published for 2026 (`snap_counts_2026.parquet`).
+
+So 2026 has formation-level charting but no personnel grouping (11, 12, 21 and so on) per play.
 
 ## 2. Tables and timing
 
@@ -217,5 +230,6 @@ capping yards. 11 tests pass.
 Phase 2 (the scrimmage generator, arms B and C) starts only after this is reviewed. Open items it needs:
 
 - An enforcement-spot check for penalties, comparing the rules core with `post.next_yardline_100`.
-- A 2026 personnel source, or a decision that 2026 personnel stays unknown.
+- Whether formation models use FTN charting (2022 to 2026, through week 10 for 2026) in place of participation
+  personnel, which stops at 2025. FTN is not yet in the tables; it joins on (game_id, play_id).
 - The censored-likelihood form for touchdown gains.
