@@ -1,0 +1,11 @@
+# Retro MIN–SF player attributes: 2026-11-23
+
+This is a gameplay prototype, not an empirically validated NFL prediction. The frozen pregame snapshot is `c0e8e8874db5f90f8d7ba05d5e7c3e5afd2445abb6079f426e962bf9d6302c95`; roster preflight and the existing participation model determine eligible identities. The participation artifact covers 2022–2025 and has SHA-256 `a31fc7150c107b3c15b11e2e643ace88828c033f8da3576b51348e4b5a677107`.
+
+The local historical Madden ratings database (`derived-v6/madden_player_seasons.db`, SHA-256 `d2128aa3d7b1e269a547fc1e3e618ce3e4cb1f1debd67fdbb07708edb6b3c412`) contains 58,743 ratings rows across releases 1992–2027, including 1,531 in release 2027. It supplies gameplay attributes, but they are video-game ratings and are **not used** as real-player measurements or as prototype inputs. See [the dataset specification](../MADDEN-RATINGS-DATASET-1992-2027.md) for source limitations.
+
+The existing GridIron `data/ratings.json` (SHA-256 `1608c3c1f247283f1cc1e9414ce48bba103452c77d2bf3a3fa4c213aca48492b`) contains 161 DEN–SEA player records and no GSIS matches among the 129 distinct players in the MIN–SF snapshot. It blends measured and imputed combine attributes with statistical estimates and includes a Madden-derived speed conversion. It is therefore not a supported source of individual MIN–SF attributes for this play.
+
+The roster and pre-2026 participation field can be reused for eligible player selection. **Individual movement speed, QB reading and throw accuracy, catching, coverage, blocking and pass rush are unsupported for these 22 players in the audited inputs.** The demo gives every player the same explicitly authored baseline. Optional per-player overrides are gameplay inputs only, not claims about real players. The replay records the defaults, frozen snapshot hash, participation hash and seed. No future game outcome, Madden player rating or new fitted movement model is used.
+
+The prototype uses an authored shotgun 11-personnel pass concept and a 4-3 defensive front, with man or zone assignments. Its current pass protection, route steering, ball and contact rules are simple gameplay heuristics. It does not establish full NFL rules coverage, realistic player ability, calibration, forecasting skill, or complete games.
