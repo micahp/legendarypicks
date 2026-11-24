@@ -105,8 +105,11 @@ class ContractViolation(ValueError):
     """A generated play that the pre-snap state cannot hold. Never caught and turned into a default."""
 
 
-def validate(state, play):
-    """Check a GeneratedPlay against the pre-snap state {'down', 'togo', 'yl'}. Returns the boundary reached, or None."""
+def validate(state, play, require_clock=True):
+    """Check a GeneratedPlay against the pre-snap state {'down', 'togo', 'yl'}. Returns the boundary reached, or None.
+
+    require_clock=False is for a generator that does not yet own the clock (CEG Phase 2): the play must then carry no
+    clock at all, so a missing clock can never pass as a generated one."""
     if play.contract != CONTRACT_VERSION:
         raise ContractViolation(f'contract {play.contract!r} is not {CONTRACT_VERSION}')
     if play.provenance is None:
@@ -117,9 +120,12 @@ def validate(state, play):
         if play.yards_gained not in (None, 0) or play.fumble or play.receiver:
             raise ContractViolation('a pre-snap foul voids the play: no yards, fumble or target')
         return None
-    if play.clock is None or play.clock.live_seconds < 0 or play.clock.dead_ball_seconds < 0:
+    if not require_clock:
+        if play.clock is not None:
+            raise ContractViolation('require_clock=False is only for plays with no clock')
+    elif play.clock is None or play.clock.live_seconds < 0 or play.clock.dead_ball_seconds < 0:
         raise ContractViolation('clock seconds must be present and non-negative')
-    if play.clock.stop_class == 'stopped' and play.clock.dead_ball_seconds != 0:
+    elif play.clock.stop_class == 'stopped' and play.clock.dead_ball_seconds != 0:
         raise ContractViolation('a stopped clock has no dead-ball runoff')
     intent = play.call.intent
     allowed = {'designed_run': {'run'}, 'dropback': {'pass_complete', 'pass_incomplete', 'interception', 'sack', 'scramble'},

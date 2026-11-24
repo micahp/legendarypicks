@@ -225,7 +225,31 @@ an event that the intent cannot produce, air yards and YAC that do not sum, a sa
 recovery, a stopped clock with dead-ball time, and a ball past an end line; it reports a goal-line boundary instead of
 capping yards. 11 tests pass.
 
-## 10. Before Phase 2
+## 10. Charting, participation and snap counts (added 2026-11-24)
+
+`scripts/nfl_sequence/ceg_charting.py`; audit `phase1/charting_audit.json`; tables `charting.parquet`,
+`participation.parquet`, `snap_counts.parquet` beside the others; manifest and schema registry updated. The three sources
+stay separate. A backfield count is not a personnel grouping, and nothing is inferred from one source to another.
+
+- **FTN charting, 2022 to 2026:** 210,838 rows, no duplicate keys, every row matches a play. Coverage of scrimmage snaps:
+  100% in 2022 to 2025, 92.6% in 2026 (151 of 163 games; the 12 week 11 games were not pulled on 2026-11-24). A play with
+  no FTN row has every FTN field unknown, never False. Label values change by season: QB location is null when not
+  charted in 2022 and `'0'` from 2023; one 2022 value is `' S'`. Both are normalized to unknown, and the raw value is kept.
+- **Timing of each FTN field** (`FTN_TIMING`, in the schema registry): pre-snap state (starting hash); offense pre-snap
+  (QB location, backfield count, no huddle, motion); defense pre-snap (box count); play design, chosen before the snap and
+  seen during the play (play action, RPO, screen, trick play, QB sneak); defense execution (blitzers, pass rushers); QB
+  execution (out of pocket, throwaway, read thrown); outcome labels (interception-worthy, catchable, contested, drop,
+  created reception, QB-fault sack). Outcome labels are never inputs.
+- **Throwaways:** 3,447 on dropbacks with FTN. All are official pass attempts: 3,439 incomplete, plus 5 interceptions, 2
+  sacks and 1 completion where FTN and the play-by-play disagree. No throwaway is in the no_attempt group (it is empty in
+  2022 to 2025). 630 throwaways (18%) still carry an official receiver, so the play-by-play counts them as targets. A
+  target model that uses the throwaway label must say whether it predicts official targets or intended targets.
+- **Agreement with the play-by-play:** shotgun matches FTN "shotgun or pistol" on 99.2% of 158,360 plays (94.3% for
+  shotgun only), so the nflverse shotgun flag includes pistol. No huddle agrees on 99.8% (44 FTN-only, 278 pbp-only).
+- **Participation:** 2022 to 2025 only, every scrimmage snap covered; 2026 none.
+- **Snap counts:** 2022 to 2026 (2026 through week 11, 162 games), one row per player and game, keyed by PFR id.
+
+## 11. Before Phase 2
 
 Phase 2 (the scrimmage generator, arms B and C) starts only after this is reviewed. Open items it needs:
 
