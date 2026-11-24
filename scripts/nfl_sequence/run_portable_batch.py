@@ -11,7 +11,10 @@ team's passer was its resolved QB1. The manifest holds every preflight and postf
 
 Usage (on the host with the packs):
   python3.12 run_portable_batch.py --name NAME --snapshots DIR --packs DIR --runtime simulate_portable_pack.py \\
-      --out DIR --models v1,v1.5,v1.6,v2,pbv1 --seeds 100 [--games G1,G2 (run in this order)] [--parallel 2] [--runtime-workers 2]
+      --out DIR --seeds 100 [--models M1,M2] [--games G1,G2 (run in this order)] [--parallel 2] [--runtime-workers 2]
+
+--models defaults to the weekly set, WEEKLY_MODELS. pbv1-off is a research ablation: its pack and registry entry stay,
+and it runs only when named in --models.
 """
 from __future__ import annotations
 
@@ -29,6 +32,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import roster_preflight  # noqa: E402
 
+WEEKLY_MODELS = ('v1', 'v1.5', 'v1.6', 'v2', 'pbv1')
 HEAVY = {'v1.6'}  # about 2.1 GB each; one at a time on the 11 GB fast host
 
 
@@ -47,7 +51,7 @@ def main(argv=None):
     ap.add_argument('--packs', required=True, type=Path, help='folder with registry.json and the packs')
     ap.add_argument('--runtime', required=True, type=Path)
     ap.add_argument('--out', required=True, type=Path)
-    ap.add_argument('--models', required=True)
+    ap.add_argument('--models', default=','.join(WEEKLY_MODELS))
     ap.add_argument('--seeds', type=int, required=True)
     ap.add_argument('--seed-start', type=int, default=300001)
     ap.add_argument('--games')
