@@ -7,6 +7,7 @@ import pytest
 
 import gridiron_bridge as bridge
 
+ENGINE = Path('/root/gridiron-v1-complete-implementation')
 
 @pytest.fixture
 def play():
@@ -82,10 +83,10 @@ def test_fourth_down_incompletion_changes_possession(play):
     assert reduced['play']['event_type'] == 'pass_incomplete'
 
 
-@pytest.mark.skipif(not Path('/root/gridiron-slc-consolidation/engine/autonomous/slc-server.js').exists(),
+@pytest.mark.skipif(not (ENGINE / 'engine/autonomous/slc-server.js').exists(),
                     reason='optional pinned Gridiron research checkout unavailable')
 def test_persistent_session_reuses_process_and_recovers_from_bad_request():
-    with bridge.GridironSession('/root/gridiron-slc-consolidation') as session:
+    with bridge.GridironSession(str(ENGINE)) as session:
         pid = session.proc.pid
         with pytest.raises(ValueError, match='gridiron_executor_failed'):
             session.request('invalid_operation')
@@ -94,3 +95,7 @@ def test_persistent_session_reuses_process_and_recovers_from_bad_request():
         assert session.proc.pid == pid
         assert first == second
         assert first['offense']['WR1']['route'] == 'curl'
+        run_assignments = session.request('example_run_assignments', direction='right')['value']
+        assert len(run_assignments['offense']) == 11
+        assert len(run_assignments['defense']) == 11
+        assert run_assignments['offense']['RB']['aiming_gap'] == 'play_side_a'

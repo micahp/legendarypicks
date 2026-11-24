@@ -20,7 +20,7 @@ import reducer
 import roster_preflight
 import v1_complete_roster
 
-ENGINE_COMMIT = 'd375f3f79fdd306f7f8ccfa6f6b87ef282de3da7'
+ENGINE_COMMIT = '221ad20e56b6f1ef013292d9ece3b75d7adec799'
 PLAYBOOK_MANIFEST_SHA256 = '9d4749f817e97f4e3da0b6c5170eae0fa922d8b1b59d608ab4ce9dd990c2e929'
 DEFENSE_POSITIONS = ('LDE', 'LDT', 'RDT', 'RDE', 'MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS')
 DEFENSE_SLOTS = ('LEDGE', 'LDT', 'RDT', 'REDGE', 'MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS')
@@ -169,6 +169,9 @@ class GridironSession:
         return response
 
     def play(self, call):
+        if call.get('offense', {}).get('call', {}).get('family') == 'run' and 'assignments' not in call:
+            direction = call['offense']['call']['direction']
+            call['assignments'] = self.request('example_run_assignments', direction=direction)['value']
         start = time.monotonic()
         response = self.request('play', call=call)
         return _validate_result(call, response['value']), {'engine_commit': self.commit,

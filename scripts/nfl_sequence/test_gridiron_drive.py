@@ -10,7 +10,7 @@ ROOT = Path('/root')
 SNAPSHOT = ROOT / 'lp-roster-preflight/docs/research/model-snapshots-2026/week-11/2026_11_MIN_SF.json'
 FIELD = ROOT / 'lp-slc-v2/docs/research/participation-model-2026-11-02/outputs/field_v3_2022_2025.json'
 BOOKS = ROOT / 'lp-snapshots/nfl-team-season-playbooks-2026-10-27-rev7'
-ENGINE = ROOT / 'gridiron-slc-consolidation'
+ENGINE = ROOT / 'gridiron-v1-complete-implementation'
 FIELD_HASH = 'a31fc7150c107b3c15b11e2e643ace88828c033f8da3576b51348e4b5a677107'
 STATE = {'quarter': 1, 'clock': 600, 'offense': 'MIN', 'defense': 'SF', 'down': 1, 'togo': 10, 'yl': 50}
 
