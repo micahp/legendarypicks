@@ -1,0 +1,218 @@
+{
+ "B:ceg": {
+  "check_failures": 0,
+  "drives": 2000,
+  "duration": {
+   "mean": 152.713,
+   "median": 128.0,
+   "n": 2000,
+   "p10": 13.0,
+   "p90": 314.0
+  },
+  "halt_reasons": {},
+  "halted": 0,
+  "plays": {
+   "mean": 5.297,
+   "median": 4.0,
+   "n": 2000,
+   "p10": 2.0,
+   "p90": 10.0
+  },
+  "plays_per_60s": 2.081,
+  "provider_counts": {
+   "defensive_touchdown_unrepresentable": 11,
+   "event:field_goal_attempt": 155,
+   "event:fumble_lost": 82,
+   "event:interception": 102,
+   "event:pass_complete": 3445,
+   "event:pass_incomplete": 1740,
+   "event:punt": 558,
+   "event:run": 4165,
+   "event:sack": 347,
+   "punt_spot_fallbacks": 50
+  },
+  "terminals": {
+   "end_of_overtime": 1,
+   "end_of_regulation": 60,
+   "field_goal_attempt": 155,
+   "halftime": 109,
+   "punt": 552,
+   "safety": 9,
+   "touchdown": 327,
+   "turnover": 182,
+   "turnover_on_downs": 605
+  },
+  "timeouts": {
+   "defense": 214,
+   "offense": 186
+  }
+ },
+ "C:ceg": {
+  "check_failures": 0,
+  "drives": 2000,
+  "duration": {
+   "mean": 175.417,
+   "median": 146.0,
+   "n": 2000,
+   "p10": 27.900000000000006,
+   "p90": 357.10000000000014
+  },
+  "halt_reasons": {},
+  "halted": 0,
+  "plays": {
+   "mean": 6.158,
+   "median": 6.0,
+   "n": 2000,
+   "p10": 3.0,
+   "p90": 11.0
+  },
+  "plays_per_60s": 2.106,
+  "provider_counts": {
+   "defensive_touchdown_unrepresentable": 11,
+   "event:field_goal_attempt": 307,
+   "event:fumble_lost": 101,
+   "event:interception": 134,
+   "event:pass_complete": 3938,
+   "event:pass_incomplete": 1981,
+   "event:punt": 716,
+   "event:run": 4734,
+   "event:sack": 405,
+   "punt_spot_fallbacks": 1
+  },
+  "terminals": {
+   "end_of_regulation": 64,
+   "field_goal_attempt": 307,
+   "halftime": 104,
+   "punt": 706,
+   "safety": 7,
+   "touchdown": 474,
+   "turnover": 233,
+   "turnover_on_downs": 105
+  },
+  "timeouts": {
+   "defense": 222,
+   "offense": 223
+  }
+ },
+ "C:d": {
+  "check_failures": 0,
+  "drives": 2000,
+  "duration": {
+   "mean": 168.751,
+   "median": 148.0,
+   "n": 2000,
+   "p10": 37.900000000000006,
+   "p90": 329.0
+  },
+  "halt_reasons": {},
+  "halted": 0,
+  "plays": {
+   "mean": 6.114,
+   "median": 5.0,
+   "n": 2000,
+   "p10": 2.0,
+   "p90": 11.0
+  },
+  "plays_per_60s": 2.174,
+  "provider_counts": {
+   "defensive_touchdown_unrepresentable": 11,
+   "event:field_goal_attempt": 300,
+   "event:fumble_lost": 100,
+   "event:interception": 139,
+   "event:pass_complete": 3906,
+   "event:pass_incomplete": 1954,
+   "event:punt": 706,
+   "event:run": 4714,
+   "event:sack": 409,
+   "punt_spot_fallbacks": 0
+  },
+  "terminals": {
+   "end_of_overtime": 1,
+   "end_of_regulation": 74,
+   "field_goal_attempt": 300,
+   "halftime": 121,
+   "punt": 692,
+   "safety": 7,
+   "touchdown": 470,
+   "turnover": 236,
+   "turnover_on_downs": 99
+  },
+  "timeouts": {}
+ },
+ "SEL:ceg": {
+  "check_failures": 0,
+  "drives": 2000,
+  "duration": {
+   "mean": 175.092,
+   "median": 143.0,
+   "n": 2000,
+   "p10": 26.900000000000006,
+   "p90": 360.0
+  },
+  "halt_reasons": {},
+  "halted": 0,
+  "plays": {
+   "mean": 6.151,
+   "median": 5.0,
+   "n": 2000,
+   "p10": 3.0,
+   "p90": 11.0
+  },
+  "plays_per_60s": 2.108,
+  "provider_counts": {
+   "defensive_touchdown_unrepresentable": 10,
+   "event:field_goal_attempt": 315,
+   "event:fumble_lost": 103,
+   "event:interception": 127,
+   "event:pass_complete": 3932,
+   "event:pass_incomplete": 1974,
+   "event:punt": 707,
+   "event:run": 4745,
+   "event:sack": 399,
+   "punt_spot_fallbacks": 0
+  },
+  "terminals": {
+   "end_of_regulation": 65,
+   "field_goal_attempt": 315,
+   "halftime": 101,
+   "punt": 697,
+   "safety": 11,
+   "touchdown": 480,
+   "turnover": 228,
+   "turnover_on_downs": 103
+  },
+  "timeouts": {
+   "defense": 226,
+   "offense": 227
+  }
+ },
+ "observed": {
+  "duration": {
+   "mean": 169.583,
+   "median": 138.0,
+   "n": 2000,
+   "p10": 41.0,
+   "p90": 334.10000000000014
+  },
+  "plays": {
+   "mean": 6.333,
+   "median": 6.0,
+   "n": 2000,
+   "p10": 3.0,
+   "p90": 11.0
+  },
+  "plays_per_60s": 2.241,
+  "results": {
+   "End of half": 142,
+   "Field goal": 323,
+   "Missed field goal": 61,
+   "Opp touchdown": 19,
+   "Punt": 659,
+   "Safety": 5,
+   "Touchdown": 472,
+   "Turnover": 186,
+   "Turnover on downs": 133
+  }
+ },
+ "season": 2025
+}
