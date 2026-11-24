@@ -73,6 +73,7 @@ class FieldBoundarySampling(unittest.TestCase):
             self.assertEqual(len(plays), 1)
         self.assertEqual(special_draws[0], special_draws[1])
 
+
     def test_illegal_sampled_play_keeps_game_wide_failure_context(self):
         pool = FakePool(('pass_incomplete', 5, 10, None))
         with self.assertRaises(football_assertions.FootballAssertionError) as raised:
@@ -655,6 +656,39 @@ class HistoricalPoolCutoff(unittest.TestCase):
             self.assertEqual([r['game_id'] for r in pinned],
                              ['2022_01_TEST', '2025_01_TEST', '2025_02_TEST', '2025_18_TEST'])
             self.assertEqual([r['game_id'] for r in dynamic], ['2022_01_TEST', '2025_01_TEST'])
+
+
+class AutonomousEventSource(unittest.TestCase):
+    def test_live_result_drives_shared_down_and_clock_transitions_without_pool_samples(self):
+        observed = []
+
+        def source(state, context):
+            observed.append((state, context))
+            return {
+                'event': 'run',
+                'clock_runoff_seconds': 3.25,
+                'row': {'game_id': 'autonomous', 'play_id': context['play_index'], 'play_type': 'run',
+                        'yards_gained': 0, 'penalty': 0, 'live_elapsed_seconds': 1.25,
+                        'dead_ball_seconds': 2, 'clock_stopped': False,
+                        'generated_from': 'gridiron-autonomous-result-v1'},
+                'decision': {'concept': 'inside_zone'},
+            }
+
+        observer = []
+        plays, terminal = e1.simulate(start(1, 900, yl=50, down=4, togo=10), 91, {}, 'autonomous-e1',
+                                      event_source=source,
+                                      execution_observer=lambda name, facts: observer.append(name))
+        self.assertEqual(terminal, 'turnover_on_downs')
+        self.assertEqual(len(observed), 1)
+        self.assertEqual(observed[0][0]['down'], 4)
+        self.assertEqual(plays[0]['outcome']['generated_yards_gained'], 0)
+        self.assertIsNone(plays[0]['outcome']['sampled_yards_gained'])
+        self.assertNotIn('sampled_from', plays[0]['outcome'])
+        self.assertEqual(plays[0]['sampling']['source'], 'autonomous_execution')
+        self.assertIn('live_outcome_generated', observer)
+        self.assertNotIn('historical_outcome_selected', observer)
+        self.assertEqual(plays[0]['state_after']['clock_seconds'], 896.75)
+        self.assertEqual(e1.check_drive(plays, terminal)['terminal'], terminal)
 
 
 if __name__ == '__main__':

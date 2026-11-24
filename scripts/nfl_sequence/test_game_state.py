@@ -2216,5 +2216,57 @@ class TeamCodes(unittest.TestCase):
         self.assertEqual(er.extras_team('KC'), 'KC')
 
 
+class AutonomousGameLifecycle(unittest.TestCase):
+    class Source:
+        def event_source(self, state, context):
+            touchdown = state['offense'] == 'A' and context['drive_index'] == 1
+            yards = state['yl'] if touchdown else 0
+            player = f"{state['offense']}-RB"
+            return {
+                'event': 'run',
+                'clock_runoff_seconds': 1 if touchdown else 700,
+                'row': {
+                    'game_id': 'autonomous', 'play_id': context['play_index'], 'play_type': 'run',
+                    'yards_gained': yards, 'penalty': 0, 'live_elapsed_seconds': 1,
+                    'dead_ball_seconds': 0, 'clock_stopped': touchdown,
+                    'participants': {
+                        'passer_id': None, 'receiver_id': None, 'rusher_id': player,
+                        'rusher_name': player, 'rusher_position': 'RB', 'rusher_team': state['offense'],
+                        'rusher_side': state['offense'], 'attribution': 'autonomous_execution',
+                        'timeout': False, 'out_of_bounds': False,
+                    },
+                    'generated_from': 'controlled_test_fixture',
+                },
+            }
+
+        def kick(self, _kind, _kicker, _receiver, _context):
+            return {'receiving_start_yardline_100': 75, 'clock_runoff_seconds': 5,
+                    'clock_starts_on': 'legal_touch', 'event': 'touchback'}
+
+        def special_teams(self, *_args):
+            return None
+
+        def try_after_touchdown(self, _situation):
+            return 1, gs.try_record('extra_point', True), None
+
+        def overtime_first_choice(self, _winner, _loser, _score):
+            return 'receive'
+
+    def test_generated_plays_complete_through_the_shared_regulation_game_lifecycle(self):
+        reference = ref({}, [])
+        record = gs.play_game(17, reference, winner_choice='receive', winner='A',
+                              execution_source=self.Source(), max_drives=80)
+        self.assertEqual(record['status'], 'complete_regulation')
+        self.assertEqual(record['points'], {'A': 7, 'B': 0})
+        self.assertEqual(record['mode'], 'autonomous_full_game')
+        self.assertFalse(record['valid_full_game'], 'a pregame roster snapshot is required for a full-game claim')
+        self.assertEqual(record['stats']['player_attribution'], 'autonomous_execution')
+        self.assertEqual(record['stats']['team']['A']['rush_yds'], 75)
+        self.assertEqual(record['stats']['player'][0]['rushing']['td'], 1)
+        self.assertTrue(any(k['kind'] == 'half_start' and k['quarter'] == 3 for k in record['kickoffs']))
+        self.assertTrue(any(p['outcome'].get('quarter_change') for d in record['drives'] for p in d['plays']))
+        gs.validate_game(record)
+
+
 if __name__ == '__main__':
     unittest.main()

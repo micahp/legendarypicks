@@ -36,6 +36,7 @@ Kickoff convention in the published nfl_pbp (measured 2026-10-24): on a kickoff 
 `defteam` is the KICKING team. The receiving team's next run or pass in the same quarter gives the starting spot.
 """
 import copy
+import math
 import random
 import hashlib
 from collections import Counter, defaultdict
@@ -725,18 +726,21 @@ class _TimeoutSamplingGuard:
 class _Game:
     """One game in progress. Each drive is an E1 drive; this class decides what follows it."""
 
-    def __init__(self, seed, ref, ledger, rng, pregame_snapshot=None, model_seed=None, paired_random_streams=None):
+    def __init__(self, seed, ref, ledger, rng, pregame_snapshot=None, model_seed=None, paired_random_streams=None,
+                 execution_source=None):
         self.seed = seed
         self.pregame_snapshot = pregame_snapshot
         snapshot_tag = f"-{pregame_snapshot['schedule']['game_id']}-{pregame_snapshot['snapshot_sha256'][:12]}" if pregame_snapshot else ''
         usage_tag = f'-{PREGAME_USAGE_VERSION}' if pregame_snapshot else ''
-        self.simulation_id = f'e2-{e1.MODEL_VERSION}{usage_tag}{snapshot_tag}-seed{seed}'
+        execution_tag = '-autonomous-v1' if execution_source is not None else ''
+        self.simulation_id = f'e2-{e1.MODEL_VERSION}{usage_tag}{execution_tag}{snapshot_tag}-seed{seed}'
         self.model_seed = seed if model_seed is None else model_seed
         self.next_play_sequence = 1
         self.ref = ref
         self.ledger = ledger
         self.rng = rng
         self.paired_random_streams = paired_random_streams
+        self.execution_source = execution_source
         self._paired_rng_indices = Counter()
         self.clock_draws = (ref.clock_model.for_game(seed, paired_random_streams=paired_random_streams)
                             if ref.clock_model is not None and paired_random_streams is not None else
@@ -797,6 +801,8 @@ class _Game:
         """A kickoff, sampled from the observed kickoff pool, or a safety free kick sampled from the observed safety-kick
         table. A kick that runs the clock out ends the quarter on the return.
         """
+        if getattr(self, 'execution_source', None) is not None:
+            return self._autonomous_kick(kind, kicker, receiver, clock_rule)
         observer = getattr(self.ref, 'execution_observer', None)
         if observer is not None:
             observer('historical_kickoff_selected', {'kind': kind, 'quarter': self.quarter})
@@ -847,11 +853,65 @@ class _Game:
         else:
             self._regulation_over()
 
+    def _autonomous_kick(self, kind, kicker, receiver, clock_rule=None):
+        """Run a generated free kick through the same game clock and possession lifecycle."""
+        context = {'quarter': self.quarter, 'clock_seconds': self.clock, 'kicking_team': kicker,
+                   'receiving_team': receiver, 'score': dict(self.points), 'kind': kind,
+                   'offense_direction': self.ledger.attacks_x100(receiver, self.quarter)}
+        result = self.execution_source.kick(kind, kicker, receiver, context)
+        if not isinstance(result, dict):
+            self.block('autonomous_kick_result_missing')
+            return
+        runoff = result.get('clock_runoff_seconds')
+        spot = result.get('receiving_start_yardline_100')
+        if (not isinstance(runoff, (int, float)) or not math.isfinite(runoff) or runoff < 0
+                or type(spot) is not int or not 1 <= spot <= 99):
+            self.block('autonomous_kick_result_invalid')
+            return
+        if result.get('touchdown'):
+            self.block('autonomous_kick_return_touchdown_requires_ceg_play_2')
+            return
+        clock_before = self.clock
+        expires = runoff >= clock_before
+        after_clock = 0 if expires else clock_before - runoff
+        after_clock, stopped = (0, False) if expires else two_minute_stop(
+            self.quarter, clock_before, after_clock, self.warned_quarters)
+        if stopped:
+            self.warned_quarters.add(self.quarter)
+        self.clock = after_clock
+        self.events.append({
+            'kind': kind, 'kicking_team': kicker, 'receiving_team': receiver, 'quarter': self.quarter,
+            'clock_before': clock_before, 'runoff_seconds': runoff, 'clock_after': after_clock,
+            'clock_clamped_to_zero': False, 'clock_expired_during_kickoff': expires,
+            'two_minute_warning': stopped, 'runoff_overrun_seconds': max(0, runoff - clock_before),
+            'spot_yardline_100': spot, 'after_drive': len(self.drives),
+            'clock_transition': {'clock_starts_on': result.get('clock_starts_on', 'legal_touch'),
+                                 'clock_interval': 'generated_free_kick_to_next_snap',
+                                 'runoff_seconds': runoff,
+                                 'stoppages': ([{'kind': 'automatic_two_minute_warning', 'team': None}]
+                                               if stopped else []),
+                                 'restart_trigger': 'period_restart' if expires else 'next_snap',
+                                 'restart_clock_seconds': after_clock},
+            'clock_rule': clock_rule, 'source': 'autonomous_execution',
+            'execution': result.get('execution'),
+        })
+        if not expires:
+            self._take_possession(receiver, spot)
+            return
+        boundary = quarter_end_kind(self.quarter)
+        if boundary == 'quarter_change':
+            self._new_quarter('change_of_ends_during_return')
+            self._take_possession(receiver, spot)
+        elif boundary == 'halftime':
+            self._half_start()
+        else:
+            self._regulation_over()
+
     def _regulation_over(self):
         """The clock ran out at the end of regulation or of overtime. A tie after regulation goes to overtime (Rule 16)."""
         if self.quarter == 5:
             self._end_overtime(self._points_leader())
-        elif self.points['A'] == self.points['B'] and self.ref.overtime_pool is not None:
+        elif self.points['A'] == self.points['B'] and (self.execution_source is not None or self.ref.overtime_pool is not None):
             self._begin_overtime()
         else:
             self.status = 'complete_regulation'
@@ -859,9 +919,17 @@ class _Game:
     def _begin_overtime(self):
         """Rule 16, Articles 2-3: a seeded fair coin toss, then the toss winner's kick-or-receive decision, then one
         10-minute period. A forced first possession (sensitivity) gives the toss winner the receive."""
-        winner = self.ref.overtime_toss or self._rng('overtime_coin_toss').choice(sorted(self.ledger.teams))
+        winner = (self._rng('overtime_coin_toss').choice(sorted(self.ledger.teams))
+                  if self.execution_source is not None else
+                  self.ref.overtime_toss or self._rng('overtime_coin_toss').choice(sorted(self.ledger.teams)))
         loser = other(winner, self.ledger.teams)
-        if self.ref.overtime_toss is not None:
+        if self.execution_source is not None:
+            choice = self.execution_source.overtime_first_choice(winner, loser, dict(self.points))
+            if choice not in ('kick', 'receive'):
+                self.block('autonomous_overtime_choice_invalid')
+                return
+            source = 'autonomous_coach_decision'
+        elif self.ref.overtime_toss is not None:
             choice, source = 'receive', 'forced first possession (sensitivity)'
         elif self.ref.overtime_choice is not None:
             choice, source = self.ref.overtime_choice, 'forced decision (labelled control)'
@@ -873,7 +941,7 @@ class _Game:
         kicker, receiver = (winner, loser) if choice == 'kick' else (loser, winner)
         self.overtime = {'toss_winner': winner, 'receiving_team': receiver, 'kicking_team': kicker,
                          'first_possession_choice': choice, 'choice_source': source,
-                         'choice_p_kick': self.ref.overtime_p_kick,
+                         'choice_p_kick': (None if self.execution_source is not None else self.ref.overtime_p_kick),
                          'regulation_points': dict(self.points), 'possessions': [], 'winner': None, 'result': None}
         self.boundaries.append({'from_quarter': 4, 'to_quarter': 5, 'kind': 'overtime', 'clock_before': 0,
                                 'drive_index': len(self.drives)})
@@ -921,6 +989,11 @@ class _Game:
 
     def _missed_field_goal_transition(self, snap_yardline_100, kick_spot_yardline_100):
         """Sample the receiver's next-drive starting spot from historical missed-kick transitions."""
+        if getattr(self, 'execution_source', None) is not None:
+            base_spot = missed_field_goal_spot(kick_spot_yardline_100)
+            return {'status': 'rule_spot_no_return', 'baseline_yardline_100': base_spot,
+                    'receiving_start_yardline_100': base_spot, 'spot_adjustment_yards': 0,
+                    'source': 'NFL rules: missed field goal dead-ball spot'}
         base_spot = missed_field_goal_spot(kick_spot_yardline_100)
         if self.clock == 0 and self.quarter in (2, 4):
             return {'status': 'period_expired', 'baseline_yardline_100': base_spot,
@@ -1124,7 +1197,8 @@ class _Game:
             play['state_before']['clock_status'] = 'running_at_snap'
             play['state_after']['clock_status'] = ('period_ended' if restart == 'period_restart' else 'running_at_next_snap')
             outcome['clock_transition'] = {
-                'clock_interval': 'observed_snap_to_next_snap',
+                'clock_interval': ('generated_live_and_dead_ball' if getattr(self, 'execution_source', None) is not None
+                                   else 'observed_snap_to_next_snap'),
                 'runoff_seconds': outcome['clock_runoff_seconds'],
                 'stoppages': reasons,
                 'restart_trigger': restart,
@@ -1486,12 +1560,13 @@ class _Game:
             self._continue(('possession', other(offense, self.ledger.teams), sample['next_yardline']))
 
     def _drive_body(self):
-        if self.quarter == 5:
+        if self.quarter == 5 and self.execution_source is None:
             return self._observed_overtime_drive()
         start = {'quarter': self.quarter, 'clock': self.clock, 'offense': self.offense, 'defense': self.defense,
                  'yl': self.yl, 'down': self.down, 'togo': self.togo,
                  'dir': self.ledger.attacks_x100(self.offense, self.quarter)}
-        special_teams = (self._resolve_special_teams if self.ref.blocked_kicks.get('rates')
+        special_teams = (self.execution_source.special_teams if self.execution_source is not None else
+                         self._resolve_special_teams if self.ref.blocked_kicks.get('rates')
                          or self.ref.kicks.get('field_goal_outcomes') else None)
         research = {'clock': self.clock_draws} if self.clock_draws is not None else {}  # the E2 call is unchanged
         attempt = []  # the plays made before a block are evidence, kept apart from drives and stats
@@ -1506,13 +1581,16 @@ class _Game:
         decision_start = len(decision_log) if isinstance(decision_log, list) else None
         plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool,
                                       self.simulation_id, special_teams=special_teams, partial=attempt,
-                                      sampling_policy=self.ref.contextual_sampler,
+                                      sampling_policy=None if self.execution_source is not None else self.ref.contextual_sampler,
                                       score_diff=self.points[self.offense] - self.points[self.defense],
                                       play_index_start=self.next_play_sequence,
                                       drive_index=len(self.drives) + 1,
                                       paired_random_streams=self.paired_random_streams,
-                                      sampling_guard=timeout_guard if timeout_decisions is None else None,
-                                      execution_observer=getattr(self.ref, 'execution_observer', None), **research)
+                                      sampling_guard=(timeout_guard if timeout_decisions is None else None)
+                                      if self.execution_source is None else None,
+                                      execution_observer=getattr(self.ref, 'execution_observer', None),
+                                      event_source=(self.execution_source.event_source
+                                                    if self.execution_source is not None else None), **research)
         if plays is None:
             self.blocked_attempt = {'drive_index': len(self.drives) + 1, 'offense_team': self.offense,
                                     'quarter_start': start['quarter'], 'clock_start': start['clock'],
@@ -1541,8 +1619,12 @@ class _Game:
             play['sequence'] = self.next_play_sequence
             play['id'] = f'{self.simulation_id}:{self.next_play_sequence}'
             self.next_play_sequence += 1
-            play['participants'] = self.ref.participants_for(
-                play, offense_team=self.offense, snapshot=self.pregame_snapshot, seed=self.seed)
+            if self.execution_source is None:
+                play['participants'] = self.ref.participants_for(
+                    play, offense_team=self.offense, snapshot=self.pregame_snapshot, seed=self.seed)
+            elif not isinstance(play.get('participants'), dict):
+                self.block('autonomous_participant_attribution_missing')
+                return
             play['state_before']['drive_index'] = drive_index  # E1 writes 1 on every play; the game index is written here
             play['state_after']['drive_index'] = drive_index
         self._apply_timeouts(plays)
@@ -1578,6 +1660,9 @@ class _Game:
             bucket = fg_bucket(snap_yl)  # the published make-rate cells are keyed on the snap position, so the bucket is too
             result = plays[-1]['outcome'].get('field_goal_result')
             if result not in ('made', 'missed'):
+                if self.execution_source is not None:
+                    self.block('autonomous_field_goal_result_missing')
+                    return
                 made, why = _draw(self._rng('field_goal_outcome', self.next_play_sequence),
                                   self.ref.kicks['field_goal'].get(bucket, (0, 0)), f'field_goal:{bucket}')
                 if why:
@@ -1589,14 +1674,15 @@ class _Game:
             drive['snap_yardline_100'] = snap_yl
             drive['kick_spot_yardline_100'] = kick_spot
             if made:
-                self._charge_made_kick(plays[-1], drive)
+                if self.execution_source is None:
+                    self._charge_made_kick(plays[-1], drive)
                 self._mark_two_minute_warning(plays[-1])
                 self.points[self.offense] += FG_POINTS
                 drive['points_scored_on_drive'] = {'team': self.offense, 'points': FG_POINTS, 'try': None}
                 self._continue(('kick', 'post_field_goal', self.offense, other(self.offense, self.ledger.teams)))
             else:  # the other team takes over at the spot of the kick, the same dead-ball spot (rules file, section 4)
                 self._mark_two_minute_warning(plays[-1])
-                if self.pregame_snapshot:
+                if self.pregame_snapshot or self.execution_source is not None:
                     transition = self._missed_field_goal_transition(snap_yl, kick_spot)
                     if transition is None:
                         return
@@ -1612,11 +1698,15 @@ class _Game:
             scorer = plays[-1]['outcome'].get('scoring_team') or self.offense
             drive['touchdown_scored_by'] = scorer
             situation = p_two = None
-            if self.ref.try_policy is not None:
+            if self.execution_source is not None:
                 situation = self._try_situation(scorer)
-                p_two = self.ref.try_policy.p_two(**situation)
-            try_points, try_record, why = _try_after_touchdown(
-                self._rng('post_touchdown_try', self.next_play_sequence), self.ref.kicks, p_two)
+                try_points, try_record, why = self.execution_source.try_after_touchdown(situation)
+            else:
+                if self.ref.try_policy is not None:
+                    situation = self._try_situation(scorer)
+                    p_two = self.ref.try_policy.p_two(**situation)
+                try_points, try_record, why = _try_after_touchdown(
+                    self._rng('post_touchdown_try', self.next_play_sequence), self.ref.kicks, p_two)
             if why:
                 self.block(why)
                 return
@@ -1629,12 +1719,13 @@ class _Game:
             scorer = self.defense
             self.points[scorer] += SAFETY_POINTS
             drive['points_scored_on_drive'] = {'team': scorer, 'points': SAFETY_POINTS, 'try': None}
-            quarter_boundary_safety_kick = ('safety_free_kick_boundaries' in getattr(self.ref, 'blocker_fixes', ())
+            quarter_boundary_safety_kick = (self.execution_source is not None or
+                                             'safety_free_kick_boundaries' in getattr(self.ref, 'blocker_fixes', ())
                                              and self.ref.safety_kick_pool is not None)
             if (self.clock == 0 and quarter_end_kind(self.quarter) == 'quarter_change'
                     and not quarter_boundary_safety_kick):
                 self.block('safety_free_kick_not_modelled')
-            elif self.clock > 0 and self.ref.safety_kick_pool is None:
+            elif self.execution_source is None and self.clock > 0 and self.ref.safety_kick_pool is None:
                 self.block('safety_free_kick_not_modelled')
             else:
                 # Time left on the clock means the free kick is due now, sampled from the observed safety-kick table. At a
@@ -1669,7 +1760,11 @@ class _Game:
         # Snapshot evidence and the legality/completion of the simulated game are separate facts.
         verified = bool((snapshot or {}).get('evaluation', {}).get('verified'))
         valid_candidate = bool(snapshot and complete and blocker is None and not guarded and not unsupported)
-        record_mode = ('pregame_full_game' if valid_candidate else 'pregame_statistical_game') if snapshot else 'legal_game_state_first_piece'
+        if self.execution_source is not None:
+            valid_candidate = bool(snapshot and verified and complete and blocker is None and not guarded and not unsupported)
+            record_mode = 'autonomous_full_game' if complete else 'autonomous_incomplete_game'
+        else:
+            record_mode = ('pregame_full_game' if valid_candidate else 'pregame_statistical_game') if snapshot else 'legal_game_state_first_piece'
         scope_out = scope_out_reasons(blocker, complete) + guard_reasons(guarded)
         rec = {
             'mode': record_mode, 'seed': self.seed, 'simulation_id': self.simulation_id,
@@ -1685,7 +1780,8 @@ class _Game:
             'scheduled_kickoff_utc': snapshot['schedule']['scheduled_kickoff_utc'] if snapshot else None,
             'snapshot_hash': snapshot['snapshot_sha256'] if snapshot else None,
             'roster_snapshot_id': snapshot['roster_snapshot_id'] if snapshot else None,
-            'model_version': (f'{e1.MODEL_VERSION}+{PREGAME_USAGE_VERSION}' if snapshot else e1.MODEL_VERSION),
+            'model_version': ((f'{e1.MODEL_VERSION}+{PREGAME_USAGE_VERSION}' if snapshot else e1.MODEL_VERSION)
+                              + ('+autonomous-v1' if self.execution_source is not None else '')),
             'rules_version': 'nfl-2026-e2-successor',
             'team_identity': ({'A': {'team': snapshot['schedule']['home_team'], 'side': 'home'},
                                'B': {'team': snapshot['schedule']['away_team'], 'side': 'away'}}
@@ -1755,7 +1851,7 @@ def unmodelled_transitions(drives, kickoffs):
         if d['terminal'] == 'field_goal_attempt' and d.get('field_goal_made') is False and not d.get('observed_overtime_drive'):
             result = d['plays'][-1]['outcome'].get('field_goal_return')
             if not isinstance(result, dict) or result.get('status') not in (
-                    'sampled_historical_next_drive_spot', 'period_expired'):
+                    'sampled_historical_next_drive_spot', 'rule_spot_no_return', 'period_expired'):
                 found.append({'kind': 'missed_field_goal_return', 'drive_index': d['index']})
         for p in d['plays']:
             if p['outcome'].get('penalty'):
@@ -1820,7 +1916,7 @@ def active_unsupported_rules(guarded, blocker):
 
 
 def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None, pregame_snapshot=None,
-              paired_randomness=False):
+              paired_randomness=False, execution_source=None):
     """Play one game under the normal-game policy. Returns a record; it never raises for a branch.
 
     `ref` is the observed Reference (e2_reference.load). It is required, so a game is never played with a silent
@@ -1841,7 +1937,8 @@ def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None, pregame
     choice = winner_choice or choice_rng.choice(['receive', 'defer'])
     ledger = CoinTossLedger(toss_winner, toss_loser, choice)
     validate_half_start(ledger.half_start_kickoffs())
-    return _Game(seed, ref, ledger, rng, pregame_snapshot, model_seed, streams).run(max_drives).record()
+    return _Game(seed, ref, ledger, rng, pregame_snapshot, model_seed, streams,
+                 execution_source=execution_source).run(max_drives).record()
 
 
 def _validate_game_impl(record):
@@ -1855,7 +1952,9 @@ def _validate_game_impl(record):
             transition = p['outcome'].get('clock_transition')
             if transition is None and not record.get('valid_full_game'):
                 continue  # older research records predate explicit clock-transition annotations
-            if not isinstance(transition, dict) or transition.get('clock_interval') != 'observed_snap_to_next_snap':
+            expected_interval = ('generated_live_and_dead_ball' if str(record.get('mode', '')).startswith('autonomous_')
+                                 else 'observed_snap_to_next_snap')
+            if not isinstance(transition, dict) or transition.get('clock_interval') != expected_interval:
                 raise AssertionError(f"drive {d['index']} play {p['sequence']} has no explicit clock transition")
             if transition.get('runoff_seconds') != p['outcome'].get('clock_runoff_seconds'):
                 raise AssertionError(f"drive {d['index']} play {p['sequence']} clock transition disagrees with its runoff")
@@ -1961,7 +2060,8 @@ def _validate_game_impl(record):
                 raise AssertionError(f"drive {drive['index']} play {play['sequence']} does not record its blocked punt attempt")
     checks.append('blocked-kick event types, attempts, classifications and source provenance')
     for k in record.get('kickoffs', []):
-        if k['kind'] == 'safety_free_kick' and k.get('source', {}).get('pool') != SAFETY_KICK_POOL:
+        if (k['kind'] == 'safety_free_kick' and k.get('source') != 'autonomous_execution'
+                and k.get('source', {}).get('pool') != SAFETY_KICK_POOL):
             raise AssertionError('safety free kick requires a separate observed safety-kick outcome table')
         if k['kind'] not in KICKOFF_KINDS:
             raise AssertionError(f"kickoff kind outside the engine's vocabulary: {k['kind']!r} (onside kicks are not modelled)")
@@ -1969,7 +2069,7 @@ def _validate_game_impl(record):
         if transition is None and not record.get('valid_full_game'):
             continue  # older research records predate explicit free-kick clock annotations
         if (not isinstance(transition, dict) or transition.get('clock_starts_on') != 'legal_touch'
-                or transition.get('clock_interval') != 'free_kick_to_next_snap'
+                or transition.get('clock_interval') not in ('free_kick_to_next_snap', 'generated_free_kick_to_next_snap')
                 or transition.get('runoff_seconds') != k['runoff_seconds']
                 or transition.get('restart_clock_seconds') != k['clock_after']):
             raise AssertionError(f"{k['kind']} does not record its free-kick clock transition")
@@ -2108,12 +2208,13 @@ def _validate_game_impl(record):
         raise AssertionError('active unsupported rules disagree with the game events')
     checks.append('active unsupported rules match the game events')
     if record['valid_full_game']:
-        if (record.get('mode') != 'pregame_full_game' or not record['complete_regulation'] or record['blocker'] is not None
+        expected_mode = 'autonomous_full_game' if record.get('mode') == 'autonomous_full_game' else 'pregame_full_game'
+        if (record.get('mode') != expected_mode or not record['complete_regulation'] or record['blocker'] is not None
                 or (record['tied'] and not record.get('overtime')) or record['unsupported_rules']):
             raise AssertionError(
-                'valid_full_game requires pregame_full_game mode, complete regulation, no blocker, a tie only after its '
+                'valid_full_game requires pregame_full_game or autonomous_full_game mode, no blocker, a tie only after its '
                 'overtime period, and no unsupported rule')
-    checks.append('valid_full_game only when pregame_full_game, complete, unblocked, any tie played out in overtime, and no unsupported rule')
+    checks.append('valid_full_game only when complete, unblocked, any tie played out in overtime, and no unsupported rule')
     return checks
 
 

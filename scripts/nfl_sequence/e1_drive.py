@@ -18,6 +18,7 @@ Reads the dev database read-only. Every drive is checked before it is written; a
 import argparse
 import hashlib
 import json
+import math
 import random
 import sqlite3
 import sys
@@ -205,7 +206,7 @@ def _credit_field_boundary_yards(event, sampled_yards, yardline):
 
 def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, partial=None, sampling_policy=None,
              score_diff=None, play_index_start=1, drive_index=1, paired_random_streams=None, sampling_guard=None,
-             timeouts=None, execution_observer=None):
+             timeouts=None, execution_observer=None, event_source=None):
     """`clock` is an optional research clock (clock_d.BoundaryClock). None keeps the E2 runoff from the pool.
     `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence.
     `sampling_policy`, when given, samples events and source plays using the current simulated teams' context.
@@ -214,6 +215,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
     and the play's runoff is made to agree with that decision. It needs the E2 runoff (`clock` None)."""
     if timeouts is not None and clock is not None:
         raise ValueError('the timeout decision uses the E2 runoff; it cannot run with the research clock')
+    if event_source is not None and (clock is not None or sampling_guard is not None):
+        raise ValueError('autonomous event execution cannot use a historical clock or source-row guard')
     rng = random.Random(seed)
     start_offense, start_defense = start['offense'], start['defense']
     start_quarter, start_dir = start['quarter'], start['dir']
@@ -256,18 +259,46 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                     'clock_quarter_end_hazard', drive_index, play_index)
                 stream_keys['clock_runoff'] = paired_random_streams.key('clock_runoff', drive_index, play_index)
         key = (st['down'], e0.ydstogo_bucket(st['togo']), e0.yardline_bucket(st['yl']))
-        source_cell = pool.get(key, [])
-        cell = sampling_guard.filter_cell(source_cell, st) if sampling_guard is not None else source_cell
-        if not cell and source_cell:
-            return halt(sampling_guard.unavailable_reason())
-        if len(cell) < MIN_POOL and not getattr(sampling_policy, 'allow_sparse_cells', False):
-            return halt(f'thin pool cell {key} ({len(cell)} observed plays, floor {MIN_POOL}); no fallback')
-        field_goal_distance = fg_feasibility.evaluate(st['yl'])
-        shares = Counter(ev for ev, _, _, _ in cell
-                         if ev != 'field_goal_attempt' or field_goal_distance['eligible'])
-        if not shares:
-            return halt('no eligible scrimmage or special-teams actions remain in this cell')
-        if sampling_policy is None:
+        generated = None
+        if event_source is not None:
+            generated = event_source(dict(st), {'play_index': play_index, 'drive_index': drive_index,
+                                                'direction': dir_of(st['offense'], st['quarter']),
+                                                'score_diff': score_diff})
+            if not isinstance(generated, dict):
+                raise TypeError('autonomous event source must return an object')
+            selected_event = generated.get('event')
+            row = generated.get('row')
+            runoff, spot = generated.get('clock_runoff_seconds'), generated.get('spot')
+            if selected_event not in EVENTS:
+                raise ValueError(f'autonomous event source returned unsupported event: {selected_event!r}')
+            if not isinstance(row, dict) or row.get('play_type') not in ('run', 'pass', 'punt', 'field_goal'):
+                raise ValueError('autonomous event source must provide a supported generated play row')
+            if not isinstance(runoff, (int, float)) or not math.isfinite(runoff) or runoff < 0:
+                raise ValueError('autonomous event source clock runoff must be finite and nonnegative')
+            if selected_event not in KICK_EVENTS and not isinstance(row.get('yards_gained'), int):
+                raise ValueError('autonomous scrimmage outcomes need integer generated yards')
+            if row.get('game_id') is None or row.get('play_id') is None:
+                raise ValueError('autonomous play rows need local execution identifiers')
+            if not isinstance(row.get('play_id'), int) or row['play_id'] < 0:
+                raise ValueError('autonomous play identifiers must use a nonnegative local integer sequence')
+            source_cell = cell = []
+            field_goal_distance = None
+            shares = Counter({selected_event: 1})
+        else:
+            source_cell = pool.get(key, [])
+            cell = sampling_guard.filter_cell(source_cell, st) if sampling_guard is not None else source_cell
+            if not cell and source_cell:
+                return halt(sampling_guard.unavailable_reason())
+            if len(cell) < MIN_POOL and not getattr(sampling_policy, 'allow_sparse_cells', False):
+                return halt(f'thin pool cell {key} ({len(cell)} observed plays, floor {MIN_POOL}); no fallback')
+            field_goal_distance = fg_feasibility.evaluate(st['yl'])
+            shares = Counter(ev for ev, _, _, _ in cell
+                             if ev != 'field_goal_attempt' or field_goal_distance['eligible'])
+            if not shares:
+                return halt('no eligible scrimmage or special-teams actions remain in this cell')
+        if event_source is not None:
+            pass
+        elif sampling_policy is None:
             selected_event = event_rng.choices(EVENTS, weights=[shares[e] for e in EVENTS])[0]
             cands = sorted([x for x in cell if x[0] == selected_event],
                            key=lambda x: (x[1]['game_id'], x[1]['play_id']))
@@ -288,14 +319,15 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                 return halt(str(unavailable))
         event = selected_event
         if execution_observer is not None:
-            execution_observer('historical_outcome_selected', {'event': event, 'play_index': play_index})
-        if sampling_guard is not None:
+            execution_observer('live_outcome_generated' if event_source is not None else 'historical_outcome_selected',
+                               {'event': event, 'play_index': play_index})
+        if sampling_guard is not None and event_source is None:
             selected_sample = (selected_event, row, runoff, spot)
             rejection = sampling_guard.rejection_reason(selected_sample, st)
             if rejection:
                 return halt(f'timeout_sampling_guard_rejected_source_row:{rejection}')
             sampling_guard.observe(selected_sample, st)
-        if event == 'field_goal_attempt' and not field_goal_distance['eligible']:
+        if event_source is None and event == 'field_goal_attempt' and not field_goal_distance['eligible']:
             return halt('field_goal_attempt_exceeds_historical_feasibility_ceiling')
         kick_outcome = None
         kick_metadata = None
@@ -314,6 +346,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         yardage_boundary_adjustment = None
         if sampled_yards is not None:
             yards, yardage_boundary_adjustment = _credit_field_boundary_yards(event, sampled_yards, st['yl'])
+            if event_source is not None and yardage_boundary_adjustment is not None:
+                yardage_boundary_adjustment['generated_yards_gained'] = yardage_boundary_adjustment.pop('sampled_yards_gained')
         try:
             if execution_observer is not None:
                 execution_observer('apply_play', {'event': event, 'play_index': play_index})
@@ -351,7 +385,16 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                            else paired_random_streams.rng('e1_timeout', drive_index, play_index))
             caller, timeout_record = timeouts.decide(timeout_rng, st, after, play_terminal, event, row)
             snap_clock = getattr(timeouts, 'clock', None)
-            if (timeout_record is not None and snap_clock is not None and event in CLOCK_EVENTS
+            if event_source is not None and timeout_record is not None:
+                live_elapsed = row.get('live_elapsed_seconds')
+                dead_ball = row.get('dead_ball_seconds')
+                if not isinstance(live_elapsed, (int, float)) or not math.isfinite(live_elapsed) or live_elapsed < 0:
+                    raise ValueError('autonomous clock data needs nonnegative live_elapsed_seconds')
+                if not isinstance(dead_ball, (int, float)) or not math.isfinite(dead_ball) or dead_ball < 0:
+                    raise ValueError('autonomous clock data needs nonnegative dead_ball_seconds')
+                runoff = live_elapsed + (0 if caller is not None or row.get('clock_stopped') else dead_ball)
+                timeout_record['runoff_source'] = 'simulated_live_and_dead_ball_time'
+            elif (timeout_record is not None and snap_clock is not None and event in CLOCK_EVENTS
                     and play_terminal is None and after['offense'] == st['offense']):
                 # The offense keeps the ball in this quarter: live ball, clock rules and tempo set the runoff.
                 clock_rng = (rng if paired_random_streams is None
@@ -431,8 +474,11 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         after_has_position = yl_after is not None and not ended_by_clock_only
         after_dir = dir_of(after['offense'], next_quarter) if after_has_position else None
         sequence = len(plays) + 1
-        sampling = {'cell': list(key), 'cell_size': len(cell), 'cell_event_counts': dict(shares),
-                    'field_goal_feasibility': field_goal_distance}
+        sampling = ({'source': 'autonomous_execution', 'cell': None, 'cell_size': None,
+                     'cell_event_counts': dict(shares), 'field_goal_feasibility': None}
+                    if event_source is not None else
+                    {'cell': list(key), 'cell_size': len(cell), 'cell_event_counts': dict(shares),
+                     'field_goal_feasibility': field_goal_distance})
         if (sampling_guard is not None and sampling_guard.last_filter['excluded_rows']
                 and not sampling_guard.last_filter_reused):
             sampling['timeout_source_filter'] = dict(sampling_guard.last_filter)
@@ -443,11 +489,13 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             'state_before': state_before,
             'sampling': sampling,
             'decision': {'type': decision_type, 'concept': None, 'coverage': None,
-                         'note': ('4th-down choice sampled from observed plays in the cell (go-for-it, punt or '
-                                  'field-goal attempt)') if st['down'] == 4 else None},
+                         'note': (row.get('decision_note') if event_source is not None else
+                                  ('4th-down choice sampled from observed plays in the cell (go-for-it, punt or '
+                                   'field-goal attempt)') if st['down'] == 4 else None)},
             'outcome': {'passer_id': None, 'receiver_id': None, 'rusher_id': None,
                         'yards_gained': None if event in KICK_EVENTS else yards,
-                        'sampled_yards_gained': sampled_yards,
+                        'sampled_yards_gained': None if event_source is not None else sampled_yards,
+                        'generated_yards_gained': sampled_yards if event_source is not None else None,
                         'yardage_boundary_adjustment': yardage_boundary_adjustment,
                         'touchdown': flags['touchdown'],
                         'turnover': flags['turnover'] or flags['turnover_on_downs'],
@@ -462,12 +510,14 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                         'quarter_change': quarter_change,
                         'clock_only_terminal': ended_by_clock_only,
                         'final_play_yardline_100': yl_after if ended_by_clock_only else None,
-                        'sampled_touchdown_flag': bool(row['touchdown'] == 1),
+                        'sampled_touchdown_flag': None if event_source is not None else bool(row['touchdown'] == 1),
                         # the observed play's penalty flag. The pool excludes penalty plays, so this is False on every
                         # sampled play; a True would be an unmodelled transition and blocks the game (see game_state)
                         'penalty': bool(row.get('penalty') == 1),
-                        'sampled_from': {'game_id': row['game_id'], 'play_id': int(row['play_id']),
-                                         'game_date': row['game_date']}},
+                        **({'generated_from': row.get('generated_from', 'autonomous_event_source')}
+                           if event_source is not None else
+                           {'sampled_from': {'game_id': row['game_id'], 'play_id': int(row['play_id']),
+                                             'game_date': row['game_date']}})},
             'state_after': state_after,
             'field': {'assignment_version': 'e1-field-end-v2', 'source': 'authored_demo_orientation',
                       'before': {'dir': dir_of(st['offense'], st['quarter']),
@@ -481,8 +531,12 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             play['outcome'].update(kick_metadata)
         if kick_outcome:
             play['outcome']['blocked_kick'] = kick_outcome
-        if row.get('pre_event') is not None:  # SLC: participants chosen before the outcome; absent for the S0 control
+        if row.get('pre_event') is not None:  # participants chosen before outcome execution
             play['outcome']['pre_event'] = row['pre_event']
+        if event_source is not None and row.get('participants') is not None:
+            play['participants'] = row['participants']
+        if event_source is not None and generated.get('execution') is not None:
+            play['autonomous_execution'] = generated['execution']
         plays.append(play)
         if execution_observer is not None:
             execution_observer('play_recorded', {'play_index': play_index})
@@ -517,14 +571,19 @@ def check_drive(plays, terminal):
                     and (yards > yardline or yardline - yards > 100):
                 raise AssertionError(f'play {i + 1}: credited gain crosses a goal line without ending at it')
             sampled_yards = o.get('sampled_yards_gained')
+            generated_yards = o.get('generated_yards_gained')
+            source_yards = sampled_yards if sampled_yards is not None else generated_yards
             adjustment = o.get('yardage_boundary_adjustment')
-            if sampled_yards is not None and sampled_yards != yards:
-                boundary = 'opponent_goal_line' if sampled_yards > yardline else 'own_goal_line'
+            if source_yards is not None and source_yards != yards:
+                boundary = 'opponent_goal_line' if source_yards > yardline else 'own_goal_line'
                 credited = yardline if boundary == 'opponent_goal_line' else yardline - 100
+                recorded_source_yards = adjustment.get('sampled_yards_gained') if isinstance(adjustment, dict) else None
+                recorded_source_yards = (recorded_source_yards if sampled_yards is not None else
+                                         adjustment.get('generated_yards_gained') if isinstance(adjustment, dict) else None)
                 if (not isinstance(adjustment, dict) or adjustment.get('boundary') != boundary
-                        or adjustment.get('sampled_yards_gained') != sampled_yards
+                        or recorded_source_yards != source_yards
                         or adjustment.get('credited_yards_gained') != credited or yards != credited):
-                    raise AssertionError(f'play {i + 1}: sampled yardage differs without a matching goal-line credit record')
+                    raise AssertionError(f'play {i + 1}: source yardage differs without a matching goal-line credit record')
             elif adjustment is not None:
                 raise AssertionError(f'play {i + 1}: goal-line adjustment has no changed sampled yardage')
         if i:
