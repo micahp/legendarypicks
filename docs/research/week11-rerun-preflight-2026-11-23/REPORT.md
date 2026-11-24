@@ -1,11 +1,10 @@
-# Week 11 rerun with the roster preflight: 13 games graded, Monday props pending
+# Week 11 rerun with the roster preflight: 13 games graded
 
 Date: 2026-11-23. 100 seeds per game and model, six models (v1, v1.5, v1.6, v2, pbv1, pbv1-off). Every run used a
 snapshot that passed the roster preflight, and every run in this report passed the postflight.
 
-Graded: all 13 games against the final scores. The 12 Thursday and Sunday games are also graded on player props.
-CIN at WAS (Monday night) was rerun on a current snapshot after the first runs failed (see below). Its game lines are
-graded (WAS 22, CIN 20). Its 97 props per model wait for nflverse to publish the Monday player stats.
+Graded: all 13 games against the final scores and the published player stats. CIN at WAS (Monday night) was rerun on a
+current snapshot after the first runs failed (see below); WAS won 22 to 20.
 
 ## Result
 
@@ -81,9 +80,26 @@ Final: **WAS 22, CIN 20.** WAS, a 6-point home underdog (no-vig 0.28), won outri
 Every model and the market had CIN winning. Every model had the under, and v2 was the most sure of it (0.18 over).
 v2 and pbv1 had WAS covering.
 
-**Props: not graded yet.** nflverse last updated its player stats and play-by-play at 21:30 UTC on 11-23, before
-kickoff, and Pro Football Reference refuses this host (HTTP 403). The 97 MNF props per model are graded when nflverse
-publishes the week 11 Monday stats.
+### CIN at WAS: props graded
+
+nflverse published the Monday player stats on 11-24 (`stats_player_week_2026.parquet`, sha256 `0be2a210459a...`).
+95 of 97 props per model are graded; Ben Sinnott (2 props) has no stat row. 39 of 95 went over.
+
+| model | Brier | market Brier | side hit rate |
+|---|---|---|---|
+| v1 | 0.274 | 0.239 | 0.632 |
+| v1.5 | 0.275 | 0.239 | 0.579 |
+| v1.6 | 0.278 | 0.239 | 0.547 |
+| v2 | 0.280 | 0.239 | 0.568 |
+| pbv1 | 0.275 | 0.239 | 0.611 |
+
+95 props in one game, so the side hit rates have a standard error of about 0.05 and the props are correlated.
+
+**Croskey-Merritt played.** He was RESERVE in the nflverse weekly roster, so the roster resolution excluded him and every
+model gave him nothing. He had 13 carries for 54 yards, 2 catches for 23 yards and a touchdown. All five of his props
+went over, at sim P(over) 0.00. The three other excluded players (McLaurin, McNichols, Hudson) did not play. A weekly
+roster status can lag a game-day activation: the exclusion rule needs a fresher source than the weekly roster for
+players coming off reserve.
 
 ## Seed completion and failures (13 games)
 
@@ -261,7 +277,19 @@ Result:
 | v2 | 0.205 | 0.302 | 0.321 | 8 | 7 | 7 | 9.9 | 12.3 |
 | pbv1 | 0.249 | 0.314 | 0.283 | 7 | 6 | 6 | 11.1 | 13.3 |
 
-Same ranking as the 12-game table: no model beats the market; v2 is best on win Brier, then v1.6. The 12-game tables
+Same ranking as the 12-game table: no model beats the market; v2 is best on win Brier, then v1.6.
+
+Props over all 13 games (1,037 graded per model; 79 with no stat row, 3 pushes):
+
+| model | Brier | market Brier | side hit rate |
+|---|---|---|---|
+| v1 | 0.317 | 0.236 | 0.512 |
+| v1.5 | 0.313 | 0.236 | 0.517 |
+| v1.6 | 0.283 | 0.236 | 0.518 |
+| v2 | 0.304 | 0.236 | 0.528 |
+| pbv1 | 0.318 | 0.236 | 0.509 |
+
+v2 is the only model above the 0.524 break-even at -110, by 0.004, with a standard error of about 0.016. The 12-game tables
 below are unchanged (the rerun with the new games.csv reproduces every 12-game row exactly).
 
 ## Games: market and models
@@ -350,7 +378,7 @@ skipped: kicking, field goals, extra points, sacks and longest plays.
 
 ## Next
 
-1. Grade the 97 CIN at WAS props per model when nflverse publishes the Monday player stats.
+1. Fix the reserve exclusion: Croskey-Merritt was RESERVE in the weekly roster and played (13 carries, 1 TD).
 2. Find why every model shrinks big favorites (mean margin about 3 points short of the spread).
 3. Give the fullback a usage role in the engine (Kyle Juszczyk gets no touches).
 4. pbv1-off: audited (`docs/research/pbv1-off-audit-2026-11-23/`). The switch is label-only, so pbv1-off is out of the
