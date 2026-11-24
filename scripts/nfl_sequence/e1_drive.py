@@ -368,7 +368,13 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         if sampled_yards is not None:
             yards, yardage_boundary_adjustment = _credit_field_boundary_yards(event, sampled_yards, st['yl'])
         try:
-            after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome)
+            if generates and event == 'penalty':
+                # SLC-CEG: an enforced foul (pre-snap, or a live foul that replaces the play). The provider computed the
+                # legal next state with the half-distance rule; the down is replayed unless the foul gives a first down.
+                after, play_terminal, flags = dict(row['penalty_after']), None, reducer._no_flags()
+                flags['first_down'] = bool(row.get('penalty_first_down'))
+            else:
+                after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome)
         except reducer.UnmodelledOutcome as blocked:
             return halt(blocked.reason)
         except (AssertionError, ValueError) as invalid:
