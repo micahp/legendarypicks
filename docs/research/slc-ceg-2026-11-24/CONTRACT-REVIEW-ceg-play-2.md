@@ -80,3 +80,51 @@ blocks CEG work.
 4. **Version and validation.** Keep the `contract` version string (`ceg-play-2`), and validate every record before the
    rules adapter sees it, as `ceg_contract.validate` does now. A record that fails is a named rejection, never
    repaired.
+
+## Third review: the V2 branch's `ceg_contract.py` types (uncommitted, read 2026-11-24)
+
+Read from `/root/lp-v2-event-expansion/scripts/nfl_sequence/ceg_contract.py`. Its first 165 lines are identical to
+CEG's `ceg-play-1` file. Its 15 tests pass. CEG can consume the `*V2` types. Three validator defects were confirmed
+by running the validator. Six smaller items follow.
+
+### Defects (confirmed by running `validate_v2`)
+
+1. **A blocked kick with no score can never validate.** `blocked` requires `recovery_yardline_100` (or a score), but
+   any recovery fact without `result == 'muff'` fails `kick_recovery_facts_without_muff`. A blocked punt fails both
+   ways. Allow recovery facts for `blocked` too.
+2. **Negative return yards are refused.** `possession_return_yards_invalid` (and the kick check) reject
+   `return_yards < 0`. Real returns lose yards, and the CEG return model draws losses. Allow negative values, bounded
+   by the field.
+3. **The kick-return touchdown check is always true.** In `validate_v2`, `role` is set from `play.scoring.team`
+   and then compared with it, so the check passes for any team. It should require that the scoring team is the team
+   in possession after the kick: receiving team for a return, either team for a muff or a block.
+
+### Smaller items
+
+4. **Spots for a kick-return score.** State the dead-ball spot of a return touchdown in the kicking team's frame
+   (the kicking team's own goal line is 100), as the scrimmage rule already does for a defensive touchdown.
+5. **A kept fumble has a fumble spot.** `kept` forbids `turnover_spot_yardline_100`, so a fumble the offense
+   recovers cannot record where it happened. Add a `fumble_spot_yardline_100`, or allow the spot on a kept fumble.
+6. **Punt recovery by the kicking team is a muff.** For punts, require `muff` with `recovery_team ==
+   'kicking_team'`, and refuse `kicking_team_recovery`. Keep `kicking_team_recovery` and `onside_recovery` for
+   kickoffs. CEG's K4 class `KREC` will map to a muff.
+7. **A safety on a kick is unsupported, not invalid.** It is rare but real (a muffed punt downed in the end zone).
+   The refusal should carry an "unsupported" name, so a historical V2 row reads as a known gap, not as a broken record.
+8. **A designed run should need a rusher role**, as scramble, completion, interception and sack already need theirs.
+9. **`require_clock=False` should not forbid a clock.** CEG's Phase 2 path has no clock. Under v2, the drive loop will
+   attach one. Refusing extra facts makes the two paths emit different record shapes. Validate the clock when it is
+   present, and require it only when `require_clock` is set.
+
+### Penalty provenance and kick and muff facts, for CEG
+
+- Penalty provenance works for CEG. CEG will emit `automatic_first_down` with a `ProvenanceV2` that names its draw.
+- **CEG-side defect found during this review.** nflverse `penalty_yards` are the enforced yards, after half-distance.
+  2022-2024: Unnecessary Roughness is 15 yards on 386 of 525 rows, with 14, 7 and 6 among the others; Offensive
+  Holding is 10 on 1,688 of 1,895. CEG's `penalty_yards` lists are built from that column, and
+  `PenaltyProvider` applies half-distance again, so it double-counts it near the goal lines. For `yards_assessed`,
+  CEG must emit each type's nominal yards, and draw a spot for spot fouls (pass interference). This is a defect in
+  the current CEG runtime. Logged as backlog E13.
+- `manifest_sha256` is required. CEG will supply its artifact or configuration hash in every run, the harness and
+  drive tests included.
+- Kick facts: CEG resolves punts and field goals in the game loop after the drive terminal. To attach `KickV2` to
+  the play, CEG moves the K4 and K5 draws into the provider. That is CEG work. It needs no contract change.
