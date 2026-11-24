@@ -20,7 +20,7 @@ import reducer
 import roster_preflight
 import v1_complete_roster
 
-ENGINE_COMMIT = '1800e843ccc59edb5f40ff090a2b4806f5ea630f'
+ENGINE_COMMIT = '62f6f6b0adeb588e4fc14b1ce5b89e295e876074'
 PLAYBOOK_MANIFEST_SHA256 = '9d4749f817e97f4e3da0b6c5170eae0fa922d8b1b59d608ab4ce9dd990c2e929'
 DEFENSE_POSITIONS = ('LDE', 'LDT', 'RDT', 'RDE', 'MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS')
 DEFENSE_SLOTS = ('LEDGE', 'LDT', 'RDT', 'REDGE', 'MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS')
@@ -124,14 +124,7 @@ def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_pat
                   'concept_selection': selection, 'formation_selection': 'explicit_11_personnel'}
 
 
-def run(engine_root, call):
-    commit = _check_engine(engine_root)
-    start = time.monotonic()
-    proc = subprocess.run(['node', str(Path(engine_root) / 'engine/autonomous/slc-cli.js')],
-                          input=json.dumps(call), capture_output=True, text=True, check=False)
-    if proc.returncode:
-        raise ValueError('gridiron_executor_failed:' + proc.stderr.strip())
-    result = json.loads(proc.stdout)
+def _validate_result(call, result):
     if result.get('schema_version') != 'gridiron.autonomous-result.v1' or result.get('status') != 'complete':
         raise ValueError('gridiron_play_incomplete:' + str(result.get('failure')))
     if not result.get('diagnostics', {}).get('reconciliation', {}).get('ok'):
@@ -145,7 +138,59 @@ def run(engine_root, call):
     if (result['call']['offense'] != call['offense']['team'] or result['call']['defense'] != call['defense']['team']
             or result['call']['concept'] != call['offense']['call']['concept']):
         raise ValueError('gridiron_result_call_mismatch')
-    return result, {'engine_commit': commit, 'elapsed_wall_seconds': time.monotonic() - start}
+    return result
+
+
+class GridironSession:
+    """One persistent, sequential engine process for many independent plays."""
+
+    def __init__(self, engine_root):
+        self.commit = _check_engine(engine_root)
+        self.proc = subprocess.Popen(['node', str(Path(engine_root) / 'engine/autonomous/slc-server.js')],
+                                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1)
+        self.next_id = 0
+
+    def request(self, op, **kwargs):
+        self.next_id += 1
+        request = {'id': self.next_id, 'op': op, **kwargs}
+        try:
+            self.proc.stdin.write(json.dumps(request, separators=(',', ':')) + '\n')
+            self.proc.stdin.flush()
+            line = self.proc.stdout.readline()
+        except (BrokenPipeError, OSError) as exc:
+            raise ValueError('gridiron_server_failed') from exc
+        if not line:
+            raise ValueError('gridiron_server_closed')
+        response = json.loads(line)
+        if response.get('id') != self.next_id:
+            raise ValueError('gridiron_server_response_id_mismatch')
+        if not response.get('ok'):
+            raise ValueError('gridiron_executor_failed:' + str(response.get('error')))
+        return response
+
+    def play(self, call):
+        start = time.monotonic()
+        response = self.request('play', call=call)
+        return _validate_result(call, response['value']), {'engine_commit': self.commit,
+                'elapsed_wall_seconds': time.monotonic() - start, 'engine_ms': response['engine_ms']}
+
+    def close(self):
+        if self.proc.stdin:
+            self.proc.stdin.close()
+        if self.proc.stdout:
+            self.proc.stdout.close()
+        self.proc.wait(timeout=10)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        self.close()
+
+
+def run(engine_root, call):
+    with GridironSession(engine_root) as session:
+        return session.play(call)
 
 
 def reduce_result(call, result, state):

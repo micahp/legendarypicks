@@ -1,6 +1,7 @@
 """Cross-engine translation checks. No historical outcome is supplied to Gridiron."""
 import copy
 import math
+from pathlib import Path
 
 import pytest
 
@@ -79,3 +80,17 @@ def test_fourth_down_incompletion_changes_possession(play):
     assert reduced['state_at_whistle']['offense'] == 'SF'
     assert reduced['state_at_whistle']['yl'] == 50
     assert reduced['play']['event_type'] == 'pass_incomplete'
+
+
+@pytest.mark.skipif(not Path('/root/gridiron-slc-consolidation/engine/autonomous/slc-server.js').exists(),
+                    reason='optional pinned Gridiron research checkout unavailable')
+def test_persistent_session_reuses_process_and_recovers_from_bad_request():
+    with bridge.GridironSession('/root/gridiron-slc-consolidation') as session:
+        pid = session.proc.pid
+        with pytest.raises(ValueError, match='gridiron_executor_failed'):
+            session.request('invalid_operation')
+        first = session.request('example_assignments', concept='curls', coverage='man')['value']
+        second = session.request('example_assignments', concept='curls', coverage='man')['value']
+        assert session.proc.pid == pid
+        assert first == second
+        assert first['offense']['WR1']['route'] == 'curl'
