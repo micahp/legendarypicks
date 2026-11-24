@@ -17,9 +17,17 @@ Two of 1,300 v1.6 seeds in week 11 stopped:
 The engine draws a historical sack fumble row with its original yardage. At this field position, that yardage puts the ball
 behind the offense's own goal line. `reducer.apply_play` (`1bb3bd50:scripts/nfl_sequence/reducer.py:76`) then raises
 `ValueError: sack_fumble_lost loss N carries the ball past its own goal line`, and the seed is lost as a
-`simulation_error`. No other week 11 model raised an engine error, but every one can: the reducer for v1 (`58ef3861`),
-v1.5 (`2eab8a89`), v1.6 (`1bb3bd50`), v2 and pbv1 (`8a1d9842`) has no own-end-zone option at all. Only v1.7
-(`1ca59e0d`) has one. So this issue is not limited to v1.6.
+`simulation_error`. Only v1.6 can reach this state: it keeps sack fumbles as their own event with the sampled
+yardage. In v1 (`58ef3861`), v1.5 (`2eab8a89`), v2 and pbv1 (`8a1d9842`) a sack fumble is a plain `fumble_lost` that
+takes the published spot, and in every model run, pass and sack losses already stop at the goal line
+(`e1_drive._credit_field_boundary_yards`).
+
+## Fix (2026-11-23)
+
+`cf8fd47b` on `fix/slc-v1.6-rules-2026-11-23`, on top of `1bb3bd50`: ports the V1.7 geometry filter (`3b8e8890`)
+behind `--slc-geometry-filter`, off by default. With it on, a fumble source row whose net gain crosses a goal line at
+the live state is left out of the draw. `test_geometry_filter.py` covers both week 11 states. The v1.6 pack is rebuilt
+with the flag on, and its new commit and pack hash go in the registry.
 
 ## Existing work: PR #49 and its branch
 

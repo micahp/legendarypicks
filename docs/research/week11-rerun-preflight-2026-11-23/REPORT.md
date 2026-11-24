@@ -157,8 +157,10 @@ It is in the v1.7 pack (`1ca59e0d`). With only `own_end_zone='resolve'`, these t
 from the same line, they continue. So the #49 line addresses both failures, but it must be ported as a new, separately
 versioned v1.6 build. It was not rerun here. Details in the issue file.
 
-The same guard is in every week 11 model. The reducer code for v1, v1.5, v1.6, v2 and pbv1 has no own-end-zone option,
-so this state always stops the seed. Only v1.6 reached it in week 11 (2 of 1,300 seeds). The other models can reach it too.
+Only v1.6 can reach this state. Its play pool keeps sack fumbles as their own event, `sack_fumble_lost`, with the
+sampled yardage. In v1, v1.5, v2 and pbv1 a sack fumble is a plain `fumble_lost`, which takes the published spot of the
+next snap. In every model, run, pass and sack losses already stop at the goal line (`_credit_field_boundary_yards`).
+So the sack-fumble error is a v1.6 issue only.
 
 ## Matched-seed sensitivity
 
