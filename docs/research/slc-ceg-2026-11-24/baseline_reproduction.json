@@ -1,0 +1,142 @@
+{
+ "v1": {
+  "pack_sha256_same": true,
+  "snapshot_same": true,
+  "seeds": [
+   300001,
+   300002,
+   300003
+  ],
+  "outcomes_identical": true,
+  "boxscores_identical": true,
+  "scores": [
+   [
+    300001,
+    31,
+    30
+   ],
+   [
+    300002,
+    26,
+    23
+   ],
+   [
+    300003,
+    28,
+    34
+   ]
+  ]
+ },
+ "v1.5": {
+  "pack_sha256_same": true,
+  "snapshot_same": true,
+  "seeds": [
+   300001,
+   300002,
+   300003
+  ],
+  "outcomes_identical": true,
+  "boxscores_identical": true,
+  "scores": [
+   [
+    300001,
+    24,
+    26
+   ],
+   [
+    300002,
+    23,
+    33
+   ],
+   [
+    300003,
+    22,
+    24
+   ]
+  ]
+ },
+ "v1.6": {
+  "pack_sha256_same": true,
+  "snapshot_same": true,
+  "seeds": [
+   300001,
+   300002,
+   300003
+  ],
+  "outcomes_identical": true,
+  "boxscores_identical": true,
+  "scores": [
+   [
+    300001,
+    8,
+    17
+   ],
+   [
+    300002,
+    14,
+    33
+   ],
+   [
+    300003,
+    10,
+    19
+   ]
+  ]
+ },
+ "v2": {
+  "pack_sha256_same": true,
+  "snapshot_same": true,
+  "seeds": [
+   300001,
+   300002,
+   300003
+  ],
+  "outcomes_identical": true,
+  "boxscores_identical": true,
+  "scores": [
+   [
+    300001,
+    17,
+    37
+   ],
+   [
+    300002,
+    27,
+    17
+   ],
+   [
+    300003,
+    17,
+    31
+   ]
+  ]
+ },
+ "pbv1": {
+  "pack_sha256_same": true,
+  "snapshot_same": true,
+  "seeds": [
+   300001,
+   300002,
+   300003
+  ],
+  "outcomes_identical": true,
+  "boxscores_identical": true,
+  "scores": [
+   [
+    300001,
+    17,
+    13
+   ],
+   [
+    300002,
+    29,
+    35
+   ],
+   [
+    300003,
+    27,
+    28
+   ]
+  ]
+ }
+}

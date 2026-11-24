@@ -15,10 +15,12 @@ differences are noted where they matter. No model was fitted and no engine code 
   (`game_state.participants_for`). The clock runoff also comes from the row's next snap. So "generate the yards" is not
   enough: the generator must also produce air yards, YAC, a clock runoff, a timeout and an out-of-bounds flag, or the
   statistics and clock lose them.
-- **Some plays can never be drawn in v2,** because the pool builder (`e1_drive.classify`) drops their rows: penalties,
-  turnovers returned for a touchdown, and plays with no same-quarter next snap (the last play of each quarter). QB
-  scrambles are dropped unless `include_qb_scrambles` is on. So a v2 game has no penalties and no defensive scrimmage
-  touchdowns. That is a realism gap, not only a sparse-cell risk.
+- **Some plays can never be drawn in v2,** because the pool builder (`e1_drive.classify`) drops their rows: penalties
+  (every pre-snap foul and 3,075 live-play fouls, 2022 to 2026), turnovers returned for a touchdown (220), and overtime
+  plays (1,106, regulation-only pool). So a v2 game has no penalties and no defensive scrimmage touchdowns. That is a
+  realism gap, not only a sparse-cell risk. *Corrected 2026-11-24 by the Phase 1 waterfall:* last plays of a quarter are
+  kept (only 33 plays lack a next snap), and scrambles are kept when `include_qb_scrambles` is on, as in the QB-decision
+  stack. See `PHASE1-DATASET-AUDIT.md` section 3.
 - **17 dependency sites** (D1 to D17 below). 12 draw a historical row or record at runtime, 4 use count tables or fixed
   shares (D2, D8, D13, D17), and 1 is left out entirely (D16, penalties). The 99 week 11 failures come from 6 of them:
   D2, D3, D6, D8, D10 and D12.
@@ -265,4 +267,4 @@ safety, missed field goal and blocked kick pools from the loaded reference, and 
 
 The frozen v1, v1.5, v1.6, v2 and pbv1 packs (`/root/runs/week-11/inputs/models/portable-models-2026-11-19/`) are rerun
 on CIN at WAS seeds 300001 to 300003 with the pre-rules-fix registry (`/root/runs/week-11/frozen-runtime`) and compared
-with the week 11 batch outputs. Result: see `baseline_reproduction.json` in this folder.
+with the week 11 batch outputs. **Result: all five reproduce exactly** (identical outcomes and box scores, same pack hashes); `baseline_reproduction.json`.
