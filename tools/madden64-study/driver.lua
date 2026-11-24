@@ -75,7 +75,31 @@ while true do
           end
         end, 0x80025b10, "madden_event_prepare")
         assert(hook, "execution hook registration failed")
-        for frame = 1, count do emu.frameadvance() end
+        local previous = {}
+        for frame = 1, count do
+          emu.frameadvance()
+          local q = memory.read_s32_be(0x89538, "RDRAM")
+          local clock = memory.read_s32_be(0x8953c, "RDRAM")
+          local down = memory.read_s32_be(0x89544, "RDRAM")
+          local distance = memory.read_s32_be(0x89548, "RDRAM")
+          local yard = memory.read_s32_be(0x8954c, "RDRAM")
+          local state = string.format("%d,%d,%d,%d,%d", q, clock, down, distance, yard)
+          if previous.state ~= state then
+            out:write(string.format("%d,%s,-1,state,0,0\n", emu.framecount(), state))
+            previous.state = state
+          end
+          for team = 0, 1 do
+            for _, index in ipairs({0,1,2,3,4,5,6,7,10,11,12,57}) do
+              local key = team * 100 + index
+              local value = memory.read_u16_be(0x82d22 + team * 0x214c + 2 * index, "RDRAM")
+              if previous[key] ~= value then
+                out:write(string.format("%d,%s,%d,total,%d,%d\n", emu.framecount(), state, team, index, value))
+                previous[key] = value
+              end
+            end
+          end
+          if frame % 600 == 0 then out:flush() end
+        end
         assert(event.unregisterbyid(hook), "execution hook unregister failed")
         out:close()
         local status = assert(io.open(W .. "hookrecord-status.txt", "w"))
