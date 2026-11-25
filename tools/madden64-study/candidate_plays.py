@@ -22,13 +22,16 @@ for frame, rows in sorted(groups.items()):
             slot, event_type = map(int, row["index"].split(":"))
             if event_type in (3, 8, 9) and int(row["value"]) != 0:
                 triggers.append({"team": int(row["team"]), "slot": slot,
+                                 "player_row": int(row["player_row"]) if row.get("player_row") else None,
                                  "raw_type": event_type, "value": int(row["value"])})
     if not triggers:
         continue
     first = rows[0]
     plays.append({"frame": frame, "quarter": int(first["quarter"]), "clock": int(first["clock"]),
                   "down": int(first["down"]), "distance": int(first["distance"]),
-                  "yard_display": int(first["yard"]), "triggers": triggers,
+                  "yard_display": int(first["yard"]),
+                  "drive_team_candidate": int(first["drive_team_candidate"]) if first.get("drive_team_candidate") else None,
+                  "triggers": triggers,
                   "ambiguous": len(triggers) != 1,
                   "raw_records": [{"team": int(r["team"]), "kind": r["kind"],
                                    "index": r["index"], "value": int(r["value"])} for r in rows]})

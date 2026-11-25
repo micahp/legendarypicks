@@ -9,8 +9,10 @@
 --   record <path.csv> <frames>                 sample candidate team counters each frame
 --   hookrecord <path.csv> <frames>             capture raw staged records at candidate routine
 --   game <path.csv> <maxframes>                stop on experimental end transition
+--   gamechunk <path.csv> <frames>              bounded chunk; reads armed.txt (0 or 1)
 --   dumpram <path>                             first 0x90000 bytes of N64 RDRAM
-local W = "E:/emu/madden64/"
+local W = (os.getenv("MADDEN_WORK") or "E:/emu/madden64/"):gsub("\\", "/")
+if W:sub(-1) ~= "/" then W = W .. "/" end
 client.SetSoundOn(false)
 local f = io.open(W .. "buttons.txt", "w")
 for k, _ in pairs(joypad.get()) do f:write(k .. "\n") end
@@ -42,18 +44,23 @@ while true do
         local seed = tonumber(a)
         assert(seed and seed >= 0 and seed <= 0xFFFFFFFF, "invalid RNG seed")
         memory.write_u32_be(0x87998, seed, "RDRAM")
-      elseif c == "hookrecord" or c == "game" then
+      elseif c == "hookrecord" or c == "game" or c == "gamechunk" then
         local count = assert(tonumber(b), "hookrecord requires a frame count")
         local out = assert(io.open(a, "w"))
-        out:write("frame,quarter,clock,down,distance,yard,team,kind,index,value\n")
+        out:write("frame,quarter,clock,down,distance,yard,team,kind,index,value,rng,player_row,drive_team_candidate\n")
         local hits = 0
+        local capture_hooks = exists(W .. "capture-hooks.flag")
+        local pending_screenshot = nil
         local hook = event.on_bus_exec(function()
           hits = hits + 1
+          if capture_hooks then pending_screenshot = emu.framecount() end
           local q = memory.read_u16_be(0x876dc, "RDRAM")
           local clock = memory.read_u16_be(0x87aac, "RDRAM")
           local down = memory.read_s32_be(0x89544, "RDRAM")
           local distance = memory.read_s32_be(0x89548, "RDRAM")
           local yard = memory.read_s32_be(0x8954c, "RDRAM")
+          local rng = memory.read_u32_be(0x87998, "RDRAM")
+          local drive_team = memory.read_u8(0x88af3, "RDRAM")
           for team = 0, 1 do
             local base = 0x82ca8 + team * 0x214c
             local n = memory.read_s16_be(base, "RDRAM")
@@ -63,14 +70,15 @@ while true do
               local slot = memory.read_u8(p, "RDRAM")
               local kind = memory.read_u8(p + 1, "RDRAM")
               local value = memory.read_s16_be(p + 2, "RDRAM")
-              out:write(string.format("%d,%d,%d,%d,%d,%d,%d,event,%d:%d,%d\n",
-                emu.framecount(), q, clock, down, distance, yard, team, slot, kind, value))
+              local player_row = slot < 11 and memory.read_u16_be(0x81860 + team * 0x214c + 2 * slot, "RDRAM") or -1
+              out:write(string.format("%d,%d,%d,%d,%d,%d,%d,event,%d:%d,%d,%u,%d,%d\n",
+                emu.framecount(), q, clock, down, distance, yard, team, slot, kind, value, rng, player_row, drive_team))
             end
             for i = 0, 22 do
               local value = memory.read_s16_be(0x82d50 + team * 0x214c + i * 2, "RDRAM")
               if value ~= 0 then
-                out:write(string.format("%d,%d,%d,%d,%d,%d,%d,staged,%d,%d\n",
-                  emu.framecount(), q, clock, down, distance, yard, team, i, value))
+                out:write(string.format("%d,%d,%d,%d,%d,%d,%d,staged,%d,%d,%u,,%d\n",
+                  emu.framecount(), q, clock, down, distance, yard, team, i, value, rng, drive_team))
               end
             end
           end
@@ -78,28 +86,42 @@ while true do
         assert(hook, "execution hook registration failed")
         local previous = {}
         local saw_fourth_zero, stopped = false, false
+        if c == "gamechunk" then
+          local armed_file = assert(io.open(W .. "armed.txt", "r"))
+          local armed = armed_file:read("*l")
+          armed_file:close()
+          assert(armed == "0" or armed == "1", "armed.txt must contain 0 or 1")
+          saw_fourth_zero = armed == "1"
+        end
         for frame = 1, count do
           emu.frameadvance()
+          if pending_screenshot then
+            client.screenshot(a .. ".hook-" .. tostring(pending_screenshot) .. ".png")
+            pending_screenshot = nil
+          end
           local q = memory.read_s32_be(0x89538, "RDRAM")
           local clock = memory.read_s32_be(0x8953c, "RDRAM")
           local down = memory.read_s32_be(0x89544, "RDRAM")
           local distance = memory.read_s32_be(0x89548, "RDRAM")
           local yard = memory.read_s32_be(0x8954c, "RDRAM")
+          local rng = memory.read_u32_be(0x87998, "RDRAM")
+          local drive_team = memory.read_u8(0x88af3, "RDRAM")
           if q == 4 and clock == 0 and not saw_fourth_zero then
             saw_fourth_zero = true
-            if c == "game" then savestate.save(a .. ".zero.state") end
+            if c == "game" or c == "gamechunk" then savestate.save(a .. ".zero.state") end
           end
           local state = string.format("%d,%d,%d,%d,%d", q, clock, down, distance, yard)
-          if previous.state ~= state then
-            out:write(string.format("%d,%s,-1,state,0,0\n", emu.framecount(), state))
-            previous.state = state
+          local state_key = state .. ":" .. drive_team
+          if previous.state ~= state_key then
+            out:write(string.format("%d,%s,-1,state,0,0,%u,,%d\n", emu.framecount(), state, rng, drive_team))
+            previous.state = state_key
           end
           for team = 0, 1 do
             for _, index in ipairs({0,1,2,3,4,5,6,7,8,9,10,11,12,15,16,17,18,19,20,21,22,57}) do
               local key = team * 100 + index
               local value = memory.read_u16_be(0x82d22 + team * 0x214c + 2 * index, "RDRAM")
               if previous[key] ~= value then
-                out:write(string.format("%d,%s,%d,total,%d,%d\n", emu.framecount(), state, team, index, value))
+                out:write(string.format("%d,%s,%d,total,%d,%d,%u,,%d\n", emu.framecount(), state, team, index, value, rng, drive_team))
                 previous[key] = value
               end
             end
@@ -110,7 +132,7 @@ while true do
             progress:write(string.format("%d/%d frame=%d q=%d clock=%d hits=%d\n", frame, count, emu.framecount(), q, clock, hits))
             progress:close()
           end
-          if c == "game" and saw_fourth_zero and q == 6 then
+          if (c == "game" or c == "gamechunk") and saw_fourth_zero and q == 6 then
             out:flush()
             client.screenshot(a .. ".end.png")
             savestate.save(a .. ".end.state")
@@ -118,11 +140,16 @@ while true do
             break
           end
         end
+        if c == "gamechunk" and not stopped then savestate.save(a .. ".checkpoint.state") end
         assert(event.unregisterbyid(hook), "execution hook unregister failed")
         out:close()
-        local status = assert(io.open(W .. "hookrecord-status.txt", "w"))
-        status:write("limit=", count, " hits=", hits, " candidate_end=", tostring(stopped), "\n")
-        status:close()
+        local status_line = string.format("limit=%d hits=%d candidate_end=%s armed=%s\n",
+          count, hits, tostring(stopped), tostring(saw_fourth_zero))
+        for _, status_path in ipairs({W .. "hookrecord-status.txt", a .. ".status.txt"}) do
+          local status = assert(io.open(status_path, "w"))
+          status:write(status_line)
+          status:close()
+        end
         if c == "game" then assert(stopped, "no candidate end transition before frame limit") end
       elseif c == "record" then
         local count = assert(tonumber(b), "record requires a frame count")
