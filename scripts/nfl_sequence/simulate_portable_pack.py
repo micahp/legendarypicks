@@ -56,6 +56,22 @@ def _normalize_conditioning_candidate_counts(decisions):
             metrics["candidate_count_before"] = base_support["candidate_count"]
 
 
+def _pre_transition_weight_concentration(decisions):
+    """Summarize contextual row weights before transition-strength reweighting."""
+    metrics = [decision.get("row_conditioning") or {} for decision in decisions]
+    shares = [float(item["max_weight_share"]) for item in metrics
+              if isinstance(item.get("max_weight_share"), (int, float))]
+    hhi = [float(item["hhi"]) for item in metrics if isinstance(item.get("hhi"), (int, float))]
+    return {
+        "scope": "optional-row-weights-before-team-transition-strength-weighting",
+        "decision_count": min(len(shares), len(hhi)),
+        "max_weight_share_mean": round(sum(shares) / len(shares), 6) if shares else None,
+        "max_weight_share_max": max(shares) if shares else None,
+        "hhi_mean": round(sum(hhi) / len(hhi), 6) if hhi else None,
+        "hhi_max": max(hhi) if hhi else None,
+    }
+
+
 def _forbid_source_table_reads():
     """Block DB connections AND external model fixture/table file opens."""
     def refused(*_args, **_kwargs):
@@ -110,6 +126,10 @@ def _run_seed(seed, reference, snapshot, gs, slc_engine=None, rng_plan=None, dec
             _normalize_conditioning_candidate_counts(decisions)
             summary = slc_engine.summary(decisions, record)
             conditioning = dict(summary.get("row_conditioning") or {})
+            conditioning["effective_sample_size_scope"] = (
+                "optional-row-weight distribution before team transition-strength weighting")
+            conditioning["probability_concentration_pre_transition"] = (
+                _pre_transition_weight_concentration(decisions))
             conditioning.pop("unique_source_row_ids", None)
             diagnostics_out.update({
                 "row_conditioning": conditioning,

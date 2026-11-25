@@ -227,6 +227,21 @@ class PortableRuntime(unittest.TestCase):
         self.assertEqual(decisions[0]["row_conditioning"]["candidate_count_after"], 20)
         self.assertEqual(decisions[1]["row_conditioning"]["candidate_count_before"], 91)
 
+    def test_pre_transition_weight_concentration_is_reported(self):
+        decisions = [
+            {"row_conditioning": {"max_weight_share": 0.5, "hhi": 0.3}},
+            {"row_conditioning": {"max_weight_share": 0.25, "hhi": 0.2}},
+        ]
+
+        summary = simulate_portable_pack._pre_transition_weight_concentration(decisions)
+
+        self.assertEqual(summary["decision_count"], 2)
+        self.assertEqual(summary["max_weight_share_mean"], 0.375)
+        self.assertEqual(summary["max_weight_share_max"], 0.5)
+        self.assertEqual(summary["hhi_mean"], 0.25)
+        self.assertEqual(summary["hhi_max"], 0.3)
+        self.assertIn("before-team-transition", summary["scope"])
+
 
 if __name__ == "__main__":
     unittest.main()
