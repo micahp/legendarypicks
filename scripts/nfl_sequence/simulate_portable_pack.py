@@ -32,6 +32,19 @@ from slc_model_registry import get_model
 from slc_pregame_context import current_streaks_for_snapshot
 
 
+def _include_completed_overtime(summary, outcomes, requested, aggregation):
+    """Count completed OT ties as valid full games in portable batch summaries."""
+    complete = [row for row in outcomes
+                if row.get("valid_full_game") and row.get("complete_game")]
+    if len(complete) == summary.get("valid_full_games"):
+        return summary
+    summary = dict(summary)
+    summary["valid_full_games"] = len(complete)
+    summary["valid_full_game_coverage"] = aggregation._round(len(complete) / requested)
+    summary["valid_full_game_distribution"] = aggregation._distribution(complete)
+    return summary
+
+
 def _forbid_source_table_reads():
     """Block DB connections AND external model fixture/table file opens."""
     def refused(*_args, **_kwargs):
@@ -469,6 +482,10 @@ def _run(args, engine_dir):
         if args.records_out:
             records.append({"seed": seed, "record": record, "error": record_error})
     summary = aggregation.summarize_outcomes(rows, args.games)
+    # The frozen engine aggregator excludes any game tied at regulation, even
+    # when overtime completed. Keep its football behavior frozen and correct
+    # only the portable runner's full-game reporting boundary.
+    summary = _include_completed_overtime(summary, rows, args.games, aggregation)
     regulation_diagnostics = {
         "games_reaching_regulation_end": sum(row["regulation_end_reached"] for row in rows),
         "games_tied_at_regulation_end": sum(row["tied_at_regulation_end"] for row in rows),

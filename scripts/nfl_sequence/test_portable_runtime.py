@@ -185,6 +185,29 @@ class PortableRuntime(unittest.TestCase):
                     "--out", str(root / "wrong-root.json"),
                 ])
 
+    def test_completed_overtime_tie_counts_as_valid_full_game(self):
+        rows = [
+            {"seed": 1, "valid_full_game": True, "complete_game": True,
+             "tied_at_regulation_end": False, "home_points": 24, "away_points": 17},
+            {"seed": 2, "valid_full_game": True, "complete_game": True,
+             "tied_at_regulation_end": True, "home_points": 27, "away_points": 24},
+            {"seed": 3, "valid_full_game": False, "complete_game": False,
+             "tied_at_regulation_end": True, "home_points": 14, "away_points": 14},
+        ]
+        summary = {"valid_full_games": 1, "valid_full_game_coverage": 1 / 3,
+                   "valid_full_game_distribution": {"sample_games": 1}}
+        aggregation = SimpleNamespace(
+            _round=lambda value: round(float(value), 4),
+            _distribution=lambda outcomes: {"sample_games": len(outcomes)},
+        )
+
+        corrected = simulate_portable_pack._include_completed_overtime(
+            summary, rows, 3, aggregation)
+
+        self.assertEqual(corrected["valid_full_games"], 2)
+        self.assertEqual(corrected["valid_full_game_coverage"], 0.6667)
+        self.assertEqual(corrected["valid_full_game_distribution"]["sample_games"], 2)
+
 
 if __name__ == "__main__":
     unittest.main()
