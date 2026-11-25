@@ -19,7 +19,7 @@ def _elapsed(quarter, clock):
     return (quarter - 1) * QUARTER_LENGTH + (QUARTER_LENGTH - clock)
 
 
-def team_stats(drives, points):
+def team_stats(drives, points, kickoff_events=()):
     """Per-team lines: plays, rushing, passing, turnovers, punts, field goals, possession time and points."""
     teams = {}
 
@@ -75,6 +75,11 @@ def team_stats(drives, points):
             # once so ordinary punts are not omitted from the team boxscore.
             if out.get('punt') or out.get('punt_attempt'):
                 t['punts'] += 1
+            if out.get('punt_return'):
+                return_team = play['state_before']['defense_team']
+                returned = team(return_team)
+                returned['punt_returns'] += 1
+                returned['punt_return_yards'] += int(out.get('return_yards') or 0)
             if out.get('field_goal_attempt'):
                 t['fg_att'] += 1
                 fg_attempt_recorded = True
@@ -113,6 +118,18 @@ def team_stats(drives, points):
             if unassigned_overtime_offensive_td:
                 # No player row exists for this observed OT score, so exclude it from player reconciliation.
                 scored['observed_overtime_touchdowns'] += 1
+    for event in kickoff_events:
+        team(event['kicking_team'])['kickoffs'] += 1
+        if event.get('result') == 'return':
+            returned = team(event['receiving_team'])
+            returned['kickoff_returns'] += 1
+            returned['kickoff_return_yards'] += int(event.get('return_yards') or 0)
+        if event.get('terminal') == 'touchdown':
+            scorer = event.get('scoring_team')
+            if scorer is None:
+                raise ValueError('kickoff touchdown is missing its scoring team')
+            team(scorer)['touchdowns'] += 1
+            team(scorer)['return_touchdowns'] += 1
     for name, pts in points.items():
         team(name)['points'] = pts
     return {name: dict(sorted(t.items())) for name, t in sorted(teams.items())}
@@ -134,7 +151,7 @@ def _player_yards(play, field, fallback):
     return fallback if value is None else int(value)
 
 
-def player_lines(drives):
+def player_lines(drives, kickoff_events=()):
     """Per-player passing, rushing, receiving and miscellaneous lines with attribution metadata."""
     lines = {}
 
@@ -145,7 +162,8 @@ def player_lines(drives):
             raise ValueError(f'player {pid} has mixed attribution sources: '
                              f'{existing["attribution"]!r} and {attribution!r}')
         entry = lines.setdefault(pid, {'passing': defaultdict(int), 'rushing': defaultdict(int),
-                                       'receiving': defaultdict(int), 'miscellaneous': defaultdict(int),
+                                       'receiving': defaultdict(int), 'kicking': defaultdict(int),
+                                       'returning': defaultdict(int), 'miscellaneous': defaultdict(int),
                                        'attribution': attribution})
         for field in ('name', 'position', 'team', 'side'):
             value = part.get(f'{role}_{field}')
@@ -194,27 +212,56 @@ def player_lines(drives):
                     c['rec'] += 1
                     c['yds'] += _credited(play, _player_yards(play, 'receiving_yards', yards))
                     c['td'] += int(td)
+            if ev == 'punt' and part.get('punter_id'):
+                k = line(part['punter_id'], part, 'punter')['kicking']
+                k['punt_att'] += 1
+                k['punt_yds'] += int((out.get('special_teams_execution') or {}).get(
+                    'generated_punt_distance_yards') or 0)
+            if ev == 'field_goal_attempt' and part.get('kicker_id'):
+                k = line(part['kicker_id'], part, 'kicker')['kicking']
+                k['fg_att'] += 1
+                k['fg_made'] += int(out.get('field_goal_result') == 'made')
+            if ev == 'punt' and out.get('punt_return') and part.get('returner_id'):
+                r = line(part['returner_id'], part, 'returner')['returning']
+                r['punt_returns'] += 1
+                r['punt_return_yds'] += int(out.get('return_yards') or 0)
+    for event in kickoff_events:
+        pid = event.get('returner_id')
+        if event.get('result') == 'return' and pid:
+            part = event.get('participants') or {}
+            entry = lines.setdefault(pid, {'passing': defaultdict(int), 'rushing': defaultdict(int),
+                                           'receiving': defaultdict(int), 'kicking': defaultdict(int),
+                                           'returning': defaultdict(int), 'miscellaneous': defaultdict(int),
+                                           'attribution': 'autonomous_execution'})
+            for field in ('name', 'position', 'team', 'side'):
+                value = part.get('returner_' + field)
+                if value is not None:
+                    entry['player_' + field] = value
+            r = entry['returning']
+            r['kickoff_returns'] += 1
+            r['kickoff_return_yds'] += int(event.get('return_yards') or 0)
+            r['td'] += int(event.get('terminal') == 'touchdown')
     out = []
     for pid in sorted(lines):
         entry = {'player_id': pid, 'attribution': lines[pid]['attribution']}
         for field in ('player_name', 'player_position', 'player_team', 'player_side'):
             if field in lines[pid]:
                 entry[field] = lines[pid][field]
-        for cat in ('passing', 'rushing', 'receiving', 'miscellaneous'):
+        for cat in ('passing', 'rushing', 'receiving', 'kicking', 'returning', 'miscellaneous'):
             if lines[pid][cat]:
                 entry[cat] = dict(sorted(lines[pid][cat].items()))
         out.append(entry)
     return out
 
 
-def compute(drives, points):
+def compute(drives, points, kickoff_events=()):
     """The game's stat block: team lines, player lines, and the label that says what the player lines are."""
-    players = player_lines(drives)
+    players = player_lines(drives, kickoff_events)
     attributions = {row['attribution'] for row in players}
     if len(attributions) > 1:
         raise ValueError(f'game mixes player attribution sources: {sorted(attributions)}')
     attribution = next(iter(attributions)) if attributions else ATTRIBUTION
-    team_lines = team_stats(drives, points)
+    team_lines = team_stats(drives, points, kickoff_events)
     if attribution in ('pregame_depth_chart_role_sample', 'pre_event_selection', 'autonomous_execution'):
         _verify_pregame_reconciliation(team_lines, players)
     note = ('Team and player lines are reconciled from the actors and outcomes generated by the autonomous executor.'

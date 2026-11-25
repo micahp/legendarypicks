@@ -334,6 +334,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         kick_outcome = None
         kick_metadata = None
         penalty_detail = None
+        typed_event_record = generated.get('event_record') if generated is not None else None
         if special_teams and selected_event in ('punt', 'field_goal_attempt'):
             resolution = special_teams(selected_event, st, row, runoff, spot, special_rng)
             if resolution and resolution.get('blocker'):
@@ -344,6 +345,9 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                 spot = resolution.get('spot', spot)
                 kick_outcome = resolution.get('kick_outcome')
                 kick_metadata = resolution.get('metadata')
+                typed_event_record = resolution.get('event_record', typed_event_record)
+                if generated is not None and resolution.get('execution') is not None:
+                    generated['execution'] = resolution['execution']
         sampled_yards = None if event in KICK_EVENTS else int(row['yards_gained'])
         yards = 0 if sampled_yards is None else sampled_yards
         yardage_boundary_adjustment = None
@@ -354,7 +358,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         try:
             if execution_observer is not None:
                 execution_observer('apply_play', {'event': event, 'play_index': play_index})
-            event_record = generated.get('event_record') if generated is not None else None
+            event_record = typed_event_record
             if event_record is not None:
                 if event_applier is None:
                     return halt('autonomous_event_transition_adapter_missing')
@@ -377,7 +381,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         except reducer.UnmodelledOutcome as blocked:
             return halt(blocked.reason)
         except (AssertionError, ValueError) as invalid:
-            if generated is not None and generated.get('event_record') is not None:
+            if typed_event_record is not None:
                 return halt('autonomous_event_transition_unsupported:' + str(invalid))
             policy_decisions = getattr(sampling_policy, 'decisions', None)
             sampled_decision = policy_decisions[-1] if isinstance(policy_decisions, list) and policy_decisions else None
@@ -528,7 +532,10 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                         'turnover': flags['turnover'] or flags['turnover_on_downs'],
                         'turnover_on_downs': flags['turnover_on_downs'],
                         'punt': flags['punt'], 'punt_attempt': flags['punt_attempt'],
+                        'punt_return': flags.get('punt_return', False),
+                        'return_yards': flags.get('return_yards'),
                         'field_goal_attempt': flags['field_goal_attempt'],
+                        'field_goal_result': flags.get('field_goal_result'),
                         'safety': flags['safety'], 'scoring_team': flags.get('scoring_team'),
                         'first_down': flags.get('first_down', False), 'clock_runoff_seconds': runoff,
                         'dead_ball_position': (None if after is None else {'offense': after['offense'],

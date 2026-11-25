@@ -2,7 +2,8 @@ import unittest
 
 import ceg_contract as c
 from event_expansion import EventExpansionSwitches
-from event_expansion_rules import apply_punt_play, apply_scrimmage_play, UnsupportedEventTransition
+from event_expansion_rules import (apply_field_goal_play, apply_kickoff_play, apply_punt_play,
+                                   apply_scrimmage_play, UnsupportedEventTransition)
 
 
 P = c.ProvenanceV2('event-expansion-test', '0', 'a' * 64, ('forced_state',), ('draw-1',))
@@ -222,8 +223,8 @@ class EventExpansionRulesTests(unittest.TestCase):
 
     def test_punt_return_touchdown_uses_explicit_return_endpoint(self):
         kick = c.KickV2('punt', 'A', 'B', 40, 45, 'return',
-                        possession_after='receiving_team', return_start_yardline_100=80,
-                        dead_ball_yardline_100=100, return_yards=20,
+                        possession_after='receiving_team', return_start_yardline_100=20,
+                        dead_ball_yardline_100=100, return_yards=80,
                         returner=c.PlayerRoleV2.named('pr1'))
         punt = record(call=c.PlayCallV2('punt'), event='punt', yards_gained=None,
                       air_yards=None, yards_after_catch=None, kick=kick,
@@ -235,7 +236,7 @@ class EventExpansionRulesTests(unittest.TestCase):
 
     def test_punt_touchback_requires_the_punt_event_switch(self):
         kick = c.KickV2('punt', 'A', 'B', 40, 45, 'touchback',
-                        possession_after='receiving_team', dead_ball_yardline_100=80)
+                        possession_after='receiving_team', dead_ball_yardline_100=20)
         punt = record(call=c.PlayCallV2('punt'), event='punt', yards_gained=None,
                       air_yards=None, yards_after_catch=None, kick=kick,
                       players=c.PlayerRolesV2(punter=c.PlayerRoleV2.named('p1')))
@@ -244,7 +245,7 @@ class EventExpansionRulesTests(unittest.TestCase):
             apply_punt_play(S, punt)
         result = apply_punt_play(
             S, punt, EventExpansionSwitches.from_enabled(('punt_return_events',)))
-        self.assertEqual((result.state_after['offense'], result.state_after['yl']), ('B', 20))
+        self.assertEqual((result.state_after['offense'], result.state_after['yl']), ('B', 80))
 
     def test_kneel_requires_its_switch_and_uses_a_rusher(self):
         kneel = record(call=c.PlayCallV2('kneel'), event='kneel', yards_gained=-1,
@@ -270,21 +271,21 @@ class EventExpansionRulesTests(unittest.TestCase):
 
     def test_punt_return_uses_kicking_frame_then_converts_to_receiving_frame(self):
         kick = c.KickV2('punt', 'A', 'B', 40, 45, 'return',
-                        possession_after='receiving_team', return_start_yardline_100=80,
-                        dead_ball_yardline_100=75, return_yards=-5,
+                        possession_after='receiving_team', return_start_yardline_100=20,
+                        dead_ball_yardline_100=15, return_yards=-5,
                         returner=c.PlayerRoleV2.named('pr1'))
         punt = record(call=c.PlayCallV2('punt'), event='punt', yards_gained=None,
                       air_yards=None, yards_after_catch=None, kick=kick,
                       players=c.PlayerRolesV2(punter=c.PlayerRoleV2.unmodelled('punter'),
                                               returner=c.PlayerRoleV2.named('pr1')))
         result = apply_punt_play(S, punt, EventExpansionSwitches.from_enabled(('punt_return_events',)))
-        self.assertEqual((result.state_after['offense'], result.state_after['yl']), ('B', 25))
+        self.assertEqual((result.state_after['offense'], result.state_after['yl']), ('B', 85))
         self.assertEqual(result.flags['return_yards'], -5)
 
     def test_negative_punt_return_must_match_dead_ball_spot(self):
         kick = c.KickV2('punt', 'A', 'B', 40, 45, 'return',
-                        possession_after='receiving_team', return_start_yardline_100=80,
-                        dead_ball_yardline_100=76, return_yards=-5,
+                        possession_after='receiving_team', return_start_yardline_100=20,
+                        dead_ball_yardline_100=16, return_yards=-5,
                         returner=c.PlayerRoleV2.named('pr1'))
         punt = record(call=c.PlayCallV2('punt'), event='punt', yards_gained=None,
                       air_yards=None, yards_after_catch=None, kick=kick,
@@ -297,7 +298,7 @@ class EventExpansionRulesTests(unittest.TestCase):
     def test_muffed_punt_recovered_by_receiver_starts_at_dead_ball_spot(self):
         kick = c.KickV2('punt', 'A', 'B', 40, 45, 'muff',
                         possession_after='receiving_team', recovery_team='receiving_team',
-                        recovery_yardline_100=75, dead_ball_yardline_100=75,
+                        recovery_yardline_100=25, dead_ball_yardline_100=25,
                         return_yards=0, recoverer=c.PlayerRoleV2.unmodelled('punt_recoverer'),
                         returner=c.PlayerRoleV2.unmodelled('punt_fumbler'),
                         fumble_spot_yardline_100=75)
@@ -307,12 +308,12 @@ class EventExpansionRulesTests(unittest.TestCase):
                                               returner=c.PlayerRoleV2.unmodelled('punt_fumbler'),
                                               fumbler=c.PlayerRoleV2.unmodelled('punt_fumbler')))
         result = apply_punt_play(S, punt, EventExpansionSwitches.from_enabled(('punt_return_events',)))
-        self.assertEqual((result.state_after['offense'], result.state_after['yl']), ('B', 25))
+        self.assertEqual((result.state_after['offense'], result.state_after['yl']), ('B', 75))
 
     def test_muffed_punt_recovered_by_kickers_requires_touch_and_keeps_possession(self):
         kick = c.KickV2('punt', 'A', 'B', 40, 45, 'muff',
                         possession_after='kicking_team', recovery_team='kicking_team',
-                        recovery_yardline_100=50, dead_ball_yardline_100=50, return_yards=0,
+                        recovery_yardline_100=30, dead_ball_yardline_100=30, return_yards=0,
                         receiving_team_touched_beyond_line=True,
                         returner=c.PlayerRoleV2.unmodelled('punt_fumbler'),
                         recoverer=c.PlayerRoleV2.unmodelled('punt_recoverer'),
@@ -322,8 +323,58 @@ class EventExpansionRulesTests(unittest.TestCase):
                       players=c.PlayerRolesV2(punter=c.PlayerRoleV2.unmodelled('punter'),
                                               fumbler=c.PlayerRoleV2.unmodelled('punt_fumbler')))
         result = apply_punt_play(S, punt, EventExpansionSwitches.from_enabled(('punt_return_events',)))
-        self.assertEqual((result.state_after['offense'], result.state_after['yl']), ('A', 50))
+        self.assertEqual((result.state_after['offense'], result.state_after['yl']), ('A', 30))
         self.assertTrue(result.flags['possession_retained'])
+
+    def test_field_goal_attempt_adapter_reports_made_and_missed_results(self):
+        common = dict(call=c.PlayCallV2('field_goal'), event='field_goal_attempt',
+                      yards_gained=None, air_yards=None, yards_after_catch=None,
+                      players=c.PlayerRolesV2(kicker=c.PlayerRoleV2.named('k1')))
+        made = record(**{**common,
+                         'kick': c.KickV2('field_goal', 'A', 'B', 47, 64, 'made'),
+                         'scoring': c.ScoringV2('field_goal', 'kicking_team')})
+        result = apply_field_goal_play(S, made, EventExpansionSwitches())
+        self.assertEqual((result.terminal, result.scoring_team), ('field_goal_attempt', 'A'))
+        self.assertEqual(result.flags['field_goal_result'], 'made')
+        missed = record(**{**common,
+                           'kick': c.KickV2('field_goal', 'A', 'B', 47, 64, 'missed',
+                                            possession_after='receiving_team')})
+        result = apply_field_goal_play(S, missed, EventExpansionSwitches())
+        self.assertIsNone(result.scoring_team)
+        self.assertEqual(result.flags['field_goal_result'], 'missed')
+
+    def test_kickoff_touchback_and_return_touchdown_use_kicking_team_frame(self):
+        state = {**S, 'offense': 'A', 'defense': 'B', 'yl': 65}
+        touchback = record(
+            call=c.PlayCallV2('kickoff'), event='kickoff', yards_gained=None,
+            air_yards=None, yards_after_catch=None,
+            kick=c.KickV2('kickoff', 'A', 'B', 65, 65, 'touchback',
+                          possession_after='receiving_team', dead_ball_yardline_100=35))
+        result = apply_kickoff_play(state, touchback, EventExpansionSwitches())
+        self.assertEqual((result.state_after['offense'], result.state_after['yl']), ('B', 65))
+        returned = record(
+            call=c.PlayCallV2('kickoff'), event='kickoff', yards_gained=None,
+            air_yards=None, yards_after_catch=None,
+            kick=c.KickV2('kickoff', 'A', 'B', 65, 65, 'return',
+                          possession_after='receiving_team', return_start_yardline_100=20,
+                          dead_ball_yardline_100=100, return_yards=80,
+                          returner=c.PlayerRoleV2.named('kr1')),
+            players=c.PlayerRolesV2(returner=c.PlayerRoleV2.named('kr1')),
+            scoring=c.ScoringV2('touchdown', 'receiving_team'))
+        result = apply_kickoff_play(state, returned, EventExpansionSwitches())
+        self.assertEqual((result.terminal, result.scoring_team), ('touchdown', 'B'))
+
+    def test_kickoff_onside_recovery_retains_kicking_team_possession(self):
+        state = {**S, 'offense': 'A', 'defense': 'B', 'yl': 65}
+        onside = record(
+            call=c.PlayCallV2('kickoff'), event='kickoff', yards_gained=None,
+            air_yards=None, yards_after_catch=None,
+            kick=c.KickV2('kickoff', 'A', 'B', 65, 10, 'onside_recovery',
+                          possession_after='kicking_team', recovery_team='kicking_team',
+                          recovery_yardline_100=55,
+                          recoverer=c.PlayerRoleV2.named('k1')))
+        result = apply_kickoff_play(state, onside, EventExpansionSwitches())
+        self.assertEqual((result.state_after['offense'], result.state_after['yl']), ('A', 55))
 
 
 if __name__ == '__main__':

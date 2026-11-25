@@ -358,6 +358,51 @@ class PregamePlayerUsage(unittest.TestCase):
 
 
 class GameStatsReconciliation(unittest.TestCase):
+    def test_autonomous_kick_events_reconcile_team_and_player_special_teams_lines(self):
+        punt = {
+            'event_type': 'punt',
+            'state_before': {'offense_team': 'A', 'defense_team': 'B'},
+            'participants': {'attribution': 'autonomous_execution',
+                             'punter_id': 'P1', 'punter_name': 'Punter', 'punter_position': 'P',
+                             'punter_team': 'A', 'punter_side': 'A',
+                             'returner_id': 'PR1', 'returner_name': 'Returner',
+                             'returner_position': 'WR', 'returner_team': 'B', 'returner_side': 'B'},
+            'outcome': {'yards_gained': None, 'touchdown': False, 'turnover': False, 'punt': True,
+                        'punt_attempt': True, 'punt_return': True, 'return_yards': 4,
+                        'special_teams_execution': {'generated_punt_distance_yards': 42}},
+        }
+        field_goal = {
+            'event_type': 'field_goal_attempt',
+            'state_before': {'offense_team': 'A', 'defense_team': 'B'},
+            'participants': {'attribution': 'autonomous_execution', 'kicker_id': 'K1',
+                             'kicker_name': 'Kicker', 'kicker_position': 'PK',
+                             'kicker_team': 'A', 'kicker_side': 'A'},
+            'outcome': {'yards_gained': None, 'touchdown': False, 'turnover': False,
+                        'field_goal_attempt': True, 'field_goal_result': 'made'},
+        }
+        drive = {'offense_team': 'A', 'quarter_start': 1, 'clock_start': 900,
+                 'end_quarter': 1, 'end_clock': 800, 'terminal': 'field_goal_attempt',
+                 'field_goal_made': True, 'plays': [punt, field_goal]}
+        kickoff = {'kicking_team': 'B', 'receiving_team': 'A', 'result': 'return',
+                   'returner_id': 'KR1', 'return_yards': 100, 'terminal': 'touchdown',
+                   'scoring_team': 'A',
+                   'participants': {'attribution': 'autonomous_execution',
+                                    'returner_id': 'KR1', 'returner_name': 'Kick Returner',
+                                    'returner_position': 'RB', 'returner_team': 'A', 'returner_side': 'A'}}
+        stats = game_stats.compute([drive], {'A': 10, 'B': 0}, [kickoff])
+        self.assertEqual(stats['team']['A']['punts'], 1)
+        self.assertEqual(stats['team']['A']['fg_att'], 1)
+        self.assertEqual(stats['team']['A']['fg_made'], 1)
+        self.assertEqual(stats['team']['B']['punt_returns'], 1)
+        self.assertEqual(stats['team']['B']['punt_return_yards'], 4)
+        self.assertEqual(stats['team']['A']['kickoff_return_yards'], 100)
+        self.assertEqual(stats['team']['A']['return_touchdowns'], 1)
+        players = {row['player_id']: row for row in stats['player']}
+        self.assertEqual(players['P1']['kicking']['punt_yds'], 42)
+        self.assertEqual(players['K1']['kicking']['fg_made'], 1)
+        self.assertEqual(players['PR1']['returning']['punt_return_yds'], 4)
+        self.assertEqual(players['KR1']['returning']['td'], 1)
+
     def test_player_yardage_is_clamped_at_the_goal_line_for_scores_and_safeties(self):
         def run(yards, yardline, *, touchdown=False, safety=False):
             return {
@@ -2242,9 +2287,23 @@ class AutonomousGameLifecycle(unittest.TestCase):
                 },
             }
 
-        def kick(self, _kind, _kicker, _receiver, _context):
-            return {'receiving_start_yardline_100': 75, 'clock_runoff_seconds': 5,
-                    'clock_starts_on': 'legal_touch', 'event': 'touchback'}
+        def kick(self, kind, kicker, receiver, _context):
+            provenance = ceg_contract.ProvenanceV2(
+                'controlled-autonomous-fixture', 'test', 'c' * 64,
+                components=('kickoff_fixture',), draw_ids=(kind,))
+            event_record = ceg_contract.GeneratedPlayV2(
+                ceg_contract.CONTRACT_V2_VERSION,
+                ceg_contract.PlayCallV2('kickoff', provenance=provenance),
+                'kickoff', None, provenance, ceg_contract.ClockV2(5),
+                kick=ceg_contract.KickV2(
+                    'kickoff', kicker, receiver, 65, 65, 'touchback',
+                    possession_after='receiving_team', dead_ball_yardline_100=35))
+            return {'receiving_start_yardline_100': 65, 'clock_runoff_seconds': 5,
+                    'clock_starts_on': 'legal_touch', 'event_record': event_record}
+
+        def apply_event(self, state, event_record):
+            return event_expansion_rules.apply_kickoff_play(
+                state, event_record, switches=EventExpansionSwitches())
 
         def special_teams(self, *_args):
             return None
@@ -2264,10 +2323,61 @@ class AutonomousGameLifecycle(unittest.TestCase):
         self.assertEqual(record['mode'], 'autonomous_full_game')
         self.assertFalse(record['valid_full_game'], 'a pregame roster snapshot is required for a full-game claim')
         self.assertEqual(record['stats']['player_attribution'], 'autonomous_execution')
-        self.assertEqual(record['stats']['team']['A']['rush_yds'], 75)
+        self.assertEqual(record['stats']['team']['A']['rush_yds'], 65)
         self.assertEqual(record['stats']['player'][0]['rushing']['td'], 1)
         self.assertTrue(any(k['kind'] == 'half_start' and k['quarter'] == 3 for k in record['kickoffs']))
         self.assertTrue(any(p['outcome'].get('quarter_change') for d in record['drives'] for p in d['plays']))
+        gs.validate_game(record)
+
+    def test_kickoff_return_touchdown_scores_and_restarts_inside_full_game_lifecycle(self):
+        class ReturnSource(self.Source):
+            def __init__(self):
+                self.kick_count = 0
+
+            def event_source(_source, state, context):
+                player = f"{state['offense']}-RB"
+                return {
+                    'event': 'run', 'clock_runoff_seconds': 700,
+                    'row': {'game_id': 'kick-return-fixture', 'play_id': context['play_index'],
+                            'play_type': 'run', 'yards_gained': 0, 'live_elapsed_seconds': 700,
+                            'dead_ball_seconds': 0, 'clock_stopped': True,
+                            'participants': {'rusher_id': player,
+                                             'rusher_team': state['offense'],
+                                             'rusher_side': state['offense'],
+                                             'attribution': 'autonomous_execution',
+                                             'timeout': False, 'out_of_bounds': False}},
+                }
+
+            def kick(self, kind, kicker, receiver, _context):
+                self.kick_count += 1
+                if self.kick_count > 1:
+                    return super().kick(kind, kicker, receiver, _context)
+                provenance = ceg_contract.ProvenanceV2(
+                    'controlled-kick-return-fixture', 'test', 'd' * 64,
+                    components=('generated_return_touchdown',), draw_ids=('initial-kick',))
+                returner = ceg_contract.PlayerRoleV2.named('A-KR')
+                event_record = ceg_contract.GeneratedPlayV2(
+                    ceg_contract.CONTRACT_V2_VERSION,
+                    ceg_contract.PlayCallV2('kickoff', provenance=provenance),
+                    'kickoff', None, provenance, ceg_contract.ClockV2(5),
+                    kick=ceg_contract.KickV2(
+                        'kickoff', kicker, receiver, 65, 65, 'return',
+                        possession_after='receiving_team', return_start_yardline_100=20,
+                        dead_ball_yardline_100=100, return_yards=80, returner=returner),
+                    scoring=ceg_contract.ScoringV2('touchdown', 'receiving_team'),
+                    players=ceg_contract.PlayerRolesV2(returner=returner))
+                return {'clock_runoff_seconds': 5, 'event_record': event_record,
+                        'clock_starts_on': 'legal_touch'}
+
+        record = gs.play_game(73, ref({}, []), winner_choice='receive', winner='A',
+                              execution_source=ReturnSource(), max_drives=80)
+        self.assertEqual(record['status'], 'complete_regulation', record.get('blocker'))
+        self.assertEqual(record['points']['A'], 7)
+        return_td = next(event for event in record['kickoffs'] if event.get('terminal') == 'touchdown')
+        self.assertEqual((return_td['scoring_team'], return_td['points_scored']), ('A', 7))
+        self.assertEqual(record['stats']['team']['A']['return_touchdowns'], 1)
+        player = next(row for row in record['stats']['player'] if row['player_id'] == 'A-KR')
+        self.assertEqual(player['returning']['td'], 1)
         gs.validate_game(record)
 
     def test_ceg_interception_return_touchdown_completes_full_game_with_shared_rules(self):
@@ -2362,6 +2472,9 @@ class AutonomousGameLifecycle(unittest.TestCase):
                                 'participants': participants}}
 
             def apply_event(_source, state, event_record):
+                if event_record.event == 'kickoff':
+                    return event_expansion_rules.apply_kickoff_play(
+                        state, event_record, switches=EventExpansionSwitches())
                 return event_expansion_rules.apply_scrimmage_play(
                     state, event_record, switches=EventExpansionSwitches())
 

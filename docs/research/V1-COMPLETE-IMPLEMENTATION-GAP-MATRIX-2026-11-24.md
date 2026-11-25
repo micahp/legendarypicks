@@ -3,7 +3,8 @@
 Audit base: `research/slc-v1-complete-2026-11-23` at `d250b3ab`. The requested
 `68a019db` object is unavailable locally and from `origin`; the design in this
 branch is the latest available copy. This matrix records the implementation
-before new engine work.
+before the autonomous implementation milestones. The original audit-time gaps
+are retained below; current implementation status is appended after the audit.
 
 | Area | Existing work to reuse | V1 Complete gap |
 | --- | --- | --- |
@@ -37,3 +38,18 @@ unresolved or unsupported values. Authored fallbacks remain explicit.
    penalties, dead-ball clocks and overtime, with no historical outcome or
    caller-supplied next-snap state.
 4. Run the existing headless engine and viewer from the same recorded events.
+
+## Current implementation status — 2026-11-25
+
+| Area | Reused and now integrated | Remaining V1 gap |
+| --- | --- | --- |
+| Player ratings | The LP bridge supplies player-specific estimated NFL ratings to Gridiron; mapped ratings affect movement, reads, throwing, blocking, catching and tackling. | Runtime ratings still need typed source/as-of/uncertainty provenance and broader independent effect checks. Madden data remains excluded under the documented restriction pending identity, cutoff and rights review. |
+| Personnel and coaching | Both frozen teams use eligible rosters; team-season tendencies inform live run/pass selection, fourth-down EV, timeouts and tries. | Special-teams units, substitutions and their role eligibility are not executed. Decision quality still needs calibration against the expected value of live alternatives. |
+| Plays and assignments | Supported inside-zone and assigned pass plays execute all 22 roles through bounded movement and live interactions; their generated outcomes feed the SLC state loop. | More executable formations and team concepts remain. Special-teams assignments and movement are absent; punt returns currently have zero generated return yards. |
+| Rules and statistics | `ceg-play-2` scrimmage outcomes, DPI, selected pre-snap/live fouls, punts, made/missed field goals and kickoff touchbacks pass through typed adapters into E1, game state and stat accounting. A full-game fixture covers a kickoff-return TD, try, restart and reconciled scoring. | Autonomous free kicks are touchback-only; blocked kicks, live punt/kickoff returns, muffs, kick return fumbles, field-goal returns, broader penalty enforcement and several scrimmage fumbles remain incomplete or fail closed. |
+| Shared kick geometry | The LP copy of `ceg-play-2` now uses the kicking team's frame consistently for punt catches, returns, touchbacks and recoveries. | The V2 branch maintainer has been notified; the shared branch contract still needs this correction before both branches freeze the same semantics. |
+| Acceptance | 239 focused contract, rules, stats, autonomous-game and full-game tests pass, including a deterministic kickoff-return TD through regulation. | Still required: live kick/return execution, all-supported-play assignment sweep, controlled reads, consecutive autonomous plays, drive, reproducible full game with real frozen snapshot, and a small behavioral/statistical batch. |
+
+The V1 kick adapters now reject unsupported blocked-kick and end-of-period
+transitions by name. They do not represent live player execution for those
+events, and the zero-yard punt-return model is an explicit interim limitation.

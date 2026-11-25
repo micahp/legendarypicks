@@ -142,8 +142,8 @@ class CegPlay2Contract(unittest.TestCase):
 
     def test_punt_return_touchdown_uses_kicking_team_frame(self):
         kick = c.KickV2('punt', 'A', 'B', 40, 45, 'return',
-                        possession_after='receiving_team', return_start_yardline_100=80,
-                        dead_ball_yardline_100=100, return_yards=20,
+                        possession_after='receiving_team', return_start_yardline_100=20,
+                        dead_ball_yardline_100=100, return_yards=80,
                         returner=c.PlayerRoleV2.named('pr1'))
         record = play(call=c.PlayCallV2('punt'), event='punt', yards_gained=None,
                       air_yards=None, yards_after_catch=None, kick=kick,
@@ -152,8 +152,8 @@ class CegPlay2Contract(unittest.TestCase):
                       scoring=c.ScoringV2('touchdown', 'receiving_team'))
         self.assertIsNone(c.validate_v2(None, record))
         mismatched = c.KickV2('punt', 'A', 'B', 40, 45, 'return',
-                              possession_after='kicking_team', return_start_yardline_100=80,
-                              dead_ball_yardline_100=100, return_yards=20,
+                              possession_after='kicking_team', return_start_yardline_100=20,
+                              dead_ball_yardline_100=100, return_yards=80,
                               returner=c.PlayerRoleV2.named('pr1'))
         with self.assertRaisesRegex(c.ContractViolationV2, 'kick_return_touchdown_team_or_result_mismatch'):
             c.validate_v2(None, play(call=c.PlayCallV2('punt'), event='punt', yards_gained=None,
@@ -162,8 +162,8 @@ class CegPlay2Contract(unittest.TestCase):
                                      scoring=c.ScoringV2('touchdown', 'receiving_team')))
         wrong_scorer = c.KickV2('punt', 'A', 'B', 40, 45, 'return',
                                 possession_after='receiving_team',
-                                return_start_yardline_100=80,
-                                dead_ball_yardline_100=100, return_yards=20,
+                                return_start_yardline_100=20,
+                                dead_ball_yardline_100=100, return_yards=80,
                                 returner=c.PlayerRoleV2.named('pr1'))
         with self.assertRaisesRegex(c.ContractViolationV2,
                                     'kick_return_touchdown_team_or_result_mismatch'):
@@ -175,7 +175,7 @@ class CegPlay2Contract(unittest.TestCase):
     def test_muff_records_recovery_team_spot_and_next_possession(self):
         kick = c.KickV2('punt', 'A', 'B', 40, 45, 'muff',
                         possession_after='kicking_team', recovery_team='kicking_team',
-                        recovery_yardline_100=45, dead_ball_yardline_100=45,
+                        recovery_yardline_100=35, dead_ball_yardline_100=35,
                         receiving_team_touched_beyond_line=True,
                         returner=c.PlayerRoleV2.unmodelled('punt_fumbler'),
                         recoverer=c.PlayerRoleV2.named('g1'), fumble_spot_yardline_100=45)

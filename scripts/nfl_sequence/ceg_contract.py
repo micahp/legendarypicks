@@ -310,7 +310,7 @@ class ScoringV2:
 
 @dataclass(frozen=True)
 class KickV2:
-    """Kick facts use the kicking team's direction for both kick and dead-ball spots."""
+    """Kick spots use the kicking team's yardline frame: its own goal line is 100."""
 
     kind: Literal['punt', 'field_goal', 'kickoff']
     kicking_team: str
@@ -640,9 +640,10 @@ def _v2_kick(kick, play):
     if kick.receiving_team_touched_beyond_line is not None \
             and type(kick.receiving_team_touched_beyond_line) is not bool:
         _v2_fail('receiving_touch_fact_invalid')
-    if kick.recovery_team == 'kicking_team' and kick.recovery_yardline_100 is not None \
-            and kick.recovery_yardline_100 > kick.kick_spot_yardline_100 \
-            and kick.receiving_team_touched_beyond_line is None:
+    if (kick.result == 'muff' and kick.recovery_team == 'kicking_team'
+            and kick.recovery_yardline_100 is not None \
+            and kick.recovery_yardline_100 < kick.kick_spot_yardline_100 \
+            and kick.receiving_team_touched_beyond_line is None):
         _v2_fail('kicking_team_beyond_line_recovery_needs_receiving_touch_fact')
     if kick.result in ('kicking_team_recovery', 'onside_recovery') and kick.possession_after != 'kicking_team':
         _v2_fail('kicking_team_recovery_possession_mismatch')

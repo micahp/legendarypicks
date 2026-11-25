@@ -314,13 +314,14 @@ def apply_punt_play(state, play, switches=FROZEN_CONTROL):
     return_yards = kick.return_yards or 0
     possession_side = kick.possession_after
     flags = {'punt': True, 'punt_attempt': True,
+             'punt_return': kick.result == 'return', 'fumble': kick.result == 'muff',
              'return_yards': return_yards, 'returner_id': kick.returner.stat_player_id}
 
     if kick.result == 'return':
         if possession_side != 'receiving_team':
             raise UnsupportedEventTransition('ordinary_punt_return_must_end_with_receiving_team')
         start = _int_spot(kick.return_start_yardline_100, 'punt_return_start_spot')
-        if start < kick.kick_spot_yardline_100:
+        if start > kick.kick_spot_yardline_100:
             raise UnsupportedEventTransition('punt_return_start_or_distance_is_impossible')
         expected_dead = start + return_yards
         if not 0 <= expected_dead <= 100 or dead_spot != expected_dead:
@@ -340,15 +341,17 @@ def apply_punt_play(state, play, switches=FROZEN_CONTROL):
         else:
             if kick.recovery_team != 'kicking_team':
                 raise UnsupportedEventTransition('punt_possession_role_mismatch')
-            if recovery <= kick.kick_spot_yardline_100:
+            if recovery >= kick.kick_spot_yardline_100:
                 raise UnsupportedEventTransition('behind_line_punt_recovery_uses_blocked_kick_path')
             if kick.receiving_team_touched_beyond_line is not True:
                 raise UnsupportedEventTransition('kicking_team_punt_recovery_needs_receiving_touch')
-            expected_dead = recovery - return_yards
+            expected_dead = recovery + return_yards
             if not 0 <= expected_dead <= 100 or dead_spot != expected_dead:
                 raise UnsupportedEventTransition('kicking_team_return_yards_disagree_with_dead_ball_spot')
     elif possession_side != 'receiving_team':
         raise UnsupportedEventTransition('punt_touchback_must_award_receiving_team')
+    elif dead_spot != 20:
+        raise UnsupportedEventTransition('punt_touchback_spot_must_be_20_in_kicking_team_frame')
 
     if play.scoring is not None:
         if play.scoring.kind == 'touchdown':
@@ -377,3 +380,110 @@ def apply_punt_play(state, play, switches=FROZEN_CONTROL):
                  'togo': min(10, 100 - dead_spot), 'yl': 100 - dead_spot}
         flags['turnover'] = True
     return AppliedEvent(after, 'punt', flags)
+
+
+def apply_field_goal_play(state, play, switches=FROZEN_CONTROL):
+    """Validate and classify a generated field-goal attempt for the E1 game loop."""
+    if not isinstance(switches, EventExpansionSwitches):
+        raise ValueError('event expansion switches must be typed')
+    contract.validate_v2(state, play)
+    if play.event != 'field_goal_attempt' or play.kick is None or play.kick.kind != 'field_goal':
+        raise UnsupportedEventTransition('field_goal_transition_requires_typed_field_goal_record')
+    kick = play.kick
+    if (kick.kicking_team, kick.receiving_team) != (state['offense'], state['defense']):
+        raise UnsupportedEventTransition('field_goal_team_roles_disagree_with_pre_kick_state')
+    if kick.result == 'blocked':
+        raise UnsupportedEventTransition('blocked_field_goal_requires_classified_blocked_kick_transition')
+    if kick.result not in ('made', 'missed', 'period_expired'):
+        raise UnsupportedEventTransition('field_goal_result_not_supported:' + str(kick.result))
+    flags = {'field_goal_attempt': True, 'field_goal_result': kick.result}
+    if kick.result == 'period_expired':
+        flags['period_expired'] = True
+        return AppliedEvent(None, 'field_goal_attempt', flags)
+    if (kick.result == 'made') != (play.scoring is not None):
+        raise UnsupportedEventTransition('field_goal_scoring_fact_disagrees_with_kick_result')
+    return AppliedEvent(None, 'field_goal_attempt', flags,
+                        state['offense'] if kick.result == 'made' else None)
+
+
+def apply_kickoff_play(state, play, switches=FROZEN_CONTROL):
+    """Apply an autonomous free kick in the kicking team's yardline frame."""
+    if not isinstance(switches, EventExpansionSwitches):
+        raise ValueError('event expansion switches must be typed')
+    contract.validate_v2(state, play)
+    if play.event != 'kickoff' or play.kick is None or play.kick.kind != 'kickoff':
+        raise UnsupportedEventTransition('kickoff_transition_requires_typed_kickoff_record')
+    kick = play.kick
+    if (kick.kicking_team, kick.receiving_team) != (state['offense'], state['defense']):
+        raise UnsupportedEventTransition('kickoff_team_roles_disagree_with_pre_kick_state')
+    if kick.kick_spot_yardline_100 != state.get('yl'):
+        raise UnsupportedEventTransition('kickoff_spot_disagrees_with_pre_kick_state')
+    _require_switch(switches, 'punt_return_events')
+    dead_spot = kick.dead_ball_yardline_100
+    if dead_spot is not None:
+        dead_spot = _int_spot(dead_spot, 'kickoff_dead_ball_spot')
+    flags = {'kickoff': True, 'return_yards': kick.return_yards or 0,
+             'returner_id': kick.returner.stat_player_id}
+    if kick.result == 'period_expired':
+        return AppliedEvent(None, 'end_of_period', {**flags, 'period_expired': True})
+    if kick.result == 'touchback':
+        if dead_spot != 35 or kick.possession_after != 'receiving_team':
+            raise UnsupportedEventTransition('kickoff_touchback_spot_must_be_35_in_kicking_team_frame')
+        after = {'offense': state['defense'], 'defense': state['offense'], 'down': 1,
+                 'togo': 10, 'yl': 65}
+        flags['touchback'] = True
+        flags['turnover'] = True
+        return AppliedEvent(after, 'kickoff', flags)
+    if kick.result == 'return':
+        start = _int_spot(kick.return_start_yardline_100, 'kickoff_return_start_spot')
+        yards = kick.return_yards
+        if kick.possession_after != 'receiving_team' or start > kick.kick_spot_yardline_100:
+            raise UnsupportedEventTransition('kickoff_return_geometry_or_possession_invalid')
+        if start + yards != dead_spot:
+            raise UnsupportedEventTransition('kickoff_return_yards_disagree_with_dead_ball_spot')
+    elif kick.result == 'muff':
+        recovery = _int_spot(kick.recovery_yardline_100, 'kickoff_recovery_spot')
+        if kick.recovery_team != kick.possession_after or kick.recovery_team not in (
+                'kicking_team', 'receiving_team'):
+            raise UnsupportedEventTransition('kickoff_muff_recovery_team_mismatch')
+        if kick.recovery_team == 'receiving_team':
+            if recovery != dead_spot:
+                raise UnsupportedEventTransition('receiving_kickoff_muff_dead_ball_spot_mismatch')
+        else:
+            if recovery >= kick.kick_spot_yardline_100:
+                raise UnsupportedEventTransition('kicking_team_kickoff_recovery_before_ten_yards')
+            if kick.receiving_team_touched_beyond_line is not True:
+                raise UnsupportedEventTransition('kicking_team_kickoff_recovery_needs_touch_or_ten_yards')
+            if recovery != dead_spot:
+                raise UnsupportedEventTransition('kicking_kickoff_muff_dead_ball_spot_mismatch')
+        flags['fumble'] = True
+        flags['recovered_by'] = kick.recovery_team
+    elif kick.result in ('kicking_team_recovery', 'onside_recovery'):
+        recovery = _int_spot(kick.recovery_yardline_100, 'kickoff_recovery_spot')
+        if kick.recovery_team != 'kicking_team' or kick.possession_after != 'kicking_team':
+            raise UnsupportedEventTransition('onside_recovery_possession_mismatch')
+        if recovery >= kick.kick_spot_yardline_100:
+            raise UnsupportedEventTransition('onside_recovery_before_ten_yards')
+        after = {'offense': state['offense'], 'defense': state['defense'], 'down': 1,
+                 'togo': min(10, recovery), 'yl': recovery}
+        flags.update({'possession_retained': True, 'onside_recovery': True})
+        return AppliedEvent(after, 'kickoff', flags)
+    else:
+        raise UnsupportedEventTransition('kickoff_result_not_supported:' + str(kick.result))
+
+    if play.scoring is not None:
+        if (play.scoring.kind != 'touchdown' or play.scoring.team != 'receiving_team'
+                or kick.result != 'return' or dead_spot != 100):
+            raise UnsupportedEventTransition('kickoff_touchdown_fact_disagrees_with_return')
+        flags.update({'touchdown': True, 'return_touchdown': True})
+        return AppliedEvent(None, 'touchdown', flags, state['defense'])
+    if dead_spot in (0, 100):
+        raise UnsupportedEventTransition('kickoff_goal_line_endpoint_needs_scoring_fact')
+    if kick.possession_after == 'kicking_team':
+        after = {'offense': state['offense'], 'defense': state['defense'], 'down': 1,
+                 'togo': min(10, dead_spot), 'yl': dead_spot}
+        flags['turnover'] = True
+    else:
+        after = {'offense': state['defense'], 'defense': state['offense'], 'down': 1,
+                 'togo': min(10, 100 - dead_spot), 'yl': 100 - dead_spot}
+    return AppliedEvent(after, 'kickoff', flags)

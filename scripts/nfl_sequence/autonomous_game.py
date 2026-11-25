@@ -122,8 +122,18 @@ class AutonomousGameExecution:
         return AutonomousTimeoutDecisions(self, remaining, points)
 
     def apply_event(self, state, event_record):
-        return event_expansion_rules.apply_scrimmage_play(
-            state, event_record, switches=self.event_switches)
+        adapters = {
+            'punt': event_expansion_rules.apply_punt_play,
+            'field_goal_attempt': event_expansion_rules.apply_field_goal_play,
+            'kickoff': event_expansion_rules.apply_kickoff_play,
+        }
+        adapter = adapters.get(event_record.event)
+        applied = (event_expansion_rules.apply_scrimmage_play(
+            state, event_record, switches=self.event_switches) if adapter is None else
+            adapter(state, event_record, switches=self.event_switches))
+        if applied.scoring_team is not None:
+            self.current_team = applied.scoring_team
+        return applied
 
     def _decision_seed(self, play_index, purpose):
         material = f'{self.seed}:{play_index}:{purpose}'.encode()
@@ -445,33 +455,107 @@ class AutonomousGameExecution:
 
     def special_teams(self, event, state, row, _runoff, _spot, rng):
         team = self.team_by_side[state['offense']]
+        receiving_side = 'B' if state['offense'] == 'A' else 'A'
+        receiving_team = self.team_by_side[receiving_side]
         roster_side = 'home' if team == self.snapshot['schedule']['home_team'] else 'away'
+        receiving_roster_side = 'home' if receiving_team == self.snapshot['schedule']['home_team'] else 'away'
         players = self.snapshot['rosters'][roster_side]['players']
+        receiving_players = self.snapshot['rosters'][receiving_roster_side]['players']
+        row.setdefault('participants', {'attribution': 'autonomous_execution', 'timeout': False})
+        provenance = ceg_contract.ProvenanceV2(
+            generator='slc.autonomous_special_teams', version='v1',
+            manifest_sha256=self.event_manifest_sha256,
+            components=('player_rating', 'authored_kick_model', 'field_geometry'),
+            draw_ids=(f"{self.seed}:{row['play_id']}:{event}",))
+
+        def role_record(role, player, side):
+            if player is None:
+                row['participants'][f'{role}_id'] = None
+                return ceg_contract.PlayerRoleV2.unmodelled(role)
+            row['participants'].update({
+                f'{role}_id': player['gsis_id'], f'{role}_name': player.get('player_name'),
+                f'{role}_position': player.get('pos_abb'), f'{role}_team': player.get('team'),
+                f'{role}_side': side,
+            })
+            return ceg_contract.PlayerRoleV2.named(player['gsis_id'])
+
+        def returner_for_team():
+            eligible = [p for p in receiving_players
+                        if p.get('pos_abb') in ('PR', 'RB', 'WR', 'CB', 'DB', 'FS', 'SS')]
+            return max(eligible, key=lambda p: (
+                self._player_rating(p['gsis_id'], 'SPD')
+                + self._player_rating(p['gsis_id'], 'BCV')
+                + self._player_rating(p['gsis_id'], 'CAR'),
+                -p.get('pos_rank', 999), p['gsis_id'])) if eligible else None
+
         if event == 'punt':
             punter = min((p for p in players if p.get('pos_abb') == 'P'),
                          key=lambda p: (p.get('pos_rank', 999), p['gsis_id']), default=None)
             distance = max(25, min(65, round(42 + rng.uniform(-5, 5))))
             projected_spot = 100 - state['yl'] + distance
-            receiving_spot = 80 if projected_spot >= 100 else int(_clamp(projected_spot, 1, 99))
-            return {'event': 'punt', 'clock_runoff_seconds': 6,
-                    'spot': receiving_spot,
+            returner = returner_for_team()
+            runoff = float(row.get('live_elapsed_seconds', 4))
+            if projected_spot >= 100:
+                result, return_start, dead_spot, return_yards = 'touchback', None, 20, None
+                returner_role = ceg_contract.PlayerRoleV2.none()
+            else:
+                result, dead_spot, return_yards = 'return', 100 - projected_spot, 0
+                return_start = dead_spot
+                returner_role = role_record('returner', returner, receiving_side)
+            punter_role = role_record('punter', punter, state['offense'])
+            kick = ceg_contract.KickV2(
+                'punt', state['offense'], state['defense'], state['yl'], distance, result,
+                possession_after='receiving_team', return_start_yardline_100=return_start,
+                dead_ball_yardline_100=dead_spot, return_yards=return_yards,
+                returner=returner_role)
+            event_record = ceg_contract.GeneratedPlayV2(
+                contract=ceg_contract.CONTRACT_V2_VERSION,
+                call=ceg_contract.PlayCallV2('punt', provenance=provenance), event='punt',
+                yards_gained=None, provenance=provenance,
+                clock=ceg_contract.ClockV2(runoff), kick=kick,
+                players=ceg_contract.PlayerRolesV2(punter=punter_role, returner=returner_role))
+            return {'event': 'punt', 'clock_runoff_seconds': runoff, 'event_record': event_record,
+                    'execution': {'schema_version': ceg_contract.CONTRACT_V2_VERSION,
+                                  'execution_kind': 'typed_kick_event_without_player_trajectory',
+                                  'ceg_event': asdict(event_record),
+                                  'viewer': None},
                     'metadata': {'special_teams_execution': {
                         'kind': 'punt', 'punter_id': punter['gsis_id'] if punter else None,
+                        'returner_id': returner['gsis_id'] if returner else None,
                         'generated_punt_distance_yards': distance,
-                        'return_model': 'bounded_no_return_v1',
-                        'assignments': 'authored_11_player_punt_coverage_and_return_roles'}}}
+                        'return_model': 'zero_yard_return_until_live_special_teams_motion_is_integrated',
+                        'assignments': 'authored_unit_roles'}}}
         kick_distance = state['yl'] + 17
         kicker = min((p for p in players if p.get('pos_abb') == 'PK'),
                      key=lambda p: (p.get('pos_rank', 999), p['gsis_id']), default=None)
         rating = self._player_rating(kicker['gsis_id'], 'KAC') if kicker else 70
         p_make = _sigmoid((62 - kick_distance) * 0.16 + (rating - 70) * 0.035)
         made = rng.random() < p_make
-        return {'event': 'field_goal_attempt', 'clock_runoff_seconds': 5,
+        runoff = float(row.get('live_elapsed_seconds', 4))
+        kicker_role = role_record('kicker', kicker, state['offense'])
+        kick_result = 'made' if made else 'missed'
+        kick = ceg_contract.KickV2(
+            'field_goal', state['offense'], state['defense'],
+            game_state.kick_spot_yardline_100(state['yl']), kick_distance, kick_result,
+            possession_after=None if made else 'receiving_team')
+        event_record = ceg_contract.GeneratedPlayV2(
+            contract=ceg_contract.CONTRACT_V2_VERSION,
+            call=ceg_contract.PlayCallV2('field_goal', provenance=provenance),
+            event='field_goal_attempt', yards_gained=None, provenance=provenance,
+            clock=ceg_contract.ClockV2(runoff), kick=kick,
+            scoring=(ceg_contract.ScoringV2('field_goal', 'kicking_team') if made else None),
+            players=ceg_contract.PlayerRolesV2(kicker=kicker_role))
+        return {'event': 'field_goal_attempt', 'clock_runoff_seconds': runoff,
+                'event_record': event_record,
+                'execution': {'schema_version': ceg_contract.CONTRACT_V2_VERSION,
+                              'execution_kind': 'typed_kick_event_without_player_trajectory',
+                              'ceg_event': asdict(event_record),
+                              'viewer': None},
                 'metadata': {'field_goal_result': 'made' if made else 'missed',
                              'field_goal_execution': {'kicker_id': kicker['gsis_id'] if kicker else None,
                                  'kick_distance_yards': kick_distance, 'kicker_accuracy_rating': rating,
                                  'make_probability': p_make, 'result': 'made' if made else 'missed',
-                                 'assignments': 'authored_11_player_field_goal_unit_roles'},
+                                 'assignments': 'authored_unit_roles'},
                              'field_goal_result_source': {'kind': 'generated_player_execution',
                                  'distance_yards': kick_distance, 'kicker_accuracy_rating': rating,
                                  'probability_made': p_make}}}
@@ -482,14 +566,31 @@ class AutonomousGameExecution:
         return int(player.get('ratings', {}).get(name, 70))
 
     def kick(self, kind, kicker, receiver, context):
-        # A rule-bounded touchback is the current V1 free-kick model. The SLC
-        # lifecycle owns possession, clock, period and score transitions.
-        return {'clock_runoff_seconds': 5, 'receiving_start_yardline_100': 65,
-                'clock_starts_on': 'legal_touch', 'touchdown': False,
+        # The SLC lifecycle owns clock, possession, score and period changes;
+        # even the current touchback-only free-kick outcome uses the shared V2
+        # event adapter so a future live return cannot bypass those rules.
+        kick_spot = 80 if kind == 'safety_free_kick' else 65
+        provenance = ceg_contract.ProvenanceV2(
+            generator='slc.autonomous_special_teams', version='v1',
+            manifest_sha256=self.event_manifest_sha256,
+            components=('authored_free_kick_model', 'field_geometry'),
+            draw_ids=(f"{self.seed}:{self.play_index}:{kind}",))
+        kick = ceg_contract.KickV2(
+            'kickoff', kicker, receiver, kick_spot, 65, 'touchback',
+            possession_after='receiving_team', dead_ball_yardline_100=35)
+        event_record = ceg_contract.GeneratedPlayV2(
+            contract=ceg_contract.CONTRACT_V2_VERSION,
+            call=ceg_contract.PlayCallV2('kickoff', provenance=provenance),
+            event='kickoff', yards_gained=None, provenance=provenance,
+            clock=ceg_contract.ClockV2(5), kick=kick)
+        return {'clock_runoff_seconds': 5,
+                'receiving_start_yardline_100': 65,
+                'clock_starts_on': 'legal_touch', 'event_record': event_record,
                 'execution': {'kind': kind, 'kicking_team': kicker, 'receiving_team': receiver,
                               'result': 'touchback', 'receiving_start_yardline_100': 65,
                               'origin': 'authored_rule_bounded_free_kick_v1',
-                              'assignments': 'authored_11_player_kick_coverage_and_return_roles'}}
+                              'ceg_event': asdict(event_record),
+                              'assignments': 'authored_unit_roles'}}
 
     def try_after_touchdown(self, situation):
         scorer = self.team_by_side.get(self.current_team, self.current_team)

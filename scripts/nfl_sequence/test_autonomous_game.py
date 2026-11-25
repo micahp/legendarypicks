@@ -1,4 +1,5 @@
 import sys
+import random
 import unittest
 from pathlib import Path
 
@@ -66,6 +67,75 @@ class AutonomousPassInterferenceTests(unittest.TestCase):
                 self.assertEqual(applied.state_after,
                                  {'offense': 'A', 'defense': 'B', 'down': 1, 'togo': 10, 'yl': 32})
                 self.assertTrue(applied.flags['penalty'])
+
+
+class AutonomousSpecialTeamsTests(unittest.TestCase):
+    def _source(self):
+        source = object.__new__(autonomous_game.AutonomousGameExecution)
+        source.seed = 7
+        source.play_index = 11
+        source.event_manifest_sha256 = 'f' * 64
+        source.team_by_side = {'A': 'AAA', 'B': 'BBB'}
+        source.ratings_path = None
+        source.event_switches = EventExpansionSwitches()
+        source.snapshot = {
+            'schedule': {'home_team': 'AAA', 'away_team': 'BBB'},
+            'rosters': {
+                'home': {'players': [
+                    {'gsis_id': 'punter-a', 'player_name': 'Punter A', 'pos_abb': 'P',
+                     'pos_rank': 1, 'team': 'AAA'},
+                    {'gsis_id': 'kicker-a', 'player_name': 'Kicker A', 'pos_abb': 'PK',
+                     'pos_rank': 1, 'team': 'AAA'},
+                ]},
+                'away': {'players': [
+                    {'gsis_id': 'returner-b', 'player_name': 'Returner B', 'pos_abb': 'WR',
+                     'pos_rank': 1, 'team': 'BBB'},
+                    {'gsis_id': 'back-b', 'player_name': 'Back B', 'pos_abb': 'RB',
+                     'pos_rank': 2, 'team': 'BBB'},
+                ]},
+            },
+        }
+        return source
+
+    def test_generated_punt_uses_typed_spot_and_named_returner(self):
+        source = self._source()
+        row = {'play_id': 12, 'live_elapsed_seconds': 4,
+               'participants': {'attribution': 'autonomous_execution'}}
+        generated = source.special_teams(
+            'punt', {'offense': 'A', 'defense': 'B', 'yl': 65}, row, 4, None, random.Random(3))
+        event_record = generated['event_record']
+        self.assertEqual(event_record.event, 'punt')
+        self.assertEqual(event_record.kick.returner.player_id, 'returner-b')
+        applied = source.apply_event(
+            {'offense': 'A', 'defense': 'B', 'down': 4, 'togo': 5, 'yl': 65}, event_record)
+        self.assertEqual(applied.state_after['offense'], 'B')
+        self.assertEqual(applied.flags['punt_return'], True)
+        self.assertEqual(applied.flags['return_yards'], 0)
+
+    def test_generated_punt_touchback_uses_kicking_frame_restart(self):
+        source = self._source()
+        row = {'play_id': 13, 'live_elapsed_seconds': 4,
+               'participants': {'attribution': 'autonomous_execution'}}
+        generated = source.special_teams(
+            'punt', {'offense': 'A', 'defense': 'B', 'yl': 35}, row, 4, None, random.Random(3))
+        self.assertEqual(generated['event_record'].kick.result, 'touchback')
+        applied = source.apply_event(
+            {'offense': 'A', 'defense': 'B', 'down': 4, 'togo': 5, 'yl': 35},
+            generated['event_record'])
+        self.assertEqual((applied.state_after['offense'], applied.state_after['yl']), ('B', 80))
+
+    def test_generated_field_goal_result_is_applied_by_shared_adapter(self):
+        source = self._source()
+        row = {'play_id': 14, 'live_elapsed_seconds': 4,
+               'participants': {'attribution': 'autonomous_execution'}}
+        generated = source.special_teams(
+            'field_goal_attempt', {'offense': 'A', 'defense': 'B', 'yl': 40},
+            row, 4, None, random.Random(9))
+        applied = source.apply_event(
+            {'offense': 'A', 'defense': 'B', 'down': 4, 'togo': 5, 'yl': 40},
+            generated['event_record'])
+        self.assertEqual(applied.flags['field_goal_result'], generated['metadata']['field_goal_result'])
+        self.assertTrue(applied.flags['field_goal_attempt'])
 
 
 if __name__ == '__main__':
