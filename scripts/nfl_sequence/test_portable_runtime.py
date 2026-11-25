@@ -208,6 +208,25 @@ class PortableRuntime(unittest.TestCase):
         self.assertEqual(corrected["valid_full_game_coverage"], 0.6667)
         self.assertEqual(corrected["valid_full_game_distribution"]["sample_games"], 2)
 
+    def test_support_aware_candidate_count_is_flattened_for_summary(self):
+        decisions = [
+            {"row_conditioning": {
+                "method": "support_aware",
+                "base_support": {"candidate_count": 137, "effective_sample_size": 132.5},
+                "final_support": {"candidate_count": 20, "effective_sample_size": 18.0},
+                "candidate_count_after": 20,
+            }},
+            {"row_conditioning": {
+                "method": "soft", "candidate_count_before": 91, "candidate_count_after": 91,
+            }},
+        ]
+
+        simulate_portable_pack._normalize_conditioning_candidate_counts(decisions)
+
+        self.assertEqual(decisions[0]["row_conditioning"]["candidate_count_before"], 137)
+        self.assertEqual(decisions[0]["row_conditioning"]["candidate_count_after"], 20)
+        self.assertEqual(decisions[1]["row_conditioning"]["candidate_count_before"], 91)
+
 
 if __name__ == "__main__":
     unittest.main()

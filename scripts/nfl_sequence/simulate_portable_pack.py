@@ -45,6 +45,17 @@ def _include_completed_overtime(summary, outcomes, requested, aggregation):
     return summary
 
 
+def _normalize_conditioning_candidate_counts(decisions):
+    """Expose support-aware pre-filter counts to the portable run summary."""
+    for decision in decisions:
+        metrics = decision.get("row_conditioning")
+        if not isinstance(metrics, dict) or "candidate_count_before" in metrics:
+            continue
+        base_support = metrics.get("base_support")
+        if isinstance(base_support, dict) and isinstance(base_support.get("candidate_count"), int):
+            metrics["candidate_count_before"] = base_support["candidate_count"]
+
+
 def _forbid_source_table_reads():
     """Block DB connections AND external model fixture/table file opens."""
     def refused(*_args, **_kwargs):
@@ -96,6 +107,7 @@ def _run_seed(seed, reference, snapshot, gs, slc_engine=None, rng_plan=None, dec
         if decisions_out is not None:
             decisions_out.extend(decisions)
         if diagnostics_out is not None:
+            _normalize_conditioning_candidate_counts(decisions)
             summary = slc_engine.summary(decisions, record)
             conditioning = dict(summary.get("row_conditioning") or {})
             conditioning.pop("unique_source_row_ids", None)
