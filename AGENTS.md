@@ -122,6 +122,24 @@ No LP live forecast/lock/grading updates, production writes, shared engine chang
 - Box: 5.8 GB RAM, shared. Check `uptime` AND `free -h` before batch jobs; under ~1.5 GB available,
   do not start. Smallest unit first, single process, no hidden library parallelism. Verify a kill
   landed with `ps`. Do not run parallel worktree dev-server stacks.
+- **Shared disk stewardship is mandatory.** Every agent's multi-gigabyte downloads, caches, worktrees,
+  build products and simulation outputs accumulate on the same finite server. Do not exhaust disk
+  space or leave it for another agent to clean up.
+  - Before downloads, extraction, builds, new worktrees or batches, check `df -h` and `df -i` on the
+    target filesystem; use `du -sh` on relevant directories and estimate peak temporary plus retained
+    storage (including simultaneous archive/extracted copies). Reuse existing verified artifacts and
+    shared caches instead of duplicating them. Check available space during large jobs and after.
+  - Budget and cap output growth, especially per-seed traces, logs, repeated snapshots and replay
+    files. Retain the smallest reproducible evidence and manifests needed; compress or stream where
+    appropriate. Do not create multi-GB copies or caches unnecessarily.
+  - Preserve headroom for other agents, databases, logs and normal service operation. If the expected
+    peak cannot fit safely, reduce scope, use an approved alternative location, or stop and report
+    the blocker before writing more data. Never fill a filesystem to test whether a job fits.
+  - Clean up only your own verified disposable temporary files and obsolete artifacts when safe.
+    Never delete another agent's work, source data, databases, shared caches, active worktrees or
+    required evidence without explicit authorization. Report large retained artifacts, their paths,
+    sizes, retention rationale, and free space before/after. Continue the primary task within the
+    available resource budget.
 - Prod is a docker stack with its own DB `backend/data/picks.db`. Read
   `docs/RUNBOOK-prod-promotion.md` before any promotion. Releases only via `scripts/release.sh`.
 
