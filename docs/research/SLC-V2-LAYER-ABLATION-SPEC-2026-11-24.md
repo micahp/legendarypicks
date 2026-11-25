@@ -116,3 +116,34 @@ sample: a result with an interval that includes zero is reported as "no detected
 
 The surviving layers are the ones whose removal makes the forecasts or the realism worse. The historical-support audit
 and the unified fallback design are then done for those layers only.
+
+## Amendment 1 (2026-11-24, before the batch)
+
+Found while building the runner; no arm had been scored.
+
+1. **Arms are run-time overrides of the frozen pack, not rebuilt packs.** The pack is decoded once per arm and the
+   arm's layers are switched off on the loaded sampler, by setting the attributes each layer's loader sets to their
+   constructor defaults (`e2_reference.load`, `slc_engine.load_reference`). The per-game player chooser is rebuilt from
+   those attributes for every game (`slc_engine.play`), so this is equivalent to removing the layer at build time.
+   The patched sampler (`fb15dbcd`) is swapped in at run time. Runner: `/root/v2-ablation/runtime` on the fast host
+   (`ablation_hook.py`, `run_arm.py`, and one inserted line in a copy of `simulate_portable_pack.py`); the live runtime
+   and registry are not changed.
+2. **Matched random streams.** The runner derives the RNG stream root from the reference and the layer description,
+   so removing a layer first would change every stream. The hook runs after the control's plan is fixed, so every arm
+   uses the control's stream root (`908a29d6...` for PIT at PHI).
+3. **A06 `qb_decisions` is not run.** In V2 the QB table is also loaded by the `run_scramble_backoff` fix
+   (`playcall_qb_decisions = qb_decisions or run_scramble_backoff`), so the layer cannot be removed without removing the
+   fix, which would change event coverage.
+4. **A07 `decision_labels`** also sets the pass label mode to `legacy`: `load_reference` refuses the conditional mode
+   without decision labels.
+5. **The streak lift and the streak row filter belong to `league_streak_splits`** (`streak_outcomes` is set when the
+   league streak table loads), so A04 also removes them. A05 `current_streak_context` removes the streak bucket and
+   both streak splits.
+6. **Seeds 300001 to 300100,** the frozen V2 week 11 preflight rerun's seeds, so A00 can be checked against the saved
+   frozen outputs on every game and seed.
+7. **Arms run: 21.** A00, A01-A05, A07-A16, A17, A18, A19, A22, A23. A23 decodes the pack again for every game,
+   because it removes the sampler for good.
+8. **Reproduction gate, as run:** A00 must match the frozen outputs exactly in scores and player box scores. Before the
+   batch: PIT at PHI 10/10 and TEN at DAL 10/10 seeds identical; a three-game check in one process (testing that a
+   reused pack carries no state between games) is required before the batch starts. After the batch, all 1,300 A00
+   seeds are compared with the frozen outputs.
