@@ -1,0 +1,908 @@
+{
+ "control": "A00_control",
+ "clip": 0.025,
+ "games": 13,
+ "arms": {
+  "A00_control": {
+   "win_brier": 0.21135,
+   "win_logloss": 0.60301,
+   "cover_brier": 0.32077,
+   "over_brier": 0.315,
+   "total_abs_error": 12.04615,
+   "margin_abs_error": 10.23846,
+   "valid_share": 1.0,
+   "props_n": 1037,
+   "prop_brier": 0.31632,
+   "prop_logloss": 0.94786,
+   "team_points_mean": 20.777,
+   "team_points_sd": 3.456
+  },
+  "C1_coverage_choice": {
+   "win_brier": 0.22731,
+   "win_brier_minus_control": [
+    0.01596,
+    -0.03962,
+    0.06731
+   ],
+   "win_logloss": 0.63976,
+   "win_logloss_minus_control": [
+    0.03675,
+    -0.08717,
+    0.15262
+   ],
+   "cover_brier": 0.31885,
+   "cover_brier_minus_control": [
+    -0.00192,
+    -0.09269,
+    0.09308
+   ],
+   "over_brier": 0.3725,
+   "over_brier_minus_control": [
+    0.0575,
+    -0.00058,
+    0.11731
+   ],
+   "total_abs_error": 13.58077,
+   "total_abs_error_minus_control": [
+    1.53462,
+    0.18462,
+    2.8
+   ],
+   "margin_abs_error": 10.21154,
+   "margin_abs_error_minus_control": [
+    -0.02692,
+    -2.19615,
+    2.4
+   ],
+   "valid_share": 1.0,
+   "valid_share_minus_control": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "props_n": 1037,
+   "prop_brier": 0.31091,
+   "prop_logloss": 0.93171,
+   "prop_brier_minus_control": [
+    -0.00541,
+    -0.0147,
+    0.00288
+   ],
+   "prop_logloss_minus_control": [
+    -0.01615,
+    -0.04816,
+    0.0119
+   ],
+   "team_points_mean": 20.421,
+   "team_points_sd": 3.997
+  },
+  "D1_dirichlet_player_shares": {
+   "win_brier": 0.165,
+   "win_brier_minus_control": [
+    -0.04635,
+    -0.07788,
+    -0.01885
+   ],
+   "win_logloss": 0.50817,
+   "win_logloss_minus_control": [
+    -0.09484,
+    -0.16646,
+    -0.02617
+   ],
+   "cover_brier": 0.305,
+   "cover_brier_minus_control": [
+    -0.01577,
+    -0.05635,
+    0.02538
+   ],
+   "over_brier": 0.35385,
+   "over_brier_minus_control": [
+    0.03885,
+    -0.02308,
+    0.10481
+   ],
+   "total_abs_error": 12.8,
+   "total_abs_error_minus_control": [
+    0.75385,
+    -0.06154,
+    1.53846
+   ],
+   "margin_abs_error": 9.23077,
+   "margin_abs_error_minus_control": [
+    -1.00769,
+    -1.93846,
+    0.12308
+   ],
+   "valid_share": 1.0,
+   "valid_share_minus_control": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "props_n": 1037,
+   "prop_brier": 0.32806,
+   "prop_logloss": 1.00312,
+   "prop_brier_minus_control": [
+    0.01174,
+    -0.0023,
+    0.02569
+   ],
+   "prop_logloss_minus_control": [
+    0.05526,
+    0.01719,
+    0.09358
+   ],
+   "team_points_mean": 21.519,
+   "team_points_sd": 3.294
+  },
+  "F1_formation_choice": {
+   "win_brier": 0.27577,
+   "win_brier_minus_control": [
+    0.06442,
+    0.02231,
+    0.10942
+   ],
+   "win_logloss": 0.7658,
+   "win_logloss_minus_control": [
+    0.16279,
+    0.05615,
+    0.28259
+   ],
+   "cover_brier": 0.37038,
+   "cover_brier_minus_control": [
+    0.04962,
+    -0.02346,
+    0.12942
+   ],
+   "over_brier": 0.29423,
+   "over_brier_minus_control": [
+    -0.02077,
+    -0.09462,
+    0.05154
+   ],
+   "total_abs_error": 12.25,
+   "total_abs_error_minus_control": [
+    0.20385,
+    -1.18462,
+    1.65385
+   ],
+   "margin_abs_error": 11.75,
+   "margin_abs_error_minus_control": [
+    1.51154,
+    -0.49615,
+    3.66923
+   ],
+   "valid_share": 1.0,
+   "valid_share_minus_control": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "props_n": 1037,
+   "prop_brier": 0.31247,
+   "prop_logloss": 0.9397,
+   "prop_brier_minus_control": [
+    -0.00385,
+    -0.01554,
+    0.00781
+   ],
+   "prop_logloss_minus_control": [
+    -0.00817,
+    -0.04925,
+    0.03049
+   ],
+   "team_points_mean": 20.94,
+   "team_points_sd": 2.959
+  },
+  "G1_no_multipliers": {
+   "win_brier": 0.2275,
+   "win_brier_minus_control": [
+    0.01615,
+    -0.09154,
+    0.11962
+   ],
+   "win_logloss": 0.64985,
+   "win_logloss_minus_control": [
+    0.04684,
+    -0.1864,
+    0.26868
+   ],
+   "cover_brier": 0.36962,
+   "cover_brier_minus_control": [
+    0.04885,
+    -0.05038,
+    0.14635
+   ],
+   "over_brier": 0.28962,
+   "over_brier_minus_control": [
+    -0.02538,
+    -0.09231,
+    0.03577
+   ],
+   "total_abs_error": 11.34231,
+   "total_abs_error_minus_control": [
+    -0.70385,
+    -2.22692,
+    1.04615
+   ],
+   "margin_abs_error": 11.08846,
+   "margin_abs_error_minus_control": [
+    0.85,
+    -2.17692,
+    3.63846
+   ],
+   "valid_share": 1.0,
+   "valid_share_minus_control": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "props_n": 1037,
+   "prop_brier": 0.31418,
+   "prop_logloss": 0.95017,
+   "prop_brier_minus_control": [
+    -0.00214,
+    -0.01304,
+    0.00797
+   ],
+   "prop_logloss_minus_control": [
+    0.00231,
+    -0.03423,
+    0.03621
+   ],
+   "team_points_mean": 21.044,
+   "team_points_sd": 2.649
+  },
+  "G2_no_filters": {
+   "win_brier": 0.22654,
+   "win_brier_minus_control": [
+    0.01519,
+    -0.04519,
+    0.06981
+   ],
+   "win_logloss": 0.63894,
+   "win_logloss_minus_control": [
+    0.03592,
+    -0.09408,
+    0.15322
+   ],
+   "cover_brier": 0.35577,
+   "cover_brier_minus_control": [
+    0.035,
+    -0.04904,
+    0.13635
+   ],
+   "over_brier": 0.29981,
+   "over_brier_minus_control": [
+    -0.01519,
+    -0.09288,
+    0.06404
+   ],
+   "total_abs_error": 12.72308,
+   "total_abs_error_minus_control": [
+    0.67692,
+    -0.64615,
+    2.05769
+   ],
+   "margin_abs_error": 10.53077,
+   "margin_abs_error_minus_control": [
+    0.29231,
+    -1.63077,
+    2.38462
+   ],
+   "valid_share": 1.0,
+   "valid_share_minus_control": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "props_n": 1037,
+   "prop_brier": 0.30763,
+   "prop_logloss": 0.92504,
+   "prop_brier_minus_control": [
+    -0.00869,
+    -0.01816,
+    0.00106
+   ],
+   "prop_logloss_minus_control": [
+    -0.02283,
+    -0.05034,
+    0.0091
+   ],
+   "team_points_mean": 21.638,
+   "team_points_sd": 3.367
+  },
+  "G3_no_multipliers_no_filters": {
+   "win_brier": 0.24654,
+   "win_brier_minus_control": [
+    0.03519,
+    -0.05923,
+    0.125
+   ],
+   "win_logloss": 0.68755,
+   "win_logloss_minus_control": [
+    0.08453,
+    -0.11946,
+    0.28159
+   ],
+   "cover_brier": 0.42154,
+   "cover_brier_minus_control": [
+    0.10077,
+    -0.02462,
+    0.22788
+   ],
+   "over_brier": 0.33865,
+   "over_brier_minus_control": [
+    0.02365,
+    -0.05846,
+    0.10962
+   ],
+   "total_abs_error": 12.94231,
+   "total_abs_error_minus_control": [
+    0.89615,
+    -1.12308,
+    2.62308
+   ],
+   "margin_abs_error": 12.15769,
+   "margin_abs_error_minus_control": [
+    1.91923,
+    -1.09615,
+    4.78846
+   ],
+   "valid_share": 1.0,
+   "valid_share_minus_control": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "props_n": 1037,
+   "prop_brier": 0.31494,
+   "prop_logloss": 0.94418,
+   "prop_brier_minus_control": [
+    -0.00137,
+    -0.01199,
+    0.00886
+   ],
+   "prop_logloss_minus_control": [
+    -0.00368,
+    -0.03252,
+    0.02647
+   ],
+   "team_points_mean": 20.037,
+   "team_points_sd": 1.932
+  },
+  "G4_league_outcomes": {
+   "win_brier": 0.24654,
+   "win_brier_minus_control": [
+    0.03519,
+    -0.05923,
+    0.125
+   ],
+   "win_logloss": 0.68755,
+   "win_logloss_minus_control": [
+    0.08453,
+    -0.11946,
+    0.28159
+   ],
+   "cover_brier": 0.42154,
+   "cover_brier_minus_control": [
+    0.10077,
+    -0.02462,
+    0.22788
+   ],
+   "over_brier": 0.33865,
+   "over_brier_minus_control": [
+    0.02365,
+    -0.05846,
+    0.10962
+   ],
+   "total_abs_error": 12.94231,
+   "total_abs_error_minus_control": [
+    0.89615,
+    -1.12308,
+    2.62308
+   ],
+   "margin_abs_error": 12.15769,
+   "margin_abs_error_minus_control": [
+    1.91923,
+    -1.09615,
+    4.78846
+   ],
+   "valid_share": 1.0,
+   "valid_share_minus_control": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "props_n": 1037,
+   "prop_brier": 0.31494,
+   "prop_logloss": 0.94418,
+   "prop_brier_minus_control": [
+    -0.00137,
+    -0.01199,
+    0.00886
+   ],
+   "prop_logloss_minus_control": [
+    -0.00368,
+    -0.03252,
+    0.02647
+   ],
+   "team_points_mean": 20.037,
+   "team_points_sd": 1.932
+  },
+  "K3_streak_context": {
+   "win_brier": 0.22615,
+   "win_brier_minus_control": [
+    0.01481,
+    -0.06269,
+    0.08981
+   ],
+   "win_logloss": 0.63787,
+   "win_logloss_minus_control": [
+    0.03485,
+    -0.13528,
+    0.20142
+   ],
+   "cover_brier": 0.30519,
+   "cover_brier_minus_control": [
+    -0.01558,
+    -0.09846,
+    0.06442
+   ],
+   "over_brier": 0.33519,
+   "over_brier_minus_control": [
+    0.02019,
+    -0.04981,
+    0.08288
+   ],
+   "total_abs_error": 13.65769,
+   "total_abs_error_minus_control": [
+    1.61154,
+    0.11538,
+    3.03462
+   ],
+   "margin_abs_error": 10.56538,
+   "margin_abs_error_minus_control": [
+    0.32692,
+    -2.42308,
+    2.85385
+   ],
+   "valid_share": 1.0,
+   "valid_share_minus_control": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "props_n": 1037,
+   "prop_brier": 0.29915,
+   "prop_logloss": 0.89905,
+   "prop_brier_minus_control": [
+    -0.01717,
+    -0.02773,
+    -0.00748
+   ],
+   "prop_logloss_minus_control": [
+    -0.04881,
+    -0.07815,
+    -0.01933
+   ],
+   "team_points_mean": 21.483,
+   "team_points_sd": 2.88
+  },
+  "L1_label_generation": {
+   "win_brier": 0.20712,
+   "win_brier_minus_control": [
+    -0.00423,
+    -0.08885,
+    0.08096
+   ],
+   "win_logloss": 0.59821,
+   "win_logloss_minus_control": [
+    -0.0048,
+    -0.19122,
+    0.1897
+   ],
+   "cover_brier": 0.29096,
+   "cover_brier_minus_control": [
+    -0.02981,
+    -0.10596,
+    0.04288
+   ],
+   "over_brier": 0.34962,
+   "over_brier_minus_control": [
+    0.03462,
+    -0.035,
+    0.10077
+   ],
+   "total_abs_error": 14.00769,
+   "total_abs_error_minus_control": [
+    1.96154,
+    0.38077,
+    3.51923
+   ],
+   "margin_abs_error": 9.18462,
+   "margin_abs_error_minus_control": [
+    -1.05385,
+    -2.87692,
+    0.86154
+   ],
+   "valid_share": 1.0,
+   "valid_share_minus_control": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "props_n": 1037,
+   "prop_brier": 0.32012,
+   "prop_logloss": 0.95272,
+   "prop_brier_minus_control": [
+    0.0038,
+    -0.01197,
+    0.02035
+   ],
+   "prop_logloss_minus_control": [
+    0.00486,
+    -0.04521,
+    0.05633
+   ],
+   "team_points_mean": 22.45,
+   "team_points_sd": 3.76
+  },
+  "L6_label_outcome_modifiers": {
+   "win_brier": 0.28904,
+   "win_brier_minus_control": [
+    0.07769,
+    -0.01827,
+    0.18808
+   ],
+   "win_logloss": 0.88846,
+   "win_logloss_minus_control": [
+    0.28544,
+    -0.03042,
+    0.73412
+   ],
+   "cover_brier": 0.31365,
+   "cover_brier_minus_control": [
+    -0.00712,
+    -0.0975,
+    0.08808
+   ],
+   "over_brier": 0.30981,
+   "over_brier_minus_control": [
+    -0.00519,
+    -0.07885,
+    0.07192
+   ],
+   "total_abs_error": 11.70769,
+   "total_abs_error_minus_control": [
+    -0.33846,
+    -1.86154,
+    1.75385
+   ],
+   "margin_abs_error": 10.72308,
+   "margin_abs_error_minus_control": [
+    0.48462,
+    -1.87308,
+    2.84231
+   ],
+   "valid_share": 1.0,
+   "valid_share_minus_control": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "props_n": 1037,
+   "prop_brier": 0.31292,
+   "prop_logloss": 0.9299,
+   "prop_brier_minus_control": [
+    -0.0034,
+    -0.01524,
+    0.01019
+   ],
+   "prop_logloss_minus_control": [
+    -0.01797,
+    -0.05633,
+    0.02709
+   ],
+   "team_points_mean": 21.704,
+   "team_points_sd": 4.358
+  },
+  "P1_score_clock_playcalling": {
+   "win_brier": 0.22553,
+   "win_brier_minus_control": [
+    0.01418,
+    -0.0514,
+    0.07212
+   ],
+   "win_logloss": 0.6454,
+   "win_logloss_minus_control": [
+    0.04239,
+    -0.10429,
+    0.17127
+   ],
+   "cover_brier": 0.32784,
+   "cover_brier_minus_control": [
+    0.00707,
+    -0.07275,
+    0.08577
+   ],
+   "over_brier": 0.27812,
+   "over_brier_minus_control": [
+    -0.03688,
+    -0.0943,
+    0.01779
+   ],
+   "total_abs_error": 11.40769,
+   "total_abs_error_minus_control": [
+    -0.63846,
+    -1.70538,
+    0.36
+   ],
+   "margin_abs_error": 10.39538,
+   "margin_abs_error_minus_control": [
+    0.15692,
+    -1.18154,
+    1.43
+   ],
+   "valid_share": 0.97692,
+   "valid_share_minus_control": [
+    -0.02308,
+    -0.04615,
+    -0.00385
+   ],
+   "props_n": 1037,
+   "prop_brier": 0.30685,
+   "prop_logloss": 0.91626,
+   "prop_brier_minus_control": [
+    -0.00947,
+    -0.01723,
+    -0.00179
+   ],
+   "prop_logloss_minus_control": [
+    -0.03161,
+    -0.05211,
+    -0.01167
+   ],
+   "team_points_mean": 20.861,
+   "team_points_sd": 3.118
+  },
+  "Q4_qb_decision_model": {
+   "win_brier": 0.22308,
+   "win_brier_minus_control": [
+    0.01173,
+    -0.02654,
+    0.04635
+   ],
+   "win_logloss": 0.63646,
+   "win_logloss_minus_control": [
+    0.03345,
+    -0.05408,
+    0.11134
+   ],
+   "cover_brier": 0.34038,
+   "cover_brier_minus_control": [
+    0.01962,
+    -0.05308,
+    0.08904
+   ],
+   "over_brier": 0.34115,
+   "over_brier_minus_control": [
+    0.02615,
+    -0.04019,
+    0.08981
+   ],
+   "total_abs_error": 13.16923,
+   "total_abs_error_minus_control": [
+    1.12308,
+    -0.08077,
+    2.23462
+   ],
+   "margin_abs_error": 9.86154,
+   "margin_abs_error_minus_control": [
+    -0.37692,
+    -1.80769,
+    1.14615
+   ],
+   "valid_share": 1.0,
+   "valid_share_minus_control": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "props_n": 1037,
+   "prop_brier": 0.31105,
+   "prop_logloss": 0.9345,
+   "prop_brier_minus_control": [
+    -0.00527,
+    -0.01205,
+    0.00143
+   ],
+   "prop_logloss_minus_control": [
+    -0.01337,
+    -0.04464,
+    0.01273
+   ],
+   "team_points_mean": 21.0,
+   "team_points_sd": 3.509
+  },
+  "S1_participation_lineup": {
+   "win_brier": 0.24173,
+   "win_brier_minus_control": [
+    0.03038,
+    -0.02808,
+    0.09269
+   ],
+   "win_logloss": 0.6781,
+   "win_logloss_minus_control": [
+    0.07509,
+    -0.06122,
+    0.2238
+   ],
+   "cover_brier": 0.35269,
+   "cover_brier_minus_control": [
+    0.03192,
+    -0.04327,
+    0.11365
+   ],
+   "over_brier": 0.30635,
+   "over_brier_minus_control": [
+    -0.00865,
+    -0.05827,
+    0.04481
+   ],
+   "total_abs_error": 11.68462,
+   "total_abs_error_minus_control": [
+    -0.36154,
+    -1.1,
+    0.37692
+   ],
+   "margin_abs_error": 10.46154,
+   "margin_abs_error_minus_control": [
+    0.22308,
+    -1.14615,
+    1.5
+   ],
+   "valid_share": 1.0,
+   "valid_share_minus_control": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "props_n": 1037,
+   "prop_brier": 0.29397,
+   "prop_logloss": 0.834,
+   "prop_brier_minus_control": [
+    -0.02235,
+    -0.04476,
+    -0.0029
+   ],
+   "prop_logloss_minus_control": [
+    -0.11386,
+    -0.19214,
+    -0.04908
+   ],
+   "team_points_mean": 20.673,
+   "team_points_sd": 3.405
+  },
+  "T1_team_event_weights": {
+   "win_brier": 0.24402,
+   "win_brier_minus_control": [
+    0.03267,
+    -0.03235,
+    0.09765
+   ],
+   "win_logloss": 0.68454,
+   "win_logloss_minus_control": [
+    0.08153,
+    -0.0623,
+    0.22581
+   ],
+   "cover_brier": 0.36319,
+   "cover_brier_minus_control": [
+    0.04242,
+    -0.06374,
+    0.14615
+   ],
+   "over_brier": 0.31852,
+   "over_brier_minus_control": [
+    0.00352,
+    -0.05827,
+    0.05
+   ],
+   "total_abs_error": 12.56923,
+   "total_abs_error_minus_control": [
+    0.52308,
+    -0.74615,
+    1.74231
+   ],
+   "margin_abs_error": 11.17385,
+   "margin_abs_error_minus_control": [
+    0.93538,
+    -1.02231,
+    2.86538
+   ],
+   "valid_share": 0.99615,
+   "valid_share_minus_control": [
+    -0.00385,
+    -0.01154,
+    0.0
+   ],
+   "props_n": 1037,
+   "prop_brier": 0.30897,
+   "prop_logloss": 0.92586,
+   "prop_brier_minus_control": [
+    -0.00735,
+    -0.01555,
+    0.00322
+   ],
+   "prop_logloss_minus_control": [
+    -0.022,
+    -0.05295,
+    0.01209
+   ],
+   "team_points_mean": 20.931,
+   "team_points_sd": 2.711
+  },
+  "U3_player_outcome_strength": {
+   "win_brier": 0.24404,
+   "win_brier_minus_control": [
+    0.03269,
+    -0.06212,
+    0.12019
+   ],
+   "win_logloss": 0.67994,
+   "win_logloss_minus_control": [
+    0.07693,
+    -0.12949,
+    0.2584
+   ],
+   "cover_brier": 0.3625,
+   "cover_brier_minus_control": [
+    0.04173,
+    -0.06077,
+    0.16192
+   ],
+   "over_brier": 0.33346,
+   "over_brier_minus_control": [
+    0.01846,
+    -0.03577,
+    0.07769
+   ],
+   "total_abs_error": 11.83077,
+   "total_abs_error_minus_control": [
+    -0.21538,
+    -1.98077,
+    1.43077
+   ],
+   "margin_abs_error": 11.22308,
+   "margin_abs_error_minus_control": [
+    0.98462,
+    -1.98077,
+    3.56538
+   ],
+   "valid_share": 1.0,
+   "valid_share_minus_control": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "props_n": 1037,
+   "prop_brier": 0.31476,
+   "prop_logloss": 0.93974,
+   "prop_brier_minus_control": [
+    -0.00156,
+    -0.00825,
+    0.00516
+   ],
+   "prop_logloss_minus_control": [
+    -0.00812,
+    -0.02256,
+    0.00588
+   ],
+   "team_points_mean": 20.512,
+   "team_points_sd": 2.968
+  }
+ },
+ "actual_team_points_mean": 23.692,
+ "actual_team_points_sd": 10.531
+}
