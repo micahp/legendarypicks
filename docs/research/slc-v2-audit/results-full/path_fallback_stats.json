@@ -1,0 +1,306 @@
+{
+ "A00_control": {
+  "decisions": 37533,
+  "backoff_share": 0.0017,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2366
+ },
+ "C1_coverage_choice": {
+  "decisions": 37517,
+  "backoff_share": 0.0025,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 610
+ },
+ "C2_coverage_outcome_lift": {
+  "decisions": 37558,
+  "backoff_share": 0.0019,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2428
+ },
+ "C3_coverage_row_filter": {
+  "decisions": 37382,
+  "backoff_share": 0.0024,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 643
+ },
+ "D1_dirichlet_player_shares": {
+  "decisions": 37544,
+  "backoff_share": 0.0018,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2387
+ },
+ "F1_formation_choice": {
+  "decisions": 37442,
+  "backoff_share": 0.0025,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2018
+ },
+ "F2_formation_outcome_lift": {
+  "decisions": 37742,
+  "backoff_share": 0.0019,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2412
+ },
+ "F3_formation_row_filter": {
+  "decisions": 37288,
+  "backoff_share": 0.0023,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 1978
+ },
+ "G1_no_multipliers": {
+  "decisions": 37539,
+  "backoff_share": 0.0018,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2497
+ },
+ "G2_no_filters": {
+  "decisions": 37714,
+  "backoff_share": 0.0024,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 0
+ },
+ "G3_no_multipliers_no_filters": {
+  "decisions": 37570,
+  "backoff_share": 0.0022,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 0
+ },
+ "G4_league_outcomes": {
+  "decisions": 37570,
+  "backoff_share": 0.0022,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 0
+ },
+ "K1_streak_outcome_lift": {
+  "decisions": 37508,
+  "backoff_share": 0.0022,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2443
+ },
+ "K2_streak_row_filter": {
+  "decisions": 37820,
+  "backoff_share": 0.0019,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 542
+ },
+ "K3_streak_context": {
+  "decisions": 37343,
+  "backoff_share": 0.002,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 557
+ },
+ "L1_label_generation": {
+  "decisions": 37819,
+  "backoff_share": 0.0018,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2437
+ },
+ "L2_label_outcome_lift": {
+  "decisions": 37483,
+  "backoff_share": 0.0018,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2413
+ },
+ "L3_label_conditional_pass_model": {
+  "decisions": 37712,
+  "backoff_share": 0.002,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2481
+ },
+ "L4_label_row_filter": {
+  "decisions": 37856,
+  "backoff_share": 0.002,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2470
+ },
+ "L5_label_participant_allocation": {
+  "decisions": 37801,
+  "backoff_share": 0.0018,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2511
+ },
+ "L6_label_outcome_modifiers": {
+  "decisions": 37649,
+  "backoff_share": 0.0019,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2424
+ },
+ "L7_playbook_label_priors": {
+  "decisions": 37302,
+  "backoff_share": 0.0017,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2438
+ },
+ "P1_score_clock_playcalling": {
+  "decisions": 37466,
+  "backoff_share": 0.0025,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2294
+ },
+ "P2_point_split_shift": {
+  "decisions": 37389,
+  "backoff_share": 0.0018,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2467
+ },
+ "P3_team_streak_shift": {
+  "decisions": 37599,
+  "backoff_share": 0.0019,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2446
+ },
+ "P4_league_streak_shift": {
+  "decisions": 37559,
+  "backoff_share": 0.0016,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2395
+ },
+ "Q1_qb_scramble_probability": {
+  "decisions": 37758,
+  "backoff_share": 0.0017,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2410
+ },
+ "Q2_qb_target_role_selection": {
+  "decisions": 37537,
+  "backoff_share": 0.0019,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 0
+ },
+ "Q3_qb_target_role_row_filter": {
+  "decisions": 37533,
+  "backoff_share": 0.0017,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 0
+ },
+ "Q4_qb_decision_model": {
+  "decisions": 37455,
+  "backoff_share": 0.0018,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 0
+ },
+ "R1_target_role_priors": {
+  "decisions": 37683,
+  "backoff_share": 0.002,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2502
+ },
+ "S1_participation_lineup": {
+  "decisions": 37608,
+  "backoff_share": 0.0018,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2483
+ },
+ "S2_kicker_field_goals": {
+  "decisions": 37542,
+  "backoff_share": 0.0022,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2455
+ },
+ "T1_team_event_weights": {
+  "decisions": 37490,
+  "backoff_share": 0.002,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2411
+ },
+ "U1_player_event_weights": {
+  "decisions": 37713,
+  "backoff_share": 0.002,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2554
+ },
+ "U2_player_row_weights": {
+  "decisions": 38106,
+  "backoff_share": 0.0021,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2506
+ },
+ "U3_player_outcome_strength": {
+  "decisions": 37883,
+  "backoff_share": 0.0022,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2502
+ },
+ "X1_exact_yardline_row_filter": {
+  "decisions": 38357,
+  "backoff_share": 0.0019,
+  "row_weight_zero": 0,
+  "two_stage_zero": 0,
+  "outcome_weight_zero": 0,
+  "qb_target_role_no_match": 2421
+ }
+}
