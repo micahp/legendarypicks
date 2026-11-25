@@ -763,6 +763,21 @@ def write_pack(path, *, reference, snapshot, model_id, code_commit, config=None,
     # A game overlay is part of this execution pack, preventing an accidentally
     # reused week/roster from being treated as the same fitted reference.
     config = config or {}
+    enabled = set(config.get("enabled_layers") or ())
+    if model_id in ("v1.7", "v1.7-penalties-on"):
+        adapter = (config.get("runtime_adapters") or {}).get("v1_7_penalty")
+        if ("penalty_proposal_and_enforcement" not in enabled
+                or not isinstance(adapter, dict)
+                or getattr(reference, "portable_v1_7_penalty_sampler", None) is None
+                or getattr(reference, "penalty_controller_factory", None) is not None):
+            raise ModelPackError("V17_PENALTY_EXPORT_INCOMPLETE")
+    if model_id == "v1.6":
+        context = ((snapshot.get("model_reference") or {}).get("current_streak_context"))
+        if ("current_streak_context" not in enabled
+                or not isinstance(context, dict)
+                or not isinstance(context.get("source_sha256"), str)
+                or not SHA256_RE.fullmatch(context["source_sha256"])):
+            raise ModelPackError("V16_STREAK_EXPORT_INCOMPLETE")
     engine_files = engine_files or {}
     if not engine_files or "scripts/nfl_sequence/game_state.py" not in engine_files:
         raise ModelPackError("BUNDLED_ENGINE_CODE_REQUIRED")

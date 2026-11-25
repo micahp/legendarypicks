@@ -170,8 +170,7 @@ def simulate(args):
         "--games", str(args.seeds), "--seed-start", str(args.seed_start),
         "--out", str(args.out.resolve()),
     ]
-    if args.with_player_lines:
-        run_args.append("--with-player-lines")
+    run_args.append("--with-player-lines" if args.with_player_lines else "--no-player-lines")
     if args.records_out:
         run_args += ["--records-out", str(args.records_out.resolve())]
     return simulate_portable_pack.main(run_args)
@@ -199,7 +198,9 @@ def main(argv=None):
     sim_cmd.add_argument("--seed-start", type=int, default=0)
     sim_cmd.add_argument("--models-dir", type=Path, default=Path(os.environ.get("SLC_MODELS_DIR", "models")))
     sim_cmd.add_argument("--out", type=Path, default=Path("slc-results.json"))
-    sim_cmd.add_argument("--with-player-lines", action="store_true")
+    sim_cmd.add_argument("--with-player-lines", dest="with_player_lines", action="store_true", default=True,
+                         help="retain player box stats for each seed (the default)")
+    sim_cmd.add_argument("--no-player-lines", dest="with_player_lines", action="store_false")
     sim_cmd.add_argument("--records-out", type=Path,
                          help="write full per-seed records for exact legacy parity comparison")
     sim_cmd.set_defaults(func=simulate)
