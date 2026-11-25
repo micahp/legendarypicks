@@ -247,7 +247,8 @@ class PlayCallSampler:
         self.decision_table = None
         self.decision_outcomes = False
         self.decision_filter = True  # False: the lifts shape the outcome, but the row is drawn from the whole cell (an experiment)
-        self.row_conditioning_method = 'legacy'
+        # Keep the frozen sampler state and reference fingerprint unchanged in
+        # legacy mode. Experimental modes are attached only when requested.
         self.pass_label_outcome_model = None
         # Research-only alternatives to the historical pre-event use of pass-dependent A/D/E labels.
         self.pass_label_mode = 'legacy'
@@ -765,7 +766,7 @@ class PlayCallSampler:
         exact_yardline_fallback = None
         conditioning_metrics = None
         conditioned_row_weights = None
-        mode = self.row_conditioning_method
+        mode = getattr(self, 'row_conditioning_method', 'legacy')
         if mode not in ('legacy', 'disabled', 'support_aware', 'soft'):
             raise ValueError(f'unknown optional row-conditioning method {mode!r}')
         if mode == 'legacy':

@@ -200,7 +200,8 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, transition_
     sampler = ref.contextual_sampler
     if row_conditioning_method not in ('legacy', 'disabled', 'support_aware', 'soft'):
         raise ValueError(f'unknown experimental row-conditioning method: {row_conditioning_method!r}')
-    sampler.row_conditioning_method = row_conditioning_method
+    if row_conditioning_method != 'legacy':
+        sampler.row_conditioning_method = row_conditioning_method
     if pass_label_mode not in ('auto', 'legacy', 'off', 'two_stage', 'conditional'):
         raise ValueError(f'unknown pass-dependent label mode: {pass_label_mode!r}')
     if pass_label_mode == 'auto':
