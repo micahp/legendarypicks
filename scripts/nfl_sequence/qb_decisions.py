@@ -413,15 +413,24 @@ def scramble_backoff_rate(table, level, cell):
     return scrambles / dropbacks if dropbacks else 0.0
 
 
-def draw(table, team, qb, down, togo, yardline, available_roles, seed_text, allow_scramble_backoff=False):
-    """Draw a QB action and, if passing, a target role before the outcome is selected."""
+def draw(table, team, qb, down, togo, yardline, available_roles, seed_text, allow_scramble_backoff=False,
+         research_off=frozenset()):
+    """Draw a QB action and, if passing, a target role before the outcome is selected.
+
+    `research_off` (V2 mechanism ablation): with 'qb_scramble_probability' the scramble probability is the cell's
+    historical scramble share of dropbacks at its support level, not the QB's or team's; scramble execution, support and
+    attribution are unchanged. With 'qb_target_role_selection' no target role is drawn."""
     cell = cell_of(down, togo, yardline)
     p_scramble, scramble_n = _scramble_probability(table, team, qb, cell)
+    probability_source = 'qb_team_model'
     if allow_scramble_backoff:
         support_level, support_n = scramble_support_level(table, cell)
         scramble_supported = support_level is not None
         if scramble_supported and p_scramble <= 0:
             p_scramble = scramble_backoff_rate(table, support_level, cell)
+        if 'qb_scramble_probability' in research_off:
+            p_scramble = scramble_backoff_rate(table, support_level, cell) if scramble_supported else 0.0
+            probability_source = 'historical_cell_rate'
     else:
         support_level, support_n = None, 0
         scramble_supported = table.get('scramble_cells') is None or cell in table['scramble_cells']
@@ -431,6 +440,8 @@ def draw(table, team, qb, down, togo, yardline, available_roles, seed_text, allo
     is_scramble = rng.random() < p_scramble
     out = {'action': 'scramble' if is_scramble else 'pass',
            'scramble_probability': p_scramble, 'scramble_history_n': scramble_n}
+    if research_off:
+        out['scramble_probability_source'] = probability_source
     if not scramble_supported:
         out['scramble_fallback'] = 'no_eligible_scramble_rows_in_cell'
     elif allow_scramble_backoff:
@@ -438,6 +449,10 @@ def draw(table, team, qb, down, togo, yardline, available_roles, seed_text, allo
         out['scramble_support_level'] = support_level
         out['scramble_fallback_support_n'] = support_n
     if is_scramble:
+        return out
+    if 'qb_target_role_selection' in research_off:
+        out['target_role'] = None
+        out['target_role_source'] = 'not_selected'
         return out
     roles = tuple(role for role in TARGET_ROLES if role in set(available_roles))
     if not roles:

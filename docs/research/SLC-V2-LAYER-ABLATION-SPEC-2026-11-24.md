@@ -147,3 +147,75 @@ Found while building the runner; no arm had been scored.
    batch: PIT at PHI 10/10 and TEN at DAL 10/10 seeds identical; a three-game check in one process (testing that a
    reused pack carries no state between games) is required before the batch starts. After the batch, all 1,300 A00
    seeds are compared with the frozen outputs.
+
+## Amendment 2 (2026-11-24, before the batch): mechanisms, not flags
+
+On Micah's instruction, arms are defined by mechanisms, not by the existing layer flags, and no arm is dropped because
+the implementation couples mechanisms. Amendment 1's arm list (and its "A06 is not run") is replaced by this one.
+
+### What changed in the code (research switches; empty set = full V2)
+
+`PlayCallSampler.research_off` is a set of mechanism names (`slc_playcall.RESEARCH_MECHANISMS`). The sampler, the
+participant chooser (`pre_event.choose`, through `chooser` and `slc_engine.play`) and the QB decision
+(`qb_decisions.draw`) read it. Every decision records `research_off` and `mechanisms_applied` (which mechanisms actually
+ran on that decision), plus chooser evidence: whether a formation, coverage, labels and a QB target role were drawn, the
+source of the scramble probability, the participant share model, and the target-role prior and playbook use.
+
+| mechanism | what switching it off does |
+|---|---|
+| `score_clock_playcalling` | run/dropback probability from the historical cell rate |
+| `point_split_shift`, `team_streak_shift`, `league_streak_shift` | that log-odds shift is not applied |
+| `qb_scramble_probability` | the scramble probability is the cell's historical scramble share of dropbacks at its support level (`qb_decisions.scramble_backoff_rate`), not the QB's or team's. Scrambles still happen, as scrambles, with the same legal-bounds, support ladder and QB attribution |
+| `qb_target_role_selection` | no target role is drawn by the QB model; the receiver's role comes from the label path (label A from the decision and target-role priors) or the team target-role model |
+| `qb_target_role_row_filter` | source rows are not filtered by the target role |
+| `label_generation` | no decision labels are drawn (A to N), so no label lift, label filter, conditional pass model or playbook; the QB target role still steers the receiver |
+| `label_outcome_lift` | the non-pass label lifts on event weights are not applied |
+| `label_conditional_pass_model` | the conditional two-stage pass draw is not used; the event is drawn from the remaining weights. The legacy label mode is **not** restored |
+| `label_row_filter` | rows are not filtered by labels |
+| `label_participant_allocation` | labels A and B (and so the QB role) do not restrict the receiver's or carrier's position |
+| `playbook_label_priors` | the playbook does not override labels D, E and C |
+| `target_role_priors` | no target-role prior table (label A comes from the decision table alone) |
+| `formation_choice`, `formation_outcome_lift`, `formation_row_filter` | the formation is not drawn / not used as a lift / not used as a filter |
+| `coverage_choice`, `coverage_outcome_lift`, `coverage_row_filter` | the same for coverage |
+| `streak_outcome_lift`, `streak_row_filter` | the streak lift / filter; independent of the play-calling shifts and of the streak table being loaded |
+| `team_event_weights` | no team event weights (exact and backoff paths) |
+| `player_event_weights`, `player_row_weights` | no player event weights / no player row weights |
+| `dirichlet_player_shares` | **alternative path:** participants by position usage (`pre_event._by_usage`, the receiver's role still applied where the code applies it); statistically, every eligible player at a position is drawn at the position's historical share instead of from the game's Dirichlet draw |
+| `exact_yardline_row_filter` | rows are not filtered to the exact yard line inside the 20 |
+
+Layers without a switch use attribute overrides at run time: streak context (`current_streak = {}`), the
+participation lineup (`participation_field = None`; personnel then comes from the formation layer), the kicker
+field-goal table (`fg_kicker = None`; the kick share is the cell's and the ordinary feasibility rule applies).
+
+### Coupling audit of the other layers
+
+- **Season adaptation** blends the team, player and share tables with the current season at build time. It cannot be
+  undone at run time. **Not dropped:** it needs a rebuilt pack with `--playcall-season-adapt` off; recorded as a
+  pending arm (Y1) to run once that pack is built.
+- **Snap-count update** is applied to the participation field, so S1 removes both. A separate arm needs the field
+  without the update, which also needs a rebuild; recorded as pending (Y2).
+- The kick decision with the kicker table (S2) and the participation lineup (S1) are independent of the 16 listed
+  layers.
+
+### Arms (39 run, 2 pending a rebuild)
+
+A00 control. Play-calling: P1 score clock, P2 point split, P3 team streak shift, P4 league streak shift. QB: Q1 scramble
+probability, Q2 target-role selection, Q3 target-role row filter, Q4 the whole QB decision model (Q1-Q3). Labels: L1
+generation (full removal), L2 outcome lift, L3 conditional pass model, L4 row filter, L5 participant allocation, L6 all
+label outcome modifiers (L2+L3), L7 playbook priors. Streak: K1 outcome lift, K2 row filter, K3 no streak context.
+Formation: F1 choice, F2 lift, F3 filter. Coverage: C1 choice, C2 lift, C3 filter. T1 team event weights. Player: U1
+event weights, U2 row weights, U3 both (player outcome strength off, allocation kept). D1 Dirichlet shares
+(position-usage path). R1 target-role priors. X1 exact-yard-line filter. Groups: G1 all multipliers off, G2 all optional
+filters off, G3 both, G4 league-wide outcomes (G3 plus the team and player tables removed, as a consistency check of
+G3). S1 participation lineup, S2 kicker field goals. Z1 minimal situational sampling (no SLC sampler). Pending: Y1
+season adaptation, Y2 snap-count update.
+
+Seeds: 50 matched seeds per game per arm (300001-300050), not 100: 39 arms x 13 games x 100 seeds would take about
+26 hours on the fast host. Thirteen games limit the game-level comparisons more than the seed count does.
+
+### Verification required before the batch
+
+1. **Replay parity:** with `research_off` empty, the refactored engine must reproduce the frozen V2 exactly (scores and
+   player box scores) on 3 games x 10 seeds, and the sampler must match the previous code on 500 of 500 synthetic draws.
+2. **Every arm, through the instrumentation** (1 game x 2 seeds each): its intended mechanisms show zero applications,
+   and the unrelated mechanisms run as often as in the control.

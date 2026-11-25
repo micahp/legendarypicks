@@ -68,31 +68,35 @@ spp.tempfile = _TempfileShim()
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', required=True, type=Path)
+    ap.add_argument('--arms', required=True, help='comma-separated arm names, run in order with one loaded pack')
     ap.add_argument('--seeds', type=int, default=100)
     ap.add_argument('--workers', type=int, default=3)
     ap.add_argument('--games', default='')
     args = ap.parse_args()
-    arm = os.environ['ABLATION_ARM']
     games = args.games.split(',') if args.games else sorted(
         p.name[:-5] for p in SNAPSHOTS.glob('2026_11_*.json') if p.name.count('.') == 1)
-    out = args.out / arm
-    out.mkdir(parents=True, exist_ok=True)
-    os.environ['ABLATION_STATS_OUT'] = str(out / 'stats')
-    status = []
-    for game in games:
-        target = out / f'{game}.json'
-        if target.exists():
-            status.append({'game': game, 'status': 'skipped_existing'})
-            continue
-        start = time.time()
-        if arm == 'A23_minimal_situational':
-            _cache.clear()  # this arm removes the sampler for good, so every game starts from a fresh decode
-        code = spp.main(['--model', 'v2', '--game', game, '--snapshot', str(SNAPSHOTS / f'{game}.json'),
-                         '--pack', str(PACK), '--pack-sha256', PACK_SHA, '--games', str(args.seeds),
-                         '--seed-start', str(SEED_START), '--out', str(target), '--workers', str(args.workers)])
-        status.append({'game': game, 'returncode': code, 'seconds': round(time.time() - start, 1)})
-        (out / 'status.json').write_text(json.dumps(status, indent=1) + '\n')
-        print(json.dumps(status[-1]), flush=True)
+    for arm in args.arms.split(','):
+        out = args.out / arm
+        out.mkdir(parents=True, exist_ok=True)
+        os.environ['ABLATION_ARM'] = arm
+        os.environ['ABLATION_STATS_OUT'] = str(out / 'stats')
+        status_path = out / 'status.json'
+        status = json.loads(status_path.read_text()) if status_path.exists() else []
+        for game in games:
+            target = out / f'{game}.json'
+            if target.exists():
+                continue
+            start = time.time()
+            if arm == 'Z1_minimal_situational':
+                _cache.clear()  # this arm removes the sampler for good, so every game starts from a fresh decode
+            code = spp.main(['--model', 'v2', '--game', game, '--snapshot', str(SNAPSHOTS / f'{game}.json'),
+                             '--pack', str(PACK), '--pack-sha256', PACK_SHA, '--games', str(args.seeds),
+                             '--seed-start', str(SEED_START), '--out', str(target), '--workers', str(args.workers)])
+            status.append({'game': game, 'returncode': code, 'seconds': round(time.time() - start, 1)})
+            status_path.write_text(json.dumps(status, indent=1) + '\n')
+            print(json.dumps({'arm': arm, **status[-1]}), flush=True)
+        if arm == 'Z1_minimal_situational':
+            _cache.clear()  # do not hand a sampler-less reference to a later arm
     return 0
 
 

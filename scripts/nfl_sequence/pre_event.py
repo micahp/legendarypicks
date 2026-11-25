@@ -122,7 +122,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
            role_table=None, decision_table=None, trick_passer_rate=TRICK_PASSER_RATE, qb_receiver_rate=QB_RECEIVER_RATE,
            share_table=None, playbook_table=None, share_cache=None, qb_decision_table=None,
            scramble_backoff_enabled=False, qb_receiver_package=False, qb_run_role_style_enabled=False, pbv1=None, seed_root=None,
-           field=None, lineup_state=None):
+           field=None, lineup_state=None, research_off=frozenset()):
     """{'passer': ..., 'receiver': ...} for a dropback, {'rusher': ...} for a run, None otherwise. Chosen before the outcome.
 
     With formation priors and the situation, also the formation and personnel grouping, from the historical shares.
@@ -137,6 +137,13 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     (schema v4) draws the grouping given this play's run or dropback call, so heavy groupings go with runs."""
     if intent not in ('run', 'dropback'):
         return None
+    off = frozenset(research_off or ())  # V2 mechanism ablation; empty is the full V2 configuration
+    if 'target_role_priors' in off:
+        role_table = None
+    if 'playbook_label_priors' in off:
+        playbook_table = None
+    if 'dirichlet_player_shares' in off:
+        share_table = None  # the alternative path: position-usage allocation (see the ablation spec, amendment 2)
     roster = snapshot['rosters'][side]
     team, players = roster['team'], roster['players']
     import share_distributions
@@ -160,7 +167,9 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     elif player_shares is None:
         chosen['participant_share_model'] = 'position_usage'
     labels = None
-    if decision_table is not None and state is not None:  # decision model categories A to N, drawn before the outcome
+    if off:
+        chosen['research_off'] = sorted(off)
+    if decision_table is not None and state is not None and 'label_generation' not in off:  # categories A to N, before the outcome
         import decision_layer
         label_only = None
         if role_table is not None and intent == 'dropback':
@@ -240,16 +249,18 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                                if p['pos_abb'] in player_shares_positions('receive')}
             qb_decision = qb_decisions.draw(
                 qb_decision_table, team, chosen['passer']['gsis_id'], state['down'], state['togo'], state['yl'],
-                available_roles, f'{base}:qb-decision', allow_scramble_backoff=scramble_backoff_enabled)
+                available_roles, f'{base}:qb-decision', allow_scramble_backoff=scramble_backoff_enabled,
+                **({'research_off': off} if off else {}))
             chosen['qb_decision'] = qb_decision
             if qb_decision['action'] == 'scramble':
                 chosen['rusher'] = chosen['passer']
                 chosen['labels'] = None  # passing labels do not describe the QB's scramble decision
-            else:
-                labels = dict(labels or {})
-                labels['A'] = qb_decision['target_role']
-                chosen['labels'] = labels
+            elif qb_decision.get('target_role') is not None:
                 chosen['target_role'] = qb_decision['target_role']
+                if 'label_generation' not in off:
+                    labels = dict(labels or {})
+                    labels['A'] = qb_decision['target_role']
+                    chosen['labels'] = labels
         receivers = [p for p in qbd_players if p['gsis_id'] != chosen['passer']['gsis_id']]
         if chosen.get('qb_decision', {}).get('action') == 'scramble':
             pass  # the selected QB is the runner; a target is not assigned to a scramble
@@ -267,7 +278,8 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                 if chosen.get('qb_decision') is not None:
                     chosen['qb_decision']['target_role'] = 'Other'
                     chosen['target_role'] = 'Other'
-                    chosen['labels']['A'] = 'Other'
+                    if chosen.get('labels') is not None:  # no labels when label generation is switched off
+                        chosen['labels']['A'] = 'Other'
             elif player_shares is None and share_table is None:
                 role = (chosen.get('qb_decision') or {}).get('target_role')
                 if role in ('RB', 'WR', 'TE'):
@@ -282,8 +294,12 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                                                    _draw(f'{base}:receiver:position'))
             else:  # the adapter: rostered receivers in proportion to their prior-season target shares
                 positions = player_shares_positions('receive')
-                if labels is not None and labels.get('A') is not None:  # decision category A, including the QB-specific role
-                    role = labels['A']
+                allocation_role = (labels['A'] if labels is not None and labels.get('A') is not None else
+                                   chosen.get('target_role') if 'label_generation' in off else None)
+                if 'label_participant_allocation' in off:
+                    pass  # the target role does not restrict the receiver's position
+                elif allocation_role is not None:  # decision category A, including the QB-specific role
+                    role = allocation_role
                     chosen['target_role'] = role
                     present = {p['pos_abb'] for p in receivers}
                     if role in ('RB', 'WR', 'TE') and role in present:
@@ -333,7 +349,8 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                                          _draw(f'{base}:rusher:position'))
         else:
             positions = player_shares_positions('carry')
-            if labels is not None and labels.get('B') is not None:  # decision category B: the carrier's role, from its prior
+            if (labels is not None and labels.get('B') is not None
+                    and 'label_participant_allocation' not in off):  # decision category B: the carrier's role, from its prior
                 carried = CARRY_ROLE_POSITIONS.get(labels['B'])
                 if carried and any(p['pos_abb'] in carried for p in run_players):
                     positions = carried
@@ -356,7 +373,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
             else:
                 chosen['rusher'] = _by_player_share(run_players, player_shares, team, 'carry', positions,
                                                     _draw(f'{base}:rusher:player'))
-    if formation_priors is not None and state is not None:
+    if formation_priors is not None and state is not None and 'formation_choice' not in off:
         import formation_layer  # local: the formation layer is optional
         chosen['formation'], chosen['personnel'] = formation_layer.choose(
             formation_priors, intent, state['down'], state['togo'], f'{base}:formation', team=team)
@@ -366,7 +383,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
             chosen['personnel'] = package
     if on_field is not None:
         chosen['personnel'] = chosen['lineup']['group']
-    if defense_priors is not None and intent == 'dropback':
+    if defense_priors is not None and intent == 'dropback' and 'coverage_choice' not in off:
         import defense_layer
         other = 'away' if side == 'home' else 'home'  # the defense is the other roster's team
         chosen['coverage'] = defense_layer.choose(defense_priors, snapshot['rosters'][other]['team'], f'{base}:coverage')
@@ -405,7 +422,8 @@ def _by_game_share(candidates, share_table, team, role, game_id, seed_text, draw
 
 def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_priors=None, role_table=None, decision_table=None,
             share_table=None, playbook_table=None, qb_decision_table=None, scramble_backoff_enabled=False,
-            qb_receiver_package=False, qb_run_role_style_enabled=False, pbv1=None, seed_root=None, field=None):
+            qb_receiver_package=False, qb_run_role_style_enabled=False, pbv1=None, seed_root=None, field=None,
+            research_off=frozenset()):
     """A callable for PlayCallSampler.participant_chooser: called once per scrimmage play, after the intent, before the outcome.
     The decision index counts those calls, so it is the same on every replay of the same game. With `field`, each side's
     skill lineup carries from one of its scrimmage plays to the next, starting from an empty lineup."""
@@ -424,7 +442,8 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
                       scramble_backoff_enabled=scramble_backoff_enabled,
                       qb_receiver_package=qb_receiver_package,
                       qb_run_role_style_enabled=qb_run_role_style_enabled, pbv1=pbv1, seed_root=seed_root,
-                      field=field, lineup_state=lineups[side] if field is not None else None)
+                      field=field, lineup_state=lineups[side] if field is not None else None,
+                      research_off=research_off)
     return pick
 
 

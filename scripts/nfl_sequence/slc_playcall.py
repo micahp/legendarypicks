@@ -144,6 +144,21 @@ class PlayCallLayer:
         return float(pm.expit(self.logit(down, togo, yl, score_diff, quarter, clock, team)))
 
 
+# Mechanisms that the V2 ablation can switch off one at a time (sampler.research_off). The sampler handles the outcome
+# and play-call mechanisms; the participant chooser (pre_event) and the QB decision (qb_decisions) read the same set.
+RESEARCH_MECHANISMS = frozenset({
+    'score_clock_playcalling', 'point_split_shift', 'team_streak_shift', 'league_streak_shift',
+    'formation_choice', 'formation_outcome_lift', 'formation_row_filter',
+    'coverage_choice', 'coverage_outcome_lift', 'coverage_row_filter',
+    'streak_outcome_lift', 'streak_row_filter',
+    'label_generation', 'label_outcome_lift', 'label_row_filter', 'label_conditional_pass_model',
+    'label_participant_allocation', 'playbook_label_priors', 'target_role_priors',
+    'qb_scramble_probability', 'qb_target_role_selection', 'qb_target_role_row_filter',
+    'team_event_weights', 'player_event_weights', 'player_row_weights',
+    'dirichlet_player_shares', 'exact_yardline_row_filter',
+})
+
+
 def intent_of(event, row):
     """The play type a historical row was. Kicks are their own intent; the rest follow the row's play type."""
     if event in e1.KICK_EVENTS:
@@ -254,12 +269,10 @@ class PlayCallSampler:
         # QB-specific pre-event target-role and scramble choices, off unless explicitly loaded.
         self.qb_decision_table = None
         self.qb_run_role_style_enabled = False
-        # V2 layer ablation research switches (SLC-V2-LAYER-ABLATION-SPEC-2026-11-24). Off by default. The first skips every
-        # optional event and row weight (formation, coverage, streak and label lifts, team event weights, player event and
-        # row weights); the second skips every optional row filter (formation, coverage, streak, labels, QB target role,
-        # exact yard line). Neither touches the scramble-class filter, which defines the selected intent.
-        self.research_disable_event_multipliers = False
-        self.research_disable_row_filters = False
+        # V2 mechanism ablation (SLC-V2-LAYER-ABLATION-SPEC-2026-11-24, amendment 2): the names in RESEARCH_MECHANISMS
+        # that are switched off. Empty by default, which is the full V2 configuration. A loaded table alone does not make
+        # its mechanism active; each mechanism has its own switch, and every decision records which ones ran.
+        self.research_off = frozenset()
         # Per-player event and joint yards/touchdown outcome profiles, off unless explicitly loaded.
         self.player_outcome_table = None
         self.player_outcome_roles = None
@@ -415,7 +428,8 @@ class PlayCallSampler:
         return None, None
 
     def _dropback_probability(self, entry, state, team):
-        if self.score_clock_playcalling_enabled:
+        if (self.score_clock_playcalling_enabled
+                and 'score_clock_playcalling' not in getattr(self, '_current_research_off', frozenset())):
             p = self.layer.p_dropback(state['down'], state['togo'], state['yl'], state['score_diff'], state['quarter'],
                                       state['clock'], team)
             if self.season_team_down is not None:
@@ -441,8 +455,14 @@ class PlayCallSampler:
         self._current_transition_fallbacks = []
         self._two_stage_fallback = None
         row_weight_fallback = None
-        no_mult = getattr(self, 'research_disable_event_multipliers', False)
-        no_filter = getattr(self, 'research_disable_row_filters', False)
+        off = frozenset(getattr(self, 'research_off', None) or ())
+        unknown = off - RESEARCH_MECHANISMS
+        if unknown:
+            raise ValueError(f'unknown research mechanism(s): {sorted(unknown)}')
+        self._current_research_off = off
+        point_shift_table = self.point_shifts if 'point_split_shift' not in off else None
+        team_streak_table = self.streak_shifts if 'team_streak_shift' not in off else None
+        league_streak_table = self.streak_league if 'league_streak_shift' not in off else None
         # the kick decision's counts: the whole cell, or with the flag the cell's rows weighted by yard line near the snap
         kick_base = entry['base'] if fg_rule is None else kicker_field_goals.kernel_counts(entry, int(state['yl']))
         total = sum(kick_base.values())
@@ -470,29 +490,29 @@ class PlayCallSampler:
         p, call_policy_source = self._dropback_probability(entry, state, team)
         split_fallbacks = []
         point_shift = 0.0
-        if self.point_shifts is not None and team in self.layer.team_index:
+        if point_shift_table is not None and team in self.layer.team_index:
             bucket = pm.score_bucket(state['score_diff'])
-            if (int(self.layer.team_index[team]), int(bucket)) not in self.point_shifts['shift']:
+            if (int(self.layer.team_index[team]), int(bucket)) not in point_shift_table['shift']:
                 split_fallbacks.append('point_split_missing_bucket')
-            point_shift = point_splits.shift_for(self.point_shifts, self.layer.team_index[team], bucket)
+            point_shift = point_splits.shift_for(point_shift_table, self.layer.team_index[team], bucket)
             p = point_splits.adjust(p, point_shift)  # the team's score-state deviation, in log-odds
-        elif self.point_shifts is not None:
+        elif point_shift_table is not None:
             split_fallbacks.append('point_split_unknown_team')
         streak_shift = 0.0
-        if self.streak_shifts is not None and team in self.layer.team_index and team in self.current_streak:
-            if (int(self.layer.team_index[team]), self.current_streak[team]) not in self.streak_shifts['shift']:
+        if team_streak_table is not None and team in self.layer.team_index and team in self.current_streak:
+            if (int(self.layer.team_index[team]), self.current_streak[team]) not in team_streak_table['shift']:
                 split_fallbacks.append('team_streak_split_missing_bucket')
-            streak_shift = streak_splits.shift_for(self.streak_shifts, self.layer.team_index[team], self.current_streak[team])
+            streak_shift = streak_splits.shift_for(team_streak_table, self.layer.team_index[team], self.current_streak[team])
             p = point_splits.adjust(p, streak_shift)  # the team's win-loss streak deviation, in log-odds
-        elif self.streak_shifts is not None:
+        elif team_streak_table is not None:
             split_fallbacks.append('team_streak_split_missing_context')
         league_streak_shift = 0.0
-        if self.streak_league is not None and team in self.current_streak:
-            if (int(streak_splits.LEAGUE), self.current_streak[team]) not in self.streak_league['shift']:
+        if league_streak_table is not None and team in self.current_streak:
+            if (int(streak_splits.LEAGUE), self.current_streak[team]) not in league_streak_table['shift']:
                 split_fallbacks.append('league_streak_split_missing_bucket')
-            league_streak_shift = streak_splits.shift_for(self.streak_league, streak_splits.LEAGUE, self.current_streak[team])
+            league_streak_shift = streak_splits.shift_for(league_streak_table, streak_splits.LEAGUE, self.current_streak[team])
             p = point_splits.adjust(p, league_streak_shift)  # the league's streak tendency, in log-odds
-        elif self.streak_league is not None:
+        elif league_streak_table is not None:
             split_fallbacks.append('league_streak_split_missing_context')
         if kick_keys and rng.random() < kick_share:
             intent, fallback = KICK_INTENT, ('kick decision: historical share of this situation cell (not yet modelled)'
@@ -517,12 +537,20 @@ class PlayCallSampler:
         labels = pre_event.get('labels') if pre_event else None
         use_labels = bool(labels) and self.decision_outcomes
         use_player_outcomes = self.player_outcome_table is not None
-        # Each of these layers is both a multiplier and a row filter; the research switches can remove one side only.
-        filter_formation, filter_coverage = use_formation and not no_filter, use_coverage and not no_filter
-        filter_streak, filter_labels = use_streak and not no_filter, use_labels and not no_filter
-        if no_mult:
-            use_formation = use_coverage = use_streak = use_labels = use_player_outcomes = False
-        use_team_outcomes = self.team_outcomes is not None and not no_mult
+        # Formation, coverage, streak and labels are each an outcome lift and a row filter; player outcomes are event
+        # weights and row weights. Each side has its own research switch.
+        filter_formation = use_formation and 'formation_row_filter' not in off
+        filter_coverage = use_coverage and 'coverage_row_filter' not in off
+        filter_streak = use_streak and 'streak_row_filter' not in off
+        filter_labels = use_labels and 'label_row_filter' not in off
+        pass_label_model = use_labels and 'label_conditional_pass_model' not in off
+        use_formation = use_formation and 'formation_outcome_lift' not in off
+        use_coverage = use_coverage and 'coverage_outcome_lift' not in off
+        use_streak = use_streak and 'streak_outcome_lift' not in off
+        use_labels = use_labels and 'label_outcome_lift' not in off
+        use_player_rows = use_player_outcomes and 'player_row_weights' not in off
+        use_player_outcomes = use_player_outcomes and 'player_event_weights' not in off
+        use_team_outcomes = self.team_outcomes is not None and 'team_event_weights' not in off
         target = e0.pool_key(int(state['down']), state['togo'], state['yl'])
         exact_outcome_rows = None
         backoff_candidates, outcome_fallback = (None, None)
@@ -665,11 +693,11 @@ class PlayCallSampler:
                 if self.trace_outcome_probabilities:
                     probability_trace.append(_event_probability_stage('all_zero_weights_fallback', keys, weights))
         if (not use_team_outcomes and self.transition_strength is None and not use_formation and not use_coverage and not use_streak and not use_labels
-                and not use_player_outcomes):
+                and not use_player_outcomes and not pass_label_model):
             if fallback_by_key is None:
                 key = rng.choices(keys, weights=[choice_base[k] for k in keys])[0]  # the unchanged baseline draw
         elif fallback_by_key is None:
-            if (use_labels and self.pass_label_mode in ('two_stage', 'conditional')
+            if (pass_label_model and self.pass_label_mode in ('two_stage', 'conditional')
                     and called_intent == 'dropback' and not scramble):
                 key = self._draw_two_stage_pass_event(rng, keys, weights, entry, labels,
                                                       offense=offense, state=state)
@@ -763,7 +791,8 @@ class PlayCallSampler:
         qb_target_role_conditioned = False
         qb_target_role_fallback = None
         if (self.qb_decision_table is not None and called_intent == 'dropback' and not scramble and qb_decision
-                and key[1] in ('pass_complete', 'pass_incomplete', 'interception') and not no_filter):
+                and key[1] in ('pass_complete', 'pass_incomplete', 'interception')
+                and 'qb_target_role_row_filter' not in off and qb_decision.get('target_role') is not None):
             import qb_decisions
             target_role = qb_decision.get('target_role')
             matched = [c for c in candidates
@@ -776,7 +805,8 @@ class PlayCallSampler:
             filter_counts.append(('qb_target_role', len(candidates)))
         exact_yardline_conditioned = False
         exact_yardline_fallback = None
-        if self.exact_yardline and state.get('yl') is not None and int(state['yl']) <= 20 and not no_filter:
+        if (self.exact_yardline and state.get('yl') is not None and int(state['yl']) <= 20
+                and 'exact_yardline_row_filter' not in off):
             exact = [c for c in candidates if c[1].get('yardline_100') is not None and int(c[1]['yardline_100']) == int(state['yl'])]
             if exact:
                 candidates = exact  # a touchdown flag then comes from the same distance the state is at
@@ -785,7 +815,7 @@ class PlayCallSampler:
                 exact_yardline_fallback = 'no_source_rows_at_exact_yardline'
             filter_counts.append(('exact_yardline', len(candidates)))
         row_weights = None
-        if use_player_outcomes:
+        if use_player_rows:
             import player_outcomes
             row_weights = [player_outcomes.row_weight(
                 self.player_outcome_table, key[1], candidate[1], pre_event, state,
@@ -850,12 +880,31 @@ class PlayCallSampler:
             'exact_outcome_rows': (len(exact_outcome_rows) if exact_outcome_rows is not None else None),
             'backoff_effective_sample_size': (round(backoff_ess, 3) if backoff_ess is not None else None),
             'row_filter_counts': filter_counts,
-            'research_switches': {'disable_event_multipliers': bool(no_mult), 'disable_row_filters': bool(no_filter)},
+            'research_off': sorted(off),
+            'mechanisms_applied': {
+                'score_clock_playcalling': call_policy_source == 'score_clock_logistic_artifact',
+                'point_split_shift': point_shift_table is not None, 'team_streak_shift': team_streak_table is not None,
+                'league_streak_shift': league_streak_table is not None,
+                'formation_outcome_lift': bool(use_formation), 'formation_row_filter': bool(filter_formation),
+                'coverage_outcome_lift': bool(use_coverage), 'coverage_row_filter': bool(filter_coverage),
+                'streak_outcome_lift': bool(use_streak), 'streak_row_filter': bool(filter_streak),
+                'label_outcome_lift': bool(use_labels), 'label_row_filter': bool(filter_labels and self.decision_filter),
+                'label_conditional_pass_model': bool(pass_label_model),
+                'team_event_weights': bool(use_team_outcomes),
+                'player_event_weights': bool(use_player_outcomes), 'player_row_weights': bool(use_player_rows),
+                'qb_target_role_row_filter': bool(qb_target_role_conditioned or qb_target_role_fallback),
+                'exact_yardline_row_filter': bool(exact_yardline_conditioned or exact_yardline_fallback),
+            },
             'point_split_applied': self.point_shifts is not None and team in self.layer.team_index,
             'team_streak_split_applied': self.streak_shifts is not None and team in self.current_streak,
             'league_streak_split_applied': self.streak_league is not None and team in self.current_streak,
             'qb_action': qb_decision.get('action') if qb_decision else None,
             'qb_scramble_probability': qb_decision.get('scramble_probability') if qb_decision else None,
+            'qb_scramble_probability_source': qb_decision.get('scramble_probability_source') if qb_decision else None,
+            'qb_target_role_source': qb_decision.get('target_role_source') if qb_decision else None,
+            'participant_share_model': (pre_event or {}).get('participant_share_model'),
+            'target_role_prior_used': bool((pre_event or {}).get('target_role_prior_used')),
+            'playbook_used': (pre_event or {}).get('playbook_used'),
             'qb_scramble_fallback': qb_decision.get('scramble_fallback') if qb_decision else None,
             'qb_run_role_style': (pre_event or {}).get('qb_run_role_style'),
             'qb_target_role': qb_decision.get('target_role') if qb_decision else None,
@@ -866,7 +915,7 @@ class PlayCallSampler:
             'qb_target_role_fallback': qb_target_role_fallback,
             'decision_timing': 'pre_outcome_sample',
             'field_goal_feasibility': field_goal,
-            'player_outcomes_conditioned': use_player_outcomes,
+            'player_outcomes_conditioned': bool(use_player_outcomes or use_player_rows),
             'player_outcome_roles': (list(player_outcomes.normalize_roles(self.player_outcome_roles))
                                      if use_player_outcomes else []),
             'player_outcome_support': self._player_support(pre_event) if use_player_outcomes else None,

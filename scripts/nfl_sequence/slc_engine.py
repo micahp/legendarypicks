@@ -459,7 +459,8 @@ def play(seed, ref, snapshot, *, paired_randomness=False, rng_plan=None):
                                                     scramble_backoff_enabled=sampler.scramble_backoff_enabled,
                                                     qb_run_role_style_enabled=getattr(
                                                         sampler, 'qb_run_role_style_enabled', False),
-                                                    pbv1=pbv1_draws, seed_root=seed_root, field=field)
+                                                    pbv1=pbv1_draws, seed_root=seed_root, field=field,
+                                                    research_off=getattr(sampler, 'research_off', frozenset()))
     try:
         record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot),
                               paired_randomness=paired_randomness, seed_root=seed_root)

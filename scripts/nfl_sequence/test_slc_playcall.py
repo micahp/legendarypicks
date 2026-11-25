@@ -691,20 +691,22 @@ class AblationGuards(unittest.TestCase):
         decision = sampler.decisions[-1]
         self.assertIsNone(decision['row_weight_fallback'])
         self.assertEqual(decision['sampling_path'], 'exact_cell')
-        self.assertEqual(decision['research_switches'], {'disable_event_multipliers': False, 'disable_row_filters': False})
+        self.assertEqual(decision['research_off'], [])
+        self.assertTrue(decision['mechanisms_applied']['player_event_weights'])
+        self.assertTrue(decision['mechanisms_applied']['player_row_weights'])
 
-    def test_disabling_event_multipliers_removes_the_player_effect(self):
+    def test_switching_off_player_weights_removes_the_player_effect(self):
         pool = cell([('pass_complete', 'pass'), ('pass_incomplete', 'pass')])
         counts = []
         for passer, receiver in (('AQBGOOD', 'AWRGOOD'), ('AQBBAD', 'AWRBAD')):
             sampler = self._sampler(passer, receiver)
-            sampler.research_disable_event_multipliers = True
+            sampler.research_off = frozenset({'player_event_weights', 'player_row_weights'})
             counts.append(sum(sampler.sample(random.Random(seed), pool, 'A', 'B', state=STATE)[0] == 'pass_complete'
                               for seed in range(200)))
             self.assertFalse(any(d['player_outcomes_conditioned'] for d in sampler.decisions))
         self.assertEqual(counts[0], counts[1])  # the same seeds and no player weight: identical draws
 
-    def test_disabling_row_filters_skips_the_exact_yardline_filter(self):
+    def test_switching_off_the_exact_yardline_filter_skips_it_only(self):
         rows = cell([('run', 'run'), ('run', 'run')])
         rows[0][1]['yardline_100'] = 10
         rows[1][1]['yardline_100'] = 15  # the same field bucket as the 10, a different yard line
@@ -712,6 +714,23 @@ class AblationGuards(unittest.TestCase):
         for disabled in (False, True):
             sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(-30.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
             sampler.exact_yardline = True
-            sampler.research_disable_row_filters = disabled
+            sampler.research_off = frozenset({'exact_yardline_row_filter'}) if disabled else frozenset()
             sampler.sample(random.Random(1), rows, 'A', 'B', state=state)
-            self.assertEqual(sampler.decisions[-1]['exact_yardline_conditioned'], not disabled)
+            decision = sampler.decisions[-1]
+            self.assertEqual(decision['exact_yardline_conditioned'], not disabled)
+            self.assertEqual(decision['mechanisms_applied']['exact_yardline_row_filter'], not disabled)
+            self.assertTrue(decision['mechanisms_applied']['score_clock_playcalling'])  # unrelated mechanisms stay on
+
+    def test_an_unknown_mechanism_name_is_refused(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        sampler.research_off = frozenset({'not_a_mechanism'})
+        with self.assertRaises(ValueError):
+            sampler.sample(random.Random(1), cell([('run', 'run')]), 'A', 'B', state=STATE)
+
+    def test_switching_off_one_playcall_shift_keeps_the_others(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        sampler.research_off = frozenset({'score_clock_playcalling'})
+        sampler.sample(random.Random(1), cell([('run', 'run'), ('pass_complete', 'pass')]), 'A', 'B', state=STATE)
+        applied = sampler.decisions[-1]['mechanisms_applied']
+        self.assertFalse(applied['score_clock_playcalling'])
+        self.assertEqual(sampler.decisions[-1]['call_policy_source'], 'historical_down_distance_field_cell_rate')
