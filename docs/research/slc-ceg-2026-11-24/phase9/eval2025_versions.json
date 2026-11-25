@@ -1,0 +1,10 @@
+{
+ "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+ "executable": "/usr/bin/python3",
+ "pandas": "3.1.1",
+ "pandas_path": "/root/.local/lib/python3.12/site-packages/pandas/__init__.py",
+ "numpy": "2.4.4",
+ "pyarrow": "26.0.1",
+ "host": "vmi3108149",
+ "cross_host_check": "smoke 2024 C,E8,O10D30 x20 drives x2 draws identical to vmi2215705 (python 3.8.10, pandas 1.5.3, numpy 1.24.4)"
+}

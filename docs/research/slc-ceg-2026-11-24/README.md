@@ -1,4 +1,4 @@
-# SLC-CEG: conditional event generation, status after Phases 0 to 8
+# SLC-CEG: conditional event generation, status after Phases 0 to 9
 
 Branch `research/slc-ceg-2026-11-24`, based on the v2 engine (`8a1d9842`). Plan: `../SLC-CONDITIONAL-EVENT-GENERATION-PLAN.md`.
 No frozen SLC version, V1 Complete or Gridiron was changed. Each scored phase (2, 3, 4, 6, 7) was pre-registered and
@@ -26,6 +26,7 @@ winners. The architecture is done; team strength is the open research question.
 | 6 differentiation | `PHASE6-DIFFERENTIATION-REPORT.md` | two team terms beat C (small); arm D confirmed (-0.348 per opportunity against v1's share) |
 | 7 evaluation | `PHASE7-EVALUATION-REPORT.md` | realism mostly within 6%, points 0.87; week 11 home-win Brier 0.245 (market 0.183); week 12 frozen |
 | 8 team strength | `PHASE8-TEAM-STRENGTH-REPORT.md` | yardage team shifts count per play but are not useful at drive level (E8 minus C -0.12, n.s.); offense ranking r 0.19 against 0.67 for a simple points-per-drive baseline; per-play tuning over-shrinks teams |
+| 9 team strength, drive-tuned | `PHASE9-TEAM-STRENGTH-REPORT.md` | no candidate beats no team terms on 2025 drives; best E-R -0.10 (n.s.), beats the points-per-drive rating; offense ranking 0.48 vs the rating's 0.62 |
 
 Open work: `ENGINEERING-BACKLOG.md` (E1 to E12), led by team strength on the scoring components, player attribution in
 the runtime (arm D), and the regression and GAM challengers.

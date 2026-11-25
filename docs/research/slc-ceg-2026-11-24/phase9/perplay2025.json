@@ -1,0 +1,72 @@
+{
+ "run_yards:off": {
+  "base_arm": "C",
+  "lambda": 10,
+  "n": 12806,
+  "E_minus_base": [
+   0.00016,
+   -0.00142,
+   0.00178
+  ]
+ },
+ "run_yards:def": {
+  "base_arm": "C",
+  "lambda": 1000,
+  "n": 12806,
+  "E_minus_base": [
+   -0.00055,
+   -0.00095,
+   -0.00014
+  ]
+ },
+ "yac:off": {
+  "base_arm": "B",
+  "lambda": 10,
+  "n": 11001,
+  "E_minus_base": [
+   0.0008,
+   -0.0008,
+   0.00267
+  ]
+ },
+ "yac:def": {
+  "base_arm": "B",
+  "lambda": 1000,
+  "n": 11001,
+  "E_minus_base": [
+   -0.00054,
+   -0.00086,
+   -0.0002
+  ]
+ },
+ "dropback_outcome:off": {
+  "base_arm": "C",
+  "k": 10,
+  "n": 19420,
+  "E_minus_base": [
+   -0.00349,
+   -0.00547,
+   -0.00161
+  ]
+ },
+ "targeted_outcome:off": {
+  "base_arm": "C",
+  "k": 10,
+  "n": 16414,
+  "E_minus_base": [
+   0.00085,
+   -0.00056,
+   0.00236
+  ]
+ },
+ "targeted_outcome:def": {
+  "base_arm": "C",
+  "k": 1000,
+  "n": 16414,
+  "E_minus_base": [
+   -0.00066,
+   -0.00117,
+   -0.00021
+  ]
+ }
+}
