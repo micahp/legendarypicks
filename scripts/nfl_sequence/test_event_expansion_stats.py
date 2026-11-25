@@ -122,6 +122,39 @@ class EventExpansionStatisticsTests(unittest.TestCase):
         self.assertEqual(stats['team']['A']['penalties_accepted_yards'], 2.0)
         self.assertEqual(stats['player']['ol1']['stats']['penalties_accepted_yards'], 2.0)
 
+    def test_non_counting_accepted_penalty_keeps_penalty_stats_and_omits_play_stats(self):
+        penalty = c.PenaltyV2(
+            'live_ball', (c.PenaltyFoulV2('defensive_pass_interference', 'defense', 0,
+                                          foul_spot=32,
+                                          player=c.PlayerRoleV2.named('cb1')),),
+            'accepted', automatic_first_down=True, provenance=P)
+        record = play(event='pass_incomplete', yards_gained=0, air_yards=None,
+                      yards_after_catch=None, penalty=penalty,
+                      players=c.PlayerRolesV2(passer=c.PlayerRoleV2.named('qb1')))
+        stats = play_deltas(record, STATE,
+                            penalty_enforcement={'accepted': True, 'yards': 8,
+                                                 'play_counts': False})
+        self.assertEqual(stats['team']['B']['penalties_accepted'], 1)
+        self.assertEqual(stats['team']['B']['penalties_accepted_yards'], 8)
+        self.assertEqual(stats['player']['cb1']['stats']['penalties_accepted'], 1)
+        self.assertNotIn('pass_attempts', stats['team'].get('A', {}))
+        self.assertNotIn('targets', stats['team'].get('A', {}))
+        self.assertNotIn('pass_attempts', stats['player'].get('qb1', {}).get('stats', {}))
+
+    def test_non_counting_accepted_penalty_does_not_credit_a_cancelled_touchdown(self):
+        penalty = c.PenaltyV2(
+            'live_ball', (c.PenaltyFoulV2('defensive_pass_interference', 'defense', 0,
+                                          foul_spot=8),),
+            'accepted', automatic_first_down=True, provenance=P)
+        record = play(yards_gained=40, air_yards=35, yards_after_catch=5,
+                      scoring=c.ScoringV2('touchdown', 'offense'), penalty=penalty)
+        stats = play_deltas(record, STATE,
+                            penalty_enforcement={'accepted': True, 'yards': 32,
+                                                 'play_counts': False})
+        self.assertNotIn('touchdowns', stats['team'].get('A', {}))
+        self.assertNotIn('points_scored', stats['team'].get('A', {}))
+        self.assertNotIn('passing_touchdowns', stats['player'].get('qb1', {}).get('stats', {}))
+
     def test_try_defensive_return_is_two_points_for_the_returning_team(self):
         record = c.TryRecordV2(c.CONTRACT_V2_VERSION, 'two_point', 'A',
                                'defensive_return', 'B', P)

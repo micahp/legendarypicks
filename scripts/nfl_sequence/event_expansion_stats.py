@@ -60,6 +60,45 @@ def play_deltas(play, state, *, penalty_enforcement=None):
         else:
             unattributed[team][field] += value
 
+    # Penalty accounting applies whether or not the snap counts. Resolve and
+    # validate enforcement before crediting the generated play so an accepted
+    # no-play foul cannot leak attempts, yards, turnovers, or scoring.
+    counts_play = True
+    if play.penalty is not None:
+        enforced_yards = 0
+        if play.penalty.disposition == 'accepted':
+            if not isinstance(penalty_enforcement, dict) or penalty_enforcement.get('accepted') is not True:
+                raise EventStatisticsError('accepted_penalty_requires_rules_enforcement_result')
+            enforced_yards = penalty_enforcement.get('yards')
+            if (not isinstance(enforced_yards, (int, float)) or isinstance(enforced_yards, bool)
+                    or not math.isfinite(enforced_yards) or enforced_yards < 0):
+                raise EventStatisticsError('accepted_penalty_enforced_yards_invalid')
+            if 'play_counts' in penalty_enforcement:
+                if type(penalty_enforcement['play_counts']) is not bool:
+                    raise EventStatisticsError('penalty_play_counts_fact_invalid')
+                counts_play = penalty_enforcement['play_counts']
+        elif penalty_enforcement is not None:
+            if (not isinstance(penalty_enforcement, dict)
+                    or penalty_enforcement.get('accepted') is not False):
+                raise EventStatisticsError('penalty_enforcement_disposition_mismatch')
+            if 'play_counts' in penalty_enforcement:
+                if type(penalty_enforcement['play_counts']) is not bool:
+                    raise EventStatisticsError('penalty_play_counts_fact_invalid')
+                counts_play = penalty_enforcement['play_counts']
+
+        for foul in play.penalty.fouls:
+            team = _role_team(foul.team, state, kick)
+            teams[team]['penalty_opportunities'] += 1
+            credit(team, 'penalties_called', 1, foul.player)
+            if play.penalty.disposition == 'accepted':
+                credit(team, 'penalties_accepted', 1, foul.player)
+                credit(team, 'penalties_accepted_yards', enforced_yards, foul.player)
+            else:
+                teams[team]['penalties_' + play.penalty.disposition] += 1
+
+    if not counts_play:
+        return _finish_deltas(teams, players, unattributed)
+
     offense, defense = state['offense'], state['defense']
     event = play.event
     roles = play.players
@@ -129,7 +168,8 @@ def play_deltas(play, state, *, penalty_enforcement=None):
             credit(team, 'fumble_returns', 1, play.possession.returner)
             credit(team, 'fumble_return_yards', play.possession.return_yards, play.possession.returner)
 
-    if kick is not None and kick.result == 'return':
+    if (kick is not None and kick.result == 'return' and not kick.out_of_bounds
+            and not play.probabilities.get('fair_catch') and kick.returner.status != 'none'):
         return_team = kick.receiving_team
         if kick.kind == 'punt':
             credit(return_team, 'punt_returns', 1, kick.returner)
@@ -162,29 +202,10 @@ def play_deltas(play, state, *, penalty_enforcement=None):
             teams[scorer]['safeties'] += 1
             teams[scorer]['points_scored'] += 2
 
-    if play.penalty is not None:
-        enforced_yards = 0
-        if play.penalty.disposition == 'accepted':
-            if not isinstance(penalty_enforcement, dict) or penalty_enforcement.get('accepted') is not True:
-                raise EventStatisticsError('accepted_penalty_requires_rules_enforcement_result')
-            enforced_yards = penalty_enforcement.get('yards')
-            if (not isinstance(enforced_yards, (int, float)) or isinstance(enforced_yards, bool)
-                    or not math.isfinite(enforced_yards) or enforced_yards < 0):
-                raise EventStatisticsError('accepted_penalty_enforced_yards_invalid')
-        elif penalty_enforcement is not None:
-            if (not isinstance(penalty_enforcement, dict)
-                    or penalty_enforcement.get('accepted') is not False):
-                raise EventStatisticsError('penalty_enforcement_disposition_mismatch')
-        for foul in play.penalty.fouls:
-            team = _role_team(foul.team, state, kick)
-            teams[team]['penalty_opportunities'] += 1
-            credit(team, 'penalties_called', 1, foul.player)
-            if play.penalty.disposition == 'accepted':
-                credit(team, 'penalties_accepted', 1, foul.player)
-                credit(team, 'penalties_accepted_yards', enforced_yards, foul.player)
-            else:
-                teams[team]['penalties_' + play.penalty.disposition] += 1
+    return _finish_deltas(teams, players, unattributed)
 
+
+def _finish_deltas(teams, players, unattributed):
     # Convert defaultdicts into ordinary JSON-serializable mappings.
     team_rows = {team: dict(sorted(values.items())) for team, values in sorted(teams.items())}
     player_rows = {pid: {'team': row['team'], 'stats': dict(sorted(row['stats'].items()))}

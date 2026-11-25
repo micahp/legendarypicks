@@ -20,7 +20,7 @@ import reducer
 import roster_preflight
 import v1_complete_roster
 
-ENGINE_COMMIT = '3117fe9eaa2017d66f47cc0190130bd07dffa3cf'
+ENGINE_COMMIT = '5a88c51951969ca6408a3fd33ee99cad34dddebe'
 PLAYBOOK_MANIFEST_SHA256 = '9d4749f817e97f4e3da0b6c5170eae0fa922d8b1b59d608ab4ce9dd990c2e929'
 DEFENSE_SLOTS = ('LEDGE', 'LDT', 'RDT', 'REDGE', 'MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS')
 DEFENSE_POSITION_CANDIDATES = {
@@ -221,6 +221,41 @@ def _validate_result(call, result):
     return result
 
 
+def _validate_special_teams_result(call, result):
+    if (result.get('schema_version') != 'gridiron.autonomous-special-teams.v1'
+            or result.get('status') != 'complete' or result.get('kind') != call.get('kind')
+            or result.get('seed') != str(call.get('seed'))):
+        raise ValueError('gridiron_special_teams_incomplete:' + str(result.get('failure')))
+    if result.get('diagnostics', {}).get('outcome_inputs') != []:
+        raise ValueError('gridiron_special_teams_outcome_input_detected')
+    if (result['diagnostics'].get('assignments_executed') != 22
+            or result['diagnostics'].get('expected_assignments') != 22):
+        raise ValueError('gridiron_special_teams_assignment_count_mismatch')
+    expected = {call['lineups']['kicking']['punter' if call['kind'] == 'punt' else 'kicker'],
+                *call['lineups']['kicking']['coverage'], call['lineups']['receiving']['returner'],
+                *call['lineups']['receiving']['blockers']}
+    roster = result.get('trajectory', {}).get('roster', [])
+    if len(roster) != 22 or {row.get('id') for row in roster} != expected:
+        raise ValueError('gridiron_special_teams_roster_mismatch')
+    assigned = {event.get('player_id') for event in result.get('events', [])
+                if event.get('type') == 'assignment_executed'}
+    if assigned != expected:
+        raise ValueError('gridiron_special_teams_assignments_missing')
+    events = result.get('events', [])
+    if not events or events[-1].get('type') != 'whistle':
+        raise ValueError('gridiron_special_teams_whistle_missing')
+    trajectory = result.get('trajectory', {})
+    frames, stride = trajectory.get('frames'), trajectory.get('stride')
+    if (not isinstance(frames, list) or not frames or type(stride) is not int
+            or any(not isinstance(frame, list) or len(frame) != stride
+                   or any(not isinstance(value, (int, float)) or not math.isfinite(value) for value in frame)
+                   for frame in frames)):
+        raise ValueError('gridiron_special_teams_trajectory_invalid')
+    if result.get('result', {}).get('result') not in ('return', 'touchback', 'muff'):
+        raise ValueError('gridiron_special_teams_result_classification_invalid')
+    return result
+
+
 class GridironSession:
     """One persistent, sequential engine process for many independent plays."""
 
@@ -258,6 +293,13 @@ class GridironSession:
         start = time.monotonic()
         response = self.request('play', call=call)
         return _validate_result(call, response['value']), {'engine_commit': self.commit,
+                'elapsed_wall_seconds': time.monotonic() - start, 'engine_ms': response['engine_ms']}
+
+    def special_teams(self, call):
+        start = time.monotonic()
+        response = self.request('special_teams', call=call)
+        result = _validate_special_teams_result(call, response['value'])
+        return result, {'engine_commit': self.commit,
                 'elapsed_wall_seconds': time.monotonic() - start, 'engine_ms': response['engine_ms']}
 
     def close(self):

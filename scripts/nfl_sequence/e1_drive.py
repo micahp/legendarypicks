@@ -533,6 +533,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                         'turnover_on_downs': flags['turnover_on_downs'],
                         'punt': flags['punt'], 'punt_attempt': flags['punt_attempt'],
                         'punt_return': flags.get('punt_return', False),
+                        'return_touchdown': flags.get('return_touchdown', False),
+                        'fair_catch': flags.get('fair_catch', False),
                         'return_yards': flags.get('return_yards'),
                         'field_goal_attempt': flags['field_goal_attempt'],
                         'field_goal_result': flags.get('field_goal_result'),
@@ -661,7 +663,10 @@ def check_drive(plays, terminal):
         changed = sb['offense_team'] != sa['offense_team']
         defensive_touchdown = (sa.get('end_of_drive') == 'touchdown' and o['touchdown']
                                 and o['turnover'] and o.get('scoring_team') == sb['defense_team'])
-        if changed != (o['turnover'] or o['punt']) and not defensive_touchdown:
+        terminal_kick_score = (p['event_type'] in ('punt', 'field_goal_attempt')
+                               and sa.get('end_of_drive') in ('touchdown', 'safety')
+                               and o.get('scoring_team') is not None)
+        if changed != (o['turnover'] or o['punt']) and not defensive_touchdown and not terminal_kick_score:
             raise AssertionError(f'play {i + 1}: possession change does not match the turnover or punt flag')
         if o['touchdown'] != (sa.get('end_of_drive') == 'touchdown'):
             raise AssertionError(f'play {i + 1}: touchdown flag and terminal disagree')
@@ -673,7 +678,7 @@ def check_drive(plays, terminal):
             raise AssertionError(f'play {i + 1}: field endpoint and scrimmage state disagree about a position')
         if o['field_goal_attempt'] and p['event_type'] == 'field_goal_attempt' and sa['yardline_100'] is not None:
             raise AssertionError(f'play {i + 1}: a field-goal attempt has no next field position')
-        if o['punt'] and sa['yardline_100'] is None:
+        if o['punt'] and sa['yardline_100'] is None and not terminal_kick_score:
             raise AssertionError(f'play {i + 1}: a punt must give the receiving spot')
     first_downs = sum(
         1 for p in plays

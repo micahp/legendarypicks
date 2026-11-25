@@ -18,5 +18,7 @@ def test_complete_game_is_valid_when_snapshot_evidence_is_unverified():
     game = gs.play_game(9, reference, winner_choice='receive', pregame_snapshot=snapshot)
     assert game['status'] == 'complete_overtime'
     assert game['valid_full_game'] is True
+    assert game['legal_game_complete'] is True
+    assert game['autonomous_player_execution_complete'] is None
     assert game['snapshot_verified'] is False
     gs.validate_game(game)

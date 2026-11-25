@@ -736,6 +736,39 @@ class _TimeoutSamplingGuard:
                 'distinct_cell_rows_excluded_by_reason': dict(sorted(self.excluded.items()))}
 
 
+def _has_22_player_execution(execution):
+    if not isinstance(execution, dict):
+        return False
+    result = execution.get('result', execution)
+    trajectory = result.get('trajectory') if isinstance(result, dict) else None
+    if not isinstance(trajectory, dict):
+        return False
+    roster = trajectory.get('roster')
+    frames, stride = trajectory.get('frames'), trajectory.get('stride')
+    return (isinstance(roster, list) and len(roster) == 22
+            and len({row.get('id') for row in roster if isinstance(row, dict)}) == 22
+            and isinstance(frames, list) and bool(frames) and type(stride) is int
+            and all(isinstance(frame, list) and len(frame) == stride
+                    and all(isinstance(value, (int, float)) and math.isfinite(value) for value in frame)
+                    for frame in frames))
+
+
+def _autonomous_execution_complete(drives, kickoff_events):
+    if not kickoff_events:
+        return False
+    for event in kickoff_events:
+        if not _has_22_player_execution(event.get('execution')):
+            return False
+    for drive in drives:
+        for play in drive.get('plays', ()):
+            if not _has_22_player_execution(play.get('autonomous_execution')):
+                return False
+        try_record = (drive.get('points_scored_on_drive') or {}).get('try')
+        if try_record is not None and not _has_22_player_execution(try_record.get('execution')):
+            return False
+    return True
+
+
 class _Game:
     """One game in progress. Each drive is an E1 drive; this class decides what follows it."""
 
@@ -876,6 +909,9 @@ class _Game:
         if not isinstance(result, dict):
             self.block('autonomous_kick_result_missing')
             return
+        if result.get('blocker'):
+            self.block(result['blocker'])
+            return
         runoff = result.get('clock_runoff_seconds')
         event_record = result.get('event_record')
         if not isinstance(runoff, (int, float)) or not math.isfinite(runoff) or runoff < 0:
@@ -883,6 +919,9 @@ class _Game:
             return
         if event_record is None:
             self.block('autonomous_kick_ceg_play_2_record_missing')
+            return
+        if event_record.clock is None or event_record.clock.runoff_seconds != runoff:
+            self.block('autonomous_kick_clock_contract_mismatch')
             return
         kick_spot = event_record.kick.kick_spot_yardline_100
         kick_state = {'offense': kicker, 'defense': receiver, 'down': 1,
@@ -920,13 +959,10 @@ class _Game:
             'returner_id': event_record.kick.returner.stat_player_id,
             'terminal': applied.terminal, 'flags': applied.flags,
             'scoring_team': applied.scoring_team,
-            'participants': {'attribution': 'autonomous_execution',
+            'participants': {**(result.get('participants') or {}),
+                             'attribution': 'autonomous_execution',
                              'returner_id': event_record.kick.returner.stat_player_id,
-                             'returner_side': receiver,
-                             'returner_team': (self.pregame_snapshot['schedule']['home_team']
-                                               if self.pregame_snapshot and receiver == 'A' else
-                                               self.pregame_snapshot['schedule']['away_team']
-                                               if self.pregame_snapshot else receiver)},
+                             },
             'ceg_event': asdict(event_record),
             'clock_transition': {'clock_starts_on': result.get('clock_starts_on', 'legal_touch'),
                                  'clock_interval': 'generated_free_kick_to_next_snap',
@@ -937,6 +973,7 @@ class _Game:
                                  'restart_clock_seconds': after_clock},
             'clock_rule': clock_rule, 'source': 'autonomous_execution',
             'execution': result.get('execution'),
+            'fair_catch': bool(event_record.probabilities.get('fair_catch')),
         }
         scorer = applied.scoring_team if applied.terminal == 'touchdown' else None
         if scorer is not None:
@@ -1791,7 +1828,7 @@ class _Game:
             drive['points_scored_on_drive'] = {'team': scorer, 'points': TD_POINTS + try_points, 'try': try_record}
             self._continue(('kick', 'post_score', scorer, other(scorer, self.ledger.teams)))
         elif terminal == 'safety':
-            scorer = self.defense
+            scorer = plays[-1]['outcome'].get('scoring_team') or self.defense
             self.points[scorer] += SAFETY_POINTS
             drive['points_scored_on_drive'] = {'team': scorer, 'points': SAFETY_POINTS, 'try': None}
             quarter_boundary_safety_kick = (self.execution_source is not None or
@@ -1805,7 +1842,7 @@ class _Game:
             else:
                 # Time left on the clock means the free kick is due now, sampled from the observed safety-kick table. At a
                 # Q2/Q4 boundary no safety kick is due before halftime or the end of regulation; the post-score rule skips it.
-                self._continue(('kick', 'safety_free_kick', self.offense, scorer))
+                self._continue(('kick', 'safety_free_kick', other(scorer, self.ledger.teams), scorer))
         else:
             self.block(f'unhandled_terminal:{terminal}')
 
@@ -1834,9 +1871,14 @@ class _Game:
         snapshot = self.pregame_snapshot
         # Snapshot evidence and the legality/completion of the simulated game are separate facts.
         verified = bool((snapshot or {}).get('evaluation', {}).get('verified'))
-        valid_candidate = bool(snapshot and complete and blocker is None and not guarded and not unsupported)
+        legal_game_complete = bool(complete and blocker is None and not guarded and not unsupported)
+        autonomous_player_execution_complete = (
+            _autonomous_execution_complete(self.drives, self.events)
+            if self.execution_source is not None else None)
+        valid_candidate = bool(snapshot and legal_game_complete)
         if self.execution_source is not None:
-            valid_candidate = bool(snapshot and verified and complete and blocker is None and not guarded and not unsupported)
+            valid_candidate = bool(snapshot and verified and legal_game_complete
+                                   and autonomous_player_execution_complete)
             record_mode = 'autonomous_full_game' if complete else 'autonomous_incomplete_game'
         else:
             record_mode = ('pregame_full_game' if valid_candidate else 'pregame_statistical_game') if snapshot else 'legal_game_state_first_piece'
@@ -1869,6 +1911,8 @@ class _Game:
             'regulation_end_reached': complete,
             'final_quarter': self.quarter, 'final_clock_seconds': self.clock,
             'complete_game': bool(complete and blocker is None and not guarded and not unsupported),
+            'legal_game_complete': legal_game_complete,
+            'autonomous_player_execution_complete': autonomous_player_execution_complete,
             'scope_out': scope_out,
             'unmodelled_transitions': guarded,
             'two_minute_warnings': two_minute_warnings(self.drives, self.events),
@@ -2330,6 +2374,12 @@ def _validate_game_impl(record):
                 'valid_full_game requires pregame_full_game or autonomous_full_game mode, no blocker, a tie only after its '
                 'overtime period, and no unsupported rule')
     checks.append('valid_full_game only when complete, unblocked, any tie played out in overtime, and no unsupported rule')
+    if record.get('mode') == 'autonomous_full_game' and record.get('valid_full_game'):
+        if record.get('autonomous_player_execution_complete') is not True:
+            raise AssertionError('valid autonomous full game requires player execution on every live event')
+    if record.get('legal_game_complete') and not record.get('complete_game'):
+        raise AssertionError('legal lifecycle completion disagrees with complete_game')
+    checks.append('legal lifecycle completion is distinct from autonomous player execution completeness')
     return checks
 
 

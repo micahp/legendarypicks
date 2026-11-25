@@ -99,3 +99,26 @@ def test_persistent_session_reuses_process_and_recovers_from_bad_request():
         assert len(run_assignments['offense']) == 11
         assert len(run_assignments['defense']) == 11
         assert run_assignments['offense']['RB']['aiming_gap'] == 'play_side_a'
+
+
+@pytest.mark.skipif(not (ENGINE / 'engine/autonomous/slc-server.js').exists(),
+                    reason='optional pinned Gridiron research checkout unavailable')
+def test_persistent_session_executes_generated_punt_return_with_all_22_players():
+    ids = ['P', *[f'C{i}' for i in range(10)], 'PR', *[f'R{i}' for i in range(10)]]
+    call = {
+        'schema_version': 'gridiron.autonomous-special-teams.v1', 'kind': 'punt', 'seed': 42,
+        'kicking_team': 'MIN', 'receiving_team': 'SF', 'yardline_100': 45,
+        'lineups': {'kicking': {'punter': 'P', 'coverage': ids[1:11]},
+                    'receiving': {'returner': 'PR', 'blockers': ids[12:]}},
+        'player_profiles': {pid: {'ratings': {'SPD': 76, 'ACC': 75, 'AGI': 75, 'STR': 68,
+            'AWR': 70, 'PUR': 75, 'TAK': 70, 'BSH': 70, 'RBK': 70, 'IBL': 70,
+            'CTH': 78, 'CAR': 78, 'BCV': 75, 'ELU': 75, 'TRK': 65, 'PRC': 70,
+            'KPW': 70, 'KAC': 70}} for pid in ids},
+    }
+    with bridge.GridironSession(str(ENGINE)) as session:
+        result, timing = session.special_teams(call)
+    assert result['status'] == 'complete'
+    assert result['diagnostics']['assignments_executed'] == 22
+    assert result['events'][-1]['type'] == 'whistle'
+    assert result['result']['result'] in ('return', 'touchback', 'muff')
+    assert timing['engine_ms'] >= 0

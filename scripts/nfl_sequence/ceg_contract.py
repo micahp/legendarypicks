@@ -560,7 +560,11 @@ def _v2_kick(kick, play):
     if not isinstance(kick, KickV2) or expected != kick.kind:
         _v2_fail('kick_record_event_mismatch')
     if play.scoring is not None and play.scoring.kind == 'safety':
-        _v2_fail('kick_safety_unsupported')
+        if (kick.kind != 'punt' or kick.result != 'return'
+                or kick.possession_after != 'receiving_team'
+                or kick.dead_ball_yardline_100 != 0
+                or play.scoring.team != 'kicking_team'):
+            _v2_fail('punt_return_safety_facts_invalid')
     if (play.scoring is not None and play.scoring.kind == 'touchdown'
             and kick.result in ('blocked', 'muff')):
         _v2_fail(kick.result + '_return_touchdown_attribution_unsupported')
@@ -779,9 +783,11 @@ def validate_v2(state, play, require_clock=True):
                 if scoring_spot != expected_spot:
                     _v2_fail('kick_return_touchdown_spot_mismatch')
             if play.scoring.kind == 'safety' and play.kick is not None:
-                role = 'kicking_team' if play.scoring.team == 'kicking_team' else 'receiving_team'
-                if play.scoring.team != role or play.kick.dead_ball_yardline_100 != (100 if role == 'kicking_team' else 0):
-                    _v2_fail('kick_safety_team_or_spot_mismatch')
+                if (play.event != 'punt' or play.kick.result != 'return'
+                        or play.scoring.team != 'kicking_team'
+                        or play.kick.possession_after != 'receiving_team'
+                        or play.kick.dead_ball_yardline_100 != 0):
+                    _v2_fail('punt_return_safety_facts_invalid')
         elif play.scoring.kind == 'touchdown':
             if play.scoring.team == 'offense' and boundary != 'opponent_goal_line':
                 _v2_fail('offensive_touchdown_must_reach_opponent_goal_line')

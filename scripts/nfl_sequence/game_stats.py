@@ -45,6 +45,8 @@ def team_stats(drives, points, kickoff_events=()):
                 charged = team(penalized_team)
                 charged['penalties'] += 1
                 charged['penalty_yards'] += int(round(enforcement['yards']))
+            if enforcement is not None and not enforcement.get('play_counts', False):
+                continue
             if ev in SCRIMMAGE_EVENTS:
                 t['plays'] += 1
             if ev in ('pass_complete', 'pass_incomplete', 'interception') and part.get('receiver_id'):
@@ -115,12 +117,14 @@ def team_stats(drives, points, kickoff_events=()):
             if scorer == d['offense_team'] and (offensive_scoring_play or unassigned_overtime_offensive_td):
                 # Scrimmage touchdowns and observed no-play OT touchdowns are offensive; returns are not.
                 scored['offensive_touchdowns'] += 1
+            if last_play and last_play['outcome'].get('return_touchdown'):
+                scored['return_touchdowns'] += 1
             if unassigned_overtime_offensive_td:
                 # No player row exists for this observed OT score, so exclude it from player reconciliation.
                 scored['observed_overtime_touchdowns'] += 1
     for event in kickoff_events:
         team(event['kicking_team'])['kickoffs'] += 1
-        if event.get('result') == 'return':
+        if event.get('result') == 'return' and event.get('returner_id') and not event.get('fair_catch'):
             returned = team(event['receiving_team'])
             returned['kickoff_returns'] += 1
             returned['kickoff_return_yards'] += int(event.get('return_yards') or 0)
@@ -182,6 +186,8 @@ def player_lines(drives, kickoff_events=()):
                 p = line(offender_id, part, 'penalty_offender')['miscellaneous']
                 p['penalties'] += 1
                 p['penalty_yards'] += int(round(enforcement['yards']))
+            if enforcement is not None and not enforcement.get('play_counts', False):
+                continue
             if (ev == 'run' or (ev == 'fumble_lost' and part.get('rusher_id'))) and part['rusher_id']:
                 r = line(part['rusher_id'], part, 'rusher')['rushing']
                 r['att'] += 1
@@ -225,9 +231,10 @@ def player_lines(drives, kickoff_events=()):
                 r = line(part['returner_id'], part, 'returner')['returning']
                 r['punt_returns'] += 1
                 r['punt_return_yds'] += int(out.get('return_yards') or 0)
+                r['td'] += int(bool(out.get('return_touchdown')))
     for event in kickoff_events:
         pid = event.get('returner_id')
-        if event.get('result') == 'return' and pid:
+        if event.get('result') == 'return' and pid and not event.get('fair_catch'):
             part = event.get('participants') or {}
             entry = lines.setdefault(pid, {'passing': defaultdict(int), 'rushing': defaultdict(int),
                                            'receiving': defaultdict(int), 'kicking': defaultdict(int),

@@ -66,7 +66,7 @@ def _state_from_down_state(before, result):
 def _apply_penalty(before, after, play, switches):
     penalty = play.penalty
     if penalty is None:
-        return after, None
+        return after, None, True
     switch = 'pre_snap_penalties' if penalty.phase == 'pre_snap' else 'live_ball_penalties'
     _require_switch(switches, switch)
     if penalty.disposition == 'offsetting':
@@ -89,13 +89,16 @@ def _apply_penalty(before, after, play, switches):
             f'penalty_nominal_yards_disagree_with_rule:{foul.team}:'
             f'{classification.penalty_type}:expected={nominal_yards}:got={foul.yards_assessed}')
     state_before = _down_state(before)
-    if penalty.phase == 'live_ball' and after is None:
-        raise UnsupportedEventTransition('live_penalty_after_terminal_play_needs_scoring_rules_integration')
-    state_after = state_before if penalty.phase == 'pre_snap' else _down_state(after)
+    terminal_play = penalty.phase == 'live_ball' and (
+        after is None or (penalty.disposition == 'accepted' and after.get('offense') != before.get('offense')))
+    state_after = (state_before if penalty.phase == 'pre_snap' or terminal_play
+                   else _down_state(after))
     if penalty.phase == 'live_ball' and play.call.intent in ('punt', 'field_goal', 'kickoff'):
         raise UnsupportedEventTransition('scrimmage_kick_penalty_requires_special_teams_enforcement')
     play_class = ('run' if play.call and play.call.intent in ('designed_run', 'kneel') else
                   'dropback' if play.call and play.call.intent == 'dropback' else None)
+    if penalty.phase == 'live_ball' and play_class is None and play.event == 'interception':
+        play_class = 'dropback'
     if penalty.phase == 'live_ball' and play_class is None:
         raise UnsupportedEventTransition('penalty_play_class_unsupported')
     if penalty.disposition not in ('accepted', 'declined'):
@@ -110,13 +113,18 @@ def _apply_penalty(before, after, play, switches):
         foul_yardline_100=foul.foul_spot,
         play_class=play_class,
         pass_outcome=('complete' if play.event == 'pass_complete' else
-                      'incomplete' if play.event == 'pass_incomplete' else None),
+                      'incomplete' if play.event in ('pass_incomplete', 'interception') else None),
         block_subtype=classification.block_subtype,
         defense_team=before['defense'])
     if (penalty.automatic_first_down is not None
             and penalty.automatic_first_down != enforcement.automatic_first_down):
         raise UnsupportedEventTransition('penalty_first_down_fact_disagrees_with_rules')
-    return _state_from_down_state(before, enforcement.state), asdict(enforcement)
+    if terminal_play and enforcement.accepted and not enforcement.play_counts:
+        return _state_from_down_state(before, enforcement.state), asdict(enforcement), False
+    return (after if terminal_play and not enforcement.accepted else
+            None if terminal_play and enforcement.play_counts else
+            _state_from_down_state(before, enforcement.state),
+            asdict(enforcement), True)
 
 
 def _defensive_recovery(before, play):
@@ -216,7 +224,7 @@ def apply_scrimmage_play(state, play, switches=FROZEN_CONTROL):
     if play.event in ('punt', 'field_goal_attempt', 'kickoff'):
         raise UnsupportedEventTransition('kick_transition_not_integrated_in_scrimmage_adapter')
     if play.event == 'no_play':
-        after, enforcement = _apply_penalty(state, state, play, switches)
+        after, enforcement, _ = _apply_penalty(state, state, play, switches)
         foul = play.penalty.fouls[0]
         flags = {'no_play': True, 'snap_occurred': False, 'penalty': True,
                  'penalty_accepted': enforcement['accepted'], 'penalty_yards': enforcement['yards'],
@@ -273,9 +281,23 @@ def apply_scrimmage_play(state, play, switches=FROZEN_CONTROL):
                               state['defense'] if terminal == 'safety' else None)
 
     if play.penalty is not None:
-        after, enforcement = _apply_penalty(state, result.state_after, play, switches)
+        after, enforcement, play_counts = _apply_penalty(state, result.state_after, play, switches)
         flags = dict(result.flags)
         foul = play.penalty.fouls[0]
+        terminal = result.terminal
+        scoring_team = result.scoring_team
+        if not play_counts:
+            terminal = ('turnover_on_downs' if enforcement['turnover_on_downs'] else None)
+            scoring_team = None
+            for name in ('touchdown', 'safety', 'turnover', 'interception', 'fumble', 'touchback',
+                         'punt_return', 'return_touchdown', 'possession_retained', 'first_down',
+                         'scoring_team'):
+                if name in flags:
+                    flags[name] = False if name != 'scoring_team' else None
+            for name in ('return_yards', 'return_team', 'returner_id', 'recovered_by'):
+                flags.pop(name, None)
+            flags['turnover_on_downs'] = enforcement['turnover_on_downs']
+            flags['first_down'] = enforcement['automatic_first_down']
         flags.update({
             'penalty': True,
             'penalty_accepted': enforcement['accepted'],
@@ -285,7 +307,7 @@ def apply_scrimmage_play(state, play, switches=FROZEN_CONTROL):
             'automatic_first_down': enforcement['automatic_first_down'],
             'first_down': flags.get('first_down', False) or enforcement['automatic_first_down'],
         })
-        result = AppliedEvent(after, result.terminal, flags, result.scoring_team, enforcement)
+        result = AppliedEvent(after, terminal, flags, scoring_team, enforcement)
     return result
 
 
@@ -314,7 +336,10 @@ def apply_punt_play(state, play, switches=FROZEN_CONTROL):
     return_yards = kick.return_yards or 0
     possession_side = kick.possession_after
     flags = {'punt': True, 'punt_attempt': True,
-             'punt_return': kick.result == 'return', 'fumble': kick.result == 'muff',
+             'punt_return': (kick.result == 'return' and not kick.out_of_bounds
+                             and kick.returner.status != 'none' and not play.probabilities.get('fair_catch')),
+             'fair_catch': bool(play.probabilities.get('fair_catch')),
+             'fumble': kick.result == 'muff',
              'return_yards': return_yards, 'returner_id': kick.returner.stat_player_id}
 
     if kick.result == 'return':
@@ -427,10 +452,11 @@ def apply_kickoff_play(state, play, switches=FROZEN_CONTROL):
     if kick.result == 'period_expired':
         return AppliedEvent(None, 'end_of_period', {**flags, 'period_expired': True})
     if kick.result == 'touchback':
-        if dead_spot != 35 or kick.possession_after != 'receiving_team':
-            raise UnsupportedEventTransition('kickoff_touchback_spot_must_be_35_in_kicking_team_frame')
+        expected_dead = 20 if kick.kick_spot_yardline_100 == 80 else 35
+        if dead_spot != expected_dead or kick.possession_after != 'receiving_team':
+            raise UnsupportedEventTransition('kickoff_touchback_spot_disagrees_with_free_kick_type')
         after = {'offense': state['defense'], 'defense': state['offense'], 'down': 1,
-                 'togo': 10, 'yl': 65}
+                 'togo': 10, 'yl': 100 - expected_dead}
         flags['touchback'] = True
         flags['turnover'] = True
         return AppliedEvent(after, 'kickoff', flags)
@@ -462,8 +488,11 @@ def apply_kickoff_play(state, play, switches=FROZEN_CONTROL):
         recovery = _int_spot(kick.recovery_yardline_100, 'kickoff_recovery_spot')
         if kick.recovery_team != 'kicking_team' or kick.possession_after != 'kicking_team':
             raise UnsupportedEventTransition('onside_recovery_possession_mismatch')
-        if recovery >= kick.kick_spot_yardline_100:
-            raise UnsupportedEventTransition('onside_recovery_before_ten_yards')
+        if recovery > kick.kick_spot_yardline_100:
+            raise UnsupportedEventTransition('onside_recovery_behind_kick_spot')
+        if (kick.kick_spot_yardline_100 - recovery < 10
+                and kick.receiving_team_touched_beyond_line is not True):
+            raise UnsupportedEventTransition('onside_recovery_before_ten_yards_without_receiving_touch')
         after = {'offense': state['offense'], 'defense': state['defense'], 'down': 1,
                  'togo': min(10, recovery), 'yl': recovery}
         flags.update({'possession_retained': True, 'onside_recovery': True})

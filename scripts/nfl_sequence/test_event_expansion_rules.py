@@ -171,6 +171,76 @@ class EventExpansionRulesTests(unittest.TestCase):
         self.assertFalse(result.penalty_enforcement['accepted'])
         self.assertTrue(result.penalty_enforcement['play_counts'])
 
+    def test_accepted_dpi_erases_a_fourth_down_turnover_and_awards_first_down(self):
+        state = {**S, 'down': 4, 'togo': 4}
+        penalty = c.PenaltyV2(
+            'live_ball', (c.PenaltyFoulV2('defensive_pass_interference', 'defense', 0,
+                                          foul_spot=32),),
+            'accepted', automatic_first_down=True, provenance=P)
+        incomplete = record(call=c.PlayCallV2('dropback'), event='pass_incomplete',
+                            yards_gained=0, penalty=penalty,
+                            players=c.PlayerRolesV2(passer=c.PlayerRoleV2.named('qb1')))
+        result = apply_scrimmage_play(state, incomplete, EventExpansionSwitches())
+        self.assertIsNone(result.terminal)
+        self.assertEqual(result.state_after, {'offense': 'A', 'defense': 'B', 'down': 1, 'togo': 10, 'yl': 32})
+        self.assertFalse(result.flags['turnover'])
+        self.assertFalse(result.flags['turnover_on_downs'])
+        self.assertFalse(result.flags['touchdown'])
+        self.assertFalse(result.penalty_enforcement['play_counts'])
+
+    def test_accepted_dpi_cancels_interception_return_and_keeps_offensive_possession(self):
+        possession = c.PossessionV2(
+            'defense', 'interception', turnover_spot_yardline_100=30,
+            dead_ball_yardline_100=40, return_yards=10,
+            returner=c.PlayerRoleV2.named('db1'))
+        penalty = c.PenaltyV2(
+            'live_ball', (c.PenaltyFoulV2('defensive_pass_interference', 'defense', 0,
+                                          foul_spot=32),),
+            'accepted', automatic_first_down=True, provenance=P)
+        interception = record(
+            call=c.PlayCallV2('dropback'), event='interception', yards_gained=0,
+            air_yards=None, yards_after_catch=None, possession=possession, penalty=penalty,
+            players=c.PlayerRolesV2(passer=c.PlayerRoleV2.named('qb1'),
+                                    interceptor=c.PlayerRoleV2.named('db1'),
+                                    returner=c.PlayerRoleV2.named('db1')))
+        result = apply_scrimmage_play(S, interception, EventExpansionSwitches())
+        self.assertIsNone(result.terminal)
+        self.assertEqual(result.state_after,
+                         {'offense': 'A', 'defense': 'B', 'down': 1, 'togo': 10, 'yl': 32})
+        self.assertIsNone(result.scoring_team)
+        self.assertFalse(result.flags['turnover'])
+        self.assertFalse(result.flags['interception'])
+        self.assertNotIn('return_yards', result.flags)
+        self.assertNotIn('return_team', result.flags)
+
+    def test_accepted_penalty_cancels_touchdown_and_declined_penalty_keeps_it(self):
+        accepted = c.PenaltyV2(
+            'live_ball', (c.PenaltyFoulV2('defensive_pass_interference', 'defense', 0,
+                                          foul_spot=8),),
+            'accepted', automatic_first_down=True, provenance=P)
+        touchdown = record(call=c.PlayCallV2('dropback'), event='pass_complete',
+                           yards_gained=40, air_yards=35, yards_after_catch=5,
+                           scoring=c.ScoringV2('touchdown', 'offense'), penalty=accepted,
+                           players=c.PlayerRolesV2(passer=c.PlayerRoleV2.named('qb1'),
+                                                   receiver=c.PlayerRoleV2.named('wr1')))
+        result = apply_scrimmage_play(S, touchdown, EventExpansionSwitches())
+        self.assertIsNone(result.terminal)
+        self.assertIsNone(result.scoring_team)
+        self.assertEqual(result.state_after['yl'], 8)
+        self.assertFalse(result.flags['touchdown'])
+        self.assertFalse(result.penalty_enforcement['play_counts'])
+
+        declined = c.PenaltyV2('live_ball', accepted.fouls, 'declined', provenance=P)
+        touchdown = record(call=c.PlayCallV2('dropback'), event='pass_complete',
+                           yards_gained=40, air_yards=35, yards_after_catch=5,
+                           scoring=c.ScoringV2('touchdown', 'offense'), penalty=declined,
+                           players=c.PlayerRolesV2(passer=c.PlayerRoleV2.named('qb1'),
+                                                   receiver=c.PlayerRoleV2.named('wr1')))
+        result = apply_scrimmage_play(S, touchdown, EventExpansionSwitches())
+        self.assertEqual((result.terminal, result.scoring_team), ('touchdown', 'A'))
+        self.assertTrue(result.flags['touchdown'])
+        self.assertTrue(result.penalty_enforcement['play_counts'])
+
     def test_penalty_source_yards_must_be_nominal_not_enforced_yards(self):
         penalty = c.PenaltyV2(
             'live_ball', (c.PenaltyFoulV2('Offensive Holding', 'offense', 5),),
@@ -233,6 +303,20 @@ class EventExpansionRulesTests(unittest.TestCase):
                                               returner=c.PlayerRoleV2.named('pr1')))
         result = apply_punt_play(S, punt, EventExpansionSwitches.from_enabled(('punt_return_events',)))
         self.assertEqual((result.terminal, result.scoring_team), ('touchdown', 'B'))
+
+    def test_punt_return_safety_credits_the_kicking_team(self):
+        kick = c.KickV2('punt', 'A', 'B', 40, 45, 'return',
+                        possession_after='receiving_team', return_start_yardline_100=5,
+                        dead_ball_yardline_100=0, return_yards=-5,
+                        returner=c.PlayerRoleV2.named('pr1'))
+        punt = record(call=c.PlayCallV2('punt'), event='punt', yards_gained=None,
+                      air_yards=None, yards_after_catch=None, kick=kick,
+                      scoring=c.ScoringV2('safety', 'kicking_team'),
+                      players=c.PlayerRolesV2(punter=c.PlayerRoleV2.named('p1'),
+                                              returner=c.PlayerRoleV2.named('pr1')))
+        result = apply_punt_play(S, punt, EventExpansionSwitches())
+        self.assertEqual((result.terminal, result.scoring_team), ('safety', 'A'))
+        self.assertTrue(result.flags['safety'])
 
     def test_punt_touchback_requires_the_punt_event_switch(self):
         kick = c.KickV2('punt', 'A', 'B', 40, 45, 'touchback',
@@ -375,6 +459,33 @@ class EventExpansionRulesTests(unittest.TestCase):
                           recoverer=c.PlayerRoleV2.named('k1')))
         result = apply_kickoff_play(state, onside, EventExpansionSwitches())
         self.assertEqual((result.state_after['offense'], result.state_after['yl']), ('A', 55))
+
+    def test_untouched_onside_recovery_before_ten_yards_is_rejected(self):
+        state = {**S, 'offense': 'A', 'defense': 'B', 'yl': 65}
+        onside = record(
+            call=c.PlayCallV2('kickoff'), event='kickoff', yards_gained=None,
+            air_yards=None, yards_after_catch=None,
+            kick=c.KickV2('kickoff', 'A', 'B', 65, 5, 'onside_recovery',
+                          possession_after='kicking_team', recovery_team='kicking_team',
+                          recovery_yardline_100=60,
+                          receiving_team_touched_beyond_line=False,
+                          recoverer=c.PlayerRoleV2.named('k1')))
+        with self.assertRaisesRegex(UnsupportedEventTransition,
+                                    'onside_recovery_before_ten_yards_without_receiving_touch'):
+            apply_kickoff_play(state, onside, EventExpansionSwitches())
+
+    def test_receiving_touch_allows_onside_recovery_before_ten_yards(self):
+        state = {**S, 'offense': 'A', 'defense': 'B', 'yl': 65}
+        onside = record(
+            call=c.PlayCallV2('kickoff'), event='kickoff', yards_gained=None,
+            air_yards=None, yards_after_catch=None,
+            kick=c.KickV2('kickoff', 'A', 'B', 65, 5, 'onside_recovery',
+                          possession_after='kicking_team', recovery_team='kicking_team',
+                          recovery_yardline_100=60,
+                          receiving_team_touched_beyond_line=True,
+                          recoverer=c.PlayerRoleV2.named('k1')))
+        result = apply_kickoff_play(state, onside, EventExpansionSwitches())
+        self.assertEqual((result.state_after['offense'], result.state_after['yl']), ('A', 60))
 
 
 if __name__ == '__main__':
