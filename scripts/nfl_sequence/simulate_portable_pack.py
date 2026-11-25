@@ -338,16 +338,18 @@ def _run(args, engine_dir):
             "v2_legacy": {},
             "v2_simplified": {
                 "optional_historical_row_filters": "all_disabled",
-                "optional_conditions": ["exact_yardline", "qb_target_role", "coverage", "formation",
-                                        "streak"] + [f"decision_label:{category}" for category in "ABCDEFGHIJKLMN"],
+                "optional_conditions": ["formation", "coverage", "streak"]
+                                        + [f"decision_label:{category}" for category in "ABCDEFGHIJKLMN"]
+                                        + ["qb_target_role", "exact_yardline"],
             },
             "v2_support_aware": {
                 "minimum_candidates": 20,
                 "minimum_effective_sample_size": 10.0,
                 "relaxation": "explicit_and_audited",
                 "filter_order_dependence": "measured",
-                "optional_conditions": ["exact_yardline", "qb_target_role", "coverage", "formation",
-                                        "streak"] + [f"decision_label:{category}" for category in "ABCDEFGHIJKLMN"],
+                "optional_conditions": ["formation", "coverage", "streak"]
+                                        + [f"decision_label:{category}" for category in "ABCDEFGHIJKLMN"]
+                                        + ["qb_target_role", "exact_yardline"],
             },
             "v2_soft_conditioning": {
                 "maximum_condition_weight": 4.0,
@@ -355,8 +357,9 @@ def _run(args, engine_dir):
                 "combination": "bounded_geometric_mean",
                 "filter_order_dependence": "measured",
                 "effective_sample_size_and_probability_concentration": "reported",
-                "optional_conditions": ["exact_yardline", "qb_target_role", "coverage", "formation",
-                                        "streak"] + [f"decision_label:{category}" for category in "ABCDEFGHIJKLMN"],
+                "optional_conditions": ["formation", "coverage", "streak"]
+                                        + [f"decision_label:{category}" for category in "ABCDEFGHIJKLMN"]
+                                        + ["qb_target_role", "exact_yardline"],
             },
         }
         experimental_configuration = {
