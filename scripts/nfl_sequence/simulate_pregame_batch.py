@@ -143,6 +143,8 @@ def _reproduction_command(args, seed):
         command.extend(['--slc-profile', args.slc_profile])
     for layer in args.slc_disable_layer:
         command.extend(['--slc-disable-layer', layer])
+    if getattr(args, 'experimental_row_conditioning', 'legacy') != 'legacy':
+        command.extend(['--experimental-row-conditioning', args.experimental_row_conditioning])
     if args.historical_archive_reconstruction:
         command.append('--historical-archive-reconstruction')
         command.extend(['--readiness-matrix', str(args.readiness_matrix), '--archive-manifest', str(args.archive_manifest),
@@ -790,12 +792,29 @@ def _execution_verification(outcomes, profile_manifest):
     if missing_counters:
         raise RuntimeError(f'SLC layers have no runtime counter: {missing_counters}')
     fallback_events = defaultdict(int)
+    conditioning_method_counts = defaultdict(int)
+    conditioning_metrics = defaultdict(float)
+    conditioning_relaxations = defaultdict(int)
+    conditioning_sources = set()
+    conditioning_games = 0
     games_with_trace = 0
     for outcome in outcomes:
         playcall = outcome.get('playcall') or {}
         execution = playcall.get('layer_execution') or {}
         if playcall:
             games_with_trace += 1
+        row_conditioning = playcall.get('row_conditioning') or {}
+        if row_conditioning.get('method_counts'):
+            conditioning_games += 1
+        for method, count in (row_conditioning.get('method_counts') or {}).items():
+            conditioning_method_counts[method] += int(count)
+        for name in ('decisions', 'candidate_count_before_total', 'candidate_count_after_total',
+                     'effective_sample_size_total', 'order_dependent_decisions', 'filter_order_jaccard_total',
+                     'below_minimum_decisions', 'soft_condition_count', 'soft_unsupported_condition_count'):
+            conditioning_metrics[name] += float(row_conditioning.get(name, 0) or 0)
+        for name, count in (row_conditioning.get('relaxed_conditions') or {}).items():
+            conditioning_relaxations[name] += int(count)
+        conditioning_sources.update(row_conditioning.get('unique_source_row_ids') or [])
         for layer, field in fields.items():
             counts[layer] += int(execution.get(field, 0) or 0)
         for name, count in (playcall.get('fallback_events') or {}).items():
@@ -831,6 +850,34 @@ def _execution_verification(outcomes, profile_manifest):
         'note': ('A layer is only reported executed when its instrumented decision path ran. State-conditional layers can have '
                  'zero applications in a small sample; that remains visible and does not count as a silent fallback.'),
     }
+    method = profile_manifest.get('experimental_row_conditioning', {}).get('method', 'legacy')
+    decisions = conditioning_metrics['decisions']
+    result['row_conditioning'] = {
+        'configured_method': method,
+        'observed_method_counts': dict(sorted(conditioning_method_counts.items())),
+        'games_with_instrumented_decisions': conditioning_games,
+        'candidate_count_before_mean': (conditioning_metrics['candidate_count_before_total'] / decisions
+                                        if decisions else None),
+        'candidate_count_after_mean': (conditioning_metrics['candidate_count_after_total'] / decisions
+                                       if decisions else None),
+        'effective_sample_size_mean': (conditioning_metrics['effective_sample_size_total'] / decisions
+                                       if decisions else None),
+        'filter_order_dependence': {
+            'decisions_with_order_effect': int(conditioning_metrics['order_dependent_decisions']),
+            'mean_jaccard_similarity': (conditioning_metrics['filter_order_jaccard_total'] / decisions
+                                        if decisions else None),
+        },
+        'below_minimum_support_decisions': int(conditioning_metrics['below_minimum_decisions']),
+        'soft_condition_evaluations': int(conditioning_metrics['soft_condition_count']),
+        'soft_unsupported_conditions': int(conditioning_metrics['soft_unsupported_condition_count']),
+        'relaxed_conditions': dict(sorted(conditioning_relaxations.items())),
+        'unique_historical_source_rows': len(conditioning_sources),
+    }
+    if method != 'legacy' and not any(conditioning_method_counts.get(key, 0)
+                                      for key in (method,)):
+        result['row_conditioning']['runtime_exercised'] = False
+    else:
+        result['row_conditioning']['runtime_exercised'] = bool(conditioning_method_counts.get(method, 0))
     if profile_manifest.get('blocker_resolution'):
         level_counts = defaultdict(int)
         metric_counts = defaultdict(int)
@@ -942,6 +989,19 @@ def run_batch(args):
     elif retrospective_marker:
         raise ValueError('retrospective snapshot classification requires explicit --historical-archive-reconstruction mode')
     resolved_profile = slc_config.apply_profile_to_args(args)
+    if args.experimental_row_conditioning != 'legacy':
+        if not args.slc_v2:
+            raise ValueError('experimental row conditioning requires --slc-v2')
+        resolved_profile['model_id'] += f'_row_conditioning_{args.experimental_row_conditioning}'
+        import slc_row_conditioning
+        resolved_profile['experimental_row_conditioning'] = {
+            'method': args.experimental_row_conditioning,
+            'minimum_candidates': slc_row_conditioning.MIN_CANDIDATES,
+            'minimum_effective_sample_size': slc_row_conditioning.MIN_EFFECTIVE_SAMPLE_SIZE,
+            'relax_priority': list(slc_row_conditioning.RELAX_PRIORITY),
+            'soft_max_condition_weight': 4.0,
+            'soft_shrinkage_prior_n': 25.0,
+        }
     if (getattr(args, 'experimental_workload_estimator', None) or getattr(args, 'workload_adaptive_config', None)) and not args.playcall_dirichlet_shares:
         raise ValueError('experimental workload estimator requires the Dirichlet workload layer')
     source_preflight.validate_model_sources(args, snapshot)
@@ -1025,7 +1085,8 @@ def run_batch(args):
                                                            pass_label_mode=args.playcall_pass_label_mode,
                                                            season_adapt_n0=args.season_adapt_n0,
                                                            workload_adaptive=getattr(args, 'workload_adaptive_config', None),
-                                                           experimental_workload_estimator=getattr(args, 'experimental_workload_estimator', None))
+                                                           experimental_workload_estimator=getattr(args, 'experimental_workload_estimator', None),
+                                                           row_conditioning_method=args.experimental_row_conditioning)
     elif args.context_mode == 'unconditioned':
         ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
                                          safety_kick_table=safety_kick_table)
@@ -1430,6 +1491,8 @@ def main(argv=None):
                     help='named fail-closed layer configuration; custom preserves the legacy manual feature flags')
     ap.add_argument('--slc-disable-layer', action='append', default=[],
                     help='SLC ablation: disable one named optional layer; repeat for multiple layers')
+    ap.add_argument('--experimental-row-conditioning', choices=('legacy', 'disabled', 'support_aware', 'soft'),
+                    default='legacy', help='research-only method for optional historical outcome-row conditioning')
     ap.add_argument('--historical-archive-reconstruction', action='store_true',
                     help='explicitly admit pinned archival inputs as retrospective; this does not relax prospective capture checks')
     ap.add_argument('--readiness-matrix', type=Path,

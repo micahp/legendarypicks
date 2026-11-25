@@ -152,7 +152,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, transition_
                    qb_run_role_style=None, score_clock_playcalling=True, personnel_first=True, season_adapt=False, season_adapt_n0=4.0,
                    pbv1_table=None, participation_field=None, participation_snap_counts=None, fg_kicker=None,
                    workload_adaptive=None, experimental_workload_estimator=None, pass_label_mode='legacy',
-                   participation_entry_current=True, season_scores=None):
+                   participation_entry_current=True, season_scores=None, row_conditioning_method='legacy'):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it.
 
@@ -198,6 +198,9 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, transition_
     ref.pool_scope['unmodeled_lateral_source_filter'] = lateral_source_filter
     ref.pool_scope['inconsistent_completion_yardage_filter'] = pass_yardage_source_filter
     sampler = ref.contextual_sampler
+    if row_conditioning_method not in ('legacy', 'disabled', 'support_aware', 'soft'):
+        raise ValueError(f'unknown experimental row-conditioning method: {row_conditioning_method!r}')
+    sampler.row_conditioning_method = row_conditioning_method
     if pass_label_mode not in ('auto', 'legacy', 'off', 'two_stage', 'conditional'):
         raise ValueError(f'unknown pass-dependent label mode: {pass_label_mode!r}')
     if pass_label_mode == 'auto':
@@ -1028,6 +1031,39 @@ def summary(decisions, record=None):
                 'current_streak_context': sum(d.get('streak_bucket') is not None for d in decisions),
             },
             'fallback_events': dict(sorted(fallbacks.items()))}
+    row_conditioning = [d.get('row_conditioning') or {} for d in decisions]
+    method_counts = Counter(item.get('method', 'legacy') for item in row_conditioning)
+    source_row_ids = sorted({f"{source.get('season')}:{source.get('game_id')}:{source.get('play_id')}"
+                             for decision in decisions
+                             if (source := decision.get('source')) is not None})
+    order_metrics = [item.get('filter_order_dependence') for item in row_conditioning
+                     if item.get('filter_order_dependence')]
+    relaxations = Counter(entry.get('condition') for item in row_conditioning
+                          for entry in item.get('relaxation_trace', []))
+    soft_conditions = sum(len(item.get('optional_conditions_weighted', [])) for item in row_conditioning)
+    soft_unsupported = sum(len(item.get('unsupported_conditions', [])) for item in row_conditioning)
+    candidate_before = [int(item.get('candidate_count_before', 0)) for item in row_conditioning]
+    candidate_after = [int(item.get('candidate_count_after', 0)) for item in row_conditioning]
+    effective_sizes = [float(item.get('effective_sample_size', 0.0)) for item in row_conditioning]
+    result['row_conditioning'] = {
+        'method_counts': dict(sorted(method_counts.items())),
+        'decisions': len(row_conditioning),
+        'candidate_count_before_total': sum(candidate_before),
+        'candidate_count_after_total': sum(candidate_after),
+        'effective_sample_size_total': sum(effective_sizes),
+        'candidate_count_before_min': min(candidate_before, default=0),
+        'candidate_count_after_min': min(candidate_after, default=0),
+        'effective_sample_size_min': min(effective_sizes, default=0.0),
+        'order_dependent_decisions': sum(
+            int((item.get('symmetric_difference_candidates') or 0) > 0) for item in order_metrics),
+        'filter_order_jaccard_total': sum(float(item.get('jaccard_similarity', 1.0)) for item in order_metrics),
+        'below_minimum_decisions': sum(bool(item.get('below_minimum_after_relaxation')) for item in row_conditioning),
+        'relaxed_conditions': dict(sorted(relaxations.items())),
+        'soft_condition_count': soft_conditions,
+        'soft_unsupported_condition_count': soft_unsupported,
+        'unique_source_rows': len(source_row_ids),
+        'unique_source_row_ids': source_row_ids,
+    }
     selections = [(d.get('participants') or {}).get('participant_selection') for d in decisions]
     selections = [entry for entry in selections if entry is not None]
     if selections:

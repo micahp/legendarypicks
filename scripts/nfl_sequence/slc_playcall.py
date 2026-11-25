@@ -30,6 +30,7 @@ import playcall_model as pm  # noqa: E402
 import formation_layer  # noqa: E402
 import point_splits  # noqa: E402
 import decision_layer  # noqa: E402
+import slc_row_conditioning  # noqa: E402
 import streak_splits  # noqa: E402
 import pre_event as pe  # noqa: E402
 import run_playcall_eval as rpe  # noqa: E402
@@ -246,6 +247,7 @@ class PlayCallSampler:
         self.decision_table = None
         self.decision_outcomes = False
         self.decision_filter = True  # False: the lifts shape the outcome, but the row is drawn from the whole cell (an experiment)
+        self.row_conditioning_method = 'legacy'
         self.pass_label_outcome_model = None
         # Research-only alternatives to the historical pre-event use of pass-dependent A/D/E labels.
         self.pass_label_mode = 'legacy'
@@ -722,71 +724,190 @@ class PlayCallSampler:
                 candidates = [c for c in candidates if c[1].get('qb_scramble') != 1]
                 if not candidates:
                     raise e1.SamplingUnavailable(f'non_scramble_run_source_rows_missing:{entry["key"]}')
+        optional_pool = list(candidates)  # after mandatory event/scramble compatibility, before optional row conditioning
+        optional_conditions = []
         if use_formation:
-            matched = [c for c in candidates if c[1].get('formation', UNKNOWN) == formation]
-            if matched:
-                candidates = matched
-            else:
-                formation_fallback = 'no_source_rows_for_chosen_formation'
+            optional_conditions.append(('formation', lambda sample, value=formation:
+                                        sample[1].get('formation', UNKNOWN) == value))
         if use_coverage:
-            matched = [c for c in candidates if c[1].get('coverage', UNKNOWN) == coverage]
-            if matched:
-                candidates = matched
-            else:
-                coverage_fallback = 'no_source_rows_for_chosen_coverage'
+            optional_conditions.append(('coverage', lambda sample, value=coverage:
+                                        sample[1].get('coverage', UNKNOWN) == value))
         if use_streak:
-            matched = [c for c in candidates if c[1].get('streak') == streak_bucket]
-            if matched:
-                candidates = matched
-            else:
-                streak_fallback = 'no_source_rows_for_current_streak'
-        if use_labels and self.decision_filter:  # the row takes each drawn label in category order, where the cell has such a row
-            after_non_label = candidates  # the cell's rows after the non-label filters, before any label narrows them
+            optional_conditions.append(('streak', lambda sample, value=streak_bucket:
+                                        sample[1].get('streak') == value))
+        if use_labels and self.decision_filter:
             for cat in decision_layer.CATS:
                 value = labels.get(cat)
-                if value is None:
-                    continue
-                matched = [c for c in candidates if (c[1].get('labels') or {}).get(cat) == value]
-                if matched:
-                    candidates = matched
-                    labels_matched.append(cat)
-                else:
-                    # why no row has the value: absent from the cell, dropped by a non-label filter, or dropped by an earlier label
-                    if not any((c[1].get('labels') or {}).get(cat) == value for c in candidate_source):
-                        why = 'absent_from_cell'
-                    elif not any((c[1].get('labels') or {}).get(cat) == value for c in after_non_label):
-                        why = 'removed_by_non_label_filter'
-                    else:
-                        why = 'removed_by_earlier_label'
-                    labels_unmatched.append(f'{cat}={value}|{why}')  # the category, the drawn value, and why no row has it
-        qb_target_role_conditioned = False
-        qb_target_role_fallback = None
-        if (self.qb_decision_table is not None and called_intent == 'dropback' and not scramble and qb_decision
-                and key[1] in ('pass_complete', 'pass_incomplete', 'interception')):
+                if value is not None:
+                    optional_conditions.append((f'decision_label:{cat}',
+                                                lambda sample, category=cat, expected=value:
+                                                (sample[1].get('labels') or {}).get(category) == expected))
+        qb_target_role_applicable = (self.qb_decision_table is not None and called_intent == 'dropback'
+                                     and not scramble and qb_decision
+                                     and key[1] in ('pass_complete', 'pass_incomplete', 'interception'))
+        target_role = None
+        if qb_target_role_applicable:
             import qb_decisions
             target_role = qb_decision.get('target_role')
-            matched = [c for c in candidates
-                       if qb_decisions.row_target_role(self.qb_decision_table, c[1]) == target_role]
-            if matched:
-                candidates = matched
-                qb_target_role_conditioned = True
-            else:
-                qb_target_role_fallback = 'no_target_identity_match_in_event_cell'
+            optional_conditions.append(('qb_target_role', lambda sample, expected=target_role:
+                                        qb_decisions.row_target_role(self.qb_decision_table, sample[1]) == expected))
+        exact_yardline_applicable = (self.exact_yardline and state.get('yl') is not None
+                                     and int(state['yl']) <= 20)
+        if exact_yardline_applicable:
+            exact_yardline = int(state['yl'])
+            optional_conditions.append(('exact_yardline', lambda sample, expected=exact_yardline:
+                                        sample[1].get('yardline_100') is not None
+                                        and int(sample[1]['yardline_100']) == expected))
+
+        qb_target_role_conditioned = False
+        qb_target_role_fallback = None
         exact_yardline_conditioned = False
         exact_yardline_fallback = None
-        if self.exact_yardline and state.get('yl') is not None and int(state['yl']) <= 20:
-            exact = [c for c in candidates if c[1].get('yardline_100') is not None and int(c[1]['yardline_100']) == int(state['yl'])]
-            if exact:
-                candidates = exact  # a touchdown flag then comes from the same distance the state is at
-                exact_yardline_conditioned = True
+        conditioning_metrics = None
+        conditioned_row_weights = None
+        mode = self.row_conditioning_method
+        if mode not in ('legacy', 'disabled', 'support_aware', 'soft'):
+            raise ValueError(f'unknown optional row-conditioning method {mode!r}')
+        transition_factors = self._transition_row_factors(optional_pool, key[1], offense, defense)
+        if mode == 'legacy':
+            # Frozen V2 replay path: preserve the historical filter order and empty-match fallback.
+            if use_formation:
+                matched = [c for c in candidates if c[1].get('formation', UNKNOWN) == formation]
+                if matched:
+                    candidates = matched
+                else:
+                    formation_fallback = 'no_source_rows_for_chosen_formation'
+            if use_coverage:
+                matched = [c for c in candidates if c[1].get('coverage', UNKNOWN) == coverage]
+                if matched:
+                    candidates = matched
+                else:
+                    coverage_fallback = 'no_source_rows_for_chosen_coverage'
+            if use_streak:
+                matched = [c for c in candidates if c[1].get('streak') == streak_bucket]
+                if matched:
+                    candidates = matched
+                else:
+                    streak_fallback = 'no_source_rows_for_current_streak'
+            after_non_label = list(candidates)
+            if use_labels and self.decision_filter:
+                for cat in decision_layer.CATS:
+                    value = labels.get(cat)
+                    if value is None:
+                        continue
+                    matched = [c for c in candidates if (c[1].get('labels') or {}).get(cat) == value]
+                    if matched:
+                        candidates = matched
+                        labels_matched.append(cat)
+                    else:
+                        if not any((candidate[1].get('labels') or {}).get(cat) == value
+                                   for candidate in candidate_source):
+                            reason = 'absent_from_cell'
+                        elif not any((candidate[1].get('labels') or {}).get(cat) == value
+                                     for candidate in after_non_label):
+                            reason = 'removed_by_non_label_filter'
+                        else:
+                            reason = 'removed_by_earlier_label'
+                        labels_unmatched.append(f'{cat}={value}|{reason}')
+            if qb_target_role_applicable:
+                matched = [c for c in candidates
+                           if qb_decisions.row_target_role(self.qb_decision_table, c[1]) == target_role]
+                if matched:
+                    candidates = matched
+                    qb_target_role_conditioned = True
+                else:
+                    qb_target_role_fallback = 'no_target_identity_match_in_event_cell'
+            if exact_yardline_applicable:
+                exact = [c for c in candidates if c[1].get('yardline_100') is not None
+                         and int(c[1]['yardline_100']) == exact_yardline]
+                if exact:
+                    candidates = exact  # touchdown attribution comes from rows at the current spot
+                    exact_yardline_conditioned = True
+                else:
+                    exact_yardline_fallback = 'no_source_rows_at_exact_yardline'
+            applied = []
+            if use_formation and formation_fallback is None:
+                applied.append('formation')
+            if use_coverage and coverage_fallback is None:
+                applied.append('coverage')
+            if use_streak and streak_fallback is None:
+                applied.append('streak')
+            applied.extend(f'decision_label:{cat}' for cat in labels_matched)
+            if qb_target_role_conditioned:
+                applied.append('qb_target_role')
+            if exact_yardline_conditioned:
+                applied.append('exact_yardline')
+            conditioning_metrics = {
+                'method': 'legacy', 'optional_conditions_requested': [name for name, _ in optional_conditions],
+                'optional_conditions_applied': applied,
+                'candidate_count_before': len(optional_pool), 'candidate_count_after': len(candidates),
+                'filter_order_dependence': slc_row_conditioning.filter_order_dependence(
+                    optional_pool, optional_conditions),
+            }
+        elif mode == 'disabled':
+            conditioning_metrics = {
+                'method': 'disabled', 'optional_conditions_requested': [name for name, _ in optional_conditions],
+                'optional_conditions_applied': [],
+                'candidate_count_before': len(optional_pool), 'candidate_count_after': len(candidates),
+            }
+        elif mode == 'support_aware':
+            if use_player_outcomes:
+                import player_outcomes
+                base_row_weights = [player_outcomes.row_weight(
+                    self.player_outcome_table, key[1], candidate[1], pre_event, state,
+                    enabled_roles=self.player_outcome_roles) for candidate in optional_pool]
             else:
-                exact_yardline_fallback = 'no_source_rows_at_exact_yardline'
+                base_row_weights = [1.0] * len(optional_pool)
+            support_weights = slc_row_conditioning.final_sampling_weights(
+                base_row_weights, [transition_factors[id(candidate)] for candidate in optional_pool])
+            candidates, conditioning_metrics = slc_row_conditioning.support_aware(
+                optional_pool, optional_conditions, support_weights)
+            if use_player_outcomes:
+                conditioned_row_weights = {id(candidate): weight
+                                           for candidate, weight in zip(optional_pool, base_row_weights)}
+            retained = set(conditioning_metrics['optional_conditions_retained'])
+            labels_matched = [cat for cat in decision_layer.CATS if f'decision_label:{cat}' in retained]
+            qb_target_role_conditioned = 'qb_target_role' in retained
+            if qb_target_role_applicable and not qb_target_role_conditioned:
+                qb_target_role_fallback = 'relaxed_for_minimum_support'
+            exact_yardline_conditioned = 'exact_yardline' in retained
+            if exact_yardline_applicable and not exact_yardline_conditioned:
+                exact_yardline_fallback = 'relaxed_for_minimum_support'
+        else:  # soft
+            if use_player_outcomes:
+                import player_outcomes
+                base_weights = [player_outcomes.row_weight(
+                    self.player_outcome_table, key[1], candidate[1], pre_event, state,
+                    enabled_roles=self.player_outcome_roles) for candidate in optional_pool]
+            else:
+                base_weights = [1.0] * len(optional_pool)
+            support_weights = slc_row_conditioning.final_sampling_weights(
+                base_weights, [transition_factors[id(candidate)] for candidate in optional_pool])
+            soft_weights, conditioning_metrics = slc_row_conditioning.soft_weights(
+                optional_pool, optional_conditions, base_weights,
+                condition_support_weights=support_weights)
+            conditioning_metrics['candidate_count_before'] = len(optional_pool)
+            conditioning_metrics['candidate_count_after'] = len(candidates)
+            conditioned_row_weights = {id(candidate): weight
+                                       for candidate, weight in zip(optional_pool, soft_weights)}
+
         row_weights = None
         if use_player_outcomes:
             import player_outcomes
-            row_weights = [player_outcomes.row_weight(
-                self.player_outcome_table, key[1], candidate[1], pre_event, state,
-                enabled_roles=self.player_outcome_roles) for candidate in candidates]
+            row_weights = ([conditioned_row_weights[id(candidate)] for candidate in candidates]
+                           if conditioned_row_weights is not None else [player_outcomes.row_weight(
+                               self.player_outcome_table, key[1], candidate[1], pre_event, state,
+                               enabled_roles=self.player_outcome_roles) for candidate in candidates])
+        elif mode == 'soft' and conditioned_row_weights is not None:
+            row_weights = [conditioned_row_weights[id(candidate)] for candidate in candidates]
+        final_row_weights = row_weights if row_weights is not None else [1.0] * len(candidates)
+        final_distribution_weights = slc_row_conditioning.final_sampling_weights(
+            final_row_weights, [transition_factors[id(candidate)] for candidate in candidates])
+        concentration = slc_row_conditioning.weight_concentration(final_distribution_weights)
+        conditioning_metrics.update(
+            effective_sample_size=slc_row_conditioning.effective_sample_size(final_distribution_weights),
+            max_weight_share=concentration['max_share'], hhi=concentration['hhi'])
+        conditioning_metrics['candidate_count_after'] = len(candidates)
         if self.transition_strength is not None:
             if candidates is not candidate_source:
                 candidate_transition_groups = self._group_transition_rows(candidates, key[1])
@@ -818,6 +939,7 @@ class PlayCallSampler:
             'formation_conditioned': bool(use_formation), 'coverage': coverage, 'coverage_conditioned': bool(use_coverage),
             'exact_yardline_conditioned': exact_yardline_conditioned,
             'exact_yardline_fallback': exact_yardline_fallback,
+            'row_conditioning': conditioning_metrics,
             'formation_fallback': formation_fallback, 'coverage_fallback': coverage_fallback,
             'streak_fallback': streak_fallback,
             'streak_outcome_conditioned': bool(use_streak),
@@ -1101,6 +1223,27 @@ class PlayCallSampler:
                         f'no_prior_transition:{side}:{team}:{event}')
             weights.append(weight)
         return weights
+
+    def _transition_row_factors(self, candidates, event, offense, defense):
+        """Per-row transition multipliers, without changing fallback diagnostics."""
+        if self.transition_strength is None:
+            return {id(candidate): 1.0 for candidate in candidates}
+        import transition_strength as ts
+        factors = {}
+        for (cell, transition), group in self._group_transition_rows(candidates, event).items():
+            factor = 1.0
+            for side, label in (('offense', offense), ('defense', defense)):
+                team = self._team(label)
+                if team is None:
+                    continue
+                try:
+                    factor *= self.transition_strength.ratio_key(
+                        side, team, cell, transition, record_fallback=False)
+                except ValueError:
+                    continue
+            for candidate in group:
+                factors[id(candidate)] = factor
+        return factors
 
     def _transition_group_weight(self, groups, event, offense, defense):
         return sum(self._transition_group_weights(groups, event, offense, defense))

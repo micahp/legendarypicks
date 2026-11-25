@@ -416,6 +416,12 @@ def build_manifest(resolved, description, snapshot, input_provenance):
         'input_provenance': resolved_input_provenance,
         'snapshot_sha256': snapshot.get('snapshot_sha256'),
     }
+    experimental_row_conditioning = resolved.get('experimental_row_conditioning')
+    if experimental_row_conditioning:
+        core['experimental_row_conditioning'] = {
+            **experimental_row_conditioning,
+            'implementation_sha256': sha256_file(Path(__file__).with_name('slc_row_conditioning.py')),
+        }
     if desc.get('blocker_resolution'):
         core['blocker_resolution'] = desc['blocker_resolution']
     core['configuration_hash'] = hashlib.sha256(
