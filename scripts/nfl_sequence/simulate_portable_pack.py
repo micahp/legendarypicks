@@ -15,6 +15,7 @@ import io
 from collections import defaultdict
 import importlib
 import inspect
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -69,7 +70,8 @@ def _forbid_source_table_reads():
     os.open = checked_os_open
 
 
-def _run_seed(seed, reference, snapshot, gs, slc_engine=None, rng_plan=None, decisions_out=None):
+def _run_seed(seed, reference, snapshot, gs, slc_engine=None, rng_plan=None, decisions_out=None,
+              diagnostics_out=None):
     if slc_engine is not None and slc_engine.is_slc(reference):
         play = slc_engine.play
         kwargs = {"paired_randomness": rng_plan.paired, "rng_plan": rng_plan}
@@ -80,6 +82,15 @@ def _run_seed(seed, reference, snapshot, gs, slc_engine=None, rng_plan=None, dec
         record, decisions = play(seed, reference, copy.deepcopy(snapshot), **kwargs)
         if decisions_out is not None:
             decisions_out.extend(decisions)
+        if diagnostics_out is not None:
+            summary = slc_engine.summary(decisions, record)
+            conditioning = dict(summary.get("row_conditioning") or {})
+            conditioning.pop("unique_source_row_ids", None)
+            diagnostics_out.update({
+                "row_conditioning": conditioning,
+                "layer_execution": summary.get("layer_execution", {}),
+                "fallback_events": summary.get("fallback_events", {}),
+            })
     else:
         play = gs.play_game
         kwargs = {"pregame_snapshot": copy.deepcopy(snapshot),
@@ -294,6 +305,75 @@ def _run(args, engine_dir):
         rng_protocol = _LegacyRngProtocol
     configured_rng = (config.get("rng_protocol") or {}).get("scheme") or rng_protocol.V1
     scheme = args.rng_protocol or configured_rng
+    experimental_configuration = None
+    experimental_method = None
+    if args.experimental_profile:
+        if args.model != "v2" or slc_engine is None or not slc_engine.is_slc(reference):
+            raise ModelPackError("EXPERIMENTAL_V2_PROFILE_REQUIRES_V2_SLC_PACK")
+        profiles = {
+            "v2_legacy": ("legacy", False),
+            "v2_simplified": ("disabled", True),
+            "v2_support_aware": ("support_aware", True),
+            "v2_soft_conditioning": ("soft", True),
+        }
+        if args.experimental_profile not in profiles:
+            raise ModelPackError("EXPERIMENTAL_V2_PROFILE_UNKNOWN")
+        experimental_method, disable_common_context = profiles[args.experimental_profile]
+        sampler = reference.contextual_sampler
+        if disable_common_context:
+            sampler.current_streak = {}
+            sampler.point_shifts = None
+        common_base = ({
+            "current_streak_context": "disabled",
+            "point_split_shifts": "disabled",
+            "formation_choice": "preserved",
+            "dirichlet_player_shares": "preserved",
+            "label_participant_allocation": "preserved",
+            "roster_eligibility": "preserved",
+            "team_and_player_strength": "preserved",
+            "participation_lineup": "unchanged_from_frozen_v2",
+            "mandatory_legality_cutoff_roster_constraints": "preserved",
+        } if disable_common_context else {})
+        parameters = {
+            "v2_legacy": {},
+            "v2_simplified": {
+                "optional_historical_row_filters": "all_disabled",
+                "optional_conditions": ["exact_yardline", "qb_target_role", "coverage", "formation",
+                                        "streak"] + [f"decision_label:{category}" for category in "ABCDEFGHIJKLMN"],
+            },
+            "v2_support_aware": {
+                "minimum_candidates": 20,
+                "minimum_effective_sample_size": 10.0,
+                "relaxation": "explicit_and_audited",
+                "filter_order_dependence": "measured",
+                "optional_conditions": ["exact_yardline", "qb_target_role", "coverage", "formation",
+                                        "streak"] + [f"decision_label:{category}" for category in "ABCDEFGHIJKLMN"],
+            },
+            "v2_soft_conditioning": {
+                "maximum_condition_weight": 4.0,
+                "shrinkage_prior_n": 25.0,
+                "combination": "bounded_geometric_mean",
+                "filter_order_dependence": "measured",
+                "effective_sample_size_and_probability_concentration": "reported",
+                "optional_conditions": ["exact_yardline", "qb_target_role", "coverage", "formation",
+                                        "streak"] + [f"decision_label:{category}" for category in "ABCDEFGHIJKLMN"],
+            },
+        }
+        experimental_configuration = {
+            "profile_id": args.experimental_profile,
+            "row_conditioning_method": experimental_method,
+            "model_id": args.model,
+            "base_package_sha256": args.pack_sha256,
+            "pregame_state_sha256": pregame_state_sha256,
+            "rng_scheme": scheme,
+            "common_base": common_base,
+            "parameters": parameters[args.experimental_profile],
+            "overlay": manifest.get("experimental_overlay"),
+            "portable_runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        }
+        config_bytes = json.dumps(experimental_configuration, sort_keys=True,
+                                  separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        experimental_configuration["config_sha256"] = hashlib.sha256(config_bytes).hexdigest()
     playcall_description = slc_engine.describe(reference) if slc_engine is not None else None
     rng_plan = rng_protocol.plan(scheme, pregame_state_sha256, reference,
                                  playcall_description)
@@ -310,6 +390,10 @@ def _run(args, engine_dir):
             + " model_input_sha256=" + str(rng_manifest.get("model_input_sha256"))
             + " reference_data_sha256=" + reference_digest(reference)
             + " layer_tables_sha256=" + layer_digest(playcall_description))
+    if experimental_method is not None:
+        # Calculate the paired stream root from the common base, before varying
+        # the treatment. All row-conditioning arms therefore share named streams.
+        reference.contextual_sampler.row_conditioning_method = experimental_method
     aggregation = importlib.import_module("pregame_batch")
     rows = []
     details = []
@@ -325,9 +409,11 @@ def _run(args, engine_dir):
         record = None
         record_error = None
         seed_decisions = []
+        seed_diagnostics = {}
         try:
             record = _run_seed(seed, reference, snapshot, gs, slc_engine, rng_plan,
-                               seed_decisions if getattr(args, "decisions_out", None) else None)
+                               seed_decisions if getattr(args, "decisions_out", None) else None,
+                               seed_diagnostics if args.experimental_profile else None)
             status = record.get("status", "unknown")
             blocker = record.get("blocker")
             valid = bool(record.get("valid_full_game") and record.get("complete_game"))
@@ -351,6 +437,8 @@ def _run(args, engine_dir):
                 "home_points": record["points"]["A"], "away_points": record["points"]["B"],
                 "score_scope": "valid_final" if valid else "regulation_end_only" if reached_reg else "partial"
             }
+            if seed_diagnostics:
+                row["execution_diagnostics"] = seed_diagnostics
             if args.with_player_lines:
                 details.append({"seed": seed, "players": (record.get("stats") or {}).get("player", [])})
         except Exception as exc:
@@ -392,6 +480,7 @@ def _run(args, engine_dir):
         "game_id": args.game, "as_of_utc": snapshot["as_of"],
         "snapshot_sha256": snapshot["snapshot_sha256"],
         "rng_protocol": rng_manifest,
+        "experimental_configuration": experimental_configuration,
         "simulation": {"requested_games": args.games, "valid_full_games": summary["valid_full_games"],
                        "seed_start": args.seed_start, "seed_end_inclusive": args.seed_start + args.games - 1},
         "summary": summary,
@@ -434,6 +523,10 @@ def main(argv=None):
                     help="override the pack's recorded RNG scheme; V1 default remains unchanged")
     ap.add_argument("--expected-stream-root-sha256", default=None,
                     help="for RNG v2, reject the run before seeds if its computed stream root differs")
+    ap.add_argument("--experimental-profile",
+                    choices=("v2_legacy", "v2_simplified", "v2_support_aware", "v2_soft_conditioning"),
+                    default=None,
+                    help="registered V2 row-conditioning experiment; treatment arms share a common base")
     ap.add_argument("--out", required=True)
     ap.add_argument("--with-player-lines", action="store_true",
                     help="retain player box stats for each seed in output")
