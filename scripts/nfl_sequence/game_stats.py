@@ -35,6 +35,16 @@ def team_stats(drives, points):
         t['possession_seconds'] += end - _elapsed(d['quarter_start'], d['clock_start'])
         for play in d['plays']:
             ev, out, part = play['event_type'], play['outcome'], play['participants']
+            enforcement = out.get('penalty_enforcement')
+            if enforcement and enforcement.get('accepted'):
+                offender = enforcement.get('offender_team')
+                penalized_team = (play['state_before']['offense_team'] if offender == 'offense' else
+                                  play['state_before']['defense_team'] if offender == 'defense' else None)
+                if penalized_team is None:
+                    raise ValueError(f"unsupported autonomous penalty team role: {offender!r}")
+                charged = team(penalized_team)
+                charged['penalties'] += 1
+                charged['penalty_yards'] += int(round(enforcement['yards']))
             if ev in SCRIMMAGE_EVENTS:
                 t['plays'] += 1
             if ev in ('pass_complete', 'pass_incomplete', 'interception') and part.get('receiver_id'):
@@ -148,6 +158,12 @@ def player_lines(drives):
             ev, out, part = play['event_type'], play['outcome'], play['participants']
             yards = out['yards_gained'] or 0
             td = bool(out['touchdown'])
+            enforcement = out.get('penalty_enforcement')
+            offender_id = enforcement.get('offender_id') if enforcement and enforcement.get('accepted') else None
+            if offender_id:
+                p = line(offender_id, part, 'penalty_offender')['miscellaneous']
+                p['penalties'] += 1
+                p['penalty_yards'] += int(round(enforcement['yards']))
             if (ev == 'run' or (ev == 'fumble_lost' and part.get('rusher_id'))) and part['rusher_id']:
                 r = line(part['rusher_id'], part, 'rusher')['rushing']
                 r['att'] += 1

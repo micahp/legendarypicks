@@ -1,4 +1,9 @@
-"""E2 game: coin-toss ledger, kickoffs, scoring, clock management, and linkage of E1 drives into one regulation game.
+"""SLC game lifecycle: coin-toss ledger, kickoffs, scoring, clock management, and regulation/overtime drives.
+
+The statistical E1/E2 path retains its historical outcome sources. When an
+execution_source is supplied, E1 calls its autonomous event source and applies
+typed ceg-play-2 outcomes through the shared rules adapter; unsupported facts
+stop the game with a named blocker.
 
 Scope:
 - the coin-toss ledger for the normal-game policy (docs/rules/NFL-2026-GAME-STATE-RULES.md, sections 1-3 and 7): the
@@ -22,15 +27,16 @@ goal's make rate in its yardline_100 bucket, the extra-point rate, the two-point
 attempts that were two-point tries. Each draw is a labelled sample from a published rate, not the outcome of a real
 game. A cell with fewer than MIN_KICK_N attempts blocks the game, and nothing is filled from a neighbouring cell.
 
-Clock intervals carry observed snap-to-snap runoff, stoppage reasons and restart triggers; first-down and out-of-bounds
-restart rules are approximated and remain a capability limitation. Timeouts are charged to the named team, limited to
-three per half and represented as clock stops; an unresolved or exhausted call blocks the record. The record's
-`unsupported_rules` names only exceptional paths it actually takes. Other capability limitations remain in
-`rule_capability_limitations`: penalties are excluded from E1 and block if encountered; onside kicks and exception coin
-toss paths are not generated; ties block because overtime is not modelled; safety free kicks lack a separate outcome
-table; and a missed field goal is awarded at the rule-defined spot without modeling a return after a beyond-line touch.
-The pregame offense participants come from the frozen roster, but the engine does not build a complete 22-player lineup,
-defensive personnel or substitutions.
+The statistical path uses observed snap-to-snap runoff and retains its scoped
+limitations. The autonomous path advances live and dead-ball time from the
+executor, makes timeout and overtime decisions in the game loop, and uses
+typed rule transitions. It currently generates selected single-foul penalties
+(including live DPI and pre-snap no-play records); the statistical E1 pool
+still excludes penalties, and unsupported autonomous foul facts fail closed.
+Autonomous kickoffs and special teams remain simplified and are listed in the
+capability limitations. The autonomous scrimmage path builds both 11-player
+units from the frozen roster; statistical modes still allocate participants
+from historical roles.
 
 Kickoff convention in the published nfl_pbp (measured 2026-10-24): on a kickoff row `posteam` is the RECEIVING team and
 `defteam` is the KICKING team. The receiving team's next run or pass in the same quarter gives the starting spot.
@@ -88,8 +94,9 @@ GUARDS = {
     'timeouts': {'guard': 'observed timeouts decrement the named team within its three-per-half allowance and are recorded as clock stops; '
                           'an unavailable caller or exhausted allowance blocks the game',
                  'enforced_by': 'timeout state; clock_transition'},
-    'penalties': {'guard': 'no penalty is drawn: E1 excludes penalty plays from its pool (classify: penalty, not modelled)',
-                  'enforced_by': 'E1 pool exclusion, counted in the pool exclusions'},
+    'penalties': {'guard': 'statistical E1 excludes penalty plays; autonomous execution applies typed supported single-foul '
+                            'records and blocks any unsupported foul fact',
+                  'enforced_by': 'E1 pool exclusion; ceg-play-2 penalty adapter and named transition blocker'},
     'onside_kicks': {'guard': 'every kickoff is drawn from the observed kickoff pool; no onside kick is drawn',
                      'enforced_by': 'kickoff pool; unsupported_rules'},
     'overtime': {'guard': 'a regulation tie with no observed overtime table is blocked as overtime_not_modelled; with the table, '
@@ -132,7 +139,7 @@ PROVISIONAL_RULES = (
      'effect': 'the quarter ends on the return; the receiver starts the next quarter at the kick spot',
      'source': 'authored modelling choice, matching E1 clamping a play runoff at 0:00; not in the rules file'},
 )
-GAPS = ['field-goal, blocked field-goal and blocked punt outcomes are sampled from published 2022-2025 nflverse rates; '
+GAPS = ['statistical-mode field-goal, blocked field-goal and blocked punt outcomes use published 2022-2025 nflverse rates; '
         'the block rates are rare and carry wide confidence intervals, and unresolved sampled transitions block the game',
         'blocked-kick returns are recorded in team totals; individual returner statistics are not assigned to the frozen roster',
         'field-goal and try outcomes are drawn from the published nfl_pbp rates (2022-2025, weeks 1-18): each draw '
@@ -141,7 +148,9 @@ GAPS = ['field-goal, blocked field-goal and blocked punt outcomes are sampled fr
         'missed-field-goal next-drive spots are sampled from observed transitions; returners and return touchdowns are not reconstructed',
         'safety free kicks are sampled from the observed 2022-2025 safety-kick table (spot and clock only); a safety at a Q1/Q3 '
         'end with no clock left still blocks',
-        'penalties, onside kicks and exception coin-toss paths remain capability limitations; overtime is modelled for the regular-season '
+        'autonomous penalties currently include typed supported single-foul transitions and live DPI generation; other foul '
+        'classifiers, multiple-foul rulings, and scoring-play enforcement still fail closed; the statistical path excludes '
+        'penalties. Onside kicks and exception coin-toss paths remain capability limitations; overtime is modelled for the regular-season '
         'period only (Rule 16: 10 minutes, the toss winner receives, the two-minute warning and Article 5(a) are not modelled); '
         'a game that takes an '
         'unsupported path is blocked or marked incomplete',
@@ -1613,7 +1622,7 @@ class _Game:
                     self.blocked_attempt['unrepresented_decisions'] = copy.deepcopy(unrepresented)
             self.block(terminal)
             return
-        if any(p['outcome'].get('penalty') for p in plays):
+        if any(p['outcome'].get('penalty') and not p['outcome'].get('penalty_enforcement') for p in plays):
             # a penalty is an unmodelled transition: the pool excludes penalty plays, so this should never be drawn; if it is,
             # the game is blocked, never completed
             self.block('penalty_not_modelled')
@@ -1861,7 +1870,8 @@ def unmodelled_transitions(drives, kickoffs):
                     'sampled_historical_next_drive_spot', 'rule_spot_no_return', 'period_expired'):
                 found.append({'kind': 'missed_field_goal_return', 'drive_index': d['index']})
         for p in d['plays']:
-            if p['outcome'].get('penalty'):
+            if (p['outcome'].get('penalty')
+                    and not p['outcome'].get('penalty_enforcement')):
                 found.append({'kind': 'penalty', 'drive_index': d['index'], 'sequence': p['sequence']})
             if p['participants'].get('timeout') and not p['participants'].get('timeout_applied'):
                 found.append({'kind': 'timeout', 'drive_index': d['index'], 'sequence': p['sequence']})

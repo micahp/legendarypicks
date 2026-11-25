@@ -56,8 +56,11 @@ def _state_from_down_state(before, result):
         offense, defense = before['defense'], before['offense']
     else:
         raise UnsupportedEventTransition('penalty_transition_changed_to_unknown_team')
+    yardline, to_go = result.yardline_100, result.to_go
+    if not float(yardline).is_integer() or not float(to_go).is_integer():
+        raise UnsupportedEventTransition('fractional_penalty_state_not_supported_by_integer_game_state')
     return {'offense': offense, 'defense': defense, 'down': result.down,
-            'togo': result.to_go, 'yl': result.yardline_100}
+            'togo': int(to_go), 'yl': int(yardline)}
 
 
 def _apply_penalty(before, after, play, switches):
@@ -214,8 +217,13 @@ def apply_scrimmage_play(state, play, switches=FROZEN_CONTROL):
         raise UnsupportedEventTransition('kick_transition_not_integrated_in_scrimmage_adapter')
     if play.event == 'no_play':
         after, enforcement = _apply_penalty(state, state, play, switches)
-        return AppliedEvent(after, None, {'no_play': True, 'snap_occurred': False},
-                            penalty_enforcement=enforcement)
+        foul = play.penalty.fouls[0]
+        flags = {'no_play': True, 'snap_occurred': False, 'penalty': True,
+                 'penalty_accepted': enforcement['accepted'], 'penalty_yards': enforcement['yards'],
+                 'penalty_type': foul.penalty_type, 'penalty_offender_team': foul.team,
+                 'automatic_first_down': enforcement['automatic_first_down'],
+                 'first_down': enforcement['automatic_first_down']}
+        return AppliedEvent(after, None, flags, penalty_enforcement=enforcement)
 
     if play.event == 'kneel':
         _require_switch(switches, 'kneel_events')
@@ -266,7 +274,18 @@ def apply_scrimmage_play(state, play, switches=FROZEN_CONTROL):
 
     if play.penalty is not None:
         after, enforcement = _apply_penalty(state, result.state_after, play, switches)
-        result = AppliedEvent(after, result.terminal, result.flags, result.scoring_team, enforcement)
+        flags = dict(result.flags)
+        foul = play.penalty.fouls[0]
+        flags.update({
+            'penalty': True,
+            'penalty_accepted': enforcement['accepted'],
+            'penalty_yards': enforcement['yards'],
+            'penalty_type': foul.penalty_type,
+            'penalty_offender_team': foul.team,
+            'automatic_first_down': enforcement['automatic_first_down'],
+            'first_down': flags.get('first_down', False) or enforcement['automatic_first_down'],
+        })
+        result = AppliedEvent(after, result.terminal, flags, result.scoring_team, enforcement)
     return result
 
 

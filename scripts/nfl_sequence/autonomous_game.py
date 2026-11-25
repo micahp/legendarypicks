@@ -228,14 +228,20 @@ class AutonomousGameExecution:
         direction = context['direction']
         los_x = call['situation']['yardline_100']
         final_x = outcome['final_ball_spot']['x_yards']
-        if abs(final_x - (los_x + direction * outcome['yards_gained'])) > 0.003:
-            raise ValueError('gridiron_final_spot_mismatch')
         events = result['events']
+        pass_interference = next((item for item in events if item['type'] == 'pass_interference'), None)
+        if (pass_interference is None
+                and abs(final_x - (los_x + direction * outcome['yards_gained'])) > 0.003):
+            raise ValueError('gridiron_final_spot_mismatch')
         thrown = next((item for item in events if item['type'] == 'throw'), None)
         caught = next((item for item in events if item['type'] == 'catch'), None)
         interception = next((item for item in events if item['type'] == 'interception'), None)
         reason = outcome['event']
-        if outcome['turnover']:
+        if pass_interference is not None:
+            if reason != 'incomplete' or thrown is None or not isinstance(pass_interference.get('spot'), dict):
+                raise ValueError('gridiron_pass_interference_terminal_facts_invalid')
+            event = 'pass_incomplete'
+        elif outcome['turnover']:
             if not interception:
                 raise ValueError('gridiron_turnover_without_interception_event')
             event = 'interception'
@@ -268,7 +274,7 @@ class AutonomousGameExecution:
             gain = 0
         spot = None
         event_record = self._ceg_play(call, result, event, gain, state, direction, los_x,
-                                      final_x, reason, interception, caught, thrown)
+                                      final_x, reason, interception, caught, thrown, pass_interference)
         if event == 'interception':
             receiving_yl = final_x if direction == 1 else 100 - final_x
             spot = int(round(receiving_yl))
@@ -283,6 +289,20 @@ class AutonomousGameExecution:
                    'concept': call['offense']['call']['concept'],
                    'assignments': 'authored_executable_gridiron_diagram'},
                'participants': self._participants(call, result, event, state)}
+        if pass_interference is not None:
+            defender_id = pass_interference.get('defender_id')
+            roster_rows = {p['gsis_id']: p for side in ('home', 'away')
+                           for p in self.snapshot['rosters'][side]['players']}
+            defender = roster_rows.get(defender_id)
+            if defender is None:
+                raise ValueError('gridiron_pass_interference_defender_not_in_frozen_roster')
+            row['participants'].update({
+                'penalty_offender_id': defender_id,
+                'penalty_offender_name': defender.get('player_name'),
+                'penalty_offender_position': defender.get('pos_abb'),
+                'penalty_offender_team': defender.get('team'),
+                'penalty_offender_side': 'B' if state['offense'] == 'A' else 'A',
+            })
         row['participants']['out_of_bounds'] = reason == 'out_of_bounds'
         if decision_note:
             row['decision_note'] = {**decision_note, 'play_family': family,
@@ -296,7 +316,7 @@ class AutonomousGameExecution:
                 'execution': execution, 'event_record': event_record}
 
     def _ceg_play(self, call, result, event, yards, state, direction, los_x, final_x, reason,
-                  interception, caught, thrown):
+                  interception, caught, thrown, pass_interference=None):
         outcome = result['result']
         players = result.get('participants', {})
         offense_players = call['offense']['lineup']
@@ -371,12 +391,22 @@ class AutonomousGameExecution:
             manifest_sha256=self.event_manifest_sha256,
             components=('team_season_playbook_prior', 'situation_policy'),
             draw_ids=(str(call['seed']),))
+        penalty = None
+        if pass_interference is not None:
+            foul_spot_x = pass_interference['spot']['x']
+            foul_spot = int(round(100 - foul_spot_x if direction == 1 else foul_spot_x))
+            penalty = ceg_contract.PenaltyV2(
+                phase='live_ball',
+                fouls=(ceg_contract.PenaltyFoulV2(
+                    'defensive_pass_interference', 'defense', 0, foul_spot=foul_spot,
+                    player=ceg_contract.PlayerRoleV2.named(pass_interference['defender_id'])),),
+                disposition='accepted', automatic_first_down=True, provenance=provenance)
         return ceg_contract.GeneratedPlayV2(
             contract=ceg_contract.CONTRACT_V2_VERSION,
             call=ceg_contract.PlayCallV2(call_intent, provenance=call_provenance),
             event=ceg_event, yards_gained=yards, air_yards=air_yards,
             yards_after_catch=yac, possession=possession, scoring=scoring,
-            provenance=provenance,
+            penalty=penalty, provenance=provenance,
             clock=ceg_contract.ClockV2(
                 runoff_seconds=max(1, math.ceil(outcome['elapsed_seconds'])) +
                 (0 if reason in ('out_of_bounds', 'incomplete', 'touchdown', 'safety') else 27),

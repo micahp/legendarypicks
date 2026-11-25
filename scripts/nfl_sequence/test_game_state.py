@@ -2273,12 +2273,53 @@ class AutonomousGameLifecycle(unittest.TestCase):
     def test_ceg_interception_return_touchdown_completes_full_game_with_shared_rules(self):
         class Source(self.Source):
             def event_source(source, state, context):
-                interception = context['play_index'] == 1
+                pre_snap_penalty = context['play_index'] == 1
+                pass_interference = context['play_index'] == 2
+                interception = context['play_index'] == 3
                 player = f"{state['offense']}-RB"
                 provenance = ceg_contract.ProvenanceV2(
                     'controlled-autonomous-fixture', 'test', 'c' * 64,
                     components=('live_execution_fixture',), draw_ids=(str(context['play_index']),))
-                if interception:
+                if pre_snap_penalty:
+                    penalty = ceg_contract.PenaltyV2(
+                        'pre_snap', (ceg_contract.PenaltyFoulV2(
+                            'false_start', 'offense', 5,
+                            player=ceg_contract.PlayerRoleV2.named('A-LT')) ,),
+                        'accepted', play_void=True, provenance=provenance)
+                    event_record = ceg_contract.GeneratedPlayV2(
+                        ceg_contract.CONTRACT_V2_VERSION, None, 'no_play', None, provenance,
+                        ceg_contract.ClockV2(0, 0, 0, 'stopped'), penalty=penalty, play_void=True)
+                    event, play_type, yards, live, stopped = 'no_play', 'run', 0, 0, True
+                    participants = {
+                        'penalty_offender_id': 'A-LT', 'penalty_offender_name': 'Tackle',
+                        'penalty_offender_position': 'LT', 'penalty_offender_team': 'AAA',
+                        'penalty_offender_side': 'A', 'attribution': 'autonomous_execution',
+                        'timeout': False, 'out_of_bounds': False,
+                    }
+                elif pass_interference:
+                    call = ceg_contract.PlayCallV2('dropback', provenance=provenance)
+                    penalty = ceg_contract.PenaltyV2(
+                        'live_ball', (ceg_contract.PenaltyFoulV2(
+                            'defensive_pass_interference', 'defense', 0,
+                            foul_spot=state['yl'] - 5,
+                            player=ceg_contract.PlayerRoleV2.named('B-DB')) ,),
+                        'accepted', automatic_first_down=True, provenance=provenance)
+                    event_record = ceg_contract.GeneratedPlayV2(
+                        ceg_contract.CONTRACT_V2_VERSION, call, 'pass_incomplete', 0, provenance,
+                        ceg_contract.ClockV2(1, 1, 0, 'stopped'), penalty=penalty,
+                        players=ceg_contract.PlayerRolesV2(
+                            passer=ceg_contract.PlayerRoleV2.named('A-QB'),
+                            receiver=ceg_contract.PlayerRoleV2.named('A-WR')))
+                    event, play_type, yards, live, stopped = 'pass_incomplete', 'pass', 0, 1, True
+                    participants = {
+                        'passer_id': 'A-QB', 'passer_team': 'AAA', 'passer_side': 'A',
+                        'receiver_id': 'A-WR', 'receiver_team': 'AAA', 'receiver_side': 'A',
+                        'penalty_offender_id': 'B-DB', 'penalty_offender_name': 'Defender',
+                        'penalty_offender_position': 'CB', 'penalty_offender_team': 'BBB',
+                        'penalty_offender_side': 'B', 'attribution': 'autonomous_execution',
+                        'timeout': False, 'out_of_bounds': False,
+                    }
+                elif interception:
                     call = ceg_contract.PlayCallV2('dropback', provenance=provenance)
                     roles = ceg_contract.PlayerRolesV2(
                         passer=ceg_contract.PlayerRoleV2.named('A-QB'),
@@ -2326,13 +2367,25 @@ class AutonomousGameLifecycle(unittest.TestCase):
 
         record = gs.play_game(41, ref({}, []), winner_choice='receive', winner='A',
                               execution_source=Source(), max_drives=80)
-        self.assertEqual(record['status'], 'complete_regulation')
+        self.assertEqual(record['status'], 'complete_regulation', record.get('blocker'))
         self.assertEqual(record['points']['B'], 7)
         self.assertTrue(any(d.get('touchdown_scored_by') == 'B' for d in record['drives']))
         scored_play = next(p for d in record['drives'] for p in d['plays']
                            if p['outcome'].get('touchdown'))
         self.assertEqual(scored_play['event_type'], 'interception')
         self.assertTrue(scored_play['outcome']['turnover'])
+        no_play = next(p for d in record['drives'] for p in d['plays'] if p['event_type'] == 'no_play')
+        self.assertEqual(no_play['state_after']['yardline_100'], no_play['state_before']['yardline_100'] + 5)
+        dpi = next(p for d in record['drives'] for p in d['plays']
+                   if p['event_type'] == 'pass_incomplete' and p['outcome'].get('penalty'))
+        self.assertEqual(dpi['event_type'], 'pass_incomplete')
+        self.assertTrue(dpi['outcome']['penalty_enforcement']['accepted'])
+        self.assertEqual(dpi['outcome']['penalty_enforcement']['yards'], 5.0)
+        self.assertEqual(record['stats']['team']['A']['penalty_yards'], 5)
+        self.assertEqual(record['stats']['team']['B']['penalties'], 1)
+        self.assertEqual(record['stats']['team']['B']['penalty_yards'], 5)
+        defender = next(p for p in record['stats']['player'] if p['player_id'] == 'B-DB')
+        self.assertEqual(defender['miscellaneous']['penalty_yards'], 5)
         self.assertEqual(record['mode'], 'autonomous_full_game')
         gs.validate_game(record)
 

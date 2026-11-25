@@ -194,6 +194,22 @@ class EventExpansionRulesTests(unittest.TestCase):
                          {'offense': 'A', 'defense': 'B', 'down': 1, 'togo': 1, 'yl': 1.0})
         self.assertTrue(result.penalty_enforcement['accepted'])
         self.assertEqual(result.penalty_enforcement['yards'], 39.0)
+        self.assertTrue(result.flags['penalty'])
+        self.assertTrue(result.flags['automatic_first_down'])
+
+    def test_pre_snap_penalty_returns_a_no_snap_replay_transition(self):
+        penalty = c.PenaltyV2(
+            'pre_snap', (c.PenaltyFoulV2('false_start', 'offense', 5),),
+            'accepted', provenance=P, play_void=True)
+        no_play = c.GeneratedPlayV2(
+            c.CONTRACT_V2_VERSION, None, 'no_play', None, P,
+            c.ClockV2(0, 0, 0, 'stopped'), penalty=penalty, play_void=True)
+        result = apply_scrimmage_play(S, no_play, EventExpansionSwitches())
+        self.assertEqual(result.state_after['down'], S['down'])
+        self.assertEqual(result.state_after['yl'], 45.0)
+        self.assertIsNone(result.terminal)
+        self.assertTrue(result.flags['no_play'])
+        self.assertTrue(result.flags['penalty'])
 
     def test_offsetting_penalties_fail_until_joint_enforcement_exists(self):
         penalty = c.PenaltyV2(

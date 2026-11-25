@@ -38,7 +38,7 @@ POOL_SEASONS = (2022, 2023, 2024, 2025)
 HOLDOUT_SEASON = holdout.HOLDOUT_SEASON  # sealed for every model; no loader in this package may read it
 MODEL_VERSION = 'e1-empirical-v0'
 RULES_VERSION = 'e1-drive-2026-10-24'
-EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack', 'interception', 'fumble_lost', 'punt',
+EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack', 'interception', 'fumble_lost', 'no_play', 'punt',
           'field_goal_attempt')
 CLOCK_EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack')  # plays the snap clock times
 KICK_EVENTS = ('punt', 'field_goal_attempt', 'blocked_punt', 'blocked_field_goal')
@@ -333,6 +333,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             return halt('field_goal_attempt_exceeds_historical_feasibility_ceiling')
         kick_outcome = None
         kick_metadata = None
+        penalty_detail = None
         if special_teams and selected_event in ('punt', 'field_goal_attempt'):
             resolution = special_teams(selected_event, st, row, runoff, spot, special_rng)
             if resolution and resolution.get('blocker'):
@@ -362,6 +363,15 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                 flags = {**reducer._no_flags(), **applied.flags}
                 if applied.scoring_team is not None:
                     flags['scoring_team'] = applied.scoring_team
+                if applied.penalty_enforcement is not None:
+                    penalty = event_record.penalty
+                    foul = penalty.fouls[0]
+                    penalty_detail = {
+                        **applied.penalty_enforcement,
+                        'penalty_type': foul.penalty_type,
+                        'offender_team': foul.team,
+                        'offender_id': (foul.player.player_id if foul.player.status == 'named' else None),
+                    }
             else:
                 after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome)
         except reducer.UnmodelledOutcome as blocked:
@@ -397,7 +407,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             # After the whistle and before the clock runs: a team may call a timeout. Then the runoff agrees with it.
             timeout_rng = (rng if paired_random_streams is None
                            else paired_random_streams.rng('e1_timeout', drive_index, play_index))
-            caller, timeout_record = timeouts.decide(timeout_rng, st, after, play_terminal, event, row)
+            caller, timeout_record = ((None, None) if event == 'no_play' else
+                                      timeouts.decide(timeout_rng, st, after, play_terminal, event, row))
             snap_clock = getattr(timeouts, 'clock', None)
             if event_source is not None and timeout_record is not None:
                 live_elapsed = row.get('live_elapsed_seconds')
@@ -477,7 +488,9 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             state_after['down'] = None
             state_after['yards_to_go'] = None
             state_after['yardline_100'] = None
-        if selected_event == 'punt':
+        if selected_event == 'no_play':
+            decision_type = 'penalty_no_play'
+        elif selected_event == 'punt':
             decision_type = 'punt'
         elif selected_event == 'field_goal_attempt':
             decision_type = 'field_goal_attempt'
@@ -527,7 +540,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                         'sampled_touchdown_flag': None if event_source is not None else bool(row['touchdown'] == 1),
                         # the observed play's penalty flag. The pool excludes penalty plays, so this is False on every
                         # sampled play; a True would be an unmodelled transition and blocks the game (see game_state)
-                        'penalty': bool(row.get('penalty') == 1),
+                        'penalty': bool(flags.get('penalty') or row.get('penalty') == 1),
+                        **({'penalty_enforcement': penalty_detail} if penalty_detail is not None else {}),
                         **({'generated_from': row.get('generated_from', 'autonomous_event_source')}
                            if event_source is not None else
                            {'sampled_from': {'game_id': row['game_id'], 'play_id': int(row['play_id']),
