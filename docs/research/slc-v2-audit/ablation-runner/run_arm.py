@@ -25,7 +25,11 @@ _real_load = spp.load_pack
 
 
 def cached_load_pack(*args, **kwargs):
-    """Decode the pack once per process. The runner re-applies every per-game setting on each call."""
+    """Return the pack the parent decoded before forking. Each game runs in its own forked child, so every game starts
+    from the parent's untouched copy (copy-on-write): no state carries from one game to the next.
+
+    Reusing one decoded reference across games in one process leaked state (IND at HOU, run 4th, matched the frozen V2
+    on 0 of 20 seeds; run alone it matched)."""
     if 'pack' not in _cache:
         _cache['pack'] = _real_load(*args, **kwargs)
     return _cache['pack']
@@ -87,16 +91,28 @@ def main():
             if target.exists():
                 continue
             start = time.time()
-            if arm == 'Z1_minimal_situational':
-                _cache.clear()  # this arm removes the sampler for good, so every game starts from a fresh decode
-            code = spp.main(['--model', 'v2', '--game', game, '--snapshot', str(SNAPSHOTS / f'{game}.json'),
+            if 'pack' not in _cache:  # decode once in the parent, which never runs a game itself
+                from slc_model_registry import get_model
+                with spp.tempfile.TemporaryDirectory(prefix='slc-model-runtime-') as engine_dir:
+                    cached_load_pack(PACK, expected_sha256=PACK_SHA, expected_code_commit=get_model('v2')['code_commit'],
+                                     engine_dir=Path(engine_dir))
+            sys.stdout.flush()
+            child = os.fork()
+            if child == 0:  # the game runs in a child process
+                try:
+                    rc = spp.main(['--model', 'v2', '--game', game, '--snapshot', str(SNAPSHOTS / f'{game}.json'),
                              '--pack', str(PACK), '--pack-sha256', PACK_SHA, '--games', str(args.seeds),
-                             '--seed-start', str(SEED_START), '--out', str(target), '--workers', str(args.workers)])
+                                   '--seed-start', str(SEED_START), '--out', str(target), '--workers', str(args.workers)])
+                except BaseException as exc:  # noqa: BLE001  a failed game is recorded, the batch goes on
+                    print(f'game {game} failed: {exc!r}', flush=True)
+                    rc = 1
+                sys.stdout.flush()
+                os._exit(int(rc or 0))
+            _, wait_status = os.waitpid(child, 0)
+            code = os.waitstatus_to_exitcode(wait_status)
             status.append({'game': game, 'returncode': code, 'seconds': round(time.time() - start, 1)})
             status_path.write_text(json.dumps(status, indent=1) + '\n')
             print(json.dumps({'arm': arm, **status[-1]}), flush=True)
-        if arm == 'Z1_minimal_situational':
-            _cache.clear()  # do not hand a sampler-less reference to a later arm
     return 0
 
 

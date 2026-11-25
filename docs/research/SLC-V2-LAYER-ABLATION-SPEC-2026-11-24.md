@@ -219,3 +219,16 @@ Seeds: 50 matched seeds per game per arm (300001-300050), not 100: 39 arms x 13 
    player box scores) on 3 games x 10 seeds, and the sampler must match the previous code on 500 of 500 synthetic draws.
 2. **Every arm, through the instrumentation** (1 game x 2 seeds each): its intended mechanisms show zero applications,
    and the unrelated mechanisms run as often as in the control.
+
+## Amendment 3 (2026-11-25): seeds, and a state leak found and fixed before any result
+
+- **20 matched seeds per game** (300001-300020), not 50, so the batch fits in about 5 hours. Arms run in priority order
+  (control, the four group arms, team, player, QB model, labels, formation, coverage, streak context, play-calling,
+  allocation, then the single mechanisms).
+- **A state leak was found by the reproduction gate.** The first batch reused one decoded pack across games in a
+  process. A00 matched the frozen V2 on 12 of 13 games, but IND at HOU (run 4th) matched on 0 of 20 seeds; run alone in
+  a fresh process it matched exactly. The batch was stopped and its outputs kept as `batch-invalid-state-leak-0142`.
+  Fix: the parent process decodes the pack once and never runs a game; each game runs in a forked child, so every
+  game starts from the untouched copy. Gate after the fix: ARI at KC, BAL at CAR, CIN at WAS, IND at HOU in that order,
+  5/5 seeds identical to the frozen V2 in scores and player box scores on each. The full A00 parity on all 13 games is
+  checked again on the new batch.
