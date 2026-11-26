@@ -336,14 +336,14 @@ def test_assigned_pass_requests_assignments_matching_declared_coverage(
     session.request = request
     monkeypatch.setattr(bridge, '_validate_result', lambda _call, result: result)
     call = {
-        'offense': {'call': {'family': 'pass', 'concept': 'assigned'}},
+        'offense': {'call': {'family': 'pass', 'concept': 'assigned', 'direction': 'left'}},
         'defense': {'call': {'coverage': coverage}},
     }
 
     session.play(call)
 
     assert requests[0] == ('example_assignments', {
-        'concept': 'slant_flat', 'coverage': assignment_coverage,
+        'concept': 'slant_flat', 'coverage': assignment_coverage, 'direction': 'left',
     })
     assert requests[1][0] == 'play'
     assert call['assignments'] is assignments

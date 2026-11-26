@@ -21,7 +21,7 @@ import roster_preflight
 import v1_complete_roster
 from scripts import nfl_team_codes
 
-ENGINE_COMMIT = '90f797d7321102c37f256810c1787a6e604f9bae'
+ENGINE_COMMIT = '6947722a4c67d26b44bbf9e770f2b7b1874fd611'
 PLAYBOOK_MANIFEST_SHA256 = '220af2a590b2e7ddf5c28a32977aadd4d5a5e6e128ca8392da8bac37ef0917ac'
 DEFENSE_SLOTS = ('LEDGE', 'LDT', 'RDT', 'REDGE', 'MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS')
 DEFENSE_POSITION_CANDIDATES = {
@@ -412,7 +412,8 @@ class GridironSession:
             if assignment_coverage is None:
                 raise ValueError('gridiron_bridge_example_assignment_coverage_unsupported:' + str(coverage))
             call['assignments'] = self.request(
-                'example_assignments', concept='slant_flat', coverage=assignment_coverage)['value']
+                'example_assignments', concept='slant_flat', coverage=assignment_coverage,
+                direction=call['offense']['call']['direction'])['value']
         _validate_coverage_assignments(call)
         mode = getattr(self, 'player_evaluation_mode', None)
         if mode is not None:
