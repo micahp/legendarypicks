@@ -331,8 +331,10 @@ class AutonomousGameExecution:
             spot = int(round(receiving_yl))
         elapsed = max(1, math.ceil(outcome['elapsed_seconds']))
         dead = 0 if reason in ('out_of_bounds', 'incomplete', 'touchdown', 'safety') else 27
+        yardage_for_slc = (0 if event == 'interception' and event_record.possession is not None
+                           and event_record.possession.touchback else gain)
         row = {'game_id': self.snapshot['schedule']['game_id'], 'play_id': int(context['play_index']),
-               'play_type': 'run' if event == 'run' else 'pass', 'yards_gained': gain,
+               'play_type': 'run' if event == 'run' else 'pass', 'yards_gained': yardage_for_slc,
                'live_elapsed_seconds': elapsed, 'dead_ball_seconds': dead,
                'clock_stopped': dead == 0, 'out_of_bounds': reason == 'out_of_bounds',
                'decision_note': decision_note or {'selection': family,
@@ -535,6 +537,8 @@ class AutonomousGameExecution:
                 raise ValueError('gridiron_completion_location_missing')
             air_yards = int(round((catch['x'] - los_x) * direction))
             yac = yards - air_yards
+        contract_yards = (0 if event == 'interception' and possession is not None
+                          and possession.touchback else yards)
 
         provenance = ceg_contract.ProvenanceV2(
             generator='gridiron.autonomous_from_snap', version=result['schema_version'],
@@ -561,7 +565,7 @@ class AutonomousGameExecution:
         return ceg_contract.GeneratedPlayV2(
             contract=ceg_contract.CONTRACT_V2_VERSION,
             call=ceg_contract.PlayCallV2(call_intent, provenance=call_provenance),
-            event=ceg_event, yards_gained=yards, air_yards=air_yards,
+            event=ceg_event, yards_gained=contract_yards, air_yards=air_yards,
             yards_after_catch=yac, possession=possession, scoring=scoring,
             fumble=fumble_info is not None, penalty=penalty, provenance=provenance,
             clock=ceg_contract.ClockV2(

@@ -160,6 +160,40 @@ class AutonomousSpecialTeamsTests(unittest.TestCase):
             for side in ('home', 'away') for p in source.snapshot['rosters'][side]['players']}
         return source
 
+    def test_goal_line_interception_touchback_uses_the_turnover_spot_not_offensive_yards(self):
+        source = self._source()
+        source.snapshot['schedule']['game_id'] = 'goal-line-interception-touchback'
+        call = {
+            'play_id': 'goal-line-interception-touchback', 'seed': '17',
+            'offense': {'team': 'AAA', 'lineup': {'QB': 'AAA-P0'},
+                        'call': {'family': 'pass', 'concept': 'assigned'}},
+            'situation': {'yardline_100': 8},
+        }
+        result = {
+            'schema_version': 'gridiron.autonomous-pass.v1',
+            'result': {'yards_gained': 8, 'elapsed_seconds': 4.5,
+                       'final_ball_spot': {'x_yards': 0}, 'event': 'tackle',
+                       'turnover': True, 'is_touchdown': False,
+                       'carrier_id': 'BBB-P0', 'possession_team': 'BBB', 'fumble': None},
+            'events': [
+                {'type': 'throw', 'target_id': 'AAA-P1'},
+                {'type': 'interception', 'player_id': 'BBB-P0',
+                 'at': {'x': 0, 'y': 13}},
+            ],
+            'participants': {'interceptor': 'BBB-P0', 'sackers': []},
+        }
+        state = {'offense': 'A', 'defense': 'B', 'down': 2, 'togo': 8, 'yl': 8}
+        generated = source._map_scrimmage_result(
+            call, result, {}, {}, state, {'play_index': 1, 'direction': -1},
+            {'selection': 'pass'}, 'pass')
+
+        self.assertTrue(generated['event_record'].possession.touchback)
+        self.assertEqual(generated['event_record'].yards_gained, 0)
+        self.assertEqual(generated['row']['yards_gained'], 0)
+        applied = source.apply_event(state, generated['event_record'])
+        self.assertEqual(applied.state_after, {'offense': 'B', 'defense': 'A',
+                                               'down': 1, 'togo': 10, 'yl': 20})
+
     def test_live_gridiron_punt_enters_slc_adapter_with_22_executed_players(self):
         source = self._source()
         with tempfile.TemporaryDirectory() as tmp:
