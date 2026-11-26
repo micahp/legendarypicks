@@ -18,6 +18,7 @@ import participation_field
 import pregame_snapshot
 import shared_participation
 import snap_update
+import nfl_team_codes
 
 SCHEMA = 'ceg-opportunity-m3-v1'
 
@@ -71,6 +72,7 @@ class Opportunity:
     def choose(self, role, team, selected, state, seed):
         # QB is present separately from the skill-player slots. Designed QB runs
         # are supported; dropback scrambles use the QB without an opportunity draw.
+        team = nfl_team_codes.to_nflverse_team_code(team)
         candidates = dict(selected['slots'])
         candidates[selected['qb1']] = 'QB'
         candidates = {p: op.GROUPS[role][pos] for p, pos in candidates.items()

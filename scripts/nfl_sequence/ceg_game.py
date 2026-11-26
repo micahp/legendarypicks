@@ -265,7 +265,9 @@ class Game:
         if player_inputs is not None:
             from ceg_player_policy import GamePlayers
             self.players = GamePlayers(player_inputs)
-            self.codes = dict(self.players.teams)
+            import nfl_team_codes
+            self.codes = {side: nfl_team_codes.to_nflverse_team_code(team)
+                          for side, team in self.players.teams.items()}
         self.prov = PenaltyProvider(hz.Provider(art['gen'], punts, c['oob'], self.players), self.sp)
         self.punts = punts
         self.score = {'A': 0, 'B': 0}
@@ -490,7 +492,7 @@ def run(args):
     art = pickle.loads(args.artifact.read_bytes())
     matchups = json.loads(args.matchups.read_text()) if args.matchups else None
     player_inputs = None
-    if args.player_snapshot:
+    if getattr(args, 'player_snapshot', None):
         if matchups:
             raise ValueError('player-aware CEG uses one frozen matchup per run')
         from ceg_player_policy import load_inputs
@@ -503,8 +505,12 @@ def run(args):
         try:
             g = Game(art, args.seed + i, player_inputs=player_inputs)
             out.append(g.play())
-        except (AssertionError, ValueError) as exc:
+        except AssertionError as exc:
             out.append({'seed': args.seed + i, 'blocked': f'check failed: {exc}'})
+        except ValueError as exc:
+            if player_inputs is None:
+                raise
+            out.append({'seed': args.seed + i, 'blocked': f'player-aware check failed: {exc}'})
     ok = [r for r in out if not r.get('blocked')]
     summary = {'games': len(out), 'completed': len(ok), 'blocked': [r['blocked'] for r in out if r.get('blocked')][:10],
                'blocked_n': len(out) - len(ok)}
