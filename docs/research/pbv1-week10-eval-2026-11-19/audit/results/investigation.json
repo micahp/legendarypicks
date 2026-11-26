@@ -1,0 +1,1733 @@
+{
+ "inv1_high_volume": [
+  {
+   "game": "2026_10_BUF_NYJ",
+   "gsis": "00-0037248",
+   "name": "James Cook",
+   "team": "BUF",
+   "act_carries": 18,
+   "act_snaps": 35,
+   "act_snap_share": 0.0926,
+   "act_carries_per_snap": 0.5143,
+   "A-control": {
+    "sim_carries": 14.35,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 10.25,
+    "sim_snaps": 28.5,
+    "sim_snap_share": 0.0718,
+    "sim_carries_per_snap": 0.3596
+   },
+   "C-field-pbv1": {
+    "sim_carries": 12.1,
+    "sim_snaps": 31.15,
+    "sim_snap_share": 0.0717,
+    "sim_carries_per_snap": 0.3884
+   }
+  },
+  {
+   "game": "2026_10_BUF_NYJ",
+   "gsis": "00-0038120",
+   "name": "Breece Hall",
+   "team": "NYJ",
+   "act_carries": 11,
+   "act_snaps": 41,
+   "act_snap_share": 0.0578,
+   "act_carries_per_snap": 0.2683,
+   "A-control": {
+    "sim_carries": 17.65,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 10.0,
+    "sim_snaps": 31.7,
+    "sim_snap_share": 0.0749,
+    "sim_carries_per_snap": 0.3155
+   },
+   "C-field-pbv1": {
+    "sim_carries": 9.05,
+    "sim_snaps": 29.55,
+    "sim_snap_share": 0.0755,
+    "sim_carries_per_snap": 0.3063
+   }
+  },
+  {
+   "game": "2026_10_CAR_NO",
+   "gsis": "00-0036555",
+   "name": "Chuba Hubbard",
+   "team": "CAR",
+   "act_carries": 27,
+   "act_snaps": 59,
+   "act_snap_share": 0.1077,
+   "act_carries_per_snap": 0.4576,
+   "A-control": {
+    "sim_carries": 14.55,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 10.65,
+    "sim_snaps": 30.1,
+    "sim_snap_share": 0.081,
+    "sim_carries_per_snap": 0.3538
+   },
+   "C-field-pbv1": {
+    "sim_carries": 12.25,
+    "sim_snaps": 33.4,
+    "sim_snap_share": 0.0896,
+    "sim_carries_per_snap": 0.3668
+   }
+  },
+  {
+   "game": "2026_10_HOU_CLE",
+   "gsis": "00-0040784",
+   "name": "Quinshon Judkins",
+   "team": "CLE",
+   "act_carries": 10,
+   "act_snaps": 32,
+   "act_snap_share": 0.0675,
+   "act_carries_per_snap": 0.3125,
+   "A-control": {
+    "sim_carries": 14.95,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 9.3,
+    "sim_snaps": 28.3,
+    "sim_snap_share": 0.0695,
+    "sim_carries_per_snap": 0.3286
+   },
+   "C-field-pbv1": {
+    "sim_carries": 8.65,
+    "sim_snaps": 28.55,
+    "sim_snap_share": 0.0734,
+    "sim_carries_per_snap": 0.303
+   }
+  },
+  {
+   "game": "2026_10_HOU_CLE",
+   "gsis": "00-0040583",
+   "name": "Woody Marks",
+   "team": "HOU",
+   "act_carries": 12,
+   "act_snaps": 30,
+   "act_snap_share": 0.06,
+   "act_carries_per_snap": 0.4,
+   "A-control": {
+    "sim_carries": 24.5,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 15.2,
+    "sim_snaps": 33.6,
+    "sim_snap_share": 0.0773,
+    "sim_carries_per_snap": 0.4524
+   },
+   "C-field-pbv1": {
+    "sim_carries": 14.05,
+    "sim_snaps": 34.65,
+    "sim_snap_share": 0.0771,
+    "sim_carries_per_snap": 0.4055
+   }
+  },
+  {
+   "game": "2026_10_JAX_TEN",
+   "gsis": "00-0040719",
+   "name": "Bhayshul Tuten",
+   "team": "JAX",
+   "act_carries": 26,
+   "act_snaps": 51,
+   "act_snap_share": 0.101,
+   "act_carries_per_snap": 0.5098,
+   "A-control": {
+    "sim_carries": 19.35,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 11.35,
+    "sim_snaps": 31.15,
+    "sim_snap_share": 0.0754,
+    "sim_carries_per_snap": 0.3644
+   },
+   "C-field-pbv1": {
+    "sim_carries": 12.85,
+    "sim_snaps": 31.95,
+    "sim_snap_share": 0.0755,
+    "sim_carries_per_snap": 0.4022
+   }
+  },
+  {
+   "game": "2026_10_KC_ATL",
+   "gsis": "00-0038542",
+   "name": "Bijan Robinson",
+   "team": "ATL",
+   "act_carries": 16,
+   "act_snaps": 51,
+   "act_snap_share": 0.0799,
+   "act_carries_per_snap": 0.3137,
+   "A-control": {
+    "sim_carries": 24.15,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 12.85,
+    "sim_snaps": 33.2,
+    "sim_snap_share": 0.0803,
+    "sim_carries_per_snap": 0.387
+   },
+   "C-field-pbv1": {
+    "sim_carries": 15.75,
+    "sim_snaps": 37.65,
+    "sim_snap_share": 0.0887,
+    "sim_carries_per_snap": 0.4183
+   }
+  },
+  {
+   "game": "2026_10_KC_ATL",
+   "gsis": "00-0041013",
+   "name": "Emmett Johnson",
+   "team": "KC",
+   "act_carries": 22,
+   "act_snaps": 57,
+   "act_snap_share": 0.1307,
+   "act_carries_per_snap": 0.386,
+   "A-control": {
+    "sim_carries": 2.35,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 2.55,
+    "sim_snaps": 8.9,
+    "sim_snap_share": 0.021,
+    "sim_carries_per_snap": 0.2865
+   },
+   "C-field-pbv1": {
+    "sim_carries": 3.85,
+    "sim_snaps": 10.65,
+    "sim_snap_share": 0.0251,
+    "sim_carries_per_snap": 0.3615
+   }
+  },
+  {
+   "game": "2026_10_LAC_BAL",
+   "gsis": "00-0032764",
+   "name": "Derrick Henry",
+   "team": "BAL",
+   "act_carries": 10,
+   "act_snaps": 38,
+   "act_snap_share": 0.0704,
+   "act_carries_per_snap": 0.2632,
+   "A-control": {
+    "sim_carries": 25.05,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 12.8,
+    "sim_snaps": 29.7,
+    "sim_snap_share": 0.0708,
+    "sim_carries_per_snap": 0.431
+   },
+   "C-field-pbv1": {
+    "sim_carries": 13.5,
+    "sim_snaps": 31.8,
+    "sim_snap_share": 0.0783,
+    "sim_carries_per_snap": 0.4245
+   }
+  },
+  {
+   "game": "2026_10_LAC_BAL",
+   "gsis": "00-0040666",
+   "name": "Omarion Hampton",
+   "team": "LAC",
+   "act_carries": 22,
+   "act_snaps": 36,
+   "act_snap_share": 0.0882,
+   "act_carries_per_snap": 0.6111,
+   "A-control": {
+    "sim_carries": 9.6,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 8.0,
+    "sim_snaps": 25.3,
+    "sim_snap_share": 0.0652,
+    "sim_carries_per_snap": 0.3162
+   },
+   "C-field-pbv1": {
+    "sim_carries": 8.95,
+    "sim_snaps": 28.25,
+    "sim_snap_share": 0.0676,
+    "sim_carries_per_snap": 0.3168
+   }
+  },
+  {
+   "game": "2026_10_LA_ARI",
+   "gsis": "00-0037557",
+   "name": "Ronnie Rivers",
+   "team": "LA",
+   "act_carries": 15,
+   "act_snaps": 17,
+   "act_snap_share": 0.0379,
+   "act_carries_per_snap": 0.8824,
+   "A-control": {
+    "sim_carries": 1.85,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 3.9,
+    "sim_snaps": 11.45,
+    "sim_snap_share": 0.0273,
+    "sim_carries_per_snap": 0.3406
+   },
+   "C-field-pbv1": {
+    "sim_carries": 3.05,
+    "sim_snaps": 10.15,
+    "sim_snap_share": 0.0246,
+    "sim_carries_per_snap": 0.3005
+   }
+  },
+  {
+   "game": "2026_10_LA_ARI",
+   "gsis": "00-0037840",
+   "name": "Kyren Williams",
+   "team": "LA",
+   "act_carries": 12,
+   "act_snaps": 39,
+   "act_snap_share": 0.0871,
+   "act_carries_per_snap": 0.3077,
+   "A-control": {
+    "sim_carries": 18.9,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 13.9,
+    "sim_snaps": 33.9,
+    "sim_snap_share": 0.0808,
+    "sim_carries_per_snap": 0.41
+   },
+   "C-field-pbv1": {
+    "sim_carries": 13.05,
+    "sim_snaps": 32.3,
+    "sim_snap_share": 0.0784,
+    "sim_carries_per_snap": 0.404
+   }
+  },
+  {
+   "game": "2026_10_LA_ARI",
+   "gsis": "00-0039738",
+   "name": "Blake Corum",
+   "team": "LA",
+   "act_carries": 17,
+   "act_snaps": 39,
+   "act_snap_share": 0.0871,
+   "act_carries_per_snap": 0.4359,
+   "A-control": {
+    "sim_carries": 8.2,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 9.9,
+    "sim_snaps": 25.6,
+    "sim_snap_share": 0.061,
+    "sim_carries_per_snap": 0.3867
+   },
+   "C-field-pbv1": {
+    "sim_carries": 10.4,
+    "sim_snaps": 25.25,
+    "sim_snap_share": 0.0613,
+    "sim_carries_per_snap": 0.4119
+   }
+  },
+  {
+   "game": "2026_10_MIA_IND",
+   "gsis": "00-0036223",
+   "name": "Jonathan Taylor",
+   "team": "IND",
+   "act_carries": 16,
+   "act_snaps": 40,
+   "act_snap_share": 0.0875,
+   "act_carries_per_snap": 0.4,
+   "A-control": {
+    "sim_carries": 20.6,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 13.15,
+    "sim_snaps": 33.1,
+    "sim_snap_share": 0.0869,
+    "sim_carries_per_snap": 0.3973
+   },
+   "C-field-pbv1": {
+    "sim_carries": 11.6,
+    "sim_snaps": 34.9,
+    "sim_snap_share": 0.0896,
+    "sim_carries_per_snap": 0.3324
+   }
+  },
+  {
+   "game": "2026_10_MIA_IND",
+   "gsis": "00-0041125",
+   "name": "Seth McGowan",
+   "team": "IND",
+   "act_carries": 12,
+   "act_snaps": 17,
+   "act_snap_share": 0.0372,
+   "act_carries_per_snap": 0.7059,
+   "A-control": {
+    "sim_carries": 0.05,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 1.65,
+    "sim_snaps": 7.95,
+    "sim_snap_share": 0.0209,
+    "sim_carries_per_snap": 0.2075
+   },
+   "C-field-pbv1": {
+    "sim_carries": 2.2,
+    "sim_snaps": 7.15,
+    "sim_snap_share": 0.0183,
+    "sim_carries_per_snap": 0.3077
+   }
+  },
+  {
+   "game": "2026_10_MIA_IND",
+   "gsis": "00-0040198",
+   "name": "Ollie Gordon II",
+   "team": "MIA",
+   "act_carries": 20,
+   "act_snaps": 49,
+   "act_snap_share": 0.1207,
+   "act_carries_per_snap": 0.4082,
+   "A-control": {
+    "sim_carries": 5.25,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 5.35,
+    "sim_snaps": 17.45,
+    "sim_snap_share": 0.0436,
+    "sim_carries_per_snap": 0.3066
+   },
+   "C-field-pbv1": {
+    "sim_carries": 7.85,
+    "sim_snaps": 18.8,
+    "sim_snap_share": 0.0453,
+    "sim_carries_per_snap": 0.4176
+   }
+  },
+  {
+   "game": "2026_10_MIN_GB",
+   "gsis": "00-0040142",
+   "name": "Kaleb Johnson",
+   "team": "GB",
+   "act_carries": 10,
+   "act_snaps": 14,
+   "act_snap_share": 0.039,
+   "act_carries_per_snap": 0.7143,
+   "A-control": {
+    "sim_carries": 0.75,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 1.65,
+    "sim_snaps": 4.7,
+    "sim_snap_share": 0.0114,
+    "sim_carries_per_snap": 0.3511
+   },
+   "C-field-pbv1": {
+    "sim_carries": 0.7,
+    "sim_snaps": 2.15,
+    "sim_snap_share": 0.0053,
+    "sim_carries_per_snap": 0.3256
+   }
+  },
+  {
+   "game": "2026_10_MIN_GB",
+   "gsis": "00-0033293",
+   "name": "Aaron Jones",
+   "team": "MIN",
+   "act_carries": 11,
+   "act_snaps": 30,
+   "act_snap_share": 0.0625,
+   "act_carries_per_snap": 0.3667,
+   "A-control": {
+    "sim_carries": 10.25,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 11.8,
+    "sim_snaps": 33.0,
+    "sim_snap_share": 0.0878,
+    "sim_carries_per_snap": 0.3576
+   },
+   "C-field-pbv1": {
+    "sim_carries": 9.75,
+    "sim_snaps": 28.8,
+    "sim_snap_share": 0.0727,
+    "sim_carries_per_snap": 0.3385
+   }
+  },
+  {
+   "game": "2026_10_MIN_GB",
+   "gsis": "00-0037525",
+   "name": "Jordan Mason",
+   "team": "MIN",
+   "act_carries": 16,
+   "act_snaps": 37,
+   "act_snap_share": 0.0771,
+   "act_carries_per_snap": 0.4324,
+   "A-control": {
+    "sim_carries": 13.55,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 9.6,
+    "sim_snaps": 26.0,
+    "sim_snap_share": 0.0692,
+    "sim_carries_per_snap": 0.3692
+   },
+   "C-field-pbv1": {
+    "sim_carries": 12.95,
+    "sim_snaps": 31.9,
+    "sim_snap_share": 0.0805,
+    "sim_carries_per_snap": 0.406
+   }
+  },
+  {
+   "game": "2026_10_NE_DET",
+   "gsis": "00-0039139",
+   "name": "Jahmyr Gibbs",
+   "team": "DET",
+   "act_carries": 22,
+   "act_snaps": 49,
+   "act_snap_share": 0.1054,
+   "act_carries_per_snap": 0.449,
+   "A-control": {
+    "sim_carries": 22.7,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 13.15,
+    "sim_snaps": 33.95,
+    "sim_snap_share": 0.0865,
+    "sim_carries_per_snap": 0.3873
+   },
+   "C-field-pbv1": {
+    "sim_carries": 14.05,
+    "sim_snaps": 36.45,
+    "sim_snap_share": 0.0897,
+    "sim_carries_per_snap": 0.3855
+   }
+  },
+  {
+   "game": "2026_10_NE_DET",
+   "gsis": "00-0040556",
+   "name": "Corey Kiner",
+   "team": "NE",
+   "act_carries": 10,
+   "act_snaps": 25,
+   "act_snap_share": 0.0556,
+   "act_carries_per_snap": 0.4,
+   "A-control": {
+    "sim_carries": 0.45,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 0.95,
+    "sim_snaps": 3.4,
+    "sim_snap_share": 0.0085,
+    "sim_carries_per_snap": 0.2794
+   },
+   "C-field-pbv1": {
+    "sim_carries": 0.35,
+    "sim_snaps": 1.05,
+    "sim_snap_share": 0.0027,
+    "sim_carries_per_snap": 0.3333
+   }
+  },
+  {
+   "game": "2026_10_PIT_CIN",
+   "gsis": "00-0038597",
+   "name": "Chase Brown",
+   "team": "CIN",
+   "act_carries": 10,
+   "act_snaps": 48,
+   "act_snap_share": 0.1345,
+   "act_carries_per_snap": 0.2083,
+   "A-control": {
+    "sim_carries": 18.35,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 10.65,
+    "sim_snaps": 33.6,
+    "sim_snap_share": 0.085,
+    "sim_carries_per_snap": 0.317
+   },
+   "C-field-pbv1": {
+    "sim_carries": 13.1,
+    "sim_snaps": 36.3,
+    "sim_snap_share": 0.0867,
+    "sim_carries_per_snap": 0.3609
+   }
+  },
+  {
+   "game": "2026_10_SEA_LV",
+   "gsis": "00-0039165",
+   "name": "Zach Charbonnet",
+   "team": "SEA",
+   "act_carries": 20,
+   "act_snaps": 41,
+   "act_snap_share": 0.1262,
+   "act_carries_per_snap": 0.4878,
+   "A-control": {
+    "sim_carries": 29.2,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 11.75,
+    "sim_snaps": 28.65,
+    "sim_snap_share": 0.0727,
+    "sim_carries_per_snap": 0.4101
+   },
+   "C-field-pbv1": {
+    "sim_carries": 17.4,
+    "sim_snaps": 36.25,
+    "sim_snap_share": 0.0861,
+    "sim_carries_per_snap": 0.48
+   }
+  },
+  {
+   "game": "2026_10_SF_DAL",
+   "gsis": "00-0036997",
+   "name": "Javonte Williams",
+   "team": "DAL",
+   "act_carries": 16,
+   "act_snaps": 58,
+   "act_snap_share": 0.0825,
+   "act_carries_per_snap": 0.2759,
+   "A-control": {
+    "sim_carries": 21.2,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 12.95,
+    "sim_snaps": 31.9,
+    "sim_snap_share": 0.0767,
+    "sim_carries_per_snap": 0.406
+   },
+   "C-field-pbv1": {
+    "sim_carries": 9.8,
+    "sim_snaps": 27.45,
+    "sim_snap_share": 0.0663,
+    "sim_carries_per_snap": 0.357
+   }
+  },
+  {
+   "game": "2026_10_SF_DAL",
+   "gsis": "00-0033280",
+   "name": "Christian McCaffrey",
+   "team": "SF",
+   "act_carries": 13,
+   "act_snaps": 39,
+   "act_snap_share": 0.1008,
+   "act_carries_per_snap": 0.3333,
+   "A-control": {
+    "sim_carries": 25.05,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 10.85,
+    "sim_snaps": 29.55,
+    "sim_snap_share": 0.0765,
+    "sim_carries_per_snap": 0.3672
+   },
+   "C-field-pbv1": {
+    "sim_carries": 11.75,
+    "sim_snaps": 31.25,
+    "sim_snap_share": 0.0796,
+    "sim_carries_per_snap": 0.376
+   }
+  },
+  {
+   "game": "2026_10_SF_DAL",
+   "gsis": "00-0041052",
+   "name": "Kaelon Black",
+   "team": "SF",
+   "act_carries": 11,
+   "act_snaps": 26,
+   "act_snap_share": 0.0672,
+   "act_carries_per_snap": 0.4231,
+   "A-control": {
+    "sim_carries": 0.0,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 0.9,
+    "sim_snaps": 2.2,
+    "sim_snap_share": 0.0057,
+    "sim_carries_per_snap": 0.4091
+   },
+   "C-field-pbv1": {
+    "sim_carries": 0.3,
+    "sim_snaps": 0.85,
+    "sim_snap_share": 0.0022,
+    "sim_carries_per_snap": 0.3529
+   }
+  },
+  {
+   "game": "2026_10_WAS_NYG",
+   "gsis": "00-0040715",
+   "name": "Cam Skattebo",
+   "team": "NYG",
+   "act_carries": 18,
+   "act_snaps": 58,
+   "act_snap_share": 0.1555,
+   "act_carries_per_snap": 0.3103,
+   "A-control": {
+    "sim_carries": 7.25,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 6.85,
+    "sim_snaps": 19.8,
+    "sim_snap_share": 0.0475,
+    "sim_carries_per_snap": 0.346
+   },
+   "C-field-pbv1": {
+    "sim_carries": 6.8,
+    "sim_snaps": 16.4,
+    "sim_snap_share": 0.0399,
+    "sim_carries_per_snap": 0.4146
+   }
+  },
+  {
+   "game": "2026_10_WAS_NYG",
+   "gsis": "00-0037256",
+   "name": "Rachaad White",
+   "team": "WAS",
+   "act_carries": 11,
+   "act_snaps": 36,
+   "act_snap_share": 0.0784,
+   "act_carries_per_snap": 0.3056,
+   "A-control": {
+    "sim_carries": 0.15,
+    "sim_snaps": 0.0,
+    "sim_snap_share": 0,
+    "sim_carries_per_snap": 0
+   },
+   "B-field": {
+    "sim_carries": 0.8,
+    "sim_snaps": 2.6,
+    "sim_snap_share": 0.0065,
+    "sim_carries_per_snap": 0.3077
+   },
+   "C-field-pbv1": {
+    "sim_carries": 0.3,
+    "sim_snaps": 1.6,
+    "sim_snap_share": 0.004,
+    "sim_carries_per_snap": 0.1875
+   }
+  },
+  {
+   "game": "2026_10_WAS_NYG",
+   "gsis": "00-0039910",
+   "name": "Jayden Daniels",
+   "team": "WAS",
+   "act_carries": 11,
+   "act_snaps": 69,
+   "act_snap_share": 0.1503,
+   "act_carries_per_snap": 0.1594,
+   "A-control": {
+    "sim_carries": 6.9,
+    "sim_snaps": 67.4,
+    "sim_snap_share": 1.0,
+    "sim_carries_per_snap": 0.1024
+   },
+   "B-field": {
+    "sim_carries": 5.45,
+    "sim_snaps": 67.3,
+    "sim_snap_share": 0.1683,
+    "sim_carries_per_snap": 0.081
+   },
+   "C-field-pbv1": {
+    "sim_carries": 6.35,
+    "sim_snaps": 66.25,
+    "sim_snap_share": 0.1667,
+    "sim_carries_per_snap": 0.0958
+   }
+  }
+ ],
+ "inv1_named_sim": {
+  "A-control": {
+   "Bijan Robinson": {
+    "snaps": 0.0,
+    "carries": 24.15,
+    "team_snaps": 66.6,
+    "team_carries": 27.2
+   },
+   "Derrick Henry": {
+    "snaps": 0.0,
+    "carries": 25.05,
+    "team_snaps": 66.1,
+    "team_carries": 33.0
+   },
+   "Jonathan Taylor": {
+    "snaps": 0.0,
+    "carries": 20.6,
+    "team_snaps": 65.4,
+    "team_carries": 27.15
+   },
+   "Jahmyr Gibbs": {
+    "snaps": 0.0,
+    "carries": 22.7,
+    "team_snaps": 63.75,
+    "team_carries": 26.55
+   },
+   "Zach Charbonnet": {
+    "snaps": 0.0,
+    "carries": 29.2,
+    "team_snaps": 67.95,
+    "team_carries": 36.7
+   },
+   "Christian McCaffrey": {
+    "snaps": 0.0,
+    "carries": 25.05,
+    "team_snaps": 68.95,
+    "team_carries": 29.55
+   }
+  },
+  "B-field": {
+   "Bijan Robinson": {
+    "snaps": 33.2,
+    "carries": 12.85,
+    "team_snaps": 413.45,
+    "team_carries": 29.0
+   },
+   "Derrick Henry": {
+    "snaps": 29.7,
+    "carries": 12.8,
+    "team_snaps": 419.55,
+    "team_carries": 35.1
+   },
+   "Jonathan Taylor": {
+    "snaps": 33.1,
+    "carries": 13.15,
+    "team_snaps": 381.1,
+    "team_carries": 28.6
+   },
+   "Jahmyr Gibbs": {
+    "snaps": 33.95,
+    "carries": 13.15,
+    "team_snaps": 392.45,
+    "team_carries": 26.0
+   },
+   "Zach Charbonnet": {
+    "snaps": 28.65,
+    "carries": 11.75,
+    "team_snaps": 393.9,
+    "team_carries": 32.55
+   },
+   "Christian McCaffrey": {
+    "snaps": 29.55,
+    "carries": 10.85,
+    "team_snaps": 386.35,
+    "team_carries": 28.05
+   }
+  },
+  "C-field-pbv1": {
+   "Bijan Robinson": {
+    "snaps": 37.65,
+    "carries": 15.75,
+    "team_snaps": 424.5,
+    "team_carries": 29.9
+   },
+   "Derrick Henry": {
+    "snaps": 31.8,
+    "carries": 13.5,
+    "team_snaps": 406.2,
+    "team_carries": 34.8
+   },
+   "Jonathan Taylor": {
+    "snaps": 34.9,
+    "carries": 11.6,
+    "team_snaps": 389.65,
+    "team_carries": 26.5
+   },
+   "Jahmyr Gibbs": {
+    "snaps": 36.45,
+    "carries": 14.05,
+    "team_snaps": 406.15,
+    "team_carries": 28.85
+   },
+   "Zach Charbonnet": {
+    "snaps": 36.25,
+    "carries": 17.4,
+    "team_snaps": 420.85,
+    "team_carries": 37.3
+   },
+   "Christian McCaffrey": {
+    "snaps": 31.25,
+    "carries": 11.75,
+    "team_snaps": 392.4,
+    "team_carries": 28.55
+   }
+  }
+ },
+ "inv1_named_actual": {
+  "Bijan Robinson": {
+   "snaps": 51,
+   "carries": 16,
+   "team_snaps": 638,
+   "team_carries": 20
+  },
+  "Derrick Henry": {
+   "snaps": 38,
+   "carries": 10,
+   "team_snaps": 540,
+   "team_carries": 15
+  },
+  "Jonathan Taylor": {
+   "snaps": 40,
+   "carries": 16,
+   "team_snaps": 457,
+   "team_carries": 34
+  },
+  "Jahmyr Gibbs": {
+   "snaps": 49,
+   "carries": 22,
+   "team_snaps": 465,
+   "team_carries": 34
+  },
+  "Zach Charbonnet": {
+   "snaps": 41,
+   "carries": 20,
+   "team_snaps": 325,
+   "team_carries": 35
+  },
+  "Christian McCaffrey": {
+   "snaps": 39,
+   "carries": 13,
+   "team_snaps": 387,
+   "team_carries": 29
+  }
+ },
+ "inv1_choice_level": {
+  "B-field": [
+   {
+    "game": "2026_10_BUF_NYJ",
+    "name": "James Cook",
+    "on_field_rate": 0.4266,
+    "run_selection_given_on_field": 0.8039,
+    "run_plays_on_field": 255
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "name": "Breece Hall",
+    "on_field_rate": 0.4465,
+    "run_selection_given_on_field": 0.7968,
+    "run_plays_on_field": 251
+   },
+   {
+    "game": "2026_10_CAR_NO",
+    "name": "Chuba Hubbard",
+    "on_field_rate": 0.4828,
+    "run_selection_given_on_field": 0.895,
+    "run_plays_on_field": 238
+   },
+   {
+    "game": "2026_10_HOU_CLE",
+    "name": "Woody Marks",
+    "on_field_rate": 0.4593,
+    "run_selection_given_on_field": 0.9129,
+    "run_plays_on_field": 333
+   },
+   {
+    "game": "2026_10_HOU_CLE",
+    "name": "Quinshon Judkins",
+    "on_field_rate": 0.4137,
+    "run_selection_given_on_field": 0.89,
+    "run_plays_on_field": 209
+   },
+   {
+    "game": "2026_10_JAX_TEN",
+    "name": "Bhayshul Tuten",
+    "on_field_rate": 0.4495,
+    "run_selection_given_on_field": 0.8664,
+    "run_plays_on_field": 262
+   },
+   {
+    "game": "2026_10_KC_ATL",
+    "name": "Bijan Robinson",
+    "on_field_rate": 0.4787,
+    "run_selection_given_on_field": 0.9519,
+    "run_plays_on_field": 270
+   },
+   {
+    "game": "2026_10_KC_ATL",
+    "name": "Emmett Johnson",
+    "on_field_rate": 0.1251,
+    "run_selection_given_on_field": 0.7391,
+    "run_plays_on_field": 69
+   },
+   {
+    "game": "2026_10_LAC_BAL",
+    "name": "Derrick Henry",
+    "on_field_rate": 0.4225,
+    "run_selection_given_on_field": 0.8767,
+    "run_plays_on_field": 292
+   },
+   {
+    "game": "2026_10_LAC_BAL",
+    "name": "Omarion Hampton",
+    "on_field_rate": 0.3883,
+    "run_selection_given_on_field": 0.8163,
+    "run_plays_on_field": 196
+   },
+   {
+    "game": "2026_10_LA_ARI",
+    "name": "Ronnie Rivers",
+    "on_field_rate": null,
+    "run_selection_given_on_field": null,
+    "run_plays_on_field": 0
+   },
+   {
+    "game": "2026_10_LA_ARI",
+    "name": "Kyren Williams",
+    "on_field_rate": null,
+    "run_selection_given_on_field": null,
+    "run_plays_on_field": 0
+   },
+   {
+    "game": "2026_10_LA_ARI",
+    "name": "Blake Corum",
+    "on_field_rate": null,
+    "run_selection_given_on_field": null,
+    "run_plays_on_field": 0
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Jonathan Taylor",
+    "on_field_rate": 0.518,
+    "run_selection_given_on_field": 0.9164,
+    "run_plays_on_field": 287
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Ollie Gordon II",
+    "on_field_rate": 0.2593,
+    "run_selection_given_on_field": 0.6185,
+    "run_plays_on_field": 173
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Seth McGowan",
+    "on_field_rate": 0.1244,
+    "run_selection_given_on_field": 0.4783,
+    "run_plays_on_field": 69
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Aaron Jones",
+    "on_field_rate": 0.523,
+    "run_selection_given_on_field": 0.8339,
+    "run_plays_on_field": 283
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Jordan Mason",
+    "on_field_rate": 0.412,
+    "run_selection_given_on_field": 0.9014,
+    "run_plays_on_field": 213
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Kaleb Johnson",
+    "on_field_rate": 0.068,
+    "run_selection_given_on_field": 0.66,
+    "run_plays_on_field": 50
+   },
+   {
+    "game": "2026_10_NE_DET",
+    "name": "Jahmyr Gibbs",
+    "on_field_rate": 0.5148,
+    "run_selection_given_on_field": 0.9293,
+    "run_plays_on_field": 283
+   },
+   {
+    "game": "2026_10_NE_DET",
+    "name": "Corey Kiner",
+    "on_field_rate": 0.0504,
+    "run_selection_given_on_field": 0.5758,
+    "run_plays_on_field": 33
+   },
+   {
+    "game": "2026_10_PIT_CIN",
+    "name": "Chase Brown",
+    "on_field_rate": 0.5076,
+    "run_selection_given_on_field": 0.9025,
+    "run_plays_on_field": 236
+   },
+   {
+    "game": "2026_10_SEA_LV",
+    "name": "Zach Charbonnet",
+    "on_field_rate": 0.4347,
+    "run_selection_given_on_field": 0.9073,
+    "run_plays_on_field": 259
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Christian McCaffrey",
+    "on_field_rate": 0.456,
+    "run_selection_given_on_field": 0.8857,
+    "run_plays_on_field": 245
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Javonte Williams",
+    "on_field_rate": 0.458,
+    "run_selection_given_on_field": 0.887,
+    "run_plays_on_field": 292
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Kaelon Black",
+    "on_field_rate": 0.034,
+    "run_selection_given_on_field": 0.75,
+    "run_plays_on_field": 24
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Rachaad White",
+    "on_field_rate": null,
+    "run_selection_given_on_field": null,
+    "run_plays_on_field": 0
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Jayden Daniels",
+    "on_field_rate": null,
+    "run_selection_given_on_field": null,
+    "run_plays_on_field": 0
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Cam Skattebo",
+    "on_field_rate": 0.2829,
+    "run_selection_given_on_field": 0.7784,
+    "run_plays_on_field": 176
+   }
+  ],
+  "C-field-pbv1": [
+   {
+    "game": "2026_10_BUF_NYJ",
+    "name": "James Cook",
+    "on_field_rate": 0.43,
+    "run_selection_given_on_field": 0.8521,
+    "run_plays_on_field": 284
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "name": "Breece Hall",
+    "on_field_rate": 0.4529,
+    "run_selection_given_on_field": 0.838,
+    "run_plays_on_field": 216
+   },
+   {
+    "game": "2026_10_CAR_NO",
+    "name": "Chuba Hubbard",
+    "on_field_rate": 0.5378,
+    "run_selection_given_on_field": 0.9041,
+    "run_plays_on_field": 271
+   },
+   {
+    "game": "2026_10_HOU_CLE",
+    "name": "Woody Marks",
+    "on_field_rate": 0.4626,
+    "run_selection_given_on_field": 0.9153,
+    "run_plays_on_field": 307
+   },
+   {
+    "game": "2026_10_HOU_CLE",
+    "name": "Quinshon Judkins",
+    "on_field_rate": 0.4406,
+    "run_selection_given_on_field": 0.901,
+    "run_plays_on_field": 192
+   },
+   {
+    "game": "2026_10_JAX_TEN",
+    "name": "Bhayshul Tuten",
+    "on_field_rate": 0.4532,
+    "run_selection_given_on_field": 0.8924,
+    "run_plays_on_field": 288
+   },
+   {
+    "game": "2026_10_KC_ATL",
+    "name": "Bijan Robinson",
+    "on_field_rate": 0.5322,
+    "run_selection_given_on_field": 0.9488,
+    "run_plays_on_field": 332
+   },
+   {
+    "game": "2026_10_KC_ATL",
+    "name": "Emmett Johnson",
+    "on_field_rate": 0.1504,
+    "run_selection_given_on_field": 0.837,
+    "run_plays_on_field": 92
+   },
+   {
+    "game": "2026_10_LAC_BAL",
+    "name": "Derrick Henry",
+    "on_field_rate": 0.4697,
+    "run_selection_given_on_field": 0.8795,
+    "run_plays_on_field": 307
+   },
+   {
+    "game": "2026_10_LAC_BAL",
+    "name": "Omarion Hampton",
+    "on_field_rate": 0.4053,
+    "run_selection_given_on_field": 0.8995,
+    "run_plays_on_field": 199
+   },
+   {
+    "game": "2026_10_LA_ARI",
+    "name": "Ronnie Rivers",
+    "on_field_rate": null,
+    "run_selection_given_on_field": null,
+    "run_plays_on_field": 0
+   },
+   {
+    "game": "2026_10_LA_ARI",
+    "name": "Kyren Williams",
+    "on_field_rate": null,
+    "run_selection_given_on_field": null,
+    "run_plays_on_field": 0
+   },
+   {
+    "game": "2026_10_LA_ARI",
+    "name": "Blake Corum",
+    "on_field_rate": null,
+    "run_selection_given_on_field": null,
+    "run_plays_on_field": 0
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Jonathan Taylor",
+    "on_field_rate": 0.5373,
+    "run_selection_given_on_field": 0.9206,
+    "run_plays_on_field": 252
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Ollie Gordon II",
+    "on_field_rate": 0.2715,
+    "run_selection_given_on_field": 0.8135,
+    "run_plays_on_field": 193
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Seth McGowan",
+    "on_field_rate": 0.1101,
+    "run_selection_given_on_field": 0.6567,
+    "run_plays_on_field": 67
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Aaron Jones",
+    "on_field_rate": 0.436,
+    "run_selection_given_on_field": 0.8864,
+    "run_plays_on_field": 220
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Jordan Mason",
+    "on_field_rate": 0.483,
+    "run_selection_given_on_field": 0.9184,
+    "run_plays_on_field": 282
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Kaleb Johnson",
+    "on_field_rate": 0.0319,
+    "run_selection_given_on_field": 0.5833,
+    "run_plays_on_field": 24
+   },
+   {
+    "game": "2026_10_NE_DET",
+    "name": "Jahmyr Gibbs",
+    "on_field_rate": 0.5384,
+    "run_selection_given_on_field": 0.9243,
+    "run_plays_on_field": 304
+   },
+   {
+    "game": "2026_10_NE_DET",
+    "name": "Corey Kiner",
+    "on_field_rate": 0.0163,
+    "run_selection_given_on_field": 1.0,
+    "run_plays_on_field": 7
+   },
+   {
+    "game": "2026_10_PIT_CIN",
+    "name": "Chase Brown",
+    "on_field_rate": 0.5201,
+    "run_selection_given_on_field": 0.9129,
+    "run_plays_on_field": 287
+   },
+   {
+    "game": "2026_10_SEA_LV",
+    "name": "Zach Charbonnet",
+    "on_field_rate": 0.5167,
+    "run_selection_given_on_field": 0.911,
+    "run_plays_on_field": 382
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Christian McCaffrey",
+    "on_field_rate": 0.4778,
+    "run_selection_given_on_field": 0.9325,
+    "run_plays_on_field": 252
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Javonte Williams",
+    "on_field_rate": 0.3978,
+    "run_selection_given_on_field": 0.9032,
+    "run_plays_on_field": 217
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Kaelon Black",
+    "on_field_rate": 0.013,
+    "run_selection_given_on_field": 0.6,
+    "run_plays_on_field": 10
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Rachaad White",
+    "on_field_rate": null,
+    "run_selection_given_on_field": null,
+    "run_plays_on_field": 0
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Jayden Daniels",
+    "on_field_rate": null,
+    "run_selection_given_on_field": null,
+    "run_plays_on_field": 0
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Cam Skattebo",
+    "on_field_rate": 0.2391,
+    "run_selection_given_on_field": 0.8395,
+    "run_plays_on_field": 162
+   }
+  ]
+ },
+ "inv2_class_counts": {
+  "B-field": {
+   "no_snap_or_injury_row": 83,
+   "injury_report_other_status": 11,
+   "published_snaps_but_no_log_row": 23,
+   "injury_report_out_or_doubtful_or_ir": 21,
+   "snap_count_zero_no_injury_row": 5
+  },
+  "C-field-pbv1": {
+   "no_snap_or_injury_row": 81,
+   "injury_report_other_status": 11,
+   "published_snaps_but_no_log_row": 24,
+   "injury_report_out_or_doubtful_or_ir": 22,
+   "snap_count_zero_no_injury_row": 4
+  }
+ },
+ "inv2_class_carries": {
+  "B-field": {
+   "no_snap_or_injury_row": 149.4,
+   "injury_report_other_status": 15.3,
+   "published_snaps_but_no_log_row": 12.9,
+   "injury_report_out_or_doubtful_or_ir": 39.5,
+   "snap_count_zero_no_injury_row": 14.7
+  },
+  "C-field-pbv1": {
+   "no_snap_or_injury_row": 142.1,
+   "injury_report_other_status": 14.7,
+   "published_snaps_but_no_log_row": 12.8,
+   "injury_report_out_or_doubtful_or_ir": 36.8,
+   "snap_count_zero_no_injury_row": 13.6
+  }
+ },
+ "inv2_class_examples": {
+  "B-field": {
+   "no_snap_or_injury_row": [
+    [
+     "2026_10_BUF_NYJ",
+     "Joshua Palmer",
+     "BUF",
+     0.1
+    ],
+    [
+     "2026_10_BUF_NYJ",
+     "Jelani Woods",
+     "NYJ",
+     0.1
+    ],
+    [
+     "2026_10_BUF_NYJ",
+     "Arian Smith",
+     "NYJ",
+     0.1
+    ],
+    [
+     "2026_10_BUF_NYJ",
+     "Chip Trayanum",
+     "NYJ",
+     0.4
+    ]
+   ],
+   "injury_report_other_status": [
+    [
+     "2026_10_BUF_NYJ",
+     "Tyrell Shavers",
+     "BUF",
+     0.2
+    ],
+    [
+     "2026_10_HOU_CLE",
+     "David Montgomery",
+     "HOU",
+     1.6
+    ],
+    [
+     "2026_10_KC_ATL",
+     "Kenneth Walker III",
+     "KC",
+     4.1
+    ],
+    [
+     "2026_10_KC_ATL",
+     "Jaydn Ott",
+     "KC",
+     3.4
+    ]
+   ],
+   "published_snaps_but_no_log_row": [
+    [
+     "2026_10_CAR_NO",
+     "Xavier Legette",
+     "CAR",
+     0.1
+    ],
+    [
+     "2026_10_CAR_NO",
+     "Oscar Delp",
+     "NO",
+     0.1
+    ],
+    [
+     "2026_10_HOU_CLE",
+     "Foster Moreau",
+     "HOU",
+     0.1
+    ],
+    [
+     "2026_10_HOU_CLE",
+     "Jaleel McLaughlin",
+     "CLE",
+     0.2
+    ]
+   ],
+   "injury_report_out_or_doubtful_or_ir": [
+    [
+     "2026_10_CAR_NO",
+     "Jonathon Brooks",
+     "CAR",
+     4.0
+    ],
+    [
+     "2026_10_CAR_NO",
+     "CJ Donaldson",
+     "NO",
+     0.9
+    ],
+    [
+     "2026_10_HOU_CLE",
+     "Brevin Jordan",
+     "HOU",
+     0.1
+    ],
+    [
+     "2026_10_JAX_TEN",
+     "Carnell Tate",
+     "TEN",
+     0.1
+    ]
+   ],
+   "snap_count_zero_no_injury_row": [
+    [
+     "2026_10_JAX_TEN",
+     "Ameer Abdullah",
+     "JAX",
+     2.0
+    ],
+    [
+     "2026_10_JAX_TEN",
+     "Kylen Granson",
+     "TEN",
+     0.1
+    ],
+    [
+     "2026_10_JAX_TEN",
+     "Julius Chestnut",
+     "TEN",
+     4.2
+    ],
+    [
+     "2026_10_LA_ARI",
+     "Evan Hull",
+     "ARI",
+     1.1
+    ]
+   ]
+  },
+  "C-field-pbv1": {
+   "no_snap_or_injury_row": [
+    [
+     "2026_10_BUF_NYJ",
+     "Joshua Palmer",
+     "BUF",
+     0.2
+    ],
+    [
+     "2026_10_BUF_NYJ",
+     "Jelani Woods",
+     "NYJ",
+     0.1
+    ],
+    [
+     "2026_10_BUF_NYJ",
+     "Arian Smith",
+     "NYJ",
+     0.2
+    ],
+    [
+     "2026_10_BUF_NYJ",
+     "Chip Trayanum",
+     "NYJ",
+     0.4
+    ]
+   ],
+   "injury_report_other_status": [
+    [
+     "2026_10_BUF_NYJ",
+     "Tyrell Shavers",
+     "BUF",
+     0.3
+    ],
+    [
+     "2026_10_HOU_CLE",
+     "David Montgomery",
+     "HOU",
+     1.5
+    ],
+    [
+     "2026_10_KC_ATL",
+     "Kenneth Walker III",
+     "KC",
+     4.7
+    ],
+    [
+     "2026_10_KC_ATL",
+     "Jaydn Ott",
+     "KC",
+     3.5
+    ]
+   ],
+   "published_snaps_but_no_log_row": [
+    [
+     "2026_10_BUF_NYJ",
+     "Skyler Bell",
+     "BUF",
+     0.1
+    ],
+    [
+     "2026_10_CAR_NO",
+     "Xavier Legette",
+     "CAR",
+     0.1
+    ],
+    [
+     "2026_10_CAR_NO",
+     "Oscar Delp",
+     "NO",
+     0.2
+    ],
+    [
+     "2026_10_HOU_CLE",
+     "Jaleel McLaughlin",
+     "CLE",
+     0.8
+    ]
+   ],
+   "injury_report_out_or_doubtful_or_ir": [
+    [
+     "2026_10_CAR_NO",
+     "Jonathon Brooks",
+     "CAR",
+     2.6
+    ],
+    [
+     "2026_10_CAR_NO",
+     "CJ Donaldson",
+     "NO",
+     0.5
+    ],
+    [
+     "2026_10_HOU_CLE",
+     "Brevin Jordan",
+     "HOU",
+     0.2
+    ],
+    [
+     "2026_10_HOU_CLE",
+     "Marvin Harrison Jr.",
+     "HOU",
+     0.1
+    ]
+   ],
+   "snap_count_zero_no_injury_row": [
+    [
+     "2026_10_JAX_TEN",
+     "Ameer Abdullah",
+     "JAX",
+     1.9
+    ],
+    [
+     "2026_10_JAX_TEN",
+     "Julius Chestnut",
+     "TEN",
+     1.9
+    ],
+    [
+     "2026_10_LA_ARI",
+     "Evan Hull",
+     "ARI",
+     1.1
+    ],
+    [
+     "2026_10_SEA_LV",
+     "George Holani",
+     "SEA",
+     8.6
+    ]
+   ]
+  }
+ },
+ "inv2_injury_statuses": {
+  "B-field": {
+   "Questionable": 11,
+   "Doubtful": 3,
+   "Out": 18,
+   "null": 4
+  },
+  "C-field-pbv1": {
+   "Questionable": 11,
+   "Doubtful": 3,
+   "Out": 19,
+   "null": 4
+  }
+ },
+ "team_snap_check": [
+  {
+   "game": "2026_10_BUF_NYJ",
+   "team": "BUF",
+   "actual_team_off_snaps": 378,
+   "sim_team_snaps_control": 69.8
+  },
+  {
+   "game": "2026_10_BUF_NYJ",
+   "team": "NYJ",
+   "actual_team_off_snaps": 709,
+   "sim_team_snaps_control": 68.9
+  },
+  {
+   "game": "2026_10_CAR_NO",
+   "team": "CAR",
+   "actual_team_off_snaps": 548,
+   "sim_team_snaps_control": 64.2
+  },
+  {
+   "game": "2026_10_CAR_NO",
+   "team": "NO",
+   "actual_team_off_snaps": 416,
+   "sim_team_snaps_control": 70.0
+  },
+  {
+   "game": "2026_10_HOU_CLE",
+   "team": "CLE",
+   "actual_team_off_snaps": 474,
+   "sim_team_snaps_control": 69.0
+  },
+  {
+   "game": "2026_10_HOU_CLE",
+   "team": "HOU",
+   "actual_team_off_snaps": 500,
+   "sim_team_snaps_control": 72.8
+  }
+ ],
+ "pid_with_snap_rows": 1302
+}

@@ -1,0 +1,3385 @@
+{
+ "games": 14,
+ "seeds_per_game_arm": {
+  "2026_10_BUF_NYJ|A-control": 20,
+  "2026_10_BUF_NYJ|B-field": 20,
+  "2026_10_BUF_NYJ|C-field-pbv1": 20,
+  "2026_10_CAR_NO|A-control": 20,
+  "2026_10_CAR_NO|B-field": 20,
+  "2026_10_CAR_NO|C-field-pbv1": 20,
+  "2026_10_HOU_CLE|A-control": 20,
+  "2026_10_HOU_CLE|B-field": 20,
+  "2026_10_HOU_CLE|C-field-pbv1": 20,
+  "2026_10_JAX_TEN|A-control": 20,
+  "2026_10_JAX_TEN|B-field": 20,
+  "2026_10_JAX_TEN|C-field-pbv1": 20,
+  "2026_10_KC_ATL|A-control": 20,
+  "2026_10_KC_ATL|B-field": 20,
+  "2026_10_KC_ATL|C-field-pbv1": 20,
+  "2026_10_LAC_BAL|A-control": 20,
+  "2026_10_LAC_BAL|B-field": 20,
+  "2026_10_LAC_BAL|C-field-pbv1": 20,
+  "2026_10_LA_ARI|A-control": 20,
+  "2026_10_LA_ARI|B-field": 20,
+  "2026_10_LA_ARI|C-field-pbv1": 20,
+  "2026_10_MIA_IND|A-control": 20,
+  "2026_10_MIA_IND|B-field": 20,
+  "2026_10_MIA_IND|C-field-pbv1": 20,
+  "2026_10_MIN_GB|A-control": 20,
+  "2026_10_MIN_GB|B-field": 20,
+  "2026_10_MIN_GB|C-field-pbv1": 20,
+  "2026_10_NE_DET|A-control": 20,
+  "2026_10_NE_DET|B-field": 20,
+  "2026_10_NE_DET|C-field-pbv1": 20,
+  "2026_10_PIT_CIN|A-control": 20,
+  "2026_10_PIT_CIN|B-field": 20,
+  "2026_10_PIT_CIN|C-field-pbv1": 20,
+  "2026_10_SEA_LV|A-control": 20,
+  "2026_10_SEA_LV|B-field": 20,
+  "2026_10_SEA_LV|C-field-pbv1": 20,
+  "2026_10_SF_DAL|A-control": 20,
+  "2026_10_SF_DAL|B-field": 20,
+  "2026_10_SF_DAL|C-field-pbv1": 20,
+  "2026_10_WAS_NYG|A-control": 20,
+  "2026_10_WAS_NYG|B-field": 20,
+  "2026_10_WAS_NYG|C-field-pbv1": 20
+ },
+ "reconcile": {
+  "A-control": {
+   "matched": {
+    "player_games": 264,
+    "sim_carries": 642.4,
+    "act_carries": 735,
+    "sim_targets": 722.7,
+    "act_targets": 854
+   },
+   "matched_nonparticipant": {
+    "player_games": 38,
+    "sim_carries": 17.4,
+    "act_carries": 0,
+    "sim_targets": 39.5,
+    "act_targets": 0
+   },
+   "sim_no_log_row": {
+    "player_games": 228,
+    "sim_carries": 186.9,
+    "act_carries": 0,
+    "sim_targets": 267.5,
+    "act_targets": 0
+   },
+   "roster_omission": {
+    "player_games": 14,
+    "sim_carries": 0.0,
+    "act_carries": 7,
+    "sim_targets": 0.0,
+    "act_targets": 27
+   },
+   "totals": {
+    "sim_carries": 846.7,
+    "act_carries_in_rows": 742,
+    "act_carries_in_logs": 742,
+    "sim_targets": 1029.7,
+    "act_targets_in_rows": 881,
+    "act_targets_in_logs": 881
+   }
+  },
+  "B-field": {
+   "matched": {
+    "player_games": 264,
+    "sim_carries": 582.95,
+    "act_carries": 735,
+    "sim_targets": 682.7,
+    "act_targets": 854
+   },
+   "matched_nonparticipant": {
+    "player_games": 38,
+    "sim_carries": 35.75,
+    "act_carries": 0,
+    "sim_targets": 44.95,
+    "act_targets": 0
+   },
+   "sim_no_log_row": {
+    "player_games": 228,
+    "sim_carries": 231.95,
+    "act_carries": 0,
+    "sim_targets": 292.85,
+    "act_targets": 0
+   },
+   "roster_omission": {
+    "player_games": 14,
+    "sim_carries": 0.0,
+    "act_carries": 7,
+    "sim_targets": 0.0,
+    "act_targets": 27
+   },
+   "totals": {
+    "sim_carries": 850.65,
+    "act_carries_in_rows": 742,
+    "act_carries_in_logs": 742,
+    "sim_targets": 1020.5,
+    "act_targets_in_rows": 881,
+    "act_targets_in_logs": 881
+   }
+  },
+  "C-field-pbv1": {
+   "matched": {
+    "player_games": 264,
+    "sim_carries": 595.5,
+    "act_carries": 735,
+    "sim_targets": 677.65,
+    "act_targets": 854
+   },
+   "matched_nonparticipant": {
+    "player_games": 38,
+    "sim_carries": 32.3,
+    "act_carries": 0,
+    "sim_targets": 43.65,
+    "act_targets": 0
+   },
+   "sim_no_log_row": {
+    "player_games": 228,
+    "sim_carries": 220.05,
+    "act_carries": 0,
+    "sim_targets": 297.2,
+    "act_targets": 0
+   },
+   "roster_omission": {
+    "player_games": 14,
+    "sim_carries": 0.0,
+    "act_carries": 7,
+    "sim_targets": 0.0,
+    "act_targets": 27
+   },
+   "totals": {
+    "sim_carries": 847.85,
+    "act_carries_in_rows": 742,
+    "act_carries_in_logs": 742,
+    "sim_targets": 1018.5,
+    "act_targets_in_rows": 881,
+    "act_targets_in_logs": 881
+   }
+  }
+ },
+ "carry_errors": {
+  "A-control": {
+   "RB": {
+    "player_games": 116,
+    "sim": 719.55,
+    "act": 607,
+    "signed_err": 112.55,
+    "mae": 5.23,
+    "abs_err": 606.65,
+    "abs_err_over_act": 0.999
+   },
+   "QB": {
+    "player_games": 41,
+    "sim": 95.8,
+    "act": 115,
+    "signed_err": -19.2,
+    "mae": 2.395,
+    "abs_err": 98.2,
+    "abs_err_over_act": 0.854
+   },
+   "WR": {
+    "player_games": 152,
+    "sim": 19.05,
+    "act": 16,
+    "signed_err": 3.05,
+    "mae": 0.209,
+    "abs_err": 31.75,
+    "abs_err_over_act": 1.984
+   },
+   "TE": {
+    "player_games": 100,
+    "sim": 12.3,
+    "act": 3,
+    "signed_err": 9.3,
+    "mae": 0.142,
+    "abs_err": 14.2,
+    "abs_err_over_act": 4.733
+   },
+   "other": {
+    "player_games": 1,
+    "sim": 0.0,
+    "act": 1,
+    "signed_err": -1.0,
+    "mae": 1.0,
+    "abs_err": 1.0,
+    "abs_err_over_act": 1.0
+   },
+   "all": {
+    "player_games": 410,
+    "sim": 846.7,
+    "act": 742,
+    "signed_err": 104.7,
+    "mae": 1.834,
+    "abs_err": 751.8,
+    "abs_err_over_act": 1.013
+   }
+  },
+  "B-field": {
+   "RB": {
+    "player_games": 120,
+    "sim": 691.05,
+    "act": 607,
+    "signed_err": 84.05,
+    "mae": 4.939,
+    "abs_err": 592.65,
+    "abs_err_over_act": 0.976
+   },
+   "QB": {
+    "player_games": 41,
+    "sim": 113.6,
+    "act": 115,
+    "signed_err": -1.4,
+    "mae": 2.554,
+    "abs_err": 104.7,
+    "abs_err_over_act": 0.91
+   },
+   "WR": {
+    "player_games": 146,
+    "sim": 30.2,
+    "act": 16,
+    "signed_err": 14.2,
+    "mae": 0.282,
+    "abs_err": 41.2,
+    "abs_err_over_act": 2.575
+   },
+   "TE": {
+    "player_games": 100,
+    "sim": 15.8,
+    "act": 3,
+    "signed_err": 12.8,
+    "mae": 0.181,
+    "abs_err": 18.1,
+    "abs_err_over_act": 6.033
+   },
+   "other": {
+    "player_games": 1,
+    "sim": 0.0,
+    "act": 1,
+    "signed_err": -1.0,
+    "mae": 1.0,
+    "abs_err": 1.0,
+    "abs_err_over_act": 1.0
+   },
+   "all": {
+    "player_games": 408,
+    "sim": 850.65,
+    "act": 742,
+    "signed_err": 108.65,
+    "mae": 1.857,
+    "abs_err": 757.65,
+    "abs_err_over_act": 1.021
+   }
+  },
+  "C-field-pbv1": {
+   "RB": {
+    "player_games": 120,
+    "sim": 690.5,
+    "act": 607,
+    "signed_err": 83.5,
+    "mae": 4.803,
+    "abs_err": 576.4,
+    "abs_err_over_act": 0.95
+   },
+   "QB": {
+    "player_games": 41,
+    "sim": 112.05,
+    "act": 115,
+    "signed_err": -2.95,
+    "mae": 2.54,
+    "abs_err": 104.15,
+    "abs_err_over_act": 0.906
+   },
+   "WR": {
+    "player_games": 145,
+    "sim": 29.7,
+    "act": 16,
+    "signed_err": 13.7,
+    "mae": 0.273,
+    "abs_err": 39.6,
+    "abs_err_over_act": 2.475
+   },
+   "TE": {
+    "player_games": 95,
+    "sim": 15.6,
+    "act": 3,
+    "signed_err": 12.6,
+    "mae": 0.191,
+    "abs_err": 18.1,
+    "abs_err_over_act": 6.033
+   },
+   "other": {
+    "player_games": 1,
+    "sim": 0.0,
+    "act": 1,
+    "signed_err": -1.0,
+    "mae": 1.0,
+    "abs_err": 1.0,
+    "abs_err_over_act": 1.0
+   },
+   "all": {
+    "player_games": 402,
+    "sim": 847.85,
+    "act": 742,
+    "signed_err": 105.85,
+    "mae": 1.839,
+    "abs_err": 739.25,
+    "abs_err_over_act": 0.996
+   }
+  }
+ },
+ "target_errors": {
+  "A-control": {
+   "RB": {
+    "player_games": 120,
+    "sim": 183.5,
+    "act": 174,
+    "signed_err": 9.5,
+    "mae": 1.352,
+    "abs_err": 162.2,
+    "abs_err_over_act": 0.932
+   },
+   "QB": {
+    "player_games": 0,
+    "sim": 0,
+    "act": 0,
+    "signed_err": 0,
+    "mae": null,
+    "abs_err": 0,
+    "abs_err_over_act": null
+   },
+   "WR": {
+    "player_games": 197,
+    "sim": 613.1,
+    "act": 516,
+    "signed_err": 97.1,
+    "mae": 2.73,
+    "abs_err": 537.8,
+    "abs_err_over_act": 1.042
+   },
+   "TE": {
+    "player_games": 126,
+    "sim": 233.1,
+    "act": 184,
+    "signed_err": 49.1,
+    "mae": 1.453,
+    "abs_err": 183.1,
+    "abs_err_over_act": 0.995
+   },
+   "other": {
+    "player_games": 6,
+    "sim": 0.0,
+    "act": 7,
+    "signed_err": -7.0,
+    "mae": 1.167,
+    "abs_err": 7.0,
+    "abs_err_over_act": 1.0
+   },
+   "all": {
+    "player_games": 449,
+    "sim": 1029.7,
+    "act": 881,
+    "signed_err": 148.7,
+    "mae": 1.982,
+    "abs_err": 890.1,
+    "abs_err_over_act": 1.01
+   }
+  },
+  "B-field": {
+   "RB": {
+    "player_games": 118,
+    "sim": 170.5,
+    "act": 174,
+    "signed_err": -3.5,
+    "mae": 1.415,
+    "abs_err": 167.0,
+    "abs_err_over_act": 0.96
+   },
+   "QB": {
+    "player_games": 0,
+    "sim": 0,
+    "act": 0,
+    "signed_err": 0,
+    "mae": null,
+    "abs_err": 0,
+    "abs_err_over_act": null
+   },
+   "WR": {
+    "player_games": 195,
+    "sim": 613.55,
+    "act": 516,
+    "signed_err": 97.55,
+    "mae": 2.777,
+    "abs_err": 541.55,
+    "abs_err_over_act": 1.05
+   },
+   "TE": {
+    "player_games": 127,
+    "sim": 236.45,
+    "act": 184,
+    "signed_err": 52.45,
+    "mae": 1.432,
+    "abs_err": 181.85,
+    "abs_err_over_act": 0.988
+   },
+   "other": {
+    "player_games": 6,
+    "sim": 0.0,
+    "act": 7,
+    "signed_err": -7.0,
+    "mae": 1.167,
+    "abs_err": 7.0,
+    "abs_err_over_act": 1.0
+   },
+   "all": {
+    "player_games": 446,
+    "sim": 1020.5,
+    "act": 881,
+    "signed_err": 139.5,
+    "mae": 2.012,
+    "abs_err": 897.4,
+    "abs_err_over_act": 1.019
+   }
+  },
+  "C-field-pbv1": {
+   "RB": {
+    "player_games": 120,
+    "sim": 170.85,
+    "act": 174,
+    "signed_err": -3.15,
+    "mae": 1.396,
+    "abs_err": 167.55,
+    "abs_err_over_act": 0.963
+   },
+   "QB": {
+    "player_games": 0,
+    "sim": 0,
+    "act": 0,
+    "signed_err": 0,
+    "mae": null,
+    "abs_err": 0,
+    "abs_err_over_act": null
+   },
+   "WR": {
+    "player_games": 197,
+    "sim": 615.1,
+    "act": 516,
+    "signed_err": 99.1,
+    "mae": 2.722,
+    "abs_err": 536.3,
+    "abs_err_over_act": 1.039
+   },
+   "TE": {
+    "player_games": 127,
+    "sim": 232.55,
+    "act": 184,
+    "signed_err": 48.55,
+    "mae": 1.429,
+    "abs_err": 181.45,
+    "abs_err_over_act": 0.986
+   },
+   "other": {
+    "player_games": 6,
+    "sim": 0.0,
+    "act": 7,
+    "signed_err": -7.0,
+    "mae": 1.167,
+    "abs_err": 7.0,
+    "abs_err_over_act": 1.0
+   },
+   "all": {
+    "player_games": 450,
+    "sim": 1018.5,
+    "act": 881,
+    "signed_err": 137.5,
+    "mae": 1.983,
+    "abs_err": 892.3,
+    "abs_err_over_act": 1.013
+   }
+  }
+ },
+ "carry_errors_logged_only": {
+  "A-control": {
+   "RB": {
+    "player_games": 75,
+    "sim": 563.05,
+    "act": 607,
+    "signed_err": -43.95,
+    "mae": 6.002,
+    "abs_err": 450.15,
+    "abs_err_over_act": 0.742
+   },
+   "QB": {
+    "player_games": 35,
+    "sim": 76.3,
+    "act": 115,
+    "signed_err": -38.7,
+    "mae": 2.249,
+    "abs_err": 78.7,
+    "abs_err_over_act": 0.684
+   },
+   "WR": {
+    "player_games": 95,
+    "sim": 13.25,
+    "act": 16,
+    "signed_err": -2.75,
+    "mae": 0.273,
+    "abs_err": 25.95,
+    "abs_err_over_act": 1.622
+   },
+   "TE": {
+    "player_games": 60,
+    "sim": 7.2,
+    "act": 3,
+    "signed_err": 4.2,
+    "mae": 0.152,
+    "abs_err": 9.1,
+    "abs_err_over_act": 3.033
+   },
+   "other": {
+    "player_games": 1,
+    "sim": 0.0,
+    "act": 1,
+    "signed_err": -1.0,
+    "mae": 1.0,
+    "abs_err": 1.0,
+    "abs_err_over_act": 1.0
+   },
+   "all": {
+    "player_games": 266,
+    "sim": 659.8,
+    "act": 742,
+    "signed_err": -82.2,
+    "mae": 2.124,
+    "abs_err": 564.9,
+    "abs_err_over_act": 0.761
+   }
+  },
+  "B-field": {
+   "RB": {
+    "player_games": 75,
+    "sim": 495.25,
+    "act": 607,
+    "signed_err": -111.75,
+    "mae": 5.291,
+    "abs_err": 396.85,
+    "abs_err_over_act": 0.654
+   },
+   "QB": {
+    "player_games": 35,
+    "sim": 90.5,
+    "act": 115,
+    "signed_err": -24.5,
+    "mae": 2.331,
+    "abs_err": 81.6,
+    "abs_err_over_act": 0.71
+   },
+   "WR": {
+    "player_games": 98,
+    "sim": 22.4,
+    "act": 16,
+    "signed_err": 6.4,
+    "mae": 0.341,
+    "abs_err": 33.4,
+    "abs_err_over_act": 2.087
+   },
+   "TE": {
+    "player_games": 56,
+    "sim": 10.55,
+    "act": 3,
+    "signed_err": 7.55,
+    "mae": 0.229,
+    "abs_err": 12.85,
+    "abs_err_over_act": 4.283
+   },
+   "other": {
+    "player_games": 1,
+    "sim": 0.0,
+    "act": 1,
+    "signed_err": -1.0,
+    "mae": 1.0,
+    "abs_err": 1.0,
+    "abs_err_over_act": 1.0
+   },
+   "all": {
+    "player_games": 265,
+    "sim": 618.7,
+    "act": 742,
+    "signed_err": -123.3,
+    "mae": 1.984,
+    "abs_err": 525.7,
+    "abs_err_over_act": 0.708
+   }
+  },
+  "C-field-pbv1": {
+   "RB": {
+    "player_games": 75,
+    "sim": 505.55,
+    "act": 607,
+    "signed_err": -101.45,
+    "mae": 5.219,
+    "abs_err": 391.45,
+    "abs_err_over_act": 0.645
+   },
+   "QB": {
+    "player_games": 35,
+    "sim": 89.7,
+    "act": 115,
+    "signed_err": -25.3,
+    "mae": 2.337,
+    "abs_err": 81.8,
+    "abs_err_over_act": 0.711
+   },
+   "WR": {
+    "player_games": 91,
+    "sim": 21.6,
+    "act": 16,
+    "signed_err": 5.6,
+    "mae": 0.346,
+    "abs_err": 31.5,
+    "abs_err_over_act": 1.969
+   },
+   "TE": {
+    "player_games": 58,
+    "sim": 10.95,
+    "act": 3,
+    "signed_err": 7.95,
+    "mae": 0.232,
+    "abs_err": 13.45,
+    "abs_err_over_act": 4.483
+   },
+   "other": {
+    "player_games": 1,
+    "sim": 0.0,
+    "act": 1,
+    "signed_err": -1.0,
+    "mae": 1.0,
+    "abs_err": 1.0,
+    "abs_err_over_act": 1.0
+   },
+   "all": {
+    "player_games": 260,
+    "sim": 627.8,
+    "act": 742,
+    "signed_err": -114.2,
+    "mae": 1.997,
+    "abs_err": 519.2,
+    "abs_err_over_act": 0.7
+   }
+  }
+ },
+ "target_errors_logged_only": {
+  "A-control": {
+   "RB": {
+    "player_games": 75,
+    "sim": 139.8,
+    "act": 174,
+    "signed_err": -34.2,
+    "mae": 1.58,
+    "abs_err": 118.5,
+    "abs_err_over_act": 0.681
+   },
+   "QB": {
+    "player_games": 0,
+    "sim": 0,
+    "act": 0,
+    "signed_err": 0,
+    "mae": null,
+    "abs_err": 0,
+    "abs_err_over_act": null
+   },
+   "WR": {
+    "player_games": 127,
+    "sim": 434.9,
+    "act": 516,
+    "signed_err": -81.1,
+    "mae": 2.831,
+    "abs_err": 359.6,
+    "abs_err_over_act": 0.697
+   },
+   "TE": {
+    "player_games": 71,
+    "sim": 187.5,
+    "act": 184,
+    "signed_err": 3.5,
+    "mae": 1.937,
+    "abs_err": 137.5,
+    "abs_err_over_act": 0.747
+   },
+   "other": {
+    "player_games": 6,
+    "sim": 0.0,
+    "act": 7,
+    "signed_err": -7.0,
+    "mae": 1.167,
+    "abs_err": 7.0,
+    "abs_err_over_act": 1.0
+   },
+   "all": {
+    "player_games": 279,
+    "sim": 762.2,
+    "act": 881,
+    "signed_err": -118.8,
+    "mae": 2.232,
+    "abs_err": 622.6,
+    "abs_err_over_act": 0.707
+   }
+  },
+  "B-field": {
+   "RB": {
+    "player_games": 74,
+    "sim": 126.2,
+    "act": 174,
+    "signed_err": -47.8,
+    "mae": 1.658,
+    "abs_err": 122.7,
+    "abs_err_over_act": 0.705
+   },
+   "QB": {
+    "player_games": 0,
+    "sim": 0,
+    "act": 0,
+    "signed_err": 0,
+    "mae": null,
+    "abs_err": 0,
+    "abs_err_over_act": null
+   },
+   "WR": {
+    "player_games": 127,
+    "sim": 434.75,
+    "act": 516,
+    "signed_err": -81.25,
+    "mae": 2.856,
+    "abs_err": 362.75,
+    "abs_err_over_act": 0.703
+   },
+   "TE": {
+    "player_games": 71,
+    "sim": 166.7,
+    "act": 184,
+    "signed_err": -17.3,
+    "mae": 1.579,
+    "abs_err": 112.1,
+    "abs_err_over_act": 0.609
+   },
+   "other": {
+    "player_games": 6,
+    "sim": 0.0,
+    "act": 7,
+    "signed_err": -7.0,
+    "mae": 1.167,
+    "abs_err": 7.0,
+    "abs_err_over_act": 1.0
+   },
+   "all": {
+    "player_games": 278,
+    "sim": 727.65,
+    "act": 881,
+    "signed_err": -153.35,
+    "mae": 2.175,
+    "abs_err": 604.55,
+    "abs_err_over_act": 0.686
+   }
+  },
+  "C-field-pbv1": {
+   "RB": {
+    "player_games": 75,
+    "sim": 125.4,
+    "act": 174,
+    "signed_err": -48.6,
+    "mae": 1.628,
+    "abs_err": 122.1,
+    "abs_err_over_act": 0.702
+   },
+   "QB": {
+    "player_games": 0,
+    "sim": 0,
+    "act": 0,
+    "signed_err": 0,
+    "mae": null,
+    "abs_err": 0,
+    "abs_err_over_act": null
+   },
+   "WR": {
+    "player_games": 127,
+    "sim": 428.3,
+    "act": 516,
+    "signed_err": -87.7,
+    "mae": 2.752,
+    "abs_err": 349.5,
+    "abs_err_over_act": 0.677
+   },
+   "TE": {
+    "player_games": 71,
+    "sim": 167.6,
+    "act": 184,
+    "signed_err": -16.4,
+    "mae": 1.641,
+    "abs_err": 116.5,
+    "abs_err_over_act": 0.633
+   },
+   "other": {
+    "player_games": 6,
+    "sim": 0.0,
+    "act": 7,
+    "signed_err": -7.0,
+    "mae": 1.167,
+    "abs_err": 7.0,
+    "abs_err_over_act": 1.0
+   },
+   "all": {
+    "player_games": 279,
+    "sim": 721.3,
+    "act": 881,
+    "signed_err": -159.7,
+    "mae": 2.133,
+    "abs_err": 595.1,
+    "abs_err_over_act": 0.675
+   }
+  }
+ },
+ "high_volume_carries": {
+  "A-control": [
+   {
+    "game": "2026_10_CAR_NO",
+    "name": "Chuba Hubbard",
+    "pos": "RB",
+    "team": "CAR",
+    "sim": 14.55,
+    "act": 27,
+    "signed": -12.45
+   },
+   {
+    "game": "2026_10_JAX_TEN",
+    "name": "Bhayshul Tuten",
+    "pos": "RB",
+    "team": "JAX",
+    "sim": 19.35,
+    "act": 26,
+    "signed": -6.65
+   },
+   {
+    "game": "2026_10_KC_ATL",
+    "name": "Emmett Johnson",
+    "pos": "RB",
+    "team": "KC",
+    "sim": 2.35,
+    "act": 22,
+    "signed": -19.65
+   },
+   {
+    "game": "2026_10_LAC_BAL",
+    "name": "Omarion Hampton",
+    "pos": "RB",
+    "team": "LAC",
+    "sim": 9.6,
+    "act": 22,
+    "signed": -12.4
+   },
+   {
+    "game": "2026_10_NE_DET",
+    "name": "Jahmyr Gibbs",
+    "pos": "RB",
+    "team": "DET",
+    "sim": 22.7,
+    "act": 22,
+    "signed": 0.7
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Ollie Gordon II",
+    "pos": "RB",
+    "team": "MIA",
+    "sim": 5.25,
+    "act": 20,
+    "signed": -14.75
+   },
+   {
+    "game": "2026_10_SEA_LV",
+    "name": "Zach Charbonnet",
+    "pos": "RB",
+    "team": "SEA",
+    "sim": 29.2,
+    "act": 20,
+    "signed": 9.2
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "name": "James Cook III",
+    "pos": "RB",
+    "team": "BUF",
+    "sim": 14.35,
+    "act": 18,
+    "signed": -3.65
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Cam Skattebo",
+    "pos": "RB",
+    "team": "NYG",
+    "sim": 7.25,
+    "act": 18,
+    "signed": -10.75
+   },
+   {
+    "game": "2026_10_LA_ARI",
+    "name": "Blake Corum",
+    "pos": "RB",
+    "team": "LA",
+    "sim": 8.2,
+    "act": 17,
+    "signed": -8.8
+   },
+   {
+    "game": "2026_10_KC_ATL",
+    "name": "Bijan Robinson",
+    "pos": "RB",
+    "team": "ATL",
+    "sim": 24.15,
+    "act": 16,
+    "signed": 8.15
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Jonathan Taylor",
+    "pos": "RB",
+    "team": "IND",
+    "sim": 20.6,
+    "act": 16,
+    "signed": 4.6
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Jordan Mason",
+    "pos": "RB",
+    "team": "MIN",
+    "sim": 13.55,
+    "act": 16,
+    "signed": -2.45
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Javonte Williams",
+    "pos": "RB",
+    "team": "DAL",
+    "sim": 21.2,
+    "act": 16,
+    "signed": 5.2
+   },
+   {
+    "game": "2026_10_LA_ARI",
+    "name": "Ronnie Rivers",
+    "pos": "RB",
+    "team": "LA",
+    "sim": 1.85,
+    "act": 15,
+    "signed": -13.15
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Christian McCaffrey",
+    "pos": "RB",
+    "team": "SF",
+    "sim": 25.05,
+    "act": 13,
+    "signed": 12.05
+   },
+   {
+    "game": "2026_10_HOU_CLE",
+    "name": "Woody Marks",
+    "pos": "RB",
+    "team": "HOU",
+    "sim": 24.5,
+    "act": 12,
+    "signed": 12.5
+   },
+   {
+    "game": "2026_10_LA_ARI",
+    "name": "Kyren Williams",
+    "pos": "RB",
+    "team": "LA",
+    "sim": 18.9,
+    "act": 12,
+    "signed": 6.9
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Seth McGowan",
+    "pos": "RB",
+    "team": "IND",
+    "sim": 0.05,
+    "act": 12,
+    "signed": -11.95
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "name": "Breece Hall",
+    "pos": "RB",
+    "team": "NYJ",
+    "sim": 17.65,
+    "act": 11,
+    "signed": 6.65
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Aaron Jones Sr.",
+    "pos": "RB",
+    "team": "MIN",
+    "sim": 10.25,
+    "act": 11,
+    "signed": -0.75
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Kaelon Black",
+    "pos": "RB",
+    "team": "SF",
+    "sim": 0.0,
+    "act": 11,
+    "signed": -11.0
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Jayden Daniels",
+    "pos": "QB",
+    "team": "WAS",
+    "sim": 6.9,
+    "act": 11,
+    "signed": -4.1
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Rachaad White",
+    "pos": "RB",
+    "team": "WAS",
+    "sim": 0.15,
+    "act": 11,
+    "signed": -10.85
+   },
+   {
+    "game": "2026_10_HOU_CLE",
+    "name": "Quinshon Judkins",
+    "pos": "RB",
+    "team": "CLE",
+    "sim": 14.95,
+    "act": 10,
+    "signed": 4.95
+   },
+   {
+    "game": "2026_10_LAC_BAL",
+    "name": "Derrick Henry",
+    "pos": "RB",
+    "team": "BAL",
+    "sim": 25.05,
+    "act": 10,
+    "signed": 15.05
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Kaleb Johnson",
+    "pos": "RB",
+    "team": "GB",
+    "sim": 0.75,
+    "act": 10,
+    "signed": -9.25
+   },
+   {
+    "game": "2026_10_NE_DET",
+    "name": "Corey Kiner",
+    "pos": "RB",
+    "team": "NE",
+    "sim": 0.45,
+    "act": 10,
+    "signed": -9.55
+   },
+   {
+    "game": "2026_10_PIT_CIN",
+    "name": "Chase Brown",
+    "pos": "RB",
+    "team": "CIN",
+    "sim": 18.35,
+    "act": 10,
+    "signed": 8.35
+   }
+  ],
+  "B-field": [
+   {
+    "game": "2026_10_CAR_NO",
+    "name": "Chuba Hubbard",
+    "pos": "RB",
+    "team": "CAR",
+    "sim": 10.65,
+    "act": 27,
+    "signed": -16.35
+   },
+   {
+    "game": "2026_10_JAX_TEN",
+    "name": "Bhayshul Tuten",
+    "pos": "RB",
+    "team": "JAX",
+    "sim": 11.35,
+    "act": 26,
+    "signed": -14.65
+   },
+   {
+    "game": "2026_10_KC_ATL",
+    "name": "Emmett Johnson",
+    "pos": "RB",
+    "team": "KC",
+    "sim": 2.55,
+    "act": 22,
+    "signed": -19.45
+   },
+   {
+    "game": "2026_10_LAC_BAL",
+    "name": "Omarion Hampton",
+    "pos": "RB",
+    "team": "LAC",
+    "sim": 8.0,
+    "act": 22,
+    "signed": -14.0
+   },
+   {
+    "game": "2026_10_NE_DET",
+    "name": "Jahmyr Gibbs",
+    "pos": "RB",
+    "team": "DET",
+    "sim": 13.15,
+    "act": 22,
+    "signed": -8.85
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Ollie Gordon II",
+    "pos": "RB",
+    "team": "MIA",
+    "sim": 5.35,
+    "act": 20,
+    "signed": -14.65
+   },
+   {
+    "game": "2026_10_SEA_LV",
+    "name": "Zach Charbonnet",
+    "pos": "RB",
+    "team": "SEA",
+    "sim": 11.75,
+    "act": 20,
+    "signed": -8.25
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "name": "James Cook III",
+    "pos": "RB",
+    "team": "BUF",
+    "sim": 10.25,
+    "act": 18,
+    "signed": -7.75
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Cam Skattebo",
+    "pos": "RB",
+    "team": "NYG",
+    "sim": 6.85,
+    "act": 18,
+    "signed": -11.15
+   },
+   {
+    "game": "2026_10_LA_ARI",
+    "name": "Blake Corum",
+    "pos": "RB",
+    "team": "LA",
+    "sim": 9.9,
+    "act": 17,
+    "signed": -7.1
+   },
+   {
+    "game": "2026_10_KC_ATL",
+    "name": "Bijan Robinson",
+    "pos": "RB",
+    "team": "ATL",
+    "sim": 12.85,
+    "act": 16,
+    "signed": -3.15
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Jonathan Taylor",
+    "pos": "RB",
+    "team": "IND",
+    "sim": 13.15,
+    "act": 16,
+    "signed": -2.85
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Jordan Mason",
+    "pos": "RB",
+    "team": "MIN",
+    "sim": 9.6,
+    "act": 16,
+    "signed": -6.4
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Javonte Williams",
+    "pos": "RB",
+    "team": "DAL",
+    "sim": 12.95,
+    "act": 16,
+    "signed": -3.05
+   },
+   {
+    "game": "2026_10_LA_ARI",
+    "name": "Ronnie Rivers",
+    "pos": "RB",
+    "team": "LA",
+    "sim": 3.9,
+    "act": 15,
+    "signed": -11.1
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Christian McCaffrey",
+    "pos": "RB",
+    "team": "SF",
+    "sim": 10.85,
+    "act": 13,
+    "signed": -2.15
+   },
+   {
+    "game": "2026_10_HOU_CLE",
+    "name": "Woody Marks",
+    "pos": "RB",
+    "team": "HOU",
+    "sim": 15.2,
+    "act": 12,
+    "signed": 3.2
+   },
+   {
+    "game": "2026_10_LA_ARI",
+    "name": "Kyren Williams",
+    "pos": "RB",
+    "team": "LA",
+    "sim": 13.9,
+    "act": 12,
+    "signed": 1.9
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Seth McGowan",
+    "pos": "RB",
+    "team": "IND",
+    "sim": 1.65,
+    "act": 12,
+    "signed": -10.35
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "name": "Breece Hall",
+    "pos": "RB",
+    "team": "NYJ",
+    "sim": 10.0,
+    "act": 11,
+    "signed": -1.0
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Aaron Jones Sr.",
+    "pos": "RB",
+    "team": "MIN",
+    "sim": 11.8,
+    "act": 11,
+    "signed": 0.8
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Kaelon Black",
+    "pos": "RB",
+    "team": "SF",
+    "sim": 0.9,
+    "act": 11,
+    "signed": -10.1
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Jayden Daniels",
+    "pos": "QB",
+    "team": "WAS",
+    "sim": 5.45,
+    "act": 11,
+    "signed": -5.55
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Rachaad White",
+    "pos": "RB",
+    "team": "WAS",
+    "sim": 0.8,
+    "act": 11,
+    "signed": -10.2
+   },
+   {
+    "game": "2026_10_HOU_CLE",
+    "name": "Quinshon Judkins",
+    "pos": "RB",
+    "team": "CLE",
+    "sim": 9.3,
+    "act": 10,
+    "signed": -0.7
+   },
+   {
+    "game": "2026_10_LAC_BAL",
+    "name": "Derrick Henry",
+    "pos": "RB",
+    "team": "BAL",
+    "sim": 12.8,
+    "act": 10,
+    "signed": 2.8
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Kaleb Johnson",
+    "pos": "RB",
+    "team": "GB",
+    "sim": 1.65,
+    "act": 10,
+    "signed": -8.35
+   },
+   {
+    "game": "2026_10_NE_DET",
+    "name": "Corey Kiner",
+    "pos": "RB",
+    "team": "NE",
+    "sim": 0.95,
+    "act": 10,
+    "signed": -9.05
+   },
+   {
+    "game": "2026_10_PIT_CIN",
+    "name": "Chase Brown",
+    "pos": "RB",
+    "team": "CIN",
+    "sim": 10.65,
+    "act": 10,
+    "signed": 0.65
+   }
+  ],
+  "C-field-pbv1": [
+   {
+    "game": "2026_10_CAR_NO",
+    "name": "Chuba Hubbard",
+    "pos": "RB",
+    "team": "CAR",
+    "sim": 12.25,
+    "act": 27,
+    "signed": -14.75
+   },
+   {
+    "game": "2026_10_JAX_TEN",
+    "name": "Bhayshul Tuten",
+    "pos": "RB",
+    "team": "JAX",
+    "sim": 12.85,
+    "act": 26,
+    "signed": -13.15
+   },
+   {
+    "game": "2026_10_KC_ATL",
+    "name": "Emmett Johnson",
+    "pos": "RB",
+    "team": "KC",
+    "sim": 3.85,
+    "act": 22,
+    "signed": -18.15
+   },
+   {
+    "game": "2026_10_LAC_BAL",
+    "name": "Omarion Hampton",
+    "pos": "RB",
+    "team": "LAC",
+    "sim": 8.95,
+    "act": 22,
+    "signed": -13.05
+   },
+   {
+    "game": "2026_10_NE_DET",
+    "name": "Jahmyr Gibbs",
+    "pos": "RB",
+    "team": "DET",
+    "sim": 14.05,
+    "act": 22,
+    "signed": -7.95
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Ollie Gordon II",
+    "pos": "RB",
+    "team": "MIA",
+    "sim": 7.85,
+    "act": 20,
+    "signed": -12.15
+   },
+   {
+    "game": "2026_10_SEA_LV",
+    "name": "Zach Charbonnet",
+    "pos": "RB",
+    "team": "SEA",
+    "sim": 17.4,
+    "act": 20,
+    "signed": -2.6
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "name": "James Cook III",
+    "pos": "RB",
+    "team": "BUF",
+    "sim": 12.1,
+    "act": 18,
+    "signed": -5.9
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Cam Skattebo",
+    "pos": "RB",
+    "team": "NYG",
+    "sim": 6.8,
+    "act": 18,
+    "signed": -11.2
+   },
+   {
+    "game": "2026_10_LA_ARI",
+    "name": "Blake Corum",
+    "pos": "RB",
+    "team": "LA",
+    "sim": 10.4,
+    "act": 17,
+    "signed": -6.6
+   },
+   {
+    "game": "2026_10_KC_ATL",
+    "name": "Bijan Robinson",
+    "pos": "RB",
+    "team": "ATL",
+    "sim": 15.75,
+    "act": 16,
+    "signed": -0.25
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Jonathan Taylor",
+    "pos": "RB",
+    "team": "IND",
+    "sim": 11.6,
+    "act": 16,
+    "signed": -4.4
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Jordan Mason",
+    "pos": "RB",
+    "team": "MIN",
+    "sim": 12.95,
+    "act": 16,
+    "signed": -3.05
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Javonte Williams",
+    "pos": "RB",
+    "team": "DAL",
+    "sim": 9.8,
+    "act": 16,
+    "signed": -6.2
+   },
+   {
+    "game": "2026_10_LA_ARI",
+    "name": "Ronnie Rivers",
+    "pos": "RB",
+    "team": "LA",
+    "sim": 3.05,
+    "act": 15,
+    "signed": -11.95
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Christian McCaffrey",
+    "pos": "RB",
+    "team": "SF",
+    "sim": 11.75,
+    "act": 13,
+    "signed": -1.25
+   },
+   {
+    "game": "2026_10_HOU_CLE",
+    "name": "Woody Marks",
+    "pos": "RB",
+    "team": "HOU",
+    "sim": 14.05,
+    "act": 12,
+    "signed": 2.05
+   },
+   {
+    "game": "2026_10_LA_ARI",
+    "name": "Kyren Williams",
+    "pos": "RB",
+    "team": "LA",
+    "sim": 13.05,
+    "act": 12,
+    "signed": 1.05
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Seth McGowan",
+    "pos": "RB",
+    "team": "IND",
+    "sim": 2.2,
+    "act": 12,
+    "signed": -9.8
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "name": "Breece Hall",
+    "pos": "RB",
+    "team": "NYJ",
+    "sim": 9.05,
+    "act": 11,
+    "signed": -1.95
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Aaron Jones Sr.",
+    "pos": "RB",
+    "team": "MIN",
+    "sim": 9.75,
+    "act": 11,
+    "signed": -1.25
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Kaelon Black",
+    "pos": "RB",
+    "team": "SF",
+    "sim": 0.3,
+    "act": 11,
+    "signed": -10.7
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Jayden Daniels",
+    "pos": "QB",
+    "team": "WAS",
+    "sim": 6.35,
+    "act": 11,
+    "signed": -4.65
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Rachaad White",
+    "pos": "RB",
+    "team": "WAS",
+    "sim": 0.3,
+    "act": 11,
+    "signed": -10.7
+   },
+   {
+    "game": "2026_10_HOU_CLE",
+    "name": "Quinshon Judkins",
+    "pos": "RB",
+    "team": "CLE",
+    "sim": 8.65,
+    "act": 10,
+    "signed": -1.35
+   },
+   {
+    "game": "2026_10_LAC_BAL",
+    "name": "Derrick Henry",
+    "pos": "RB",
+    "team": "BAL",
+    "sim": 13.5,
+    "act": 10,
+    "signed": 3.5
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Kaleb Johnson",
+    "pos": "RB",
+    "team": "GB",
+    "sim": 0.7,
+    "act": 10,
+    "signed": -9.3
+   },
+   {
+    "game": "2026_10_NE_DET",
+    "name": "Corey Kiner",
+    "pos": "RB",
+    "team": "NE",
+    "sim": 0.35,
+    "act": 10,
+    "signed": -9.65
+   },
+   {
+    "game": "2026_10_PIT_CIN",
+    "name": "Chase Brown",
+    "pos": "RB",
+    "team": "CIN",
+    "sim": 13.1,
+    "act": 10,
+    "signed": 3.1
+   }
+  ]
+ },
+ "team_shares": {
+  "A-control": {
+   "team_games": 28,
+   "carries": {
+    "team_total_err": 200.7,
+    "share_err": 648.946,
+    "player_abs_err": 751.8,
+    "per_team_game_player_abs": 26.85
+   },
+   "targets": {
+    "team_total_err": 218.0,
+    "share_err": 799.874,
+    "player_abs_err": 890.1,
+    "per_team_game_player_abs": 31.789
+   }
+  },
+  "B-field": {
+   "team_games": 28,
+   "carries": {
+    "team_total_err": 215.55,
+    "share_err": 681.179,
+    "player_abs_err": 757.65,
+    "per_team_game_player_abs": 27.059
+   },
+   "targets": {
+    "team_total_err": 205.8,
+    "share_err": 811.71,
+    "player_abs_err": 897.4,
+    "per_team_game_player_abs": 32.05
+   }
+  },
+  "C-field-pbv1": {
+   "team_games": 28,
+   "carries": {
+    "team_total_err": 197.05,
+    "share_err": 663.032,
+    "player_abs_err": 739.25,
+    "per_team_game_player_abs": 26.402
+   },
+   "targets": {
+    "team_total_err": 208.8,
+    "share_err": 804.959,
+    "player_abs_err": 892.3,
+    "per_team_game_player_abs": 31.868
+   }
+  }
+ },
+ "team_shares_logged_only": {
+  "A-control": {
+   "team_games": 28,
+   "carries": {
+    "team_total_err": 197.5,
+    "share_err": 570.579,
+    "player_abs_err": 564.9,
+    "per_team_game_player_abs": 20.175
+   },
+   "targets": {
+    "team_total_err": 222.9,
+    "share_err": 643.299,
+    "player_abs_err": 622.6,
+    "per_team_game_player_abs": 22.236
+   }
+  },
+  "B-field": {
+   "team_games": 28,
+   "carries": {
+    "team_total_err": 207.4,
+    "share_err": 530.38,
+    "player_abs_err": 525.7,
+    "per_team_game_player_abs": 18.775
+   },
+   "targets": {
+    "team_total_err": 238.95,
+    "share_err": 633.451,
+    "player_abs_err": 604.55,
+    "per_team_game_player_abs": 21.591
+   }
+  },
+  "C-field-pbv1": {
+   "team_games": 28,
+   "carries": {
+    "team_total_err": 192.0,
+    "share_err": 531.684,
+    "player_abs_err": 519.2,
+    "per_team_game_player_abs": 18.543
+   },
+   "targets": {
+    "team_total_err": 240.4,
+    "share_err": 633.532,
+    "player_abs_err": 595.1,
+    "per_team_game_player_abs": 21.254
+   }
+  }
+ },
+ "starter_moves": {
+  "A->B": {
+   "starter_sim_base": 449.5,
+   "starter_sim_other": 337.5,
+   "starter_act": 489,
+   "lost": [
+    {
+     "name": "Zach Charbonnet",
+     "pos": "RB",
+     "team": "SEA",
+     "sim_base": 29.2,
+     "sim_other": 11.75,
+     "act": 20,
+     "gsis": "00-0039165",
+     "delta": -17.45
+    },
+    {
+     "name": "Christian McCaffrey",
+     "pos": "RB",
+     "team": "SF",
+     "sim_base": 25.05,
+     "sim_other": 10.85,
+     "act": 13,
+     "gsis": "00-0033280",
+     "delta": -14.2
+    },
+    {
+     "name": "Derrick Henry",
+     "pos": "RB",
+     "team": "BAL",
+     "sim_base": 25.05,
+     "sim_other": 12.8,
+     "act": 10,
+     "gsis": "00-0032764",
+     "delta": -12.25
+    },
+    {
+     "name": "Bijan Robinson",
+     "pos": "RB",
+     "team": "ATL",
+     "sim_base": 24.15,
+     "sim_other": 12.85,
+     "act": 16,
+     "gsis": "00-0038542",
+     "delta": -11.3
+    },
+    {
+     "name": "Jahmyr Gibbs",
+     "pos": "RB",
+     "team": "DET",
+     "sim_base": 22.7,
+     "sim_other": 13.15,
+     "act": 22,
+     "gsis": "00-0039139",
+     "delta": -9.55
+    },
+    {
+     "name": "Javonte Williams",
+     "pos": "RB",
+     "team": "DAL",
+     "sim_base": 21.2,
+     "sim_other": 12.95,
+     "act": 16,
+     "gsis": "00-0036997",
+     "delta": -8.25
+    },
+    {
+     "name": "Bhayshul Tuten",
+     "pos": "RB",
+     "team": "JAX",
+     "sim_base": 19.35,
+     "sim_other": 11.35,
+     "act": 26,
+     "gsis": "00-0040719",
+     "delta": -8.0
+    },
+    {
+     "name": "Chase Brown",
+     "pos": "RB",
+     "team": "CIN",
+     "sim_base": 18.35,
+     "sim_other": 10.65,
+     "act": 10,
+     "gsis": "00-0038597",
+     "delta": -7.7
+    },
+    {
+     "name": "Breece Hall",
+     "pos": "RB",
+     "team": "NYJ",
+     "sim_base": 17.65,
+     "sim_other": 10.0,
+     "act": 11,
+     "gsis": "00-0038120",
+     "delta": -7.65
+    },
+    {
+     "name": "Jonathan Taylor",
+     "pos": "RB",
+     "team": "IND",
+     "sim_base": 20.6,
+     "sim_other": 13.15,
+     "act": 16,
+     "gsis": "00-0036223",
+     "delta": -7.45
+    }
+   ],
+   "gained": [
+    {
+     "name": "Dak Prescott",
+     "pos": "QB",
+     "team": "DAL",
+     "sim_base": 2.65,
+     "sim_other": 7.9,
+     "act": 4,
+     "gsis": "00-0033077",
+     "delta": 5.25
+    },
+    {
+     "name": "Justin Herbert",
+     "pos": "QB",
+     "team": "LAC",
+     "sim_base": 3.85,
+     "sim_other": 7.4,
+     "act": 7,
+     "gsis": "00-0036355",
+     "delta": 3.55
+    },
+    {
+     "name": "Brock Purdy",
+     "pos": "QB",
+     "team": "SF",
+     "sim_base": 3.45,
+     "sim_other": 5.95,
+     "act": 2,
+     "gsis": "00-0037834",
+     "delta": 2.5
+    },
+    {
+     "name": "Blake Corum",
+     "pos": "RB",
+     "team": "LA",
+     "sim_base": 8.2,
+     "sim_other": 9.9,
+     "act": 17,
+     "gsis": "00-0039738",
+     "delta": 1.7
+    },
+    {
+     "name": "Dylan Sampson",
+     "pos": "RB",
+     "team": "CLE",
+     "sim_base": 6.65,
+     "sim_other": 8.25,
+     "act": 4,
+     "gsis": "00-0040162",
+     "delta": 1.6
+    },
+    {
+     "name": "Tre Tucker",
+     "pos": "WR",
+     "team": "LV",
+     "sim_base": 0.1,
+     "sim_other": 1.3,
+     "act": 0,
+     "gsis": "00-0038563",
+     "delta": 1.2
+    },
+    {
+     "name": "AJ Barner",
+     "pos": "TE",
+     "team": "SEA",
+     "sim_base": 0.3,
+     "sim_other": 1.4,
+     "act": 0,
+     "gsis": "00-0039793",
+     "delta": 1.1
+    },
+    {
+     "name": "Patrick Mahomes",
+     "pos": "QB",
+     "team": "KC",
+     "sim_base": 4.2,
+     "sim_other": 5.25,
+     "act": 2,
+     "gsis": "00-0033873",
+     "delta": 1.05
+    },
+    {
+     "name": "J.J. McCarthy",
+     "pos": "QB",
+     "team": "NYG",
+     "sim_base": 4.95,
+     "sim_other": 5.95,
+     "act": 6,
+     "gsis": "00-0039923",
+     "delta": 1.0
+    },
+    {
+     "name": "Aaron Rodgers",
+     "pos": "QB",
+     "team": "PIT",
+     "sim_base": 1.95,
+     "sim_other": 2.9,
+     "act": 2,
+     "gsis": "00-0023459",
+     "delta": 0.95
+    }
+   ]
+  },
+  "B->C": {
+   "starter_sim_base": 337.5,
+   "starter_sim_other": 357.9,
+   "starter_act": 489,
+   "lost": [
+    {
+     "name": "Javonte Williams",
+     "pos": "RB",
+     "team": "DAL",
+     "sim_base": 12.95,
+     "sim_other": 9.8,
+     "act": 16,
+     "gsis": "00-0036997",
+     "delta": -3.15
+    },
+    {
+     "name": "Justin Herbert",
+     "pos": "QB",
+     "team": "LAC",
+     "sim_base": 7.4,
+     "sim_other": 5.65,
+     "act": 7,
+     "gsis": "00-0036355",
+     "delta": -1.75
+    },
+    {
+     "name": "Jonathan Taylor",
+     "pos": "RB",
+     "team": "IND",
+     "sim_base": 13.15,
+     "sim_other": 11.6,
+     "act": 16,
+     "gsis": "00-0036223",
+     "delta": -1.55
+    },
+    {
+     "name": "Breece Hall",
+     "pos": "RB",
+     "team": "NYJ",
+     "sim_base": 10.0,
+     "sim_other": 9.05,
+     "act": 11,
+     "gsis": "00-0038120",
+     "delta": -0.95
+    },
+    {
+     "name": "Kyren Williams",
+     "pos": "RB",
+     "team": "LA",
+     "sim_base": 13.9,
+     "sim_other": 13.05,
+     "act": 12,
+     "gsis": "00-0037840",
+     "delta": -0.85
+    },
+    {
+     "name": "Dak Prescott",
+     "pos": "QB",
+     "team": "DAL",
+     "sim_base": 7.9,
+     "sim_other": 7.2,
+     "act": 4,
+     "gsis": "00-0033077",
+     "delta": -0.7
+    },
+    {
+     "name": "AJ Barner",
+     "pos": "TE",
+     "team": "SEA",
+     "sim_base": 1.4,
+     "sim_other": 0.85,
+     "act": 0,
+     "gsis": "00-0039793",
+     "delta": -0.55
+    },
+    {
+     "name": "Deshaun Watson",
+     "pos": "QB",
+     "team": "CLE",
+     "sim_base": 3.45,
+     "sim_other": 2.95,
+     "act": 8,
+     "gsis": "00-0033537",
+     "delta": -0.5
+    },
+    {
+     "name": "Rachaad White",
+     "pos": "RB",
+     "team": "WAS",
+     "sim_base": 0.8,
+     "sim_other": 0.3,
+     "act": 11,
+     "gsis": "00-0037256",
+     "delta": -0.5
+    },
+    {
+     "name": "Devaughn Vele",
+     "pos": "WR",
+     "team": "NO",
+     "sim_base": 0.95,
+     "sim_other": 0.55,
+     "act": 0,
+     "gsis": "00-0039424",
+     "delta": -0.4
+    }
+   ],
+   "gained": [
+    {
+     "name": "Zach Charbonnet",
+     "pos": "RB",
+     "team": "SEA",
+     "sim_base": 11.75,
+     "sim_other": 17.4,
+     "act": 20,
+     "gsis": "00-0039165",
+     "delta": 5.65
+    },
+    {
+     "name": "Jordan Mason",
+     "pos": "RB",
+     "team": "MIN",
+     "sim_base": 9.6,
+     "sim_other": 12.95,
+     "act": 16,
+     "gsis": "00-0037525",
+     "delta": 3.35
+    },
+    {
+     "name": "Bijan Robinson",
+     "pos": "RB",
+     "team": "ATL",
+     "sim_base": 12.85,
+     "sim_other": 15.75,
+     "act": 16,
+     "gsis": "00-0038542",
+     "delta": 2.9
+    },
+    {
+     "name": "Ollie Gordon II",
+     "pos": "RB",
+     "team": "MIA",
+     "sim_base": 5.35,
+     "sim_other": 7.85,
+     "act": 20,
+     "gsis": "00-0040198",
+     "delta": 2.5
+    },
+    {
+     "name": "Chase Brown",
+     "pos": "RB",
+     "team": "CIN",
+     "sim_base": 10.65,
+     "sim_other": 13.1,
+     "act": 10,
+     "gsis": "00-0038597",
+     "delta": 2.45
+    },
+    {
+     "name": "James Cook III",
+     "pos": "RB",
+     "team": "BUF",
+     "sim_base": 10.25,
+     "sim_other": 12.1,
+     "act": 18,
+     "gsis": "00-0037248",
+     "delta": 1.85
+    },
+    {
+     "name": "Chuba Hubbard",
+     "pos": "RB",
+     "team": "CAR",
+     "sim_base": 10.65,
+     "sim_other": 12.25,
+     "act": 27,
+     "gsis": "00-0036555",
+     "delta": 1.6
+    },
+    {
+     "name": "Bhayshul Tuten",
+     "pos": "RB",
+     "team": "JAX",
+     "sim_base": 11.35,
+     "sim_other": 12.85,
+     "act": 26,
+     "gsis": "00-0040719",
+     "delta": 1.5
+    },
+    {
+     "name": "Emmett Johnson",
+     "pos": "RB",
+     "team": "KC",
+     "sim_base": 2.55,
+     "sim_other": 3.85,
+     "act": 22,
+     "gsis": "00-0041013",
+     "delta": 1.3
+    },
+    {
+     "name": "Patrick Mahomes",
+     "pos": "QB",
+     "team": "KC",
+     "sim_base": 5.25,
+     "sim_other": 6.3,
+     "act": 2,
+     "gsis": "00-0033873",
+     "delta": 1.05
+    }
+   ]
+  }
+ },
+ "paired_scores": {
+  "A-control minus B-field": {
+   "paired_seeds": 280,
+   "seeds_with_different_margin": 235,
+   "margin": {
+    "mean": -1.193,
+    "ci95_by_game": [
+     -2.943,
+     0.75
+    ]
+   },
+   "total": {
+    "mean": -0.114,
+    "ci95_by_game": [
+     -1.704,
+     1.668
+    ]
+   },
+   "home_win": {
+    "mean": -0.029,
+    "ci95_by_game": [
+     -0.1,
+     0.054
+    ]
+   },
+   "per_game": {
+    "2026_10_BUF_NYJ": {
+     "seeds": 20,
+     "margin": -4.8,
+     "total": 3.4,
+     "home_win": -0.05
+    },
+    "2026_10_CAR_NO": {
+     "seeds": 20,
+     "margin": -1.65,
+     "total": -2.05,
+     "home_win": -0.1
+    },
+    "2026_10_HOU_CLE": {
+     "seeds": 20,
+     "margin": 3.05,
+     "total": 1.75,
+     "home_win": 0.25
+    },
+    "2026_10_JAX_TEN": {
+     "seeds": 20,
+     "margin": -5.4,
+     "total": -1.0,
+     "home_win": -0.15
+    },
+    "2026_10_KC_ATL": {
+     "seeds": 20,
+     "margin": -1.3,
+     "total": -1.0,
+     "home_win": -0.15
+    },
+    "2026_10_LAC_BAL": {
+     "seeds": 20,
+     "margin": 0.2,
+     "total": 7.3,
+     "home_win": -0.1
+    },
+    "2026_10_LA_ARI": {
+     "seeds": 20,
+     "margin": 1.55,
+     "total": -0.95,
+     "home_win": 0.05
+    },
+    "2026_10_MIA_IND": {
+     "seeds": 20,
+     "margin": -5.55,
+     "total": -0.35,
+     "home_win": -0.15
+    },
+    "2026_10_MIN_GB": {
+     "seeds": 20,
+     "margin": -3.8,
+     "total": -2.6,
+     "home_win": -0.2
+    },
+    "2026_10_NE_DET": {
+     "seeds": 20,
+     "margin": -3.65,
+     "total": -5.85,
+     "home_win": 0.05
+    },
+    "2026_10_PIT_CIN": {
+     "seeds": 20,
+     "margin": 6.8,
+     "total": 3.5,
+     "home_win": 0.25
+    },
+    "2026_10_SEA_LV": {
+     "seeds": 20,
+     "margin": -4.1,
+     "total": -2.4,
+     "home_win": -0.15
+    },
+    "2026_10_SF_DAL": {
+     "seeds": 20,
+     "margin": -0.2,
+     "total": -2.6,
+     "home_win": -0.05
+    },
+    "2026_10_WAS_NYG": {
+     "seeds": 20,
+     "margin": 2.15,
+     "total": 1.25,
+     "home_win": 0.1
+    }
+   }
+  },
+  "B-field minus C-field-pbv1": {
+   "paired_seeds": 280,
+   "seeds_with_different_margin": 247,
+   "margin": {
+    "mean": 1.486,
+    "ci95_by_game": [
+     -0.725,
+     3.743
+    ]
+   },
+   "total": {
+    "mean": 0.064,
+    "ci95_by_game": [
+     -2.029,
+     2.139
+    ]
+   },
+   "home_win": {
+    "mean": 0.021,
+    "ci95_by_game": [
+     -0.05,
+     0.093
+    ]
+   },
+   "per_game": {
+    "2026_10_BUF_NYJ": {
+     "seeds": 20,
+     "margin": 5.7,
+     "total": 0.6,
+     "home_win": 0.05
+    },
+    "2026_10_CAR_NO": {
+     "seeds": 20,
+     "margin": 3.0,
+     "total": 4.7,
+     "home_win": 0.15
+    },
+    "2026_10_HOU_CLE": {
+     "seeds": 20,
+     "margin": 1.8,
+     "total": -0.4,
+     "home_win": -0.1
+    },
+    "2026_10_JAX_TEN": {
+     "seeds": 20,
+     "margin": 6.45,
+     "total": 8.15,
+     "home_win": 0.1
+    },
+    "2026_10_KC_ATL": {
+     "seeds": 20,
+     "margin": -0.75,
+     "total": -3.85,
+     "home_win": 0.15
+    },
+    "2026_10_LAC_BAL": {
+     "seeds": 20,
+     "margin": -4.05,
+     "total": -7.45,
+     "home_win": -0.05
+    },
+    "2026_10_LA_ARI": {
+     "seeds": 20,
+     "margin": -2.35,
+     "total": -1.55,
+     "home_win": -0.1
+    },
+    "2026_10_MIA_IND": {
+     "seeds": 20,
+     "margin": 7.4,
+     "total": 0.3,
+     "home_win": 0.25
+    },
+    "2026_10_MIN_GB": {
+     "seeds": 20,
+     "margin": 5.0,
+     "total": -1.6,
+     "home_win": 0.15
+    },
+    "2026_10_NE_DET": {
+     "seeds": 20,
+     "margin": -2.85,
+     "total": 5.05,
+     "home_win": -0.25
+    },
+    "2026_10_PIT_CIN": {
+     "seeds": 20,
+     "margin": -5.6,
+     "total": -0.4,
+     "home_win": -0.15
+    },
+    "2026_10_SEA_LV": {
+     "seeds": 20,
+     "margin": 7.7,
+     "total": -2.6,
+     "home_win": 0.15
+    },
+    "2026_10_SF_DAL": {
+     "seeds": 20,
+     "margin": -0.45,
+     "total": 3.65,
+     "home_win": 0.0
+    },
+    "2026_10_WAS_NYG": {
+     "seeds": 20,
+     "margin": -0.2,
+     "total": -3.7,
+     "home_win": -0.05
+    }
+   }
+  },
+  "A-control minus C-field-pbv1": {
+   "paired_seeds": 280,
+   "seeds_with_different_margin": 237,
+   "margin": {
+    "mean": 0.293,
+    "ci95_by_game": [
+     -1.293,
+     1.732
+    ]
+   },
+   "total": {
+    "mean": -0.05,
+    "ci95_by_game": [
+     -1.832,
+     1.761
+    ]
+   },
+   "home_win": {
+    "mean": -0.007,
+    "ci95_by_game": [
+     -0.057,
+     0.039
+    ]
+   },
+   "per_game": {
+    "2026_10_BUF_NYJ": {
+     "seeds": 20,
+     "margin": 0.9,
+     "total": 4.0,
+     "home_win": 0.0
+    },
+    "2026_10_CAR_NO": {
+     "seeds": 20,
+     "margin": 1.35,
+     "total": 2.65,
+     "home_win": 0.05
+    },
+    "2026_10_HOU_CLE": {
+     "seeds": 20,
+     "margin": 4.85,
+     "total": 1.35,
+     "home_win": 0.15
+    },
+    "2026_10_JAX_TEN": {
+     "seeds": 20,
+     "margin": 1.05,
+     "total": 7.15,
+     "home_win": -0.05
+    },
+    "2026_10_KC_ATL": {
+     "seeds": 20,
+     "margin": -2.05,
+     "total": -4.85,
+     "home_win": 0.0
+    },
+    "2026_10_LAC_BAL": {
+     "seeds": 20,
+     "margin": -3.85,
+     "total": -0.15,
+     "home_win": -0.15
+    },
+    "2026_10_LA_ARI": {
+     "seeds": 20,
+     "margin": -0.8,
+     "total": -2.5,
+     "home_win": -0.05
+    },
+    "2026_10_MIA_IND": {
+     "seeds": 20,
+     "margin": 1.85,
+     "total": -0.05,
+     "home_win": 0.1
+    },
+    "2026_10_MIN_GB": {
+     "seeds": 20,
+     "margin": 1.2,
+     "total": -4.2,
+     "home_win": -0.05
+    },
+    "2026_10_NE_DET": {
+     "seeds": 20,
+     "margin": -6.5,
+     "total": -0.8,
+     "home_win": -0.2
+    },
+    "2026_10_PIT_CIN": {
+     "seeds": 20,
+     "margin": 1.2,
+     "total": 3.1,
+     "home_win": 0.1
+    },
+    "2026_10_SEA_LV": {
+     "seeds": 20,
+     "margin": 3.6,
+     "total": -5.0,
+     "home_win": 0.0
+    },
+    "2026_10_SF_DAL": {
+     "seeds": 20,
+     "margin": -0.65,
+     "total": 1.05,
+     "home_win": -0.05
+    },
+    "2026_10_WAS_NYG": {
+     "seeds": 20,
+     "margin": 1.95,
+     "total": -2.45,
+     "home_win": 0.05
+    }
+   }
+  }
+ },
+ "choice_box_check": {
+  "B-field": {
+   "seeds": 280,
+   "rush_plays": 17013,
+   "box_carries": 17013,
+   "target_plays": 21023,
+   "box_targets": 20410,
+   "seeds_target_mismatch": 246
+  },
+  "C-field-pbv1": {
+   "seeds": 280,
+   "rush_plays": 16957,
+   "box_carries": 16957,
+   "target_plays": 20979,
+   "box_targets": 20370,
+   "seeds_target_mismatch": 244
+  }
+ },
+ "lineup_eligibility": {
+  "B-field": {
+   "plays": 38036,
+   "eligibility_checked": 35764,
+   "violations": 0,
+   "qb_rushes_not_checked": 2272,
+   "lineup_status": {
+    "ok": 37939,
+    "short": 97
+   },
+   "on_field_sizes": {
+    "5": 36439,
+    "4": 1536,
+    "3": 58,
+    "9": 2,
+    "2": 1
+   },
+   "examples": []
+  },
+  "C-field-pbv1": {
+   "plays": 37936,
+   "eligibility_checked": 35695,
+   "violations": 0,
+   "qb_rushes_not_checked": 2241,
+   "lineup_status": {
+    "ok": 37892,
+    "short": 44
+   },
+   "on_field_sizes": {
+    "5": 37892,
+    "4": 42,
+    "3": 2
+   },
+   "examples": []
+  }
+ },
+ "shared_draws_B_vs_C": {
+  "only_in_B": 62271,
+  "shared": 65119,
+  "same_chosen": 27629,
+  "same_chosen_same_candidates": 14763,
+  "different_chosen": 37490,
+  "different_candidate_list": 36112,
+  "same_list_different_weights": 1369,
+  "only_in_C": 24770,
+  "same_list_same_weights": 9
+ },
+ "duplicate_draw_keys": 73535,
+ "first_divergence_B_vs_C": {
+  "seeds": 280,
+  "kinds": {
+   "group": 280
+  },
+  "index_median": 0.0,
+  "index_min": 0,
+  "index_max": 9,
+  "examples": [
+   {
+    "game": "2026_10_BUF_NYJ",
+    "seed": 300001,
+    "index": 4,
+    "kind": "group",
+    "B": {
+     "intent": "run",
+     "group": "11",
+     "rusher": "00-0039798",
+     "receiver": null,
+     "draws": [
+      {
+       "name": "field:group",
+       "chosen": [
+        "11"
+       ],
+       "n_candidates": 19,
+       "chosen_weight": null
+      },
+      {
+       "name": "rusher:dirichlet",
+       "chosen": [
+        "00-0039798"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    },
+    "C": {
+     "intent": "run",
+     "group": "22",
+     "rusher": "00-0039798",
+     "receiver": null,
+     "draws": [
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0041239"
+       ],
+       "n_candidates": 4,
+       "chosen_weight": null
+      },
+      {
+       "name": "rusher:dirichlet",
+       "chosen": [
+        "00-0039798"
+       ],
+       "n_candidates": 2,
+       "chosen_weight": null
+      }
+     ]
+    }
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "seed": 300002,
+    "index": 0,
+    "kind": "group",
+    "B": {
+     "intent": "run",
+     "group": "11",
+     "rusher": "00-0037248",
+     "receiver": null,
+     "draws": [
+      {
+       "name": "field:group",
+       "chosen": [
+        "11"
+       ],
+       "n_candidates": 30,
+       "chosen_weight": null
+      },
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0037248"
+       ],
+       "n_candidates": 3,
+       "chosen_weight": null
+      },
+      {
+       "name": "rusher:dirichlet",
+       "chosen": [
+        "00-0037248"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    },
+    "C": {
+     "intent": "run",
+     "group": "12",
+     "rusher": "00-0037248",
+     "receiver": null,
+     "draws": [
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0037248"
+       ],
+       "n_candidates": 3,
+       "chosen_weight": null
+      },
+      {
+       "name": "rusher:dirichlet",
+       "chosen": [
+        "00-0037248"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    }
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "seed": 300003,
+    "index": 1,
+    "kind": "group",
+    "B": {
+     "intent": "run",
+     "group": "12",
+     "rusher": "00-0037248",
+     "receiver": null,
+     "draws": [
+      {
+       "name": "field:group",
+       "chosen": [
+        "12"
+       ],
+       "n_candidates": 21,
+       "chosen_weight": null
+      },
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0037248"
+       ],
+       "n_candidates": 2,
+       "chosen_weight": null
+      },
+      {
+       "name": "rusher:dirichlet",
+       "chosen": [
+        "00-0037248"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    },
+    "C": {
+     "intent": "run",
+     "group": "11",
+     "rusher": "00-0035537",
+     "receiver": null,
+     "draws": [
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0039901"
+       ],
+       "n_candidates": 4,
+       "chosen_weight": null
+      },
+      {
+       "name": "rusher:dirichlet",
+       "chosen": [
+        "00-0035537"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    }
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "seed": 300004,
+    "index": 2,
+    "kind": "group",
+    "B": {
+     "intent": "dropback",
+     "group": "12",
+     "rusher": null,
+     "receiver": "00-0037248",
+     "draws": [
+      {
+       "name": "field:group",
+       "chosen": [
+        "12"
+       ],
+       "n_candidates": 13,
+       "chosen_weight": null
+      },
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0038933"
+       ],
+       "n_candidates": 3,
+       "chosen_weight": null
+      },
+      {
+       "name": "combined-target-role",
+       "chosen": [
+        "WR"
+       ],
+       "n_candidates": 4,
+       "chosen_weight": null
+      },
+      {
+       "name": "receiver:dirichlet",
+       "chosen": [
+        "00-0037248"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    },
+    "C": {
+     "intent": "dropback",
+     "group": "11",
+     "rusher": null,
+     "receiver": "00-0037248",
+     "draws": [
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0038933"
+       ],
+       "n_candidates": 3,
+       "chosen_weight": null
+      },
+      {
+       "name": "combined-target-role",
+       "chosen": [
+        "WR"
+       ],
+       "n_candidates": 4,
+       "chosen_weight": null
+      },
+      {
+       "name": "receiver:dirichlet",
+       "chosen": [
+        "00-0037248"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    }
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "seed": 300005,
+    "index": 0,
+    "kind": "group",
+    "B": {
+     "intent": "dropback",
+     "group": "21",
+     "rusher": null,
+     "receiver": "00-0037740",
+     "draws": [
+      {
+       "name": "field:group",
+       "chosen": [
+        "21"
+       ],
+       "n_candidates": 31,
+       "chosen_weight": null
+      },
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0039794"
+       ],
+       "n_candidates": 5,
+       "chosen_weight": null
+      },
+      {
+       "name": "combined-target-role",
+       "chosen": [
+        "Other"
+       ],
+       "n_candidates": 4,
+       "chosen_weight": null
+      },
+      {
+       "name": "receiver:dirichlet",
+       "chosen": [
+        "00-0037740"
+       ],
+       "n_candidates": 2,
+       "chosen_weight": null
+      }
+     ]
+    },
+    "C": {
+     "intent": "dropback",
+     "group": "12",
+     "rusher": null,
+     "receiver": "00-0037740",
+     "draws": [
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0038120"
+       ],
+       "n_candidates": 5,
+       "chosen_weight": null
+      },
+      {
+       "name": "combined-target-role",
+       "chosen": [
+        "Other"
+       ],
+       "n_candidates": 4,
+       "chosen_weight": null
+      },
+      {
+       "name": "receiver:dirichlet",
+       "chosen": [
+        "00-0037740"
+       ],
+       "n_candidates": 2,
+       "chosen_weight": null
+      }
+     ]
+    }
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "seed": 300006,
+    "index": 0,
+    "kind": "group",
+    "B": {
+     "intent": "run",
+     "group": "11-OL6",
+     "rusher": "00-0037248",
+     "receiver": null,
+     "draws": [
+      {
+       "name": "field:group",
+       "chosen": [
+        "11-OL6"
+       ],
+       "n_candidates": 30,
+       "chosen_weight": null
+      },
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0037248"
+       ],
+       "n_candidates": 3,
+       "chosen_weight": null
+      },
+      {
+       "name": "rusher:dirichlet",
+       "chosen": [
+        "00-0037248"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    },
+    "C": {
+     "intent": "run",
+     "group": "12",
+     "rusher": "00-0037248",
+     "receiver": null,
+     "draws": [
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0037248"
+       ],
+       "n_candidates": 3,
+       "chosen_weight": null
+      },
+      {
+       "name": "rusher:dirichlet",
+       "chosen": [
+        "00-0037248"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    }
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "seed": 300007,
+    "index": 0,
+    "kind": "group",
+    "B": {
+     "intent": "run",
+     "group": "12",
+     "rusher": "00-0038120",
+     "receiver": null,
+     "draws": [
+      {
+       "name": "field:group",
+       "chosen": [
+        "12"
+       ],
+       "n_candidates": 30,
+       "chosen_weight": null
+      },
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0038120"
+       ],
+       "n_candidates": 5,
+       "chosen_weight": null
+      },
+      {
+       "name": "rusher:dirichlet",
+       "chosen": [
+        "00-0038120"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    },
+    "C": {
+     "intent": "run",
+     "group": "13",
+     "rusher": "00-0038120",
+     "receiver": null,
+     "draws": [
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0038120"
+       ],
+       "n_candidates": 5,
+       "chosen_weight": null
+      },
+      {
+       "name": "rusher:dirichlet",
+       "chosen": [
+        "00-0038120"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    }
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "seed": 300008,
+    "index": 0,
+    "kind": "group",
+    "B": {
+     "intent": "dropback",
+     "group": "11",
+     "rusher": null,
+     "receiver": "00-0040736",
+     "draws": [
+      {
+       "name": "field:group",
+       "chosen": [
+        "11"
+       ],
+       "n_candidates": 31,
+       "chosen_weight": null
+      },
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0038120"
+       ],
+       "n_candidates": 5,
+       "chosen_weight": null
+      },
+      {
+       "name": "combined-target-role",
+       "chosen": [
+        "WR"
+       ],
+       "n_candidates": 4,
+       "chosen_weight": null
+      },
+      {
+       "name": "receiver:dirichlet",
+       "chosen": [
+        "00-0040736"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    },
+    "C": {
+     "intent": "dropback",
+     "group": "12",
+     "rusher": null,
+     "receiver": "00-0040736",
+     "draws": [
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0038120"
+       ],
+       "n_candidates": 5,
+       "chosen_weight": null
+      },
+      {
+       "name": "combined-target-role",
+       "chosen": [
+        "WR"
+       ],
+       "n_candidates": 4,
+       "chosen_weight": null
+      },
+      {
+       "name": "receiver:dirichlet",
+       "chosen": [
+        "00-0040736"
+       ],
+       "n_candidates": 2,
+       "chosen_weight": null
+      }
+     ]
+    }
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "seed": 300009,
+    "index": 6,
+    "kind": "group",
+    "B": {
+     "intent": "dropback",
+     "group": "12",
+     "rusher": null,
+     "receiver": "00-0039901",
+     "draws": [
+      {
+       "name": "field:group",
+       "chosen": [
+        "12"
+       ],
+       "n_candidates": 20,
+       "chosen_weight": null
+      },
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0040194"
+       ],
+       "n_candidates": 3,
+       "chosen_weight": null
+      },
+      {
+       "name": "combined-target-role",
+       "chosen": [
+        "WR"
+       ],
+       "n_candidates": 4,
+       "chosen_weight": null
+      },
+      {
+       "name": "receiver:dirichlet",
+       "chosen": [
+        "00-0039901"
+       ],
+       "n_candidates": 2,
+       "chosen_weight": null
+      }
+     ]
+    },
+    "C": {
+     "intent": "dropback",
+     "group": "11",
+     "rusher": null,
+     "receiver": "00-0039901",
+     "draws": [
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0035689"
+       ],
+       "n_candidates": 3,
+       "chosen_weight": null
+      },
+      {
+       "name": "combined-target-role",
+       "chosen": [
+        "WR"
+       ],
+       "n_candidates": 4,
+       "chosen_weight": null
+      },
+      {
+       "name": "receiver:dirichlet",
+       "chosen": [
+        "00-0039901"
+       ],
+       "n_candidates": 3,
+       "chosen_weight": null
+      }
+     ]
+    }
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "seed": 300010,
+    "index": 1,
+    "kind": "group",
+    "B": {
+     "intent": "run",
+     "group": "11",
+     "rusher": "00-0038120",
+     "receiver": null,
+     "draws": [
+      {
+       "name": "field:group",
+       "chosen": [
+        "11"
+       ],
+       "n_candidates": 17,
+       "chosen_weight": null
+      },
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0040736"
+       ],
+       "n_candidates": 4,
+       "chosen_weight": null
+      },
+      {
+       "name": "rusher:dirichlet",
+       "chosen": [
+        "00-0038120"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    },
+    "C": {
+     "intent": "run",
+     "group": "13",
+     "rusher": "00-0038120",
+     "receiver": null,
+     "draws": [
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0041032"
+       ],
+       "n_candidates": 4,
+       "chosen_weight": null
+      },
+      {
+       "name": "rusher:dirichlet",
+       "chosen": [
+        "00-0038120"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    }
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "seed": 300011,
+    "index": 0,
+    "kind": "group",
+    "B": {
+     "intent": "run",
+     "group": "12",
+     "rusher": "00-0038120",
+     "receiver": null,
+     "draws": [
+      {
+       "name": "field:group",
+       "chosen": [
+        "12"
+       ],
+       "n_candidates": 30,
+       "chosen_weight": null
+      },
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0038120"
+       ],
+       "n_candidates": 5,
+       "chosen_weight": null
+      },
+      {
+       "name": "rusher:dirichlet",
+       "chosen": [
+        "00-0038120"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    },
+    "C": {
+     "intent": "run",
+     "group": "11",
+     "rusher": "00-0038120",
+     "receiver": null,
+     "draws": [
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0038120"
+       ],
+       "n_candidates": 5,
+       "chosen_weight": null
+      },
+      {
+       "name": "rusher:dirichlet",
+       "chosen": [
+        "00-0038120"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    }
+   },
+   {
+    "game": "2026_10_BUF_NYJ",
+    "seed": 300012,
+    "index": 1,
+    "kind": "group",
+    "B": {
+     "intent": "run",
+     "group": "11",
+     "rusher": "00-0038120",
+     "receiver": null,
+     "draws": [
+      {
+       "name": "field:group",
+       "chosen": [
+        "11"
+       ],
+       "n_candidates": 21,
+       "chosen_weight": null
+      },
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0037755"
+       ],
+       "n_candidates": 4,
+       "chosen_weight": null
+      },
+      {
+       "name": "rusher:dirichlet",
+       "chosen": [
+        "00-0038120"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    },
+    "C": {
+     "intent": "run",
+     "group": "12",
+     "rusher": "00-0036842",
+     "receiver": null,
+     "draws": [
+      {
+       "name": "field:advance",
+       "chosen": [
+        "00-0036842"
+       ],
+       "n_candidates": 4,
+       "chosen_weight": null
+      },
+      {
+       "name": "rusher:dirichlet",
+       "chosen": [
+        "00-0036842"
+       ],
+       "n_candidates": 1,
+       "chosen_weight": null
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "first_outcome_divergence_B_vs_C": {
+  "kinds": {
+   "rusher": 123,
+   "receiver": 157
+  },
+  "index_median": 1.0,
+  "index_min": 0,
+  "index_max": 11
+ },
+ "receiver_pick_event_types": {
+  "B-field": {
+   "pass_incomplete": 6825,
+   "pass_complete": 13271,
+   "sack": 531,
+   "interception": 314,
+   "fumble_lost": 82
+  },
+  "C-field-pbv1": {
+   "pass_incomplete": 6889,
+   "pass_complete": 13161,
+   "sack": 526,
+   "interception": 320,
+   "fumble_lost": 83
+  }
+ }
+}

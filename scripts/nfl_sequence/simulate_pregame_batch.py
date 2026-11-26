@@ -1000,6 +1000,7 @@ def run_batch(args):
                                                                (args.participation_snap_counts,
                                                                 args.participation_snap_counts_sha256)
                                                                if args.participation_snap_counts else None),
+                                                           participation_entry_current=args.participation_entry_current_season,
                                                            fg_kicker=((args.playcall_fg_kicker, args.playcall_fg_kicker_sha256)
                                                                       if args.playcall_fg_kicker else None),
                                                            season_scores=((args.season_score_file,
@@ -1484,7 +1485,7 @@ def main(argv=None):
     ap.add_argument('--participation-field', type=Path, default=None,
                     help='SLC v2 research flag (off by default): skill lineups carry from snap to snap and the runner and '
                          'receiver come only from players on the field (participation_field.py). Needs '
-                         '--participation-field-sha256 and --rng-protocol v2; cannot run with --playcall-pbv1-package')
+                         '--participation-field-sha256 and --rng-protocol v2. --playcall-pbv1-package requires it.')
     ap.add_argument('--participation-field-sha256', default=None,
                     help='the expected SHA-256 of the --participation-field table; a different file is refused')
     ap.add_argument('--participation-snap-counts', type=Path, default=None,
@@ -1494,6 +1495,15 @@ def main(argv=None):
                          '--participation-field and --participation-snap-counts-sha256')
     ap.add_argument('--participation-snap-counts-sha256', default=None,
                     help='the expected SHA-256 of the --participation-snap-counts file; a different file is refused')
+    ap.add_argument('--participation-entry-current-season', dest='participation_entry_current_season',
+                    action='store_true', default=True,
+                    help='default on (HE): the bench draw weights each player by his current-season share of team snaps '
+                         'from --participation-snap-counts, and falls back to the table rate when he has no earlier active '
+                         'game. Applies only with --participation-field and --participation-snap-counts; without both, the '
+                         'draw is the table rate. Leave hazards are unchanged.')
+    ap.add_argument('--no-participation-entry-current-season', dest='participation_entry_current_season',
+                    action='store_false',
+                    help='the table-rate bench draw (HS/historical), instead of HE')
     ap.add_argument('--season-score-file', type=Path, default=None,
                     help='the nflverse play-by-play release that supplies current-season pre-play scores, with '
                          '--season-score-file-sha256. A data input, not code: without it the pinned default release is '
@@ -1679,8 +1689,6 @@ def main(argv=None):
         if not args.participation_snap_counts:
             ap.error('--slc-v2 requires --participation-snap-counts and --participation-snap-counts-sha256 '
                      '(docs/research/participation-model-2026-11-02/build_snap_counts.py for the game season)')
-        if args.playcall_pbv1_package:
-            ap.error('--slc-v2 sets the personnel label from the lineup; it cannot run with --playcall-pbv1-package')
         args.playcall_season_adapt = True
         args.rng_protocol = rng_protocol.V2
         for flag, (path, sha) in SLC_V2_TABLES.items():
@@ -1698,8 +1706,6 @@ def main(argv=None):
             ap.error('--participation-field requires --participation-field-sha256')
         if args.rng_protocol != rng_protocol.V2:
             ap.error('--participation-field requires --rng-protocol v2')
-        if args.playcall_pbv1_package:
-            ap.error('--participation-field cannot run with --playcall-pbv1-package; both set the personnel label')
         if not args.playcall_artifact:
             ap.error('--participation-field requires --playcall-artifact (the SLC engine)')
     if args.participation_snap_counts:
@@ -1707,6 +1713,11 @@ def main(argv=None):
             ap.error('--participation-snap-counts requires --participation-field')
         if not args.participation_snap_counts_sha256:
             ap.error('--participation-snap-counts requires --participation-snap-counts-sha256')
+    if args.playcall_pbv1_package:
+        if not args.participation_field:
+            ap.error('--playcall-pbv1-package requires --participation-field so package draws constrain player participation')
+        if args.rng_protocol != rng_protocol.V2:
+            ap.error('--playcall-pbv1-package requires --rng-protocol v2')
     if bool(args.season_score_file) != bool(args.season_score_file_sha256):
         ap.error('--season-score-file and --season-score-file-sha256 go together')
     if args.playcall_fg_kicker:

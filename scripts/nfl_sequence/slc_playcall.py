@@ -741,6 +741,7 @@ class PlayCallSampler:
             else:
                 streak_fallback = 'no_source_rows_for_current_streak'
         if use_labels and self.decision_filter:  # the row takes each drawn label in category order, where the cell has such a row
+            after_non_label = candidates  # the cell's rows after the non-label filters, before any label narrows them
             for cat in decision_layer.CATS:
                 value = labels.get(cat)
                 if value is None:
@@ -750,7 +751,14 @@ class PlayCallSampler:
                     candidates = matched
                     labels_matched.append(cat)
                 else:
-                    labels_unmatched.append(cat)
+                    # why no row has the value: absent from the cell, dropped by a non-label filter, or dropped by an earlier label
+                    if not any((c[1].get('labels') or {}).get(cat) == value for c in candidate_source):
+                        why = 'absent_from_cell'
+                    elif not any((c[1].get('labels') or {}).get(cat) == value for c in after_non_label):
+                        why = 'removed_by_non_label_filter'
+                    else:
+                        why = 'removed_by_earlier_label'
+                    labels_unmatched.append(f'{cat}={value}|{why}')  # the category, the drawn value, and why no row has it
         qb_target_role_conditioned = False
         qb_target_role_fallback = None
         if (self.qb_decision_table is not None and called_intent == 'dropback' and not scramble and qb_decision

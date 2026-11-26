@@ -1,0 +1,498 @@
+{
+  "games": {
+    "A-control": {
+      "2026_10_BUF_NYJ": {
+        "actual_margin": -19,
+        "actual_total": 43,
+        "brier": 0.0625,
+        "log_loss": 0.2877,
+        "margin_error": 12.3,
+        "mean_margin": -6.7,
+        "mean_total": 46.5,
+        "p_home_win": 0.25,
+        "seeds": 20
+      },
+      "2026_10_CAR_NO": {
+        "actual_margin": -3,
+        "actual_total": 37,
+        "brier": 0.5625,
+        "log_loss": 1.3863,
+        "margin_error": 11.7,
+        "mean_margin": 8.7,
+        "mean_total": 39.2,
+        "p_home_win": 0.75,
+        "seeds": 20
+      },
+      "2026_10_HOU_CLE": {
+        "actual_margin": 3,
+        "actual_total": 51,
+        "brier": 0.36,
+        "log_loss": 0.9163,
+        "margin_error": -7.35,
+        "mean_margin": -4.35,
+        "mean_total": 40.65,
+        "p_home_win": 0.4,
+        "seeds": 20
+      },
+      "2026_10_JAX_TEN": {
+        "actual_margin": -17,
+        "actual_total": 63,
+        "brier": 0.04,
+        "log_loss": 0.2231,
+        "margin_error": 8.7,
+        "mean_margin": -8.3,
+        "mean_total": 44.1,
+        "p_home_win": 0.2,
+        "seeds": 20
+      },
+      "2026_10_KC_ATL": {
+        "actual_margin": -22,
+        "actual_total": 48,
+        "brier": 0.0225,
+        "log_loss": 0.1625,
+        "margin_error": 13.85,
+        "mean_margin": -8.15,
+        "mean_total": 46.75,
+        "p_home_win": 0.15,
+        "seeds": 20
+      },
+      "2026_10_LAC_BAL": {
+        "actual_margin": -3,
+        "actual_total": 43,
+        "brier": 0.0625,
+        "log_loss": 0.2877,
+        "margin_error": -1.9,
+        "mean_margin": -4.9,
+        "mean_total": 42.8,
+        "p_home_win": 0.25,
+        "seeds": 20
+      },
+      "2026_10_LA_ARI": {
+        "actual_margin": -28,
+        "actual_total": 40,
+        "brier": 0.09,
+        "log_loss": 0.3567,
+        "margin_error": 23.2,
+        "mean_margin": -4.8,
+        "mean_total": 49.7,
+        "p_home_win": 0.3,
+        "seeds": 20
+      },
+      "2026_10_MIA_IND": {
+        "actual_margin": 2,
+        "actual_total": 46,
+        "brier": 0.5625,
+        "log_loss": 1.3863,
+        "margin_error": -8.3,
+        "mean_margin": -6.3,
+        "mean_total": 40.7,
+        "p_home_win": 0.25,
+        "seeds": 20
+      },
+      "2026_10_MIN_GB": {
+        "actual_margin": -20,
+        "actual_total": 40,
+        "brier": 0.36,
+        "log_loss": 0.9163,
+        "margin_error": 23.0,
+        "mean_margin": 3.0,
+        "mean_total": 44.4,
+        "p_home_win": 0.6,
+        "seeds": 20
+      },
+      "2026_10_NE_DET": {
+        "actual_margin": 25,
+        "actual_total": 45,
+        "brier": 0.4225,
+        "log_loss": 1.0498,
+        "margin_error": -28.75,
+        "mean_margin": -3.75,
+        "mean_total": 43.05,
+        "p_home_win": 0.35,
+        "seeds": 20
+      },
+      "2026_10_PIT_CIN": {
+        "actual_margin": 20,
+        "actual_total": 56,
+        "brier": 0.09,
+        "log_loss": 0.3567,
+        "margin_error": -16.0,
+        "mean_margin": 4.0,
+        "mean_total": 45.4,
+        "p_home_win": 0.7,
+        "seeds": 20
+      },
+      "2026_10_SEA_LV": {
+        "actual_margin": -8,
+        "actual_total": 34,
+        "brier": 0.04,
+        "log_loss": 0.2231,
+        "margin_error": -0.3,
+        "mean_margin": -8.3,
+        "mean_total": 41.0,
+        "p_home_win": 0.2,
+        "seeds": 20
+      },
+      "2026_10_SF_DAL": {
+        "actual_margin": -6,
+        "actual_total": 86,
+        "brier": 0.36,
+        "log_loss": 0.9163,
+        "margin_error": 7.65,
+        "mean_margin": 1.65,
+        "mean_total": 48.95,
+        "p_home_win": 0.6,
+        "seeds": 20
+      },
+      "2026_10_WAS_NYG": {
+        "actual_margin": -3,
+        "actual_total": 45,
+        "brier": 0.25,
+        "log_loss": 0.6931,
+        "margin_error": 4.1,
+        "mean_margin": 1.1,
+        "mean_total": 44.5,
+        "p_home_win": 0.5,
+        "seeds": 20
+      }
+    },
+    "B-field": {
+      "2026_10_BUF_NYJ": {
+        "actual_margin": -19,
+        "actual_total": 43,
+        "brier": 0.09,
+        "log_loss": 0.3567,
+        "margin_error": 17.1,
+        "mean_margin": -1.9,
+        "mean_total": 43.1,
+        "p_home_win": 0.3,
+        "seeds": 20
+      },
+      "2026_10_CAR_NO": {
+        "actual_margin": -3,
+        "actual_total": 37,
+        "brier": 0.7225,
+        "log_loss": 1.8971,
+        "margin_error": 13.35,
+        "mean_margin": 10.35,
+        "mean_total": 41.25,
+        "p_home_win": 0.85,
+        "seeds": 20
+      },
+      "2026_10_HOU_CLE": {
+        "actual_margin": 3,
+        "actual_total": 51,
+        "brier": 0.7225,
+        "log_loss": 1.8971,
+        "margin_error": -10.4,
+        "mean_margin": -7.4,
+        "mean_total": 38.9,
+        "p_home_win": 0.15,
+        "seeds": 20
+      },
+      "2026_10_JAX_TEN": {
+        "actual_margin": -17,
+        "actual_total": 63,
+        "brier": 0.1225,
+        "log_loss": 0.4308,
+        "margin_error": 14.1,
+        "mean_margin": -2.9,
+        "mean_total": 45.1,
+        "p_home_win": 0.35,
+        "seeds": 20
+      },
+      "2026_10_KC_ATL": {
+        "actual_margin": -22,
+        "actual_total": 48,
+        "brier": 0.09,
+        "log_loss": 0.3567,
+        "margin_error": 15.15,
+        "mean_margin": -6.85,
+        "mean_total": 47.75,
+        "p_home_win": 0.3,
+        "seeds": 20
+      },
+      "2026_10_LAC_BAL": {
+        "actual_margin": -3,
+        "actual_total": 43,
+        "brier": 0.1225,
+        "log_loss": 0.4308,
+        "margin_error": -2.1,
+        "mean_margin": -5.1,
+        "mean_total": 35.5,
+        "p_home_win": 0.35,
+        "seeds": 20
+      },
+      "2026_10_LA_ARI": {
+        "actual_margin": -28,
+        "actual_total": 40,
+        "brier": 0.0625,
+        "log_loss": 0.2877,
+        "margin_error": 21.65,
+        "mean_margin": -6.35,
+        "mean_total": 50.65,
+        "p_home_win": 0.25,
+        "seeds": 20
+      },
+      "2026_10_MIA_IND": {
+        "actual_margin": 2,
+        "actual_total": 46,
+        "brier": 0.36,
+        "log_loss": 0.9163,
+        "margin_error": -2.75,
+        "mean_margin": -0.75,
+        "mean_total": 41.05,
+        "p_home_win": 0.4,
+        "seeds": 20
+      },
+      "2026_10_MIN_GB": {
+        "actual_margin": -20,
+        "actual_total": 40,
+        "brier": 0.64,
+        "log_loss": 1.6094,
+        "margin_error": 26.8,
+        "mean_margin": 6.8,
+        "mean_total": 47.0,
+        "p_home_win": 0.8,
+        "seeds": 20
+      },
+      "2026_10_NE_DET": {
+        "actual_margin": 25,
+        "actual_total": 45,
+        "brier": 0.49,
+        "log_loss": 1.204,
+        "margin_error": -25.1,
+        "mean_margin": -0.1,
+        "mean_total": 48.9,
+        "p_home_win": 0.3,
+        "seeds": 20
+      },
+      "2026_10_PIT_CIN": {
+        "actual_margin": 20,
+        "actual_total": 56,
+        "brier": 0.3025,
+        "log_loss": 0.7985,
+        "margin_error": -22.8,
+        "mean_margin": -2.8,
+        "mean_total": 41.9,
+        "p_home_win": 0.45,
+        "seeds": 20
+      },
+      "2026_10_SEA_LV": {
+        "actual_margin": -8,
+        "actual_total": 34,
+        "brier": 0.1225,
+        "log_loss": 0.4308,
+        "margin_error": 3.8,
+        "mean_margin": -4.2,
+        "mean_total": 43.4,
+        "p_home_win": 0.35,
+        "seeds": 20
+      },
+      "2026_10_SF_DAL": {
+        "actual_margin": -6,
+        "actual_total": 86,
+        "brier": 0.4225,
+        "log_loss": 1.0498,
+        "margin_error": 7.85,
+        "mean_margin": 1.85,
+        "mean_total": 51.55,
+        "p_home_win": 0.65,
+        "seeds": 20
+      },
+      "2026_10_WAS_NYG": {
+        "actual_margin": -3,
+        "actual_total": 45,
+        "brier": 0.16,
+        "log_loss": 0.5108,
+        "margin_error": 1.95,
+        "mean_margin": -1.05,
+        "mean_total": 43.25,
+        "p_home_win": 0.4,
+        "seeds": 20
+      }
+    },
+    "C-field-pbv1": {
+      "2026_10_BUF_NYJ": {
+        "actual_margin": -19,
+        "actual_total": 43,
+        "brier": 0.0625,
+        "log_loss": 0.2877,
+        "margin_error": 11.4,
+        "mean_margin": -7.6,
+        "mean_total": 42.5,
+        "p_home_win": 0.25,
+        "seeds": 20
+      },
+      "2026_10_CAR_NO": {
+        "actual_margin": -3,
+        "actual_total": 37,
+        "brier": 0.49,
+        "log_loss": 1.204,
+        "margin_error": 10.35,
+        "mean_margin": 7.35,
+        "mean_total": 36.55,
+        "p_home_win": 0.7,
+        "seeds": 20
+      },
+      "2026_10_HOU_CLE": {
+        "actual_margin": 3,
+        "actual_total": 51,
+        "brier": 0.5625,
+        "log_loss": 1.3863,
+        "margin_error": -12.2,
+        "mean_margin": -9.2,
+        "mean_total": 39.3,
+        "p_home_win": 0.25,
+        "seeds": 20
+      },
+      "2026_10_JAX_TEN": {
+        "actual_margin": -17,
+        "actual_total": 63,
+        "brier": 0.0625,
+        "log_loss": 0.2877,
+        "margin_error": 7.65,
+        "mean_margin": -9.35,
+        "mean_total": 36.95,
+        "p_home_win": 0.25,
+        "seeds": 20
+      },
+      "2026_10_KC_ATL": {
+        "actual_margin": -22,
+        "actual_total": 48,
+        "brier": 0.0225,
+        "log_loss": 0.1625,
+        "margin_error": 15.9,
+        "mean_margin": -6.1,
+        "mean_total": 51.6,
+        "p_home_win": 0.15,
+        "seeds": 20
+      },
+      "2026_10_LAC_BAL": {
+        "actual_margin": -3,
+        "actual_total": 43,
+        "brier": 0.16,
+        "log_loss": 0.5108,
+        "margin_error": 1.95,
+        "mean_margin": -1.05,
+        "mean_total": 42.95,
+        "p_home_win": 0.4,
+        "seeds": 20
+      },
+      "2026_10_LA_ARI": {
+        "actual_margin": -28,
+        "actual_total": 40,
+        "brier": 0.1225,
+        "log_loss": 0.4308,
+        "margin_error": 24.0,
+        "mean_margin": -4.0,
+        "mean_total": 52.2,
+        "p_home_win": 0.35,
+        "seeds": 20
+      },
+      "2026_10_MIA_IND": {
+        "actual_margin": 2,
+        "actual_total": 46,
+        "brier": 0.7225,
+        "log_loss": 1.8971,
+        "margin_error": -10.15,
+        "mean_margin": -8.15,
+        "mean_total": 40.75,
+        "p_home_win": 0.15,
+        "seeds": 20
+      },
+      "2026_10_MIN_GB": {
+        "actual_margin": -20,
+        "actual_total": 40,
+        "brier": 0.4225,
+        "log_loss": 1.0498,
+        "margin_error": 21.8,
+        "mean_margin": 1.8,
+        "mean_total": 48.6,
+        "p_home_win": 0.65,
+        "seeds": 20
+      },
+      "2026_10_NE_DET": {
+        "actual_margin": 25,
+        "actual_total": 45,
+        "brier": 0.2025,
+        "log_loss": 0.5978,
+        "margin_error": -22.25,
+        "mean_margin": 2.75,
+        "mean_total": 43.85,
+        "p_home_win": 0.55,
+        "seeds": 20
+      },
+      "2026_10_PIT_CIN": {
+        "actual_margin": 20,
+        "actual_total": 56,
+        "brier": 0.16,
+        "log_loss": 0.5108,
+        "margin_error": -17.2,
+        "mean_margin": 2.8,
+        "mean_total": 42.3,
+        "p_home_win": 0.6,
+        "seeds": 20
+      },
+      "2026_10_SEA_LV": {
+        "actual_margin": -8,
+        "actual_total": 34,
+        "brier": 0.04,
+        "log_loss": 0.2231,
+        "margin_error": -3.9,
+        "mean_margin": -11.9,
+        "mean_total": 46.0,
+        "p_home_win": 0.2,
+        "seeds": 20
+      },
+      "2026_10_SF_DAL": {
+        "actual_margin": -6,
+        "actual_total": 86,
+        "brier": 0.4225,
+        "log_loss": 1.0498,
+        "margin_error": 8.3,
+        "mean_margin": 2.3,
+        "mean_total": 47.9,
+        "p_home_win": 0.65,
+        "seeds": 20
+      },
+      "2026_10_WAS_NYG": {
+        "actual_margin": -3,
+        "actual_total": 45,
+        "brier": 0.2025,
+        "log_loss": 0.5978,
+        "margin_error": 2.15,
+        "mean_margin": -0.85,
+        "mean_total": 46.95,
+        "p_home_win": 0.45,
+        "seeds": 20
+      }
+    }
+  },
+  "season": 2026,
+  "skipped_without_final": [],
+  "summary": {
+    "A-control": {
+      "brier": 0.2346,
+      "games": 14,
+      "log_loss": 0.6544,
+      "mean_abs_margin_error": 11.94,
+      "mean_abs_total_error": 8.06
+    },
+    "B-field": {
+      "brier": 0.3164,
+      "games": 14,
+      "log_loss": 0.8698,
+      "mean_abs_margin_error": 13.21,
+      "mean_abs_total_error": 9.16
+    },
+    "C-field-pbv1": {
+      "brier": 0.2611,
+      "games": 14,
+      "log_loss": 0.7283,
+      "mean_abs_margin_error": 12.09,
+      "mean_abs_total_error": 9.66
+    }
+  },
+  "week": 10
+}

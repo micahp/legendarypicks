@@ -262,5 +262,32 @@ class FrozenSnapshotFile(unittest.TestCase):
                 snapshot_module.load_frozen_snapshot(str(path))
 
 
+class SourceArtifactTiming(unittest.TestCase):
+    CUTOFF = datetime(2026, 11, 11, 12, 0, tzinfo=timezone.utc)
+
+    def artifact(self, last_modified, acquired):
+        return {'sha256': 'a' * 64, 'last_modified_utc': last_modified, 'acquired_at_utc': acquired}
+
+    def test_download_after_cutoff_does_not_reject_a_file_published_before_it(self):
+        # WAS_NYG case: published 2026-11-11 07:04 UTC, downloaded 23:28 UTC, cutoff 12:00 UTC.
+        snapshot_module.check_source_artifacts(
+            [self.artifact('2026-11-11T07:04:34Z', '2026-11-11T23:28:06Z')], self.CUTOFF)
+
+    def test_publication_after_cutoff_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'published after the frozen pregame cutoff'):
+            snapshot_module.check_source_artifacts(
+                [self.artifact('2026-11-11T12:30:00Z', '2026-11-11T23:28:06Z')], self.CUTOFF)
+
+    def test_missing_publisher_time_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'last_modified_utc is missing'):
+            snapshot_module.check_source_artifacts([self.artifact(None, '2026-11-11T07:00:00Z')], self.CUTOFF)
+
+    def test_missing_sha_pin_is_rejected(self):
+        bad = self.artifact('2026-11-11T07:04:34Z', '2026-11-11T07:05:00Z')
+        bad['sha256'] = ''
+        with self.assertRaisesRegex(ValueError, 'SHA-256 pin'):
+            snapshot_module.check_source_artifacts([bad], self.CUTOFF)
+
+
 if __name__ == '__main__':
     unittest.main()

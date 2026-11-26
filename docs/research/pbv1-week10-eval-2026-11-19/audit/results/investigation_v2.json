@@ -1,0 +1,1986 @@
+{
+ "denominator_reconciliation": {
+  "team_games": 28,
+  "mean_pbp_plays": 66.54,
+  "mean_sim_choice_plays_B": 67.92,
+  "mean_sim_choice_plays_C": 67.74,
+  "mean_sim_box_plays_B": 67.92,
+  "mean_abs_gap_choice_vs_box_B": 0.0
+ },
+ "recon_rows": [
+  {
+   "game": "2026_10_BUF_NYJ",
+   "team": "BUF",
+   "pbp_plays": 61,
+   "sim_choice_plays_B": 66.8,
+   "sim_choice_plays_C": 72.45,
+   "sim_box_plays_B": 66.8
+  },
+  {
+   "game": "2026_10_BUF_NYJ",
+   "team": "NYJ",
+   "pbp_plays": 75,
+   "sim_choice_plays_B": 71.0,
+   "sim_choice_plays_C": 65.25,
+   "sim_box_plays_B": 71.0
+  },
+  {
+   "game": "2026_10_CAR_NO",
+   "team": "NO",
+   "pbp_plays": 67,
+   "sim_choice_plays_B": 71.3,
+   "sim_choice_plays_C": 71.7,
+   "sim_box_plays_B": 71.3
+  },
+  {
+   "game": "2026_10_CAR_NO",
+   "team": "CAR",
+   "pbp_plays": 72,
+   "sim_choice_plays_B": 62.35,
+   "sim_choice_plays_C": 62.1,
+   "sim_box_plays_B": 62.35
+  },
+  {
+   "game": "2026_10_HOU_CLE",
+   "team": "HOU",
+   "pbp_plays": 69,
+   "sim_choice_plays_B": 73.15,
+   "sim_choice_plays_C": 74.9,
+   "sim_box_plays_B": 73.15
+  },
+  {
+   "game": "2026_10_HOU_CLE",
+   "team": "CLE",
+   "pbp_plays": 69,
+   "sim_choice_plays_B": 68.4,
+   "sim_choice_plays_C": 64.8,
+   "sim_box_plays_B": 68.4
+  },
+  {
+   "game": "2026_10_JAX_TEN",
+   "team": "TEN",
+   "pbp_plays": 59,
+   "sim_choice_plays_B": 66.1,
+   "sim_choice_plays_C": 65.4,
+   "sim_box_plays_B": 66.1
+  },
+  {
+   "game": "2026_10_JAX_TEN",
+   "team": "JAX",
+   "pbp_plays": 75,
+   "sim_choice_plays_B": 69.3,
+   "sim_choice_plays_C": 70.5,
+   "sim_box_plays_B": 69.3
+  },
+  {
+   "game": "2026_10_KC_ATL",
+   "team": "KC",
+   "pbp_plays": 67,
+   "sim_choice_plays_B": 71.15,
+   "sim_choice_plays_C": 70.8,
+   "sim_box_plays_B": 71.15
+  },
+  {
+   "game": "2026_10_KC_ATL",
+   "team": "ATL",
+   "pbp_plays": 76,
+   "sim_choice_plays_B": 69.35,
+   "sim_choice_plays_C": 70.75,
+   "sim_box_plays_B": 69.35
+  },
+  {
+   "game": "2026_10_LAC_BAL",
+   "team": "LAC",
+   "pbp_plays": 58,
+   "sim_choice_plays_B": 65.15,
+   "sim_choice_plays_C": 69.7,
+   "sim_box_plays_B": 65.15
+  },
+  {
+   "game": "2026_10_LAC_BAL",
+   "team": "BAL",
+   "pbp_plays": 71,
+   "sim_choice_plays_B": 70.3,
+   "sim_choice_plays_C": 67.7,
+   "sim_box_plays_B": 70.3
+  },
+  {
+   "game": "2026_10_LA_ARI",
+   "team": "ARI",
+   "pbp_plays": 36,
+   "sim_choice_plays_B": 68.2,
+   "sim_choice_plays_C": 66.25,
+   "sim_box_plays_B": 68.2
+  },
+  {
+   "game": "2026_10_LA_ARI",
+   "team": "LA",
+   "pbp_plays": 79,
+   "sim_choice_plays_B": 70.25,
+   "sim_choice_plays_C": 68.65,
+   "sim_box_plays_B": 70.25
+  },
+  {
+   "game": "2026_10_MIA_IND",
+   "team": "IND",
+   "pbp_plays": 61,
+   "sim_choice_plays_B": 63.9,
+   "sim_choice_plays_C": 64.95,
+   "sim_box_plays_B": 63.9
+  },
+  {
+   "game": "2026_10_MIA_IND",
+   "team": "MIA",
+   "pbp_plays": 70,
+   "sim_choice_plays_B": 67.3,
+   "sim_choice_plays_C": 69.25,
+   "sim_box_plays_B": 67.3
+  },
+  {
+   "game": "2026_10_MIN_GB",
+   "team": "MIN",
+   "pbp_plays": 70,
+   "sim_choice_plays_B": 63.1,
+   "sim_choice_plays_C": 66.05,
+   "sim_box_plays_B": 63.1
+  },
+  {
+   "game": "2026_10_MIN_GB",
+   "team": "GB",
+   "pbp_plays": 57,
+   "sim_choice_plays_B": 69.1,
+   "sim_choice_plays_C": 67.45,
+   "sim_box_plays_B": 69.1
+  },
+  {
+   "game": "2026_10_NE_DET",
+   "team": "DET",
+   "pbp_plays": 72,
+   "sim_choice_plays_B": 65.95,
+   "sim_choice_plays_C": 67.7,
+   "sim_box_plays_B": 65.95
+  },
+  {
+   "game": "2026_10_NE_DET",
+   "team": "NE",
+   "pbp_plays": 62,
+   "sim_choice_plays_B": 67.45,
+   "sim_choice_plays_C": 64.3,
+   "sim_box_plays_B": 67.45
+  },
+  {
+   "game": "2026_10_PIT_CIN",
+   "team": "CIN",
+   "pbp_plays": 68,
+   "sim_choice_plays_B": 66.2,
+   "sim_choice_plays_C": 69.8,
+   "sim_box_plays_B": 66.2
+  },
+  {
+   "game": "2026_10_PIT_CIN",
+   "team": "PIT",
+   "pbp_plays": 62,
+   "sim_choice_plays_B": 70.8,
+   "sim_choice_plays_C": 66.35,
+   "sim_box_plays_B": 70.8
+  },
+  {
+   "game": "2026_10_SEA_LV",
+   "team": "LV",
+   "pbp_plays": 59,
+   "sim_choice_plays_B": 67.55,
+   "sim_choice_plays_C": 60.6,
+   "sim_box_plays_B": 67.55
+  },
+  {
+   "game": "2026_10_SEA_LV",
+   "team": "SEA",
+   "pbp_plays": 57,
+   "sim_choice_plays_B": 65.9,
+   "sim_choice_plays_C": 70.15,
+   "sim_box_plays_B": 65.9
+  },
+  {
+   "game": "2026_10_SF_DAL",
+   "team": "SF",
+   "pbp_plays": 67,
+   "sim_choice_plays_B": 64.8,
+   "sim_choice_plays_C": 65.4,
+   "sim_box_plays_B": 64.8
+  },
+  {
+   "game": "2026_10_SF_DAL",
+   "team": "DAL",
+   "pbp_plays": 84,
+   "sim_choice_plays_B": 69.65,
+   "sim_choice_plays_C": 69.0,
+   "sim_box_plays_B": 69.65
+  },
+  {
+   "game": "2026_10_WAS_NYG",
+   "team": "NYG",
+   "pbp_plays": 68,
+   "sim_choice_plays_B": 70.0,
+   "sim_choice_plays_C": 68.6,
+   "sim_box_plays_B": 70.0
+  },
+  {
+   "game": "2026_10_WAS_NYG",
+   "team": "WAS",
+   "pbp_plays": 72,
+   "sim_choice_plays_B": 67.3,
+   "sim_choice_plays_C": 66.25,
+   "sim_box_plays_B": 67.3
+  }
+ ],
+ "high_volume_decomposition": [
+  {
+   "game": "2026_10_BUF_NYJ",
+   "gsis": "00-0037248",
+   "name": "James Cook",
+   "team": "BUF",
+   "named": false,
+   "actual": {
+    "P": 61,
+    "F": 0.5738,
+    "R_team_rate": 0.4754,
+    "S_implied": 1.0818,
+    "carries": 18,
+    "snaps": 35
+   },
+   "B": {
+    "P": 66.8,
+    "F": 0.4266,
+    "R": 0.4474,
+    "S": 0.8039,
+    "rusher_per_game": 10.25,
+    "box_carries": 10.25,
+    "box_snaps": 28.5,
+    "team_run_rate": 0.4132
+   },
+   "C": {
+    "P": 72.45,
+    "F": 0.43,
+    "R": 0.4559,
+    "S": 0.8521,
+    "rusher_per_game": 12.1,
+    "box_carries": 12.1,
+    "box_snaps": 31.15,
+    "team_run_rate": 0.4258
+   }
+  },
+  {
+   "game": "2026_10_BUF_NYJ",
+   "gsis": "00-0038120",
+   "name": "Breece Hall",
+   "team": "NYJ",
+   "named": false,
+   "actual": {
+    "P": 75,
+    "F": 0.5467,
+    "R_team_rate": 0.3067,
+    "S_implied": 0.8749,
+    "carries": 11,
+    "snaps": 41
+   },
+   "B": {
+    "P": 71.0,
+    "F": 0.4465,
+    "R": 0.3959,
+    "S": 0.7968,
+    "rusher_per_game": 10.0,
+    "box_carries": 10.0,
+    "box_snaps": 31.7,
+    "team_run_rate": 0.3838
+   },
+   "C": {
+    "P": 65.25,
+    "F": 0.4529,
+    "R": 0.3655,
+    "S": 0.838,
+    "rusher_per_game": 9.05,
+    "box_carries": 9.05,
+    "box_snaps": 29.55,
+    "team_run_rate": 0.3648
+   }
+  },
+  {
+   "game": "2026_10_CAR_NO",
+   "gsis": "00-0036555",
+   "name": "Chuba Hubbard",
+   "team": "CAR",
+   "named": false,
+   "actual": {
+    "P": 72,
+    "F": 0.8194,
+    "R_team_rate": 0.4444,
+    "S_implied": 1.0297,
+    "carries": 27,
+    "snaps": 59
+   },
+   "B": {
+    "P": 62.35,
+    "F": 0.4828,
+    "R": 0.3953,
+    "S": 0.895,
+    "rusher_per_game": 10.65,
+    "box_carries": 10.65,
+    "box_snaps": 30.1,
+    "team_run_rate": 0.3873
+   },
+   "C": {
+    "P": 62.1,
+    "F": 0.5378,
+    "R": 0.4057,
+    "S": 0.9041,
+    "rusher_per_game": 12.25,
+    "box_carries": 12.25,
+    "box_snaps": 33.4,
+    "team_run_rate": 0.3961
+   }
+  },
+  {
+   "game": "2026_10_HOU_CLE",
+   "gsis": "00-0040784",
+   "name": "Quinshon Judkins",
+   "team": "CLE",
+   "named": false,
+   "actual": {
+    "P": 69,
+    "F": 0.4638,
+    "R_team_rate": 0.3188,
+    "S_implied": 0.9801,
+    "carries": 10,
+    "snaps": 32
+   },
+   "B": {
+    "P": 68.4,
+    "F": 0.4137,
+    "R": 0.3693,
+    "S": 0.89,
+    "rusher_per_game": 9.3,
+    "box_carries": 9.3,
+    "box_snaps": 28.3,
+    "team_run_rate": 0.345
+   },
+   "C": {
+    "P": 64.8,
+    "F": 0.4406,
+    "R": 0.3363,
+    "S": 0.901,
+    "rusher_per_game": 8.65,
+    "box_carries": 8.65,
+    "box_snaps": 28.55,
+    "team_run_rate": 0.3426
+   }
+  },
+  {
+   "game": "2026_10_HOU_CLE",
+   "gsis": "00-0040583",
+   "name": "Woody Marks",
+   "team": "HOU",
+   "named": false,
+   "actual": {
+    "P": 69,
+    "F": 0.4348,
+    "R_team_rate": 0.3478,
+    "S_implied": 1.15,
+    "carries": 12,
+    "snaps": 30
+   },
+   "B": {
+    "P": 73.15,
+    "F": 0.4593,
+    "R": 0.4955,
+    "S": 0.9129,
+    "rusher_per_game": 15.2,
+    "box_carries": 15.2,
+    "box_snaps": 33.6,
+    "team_run_rate": 0.4662
+   },
+   "C": {
+    "P": 74.9,
+    "F": 0.4626,
+    "R": 0.443,
+    "S": 0.9153,
+    "rusher_per_game": 14.05,
+    "box_carries": 14.05,
+    "box_snaps": 34.65,
+    "team_run_rate": 0.4666
+   }
+  },
+  {
+   "game": "2026_10_JAX_TEN",
+   "gsis": "00-0040719",
+   "name": "Bhayshul Tuten",
+   "team": "JAX",
+   "named": false,
+   "actual": {
+    "P": 75,
+    "F": 0.68,
+    "R_team_rate": 0.48,
+    "S_implied": 1.0621,
+    "carries": 26,
+    "snaps": 51
+   },
+   "B": {
+    "P": 69.3,
+    "F": 0.4495,
+    "R": 0.4205,
+    "S": 0.8664,
+    "rusher_per_game": 11.35,
+    "box_carries": 11.35,
+    "box_snaps": 31.15,
+    "team_run_rate": 0.4235
+   },
+   "C": {
+    "P": 70.5,
+    "F": 0.4532,
+    "R": 0.4507,
+    "S": 0.8924,
+    "rusher_per_game": 12.85,
+    "box_carries": 12.85,
+    "box_snaps": 31.95,
+    "team_run_rate": 0.4589
+   }
+  },
+  {
+   "game": "2026_10_KC_ATL",
+   "gsis": "00-0038542",
+   "name": "Bijan Robinson",
+   "team": "ATL",
+   "named": true,
+   "actual": {
+    "P": 76,
+    "F": 0.6711,
+    "R_team_rate": 0.2632,
+    "S_implied": 1.1922,
+    "carries": 16,
+    "snaps": 51
+   },
+   "B": {
+    "P": 69.35,
+    "F": 0.4787,
+    "R": 0.4066,
+    "S": 0.9519,
+    "rusher_per_game": 12.85,
+    "box_carries": 12.85,
+    "box_snaps": 33.2,
+    "team_run_rate": 0.3937
+   },
+   "C": {
+    "P": 70.75,
+    "F": 0.5322,
+    "R": 0.4409,
+    "S": 0.9488,
+    "rusher_per_game": 15.75,
+    "box_carries": 15.75,
+    "box_snaps": 37.65,
+    "team_run_rate": 0.3993
+   }
+  },
+  {
+   "game": "2026_10_KC_ATL",
+   "gsis": "00-0041013",
+   "name": "Emmett Johnson",
+   "team": "KC",
+   "named": false,
+   "actual": {
+    "P": 67,
+    "F": 0.8507,
+    "R_team_rate": 0.403,
+    "S_implied": 0.9578,
+    "carries": 22,
+    "snaps": 57
+   },
+   "B": {
+    "P": 71.15,
+    "F": 0.1251,
+    "R": 0.3876,
+    "S": 0.7391,
+    "rusher_per_game": 2.55,
+    "box_carries": 2.55,
+    "box_snaps": 8.9,
+    "team_run_rate": 0.3865
+   },
+   "C": {
+    "P": 70.8,
+    "F": 0.1504,
+    "R": 0.4319,
+    "S": 0.837,
+    "rusher_per_game": 3.85,
+    "box_carries": 3.85,
+    "box_snaps": 10.65,
+    "team_run_rate": 0.3997
+   }
+  },
+  {
+   "game": "2026_10_LAC_BAL",
+   "gsis": "00-0032764",
+   "name": "Derrick Henry",
+   "team": "BAL",
+   "named": true,
+   "actual": {
+    "P": 71,
+    "F": 0.5352,
+    "R_team_rate": 0.2113,
+    "S_implied": 1.2456,
+    "carries": 10,
+    "snaps": 38
+   },
+   "B": {
+    "P": 70.3,
+    "F": 0.4225,
+    "R": 0.4916,
+    "S": 0.8767,
+    "rusher_per_game": 12.8,
+    "box_carries": 12.8,
+    "box_snaps": 29.7,
+    "team_run_rate": 0.4531
+   },
+   "C": {
+    "P": 67.7,
+    "F": 0.4697,
+    "R": 0.4827,
+    "S": 0.8795,
+    "rusher_per_game": 13.5,
+    "box_carries": 13.5,
+    "box_snaps": 31.8,
+    "team_run_rate": 0.4727
+   }
+  },
+  {
+   "game": "2026_10_LAC_BAL",
+   "gsis": "00-0040666",
+   "name": "Omarion Hampton",
+   "team": "LAC",
+   "named": false,
+   "actual": {
+    "P": 58,
+    "F": 0.6207,
+    "R_team_rate": 0.5862,
+    "S_implied": 1.0425,
+    "carries": 22,
+    "snaps": 36
+   },
+   "B": {
+    "P": 65.15,
+    "F": 0.3883,
+    "R": 0.3874,
+    "S": 0.8163,
+    "rusher_per_game": 8.0,
+    "box_carries": 8.0,
+    "box_snaps": 25.3,
+    "team_run_rate": 0.3914
+   },
+   "C": {
+    "P": 69.7,
+    "F": 0.4053,
+    "R": 0.3522,
+    "S": 0.8995,
+    "rusher_per_game": 8.95,
+    "box_carries": 8.95,
+    "box_snaps": 28.25,
+    "team_run_rate": 0.358
+   }
+  },
+  {
+   "game": "2026_10_LA_ARI",
+   "gsis": "00-0037557",
+   "name": "Ronnie Rivers",
+   "team": "LA",
+   "named": false,
+   "actual": {
+    "P": 79,
+    "F": 0.2152,
+    "R_team_rate": 0.557,
+    "S_implied": 1.5842,
+    "carries": 15,
+    "snaps": 17
+   },
+   "B": {
+    "P": 70.25,
+    "F": 0.163,
+    "R": 0.4934,
+    "S": 0.6903,
+    "rusher_per_game": 3.9,
+    "box_carries": 3.9,
+    "box_snaps": 11.45,
+    "team_run_rate": 0.4491
+   },
+   "C": {
+    "P": 68.65,
+    "F": 0.1479,
+    "R": 0.4286,
+    "S": 0.7011,
+    "rusher_per_game": 3.05,
+    "box_carries": 3.05,
+    "box_snaps": 10.15,
+    "team_run_rate": 0.4297
+   }
+  },
+  {
+   "game": "2026_10_LA_ARI",
+   "gsis": "00-0037840",
+   "name": "Kyren Williams",
+   "team": "LA",
+   "named": false,
+   "actual": {
+    "P": 79,
+    "F": 0.4937,
+    "R_team_rate": 0.557,
+    "S_implied": 0.5524,
+    "carries": 12,
+    "snaps": 39
+   },
+   "B": {
+    "P": 70.25,
+    "F": 0.4826,
+    "R": 0.4499,
+    "S": 0.9115,
+    "rusher_per_game": 13.9,
+    "box_carries": 13.9,
+    "box_snaps": 33.9,
+    "team_run_rate": 0.4491
+   },
+   "C": {
+    "P": 68.65,
+    "F": 0.4705,
+    "R": 0.4365,
+    "S": 0.9255,
+    "rusher_per_game": 13.05,
+    "box_carries": 13.05,
+    "box_snaps": 32.3,
+    "team_run_rate": 0.4297
+   }
+  },
+  {
+   "game": "2026_10_LA_ARI",
+   "gsis": "00-0039738",
+   "name": "Blake Corum",
+   "team": "LA",
+   "named": false,
+   "actual": {
+    "P": 79,
+    "F": 0.4937,
+    "R_team_rate": 0.557,
+    "S_implied": 0.7826,
+    "carries": 17,
+    "snaps": 39
+   },
+   "B": {
+    "P": 70.25,
+    "F": 0.3644,
+    "R": 0.4453,
+    "S": 0.8684,
+    "rusher_per_game": 9.9,
+    "box_carries": 9.9,
+    "box_snaps": 25.6,
+    "team_run_rate": 0.4491
+   },
+   "C": {
+    "P": 68.65,
+    "F": 0.3678,
+    "R": 0.4554,
+    "S": 0.9043,
+    "rusher_per_game": 10.4,
+    "box_carries": 10.4,
+    "box_snaps": 25.25,
+    "team_run_rate": 0.4297
+   }
+  },
+  {
+   "game": "2026_10_MIA_IND",
+   "gsis": "00-0036223",
+   "name": "Jonathan Taylor",
+   "team": "IND",
+   "named": true,
+   "actual": {
+    "P": 61,
+    "F": 0.6557,
+    "R_team_rate": 0.5246,
+    "S_implied": 0.7625,
+    "carries": 16,
+    "snaps": 40
+   },
+   "B": {
+    "P": 63.9,
+    "F": 0.518,
+    "R": 0.4335,
+    "S": 0.9164,
+    "rusher_per_game": 13.15,
+    "box_carries": 13.15,
+    "box_snaps": 33.1,
+    "team_run_rate": 0.4171
+   },
+   "C": {
+    "P": 64.95,
+    "F": 0.5373,
+    "R": 0.361,
+    "S": 0.9206,
+    "rusher_per_game": 11.6,
+    "box_carries": 11.6,
+    "box_snaps": 34.9,
+    "team_run_rate": 0.3788
+   }
+  },
+  {
+   "game": "2026_10_MIA_IND",
+   "gsis": "00-0041125",
+   "name": "Seth McGowan",
+   "team": "IND",
+   "named": false,
+   "actual": {
+    "P": 61,
+    "F": 0.2787,
+    "R_team_rate": 0.5246,
+    "S_implied": 1.3456,
+    "carries": 12,
+    "snaps": 17
+   },
+   "B": {
+    "P": 63.9,
+    "F": 0.1244,
+    "R": 0.434,
+    "S": 0.4783,
+    "rusher_per_game": 1.65,
+    "box_carries": 1.65,
+    "box_snaps": 7.95,
+    "team_run_rate": 0.4171
+   },
+   "C": {
+    "P": 64.95,
+    "F": 0.1101,
+    "R": 0.4685,
+    "S": 0.6567,
+    "rusher_per_game": 2.2,
+    "box_carries": 2.2,
+    "box_snaps": 7.15,
+    "team_run_rate": 0.3788
+   }
+  },
+  {
+   "game": "2026_10_MIA_IND",
+   "gsis": "00-0040198",
+   "name": "Ollie Gordon II",
+   "team": "MIA",
+   "named": false,
+   "actual": {
+    "P": 70,
+    "F": 0.7,
+    "R_team_rate": 0.3714,
+    "S_implied": 1.0989,
+    "carries": 20,
+    "snaps": 49
+   },
+   "B": {
+    "P": 67.3,
+    "F": 0.2593,
+    "R": 0.4957,
+    "S": 0.6185,
+    "rusher_per_game": 5.35,
+    "box_carries": 5.35,
+    "box_snaps": 17.45,
+    "team_run_rate": 0.4658
+   },
+   "C": {
+    "P": 69.25,
+    "F": 0.2715,
+    "R": 0.5133,
+    "S": 0.8135,
+    "rusher_per_game": 7.85,
+    "box_carries": 7.85,
+    "box_snaps": 18.8,
+    "team_run_rate": 0.5199
+   }
+  },
+  {
+   "game": "2026_10_MIN_GB",
+   "gsis": "00-0040142",
+   "name": "Kaleb Johnson",
+   "team": "GB",
+   "named": false,
+   "actual": {
+    "P": 57,
+    "F": 0.2456,
+    "R_team_rate": 0.2982,
+    "S_implied": 2.395,
+    "carries": 10,
+    "snaps": 14
+   },
+   "B": {
+    "P": 69.1,
+    "F": 0.068,
+    "R": 0.5319,
+    "S": 0.66,
+    "rusher_per_game": 1.65,
+    "box_carries": 1.65,
+    "box_snaps": 4.7,
+    "team_run_rate": 0.4609
+   },
+   "C": {
+    "P": 67.45,
+    "F": 0.0319,
+    "R": 0.5581,
+    "S": 0.5833,
+    "rusher_per_game": 0.7,
+    "box_carries": 0.7,
+    "box_snaps": 2.15,
+    "team_run_rate": 0.4552
+   }
+  },
+  {
+   "game": "2026_10_MIN_GB",
+   "gsis": "00-0033293",
+   "name": "Aaron Jones",
+   "team": "MIN",
+   "named": false,
+   "actual": {
+    "P": 70,
+    "F": 0.4286,
+    "R_team_rate": 0.4286,
+    "S_implied": 0.8556,
+    "carries": 11,
+    "snaps": 30
+   },
+   "B": {
+    "P": 63.1,
+    "F": 0.523,
+    "R": 0.4288,
+    "S": 0.8339,
+    "rusher_per_game": 11.8,
+    "box_carries": 11.8,
+    "box_snaps": 33.0,
+    "team_run_rate": 0.4144
+   },
+   "C": {
+    "P": 66.05,
+    "F": 0.436,
+    "R": 0.3819,
+    "S": 0.8864,
+    "rusher_per_game": 9.75,
+    "box_carries": 9.75,
+    "box_snaps": 28.8,
+    "team_run_rate": 0.4065
+   }
+  },
+  {
+   "game": "2026_10_MIN_GB",
+   "gsis": "00-0037525",
+   "name": "Jordan Mason",
+   "team": "MIN",
+   "named": false,
+   "actual": {
+    "P": 70,
+    "F": 0.5286,
+    "R_team_rate": 0.4286,
+    "S_implied": 1.009,
+    "carries": 16,
+    "snaps": 37
+   },
+   "B": {
+    "P": 63.1,
+    "F": 0.412,
+    "R": 0.4096,
+    "S": 0.9014,
+    "rusher_per_game": 9.6,
+    "box_carries": 9.6,
+    "box_snaps": 26.0,
+    "team_run_rate": 0.4144
+   },
+   "C": {
+    "P": 66.05,
+    "F": 0.483,
+    "R": 0.442,
+    "S": 0.9184,
+    "rusher_per_game": 12.95,
+    "box_carries": 12.95,
+    "box_snaps": 31.9,
+    "team_run_rate": 0.4065
+   }
+  },
+  {
+   "game": "2026_10_NE_DET",
+   "gsis": "00-0039139",
+   "name": "Jahmyr Gibbs",
+   "team": "DET",
+   "named": true,
+   "actual": {
+    "P": 72,
+    "F": 0.6806,
+    "R_team_rate": 0.4306,
+    "S_implied": 1.0428,
+    "carries": 22,
+    "snaps": 49
+   },
+   "B": {
+    "P": 65.95,
+    "F": 0.5148,
+    "R": 0.4168,
+    "S": 0.9293,
+    "rusher_per_game": 13.15,
+    "box_carries": 13.15,
+    "box_snaps": 33.95,
+    "team_run_rate": 0.3791
+   },
+   "C": {
+    "P": 67.7,
+    "F": 0.5384,
+    "R": 0.417,
+    "S": 0.9243,
+    "rusher_per_game": 14.05,
+    "box_carries": 14.05,
+    "box_snaps": 36.45,
+    "team_run_rate": 0.4121
+   }
+  },
+  {
+   "game": "2026_10_NE_DET",
+   "gsis": "00-0040556",
+   "name": "Corey Kiner",
+   "team": "NE",
+   "named": false,
+   "actual": {
+    "P": 62,
+    "F": 0.4032,
+    "R_team_rate": 0.3387,
+    "S_implied": 1.181,
+    "carries": 10,
+    "snaps": 25
+   },
+   "B": {
+    "P": 67.45,
+    "F": 0.0504,
+    "R": 0.4853,
+    "S": 0.5758,
+    "rusher_per_game": 0.95,
+    "box_carries": 0.95,
+    "box_snaps": 3.4,
+    "team_run_rate": 0.4248
+   },
+   "C": {
+    "P": 64.3,
+    "F": 0.0163,
+    "R": 0.3333,
+    "S": 1.0,
+    "rusher_per_game": 0.35,
+    "box_carries": 0.35,
+    "box_snaps": 1.05,
+    "team_run_rate": 0.3865
+   }
+  },
+  {
+   "game": "2026_10_PIT_CIN",
+   "gsis": "00-0038597",
+   "name": "Chase Brown",
+   "team": "CIN",
+   "named": false,
+   "actual": {
+    "P": 68,
+    "F": 0.7059,
+    "R_team_rate": 0.2941,
+    "S_implied": 0.7083,
+    "carries": 10,
+    "snaps": 48
+   },
+   "B": {
+    "P": 66.2,
+    "F": 0.5076,
+    "R": 0.3512,
+    "S": 0.9025,
+    "rusher_per_game": 10.65,
+    "box_carries": 10.65,
+    "box_snaps": 33.6,
+    "team_run_rate": 0.3391
+   },
+   "C": {
+    "P": 69.8,
+    "F": 0.5201,
+    "R": 0.3953,
+    "S": 0.9129,
+    "rusher_per_game": 13.1,
+    "box_carries": 13.1,
+    "box_snaps": 36.3,
+    "team_run_rate": 0.3789
+   }
+  },
+  {
+   "game": "2026_10_SEA_LV",
+   "gsis": "00-0039165",
+   "name": "Zach Charbonnet",
+   "team": "SEA",
+   "named": true,
+   "actual": {
+    "P": 57,
+    "F": 0.7193,
+    "R_team_rate": 0.5614,
+    "S_implied": 0.8689,
+    "carries": 20,
+    "snaps": 41
+   },
+   "B": {
+    "P": 65.9,
+    "F": 0.4347,
+    "R": 0.452,
+    "S": 0.9073,
+    "rusher_per_game": 11.75,
+    "box_carries": 11.75,
+    "box_snaps": 28.65,
+    "team_run_rate": 0.475
+   },
+   "C": {
+    "P": 70.15,
+    "F": 0.5167,
+    "R": 0.5269,
+    "S": 0.911,
+    "rusher_per_game": 17.4,
+    "box_carries": 17.4,
+    "box_snaps": 36.25,
+    "team_run_rate": 0.516
+   }
+  },
+  {
+   "game": "2026_10_SF_DAL",
+   "gsis": "00-0036997",
+   "name": "Javonte Williams",
+   "team": "DAL",
+   "named": false,
+   "actual": {
+    "P": 84,
+    "F": 0.6905,
+    "R_team_rate": 0.2857,
+    "S_implied": 0.9655,
+    "carries": 16,
+    "snaps": 58
+   },
+   "B": {
+    "P": 69.65,
+    "F": 0.458,
+    "R": 0.4577,
+    "S": 0.887,
+    "rusher_per_game": 12.95,
+    "box_carries": 12.95,
+    "box_snaps": 31.9,
+    "team_run_rate": 0.4379
+   },
+   "C": {
+    "P": 69.0,
+    "F": 0.3978,
+    "R": 0.3953,
+    "S": 0.9032,
+    "rusher_per_game": 9.8,
+    "box_carries": 9.8,
+    "box_snaps": 27.45,
+    "team_run_rate": 0.4065
+   }
+  },
+  {
+   "game": "2026_10_SF_DAL",
+   "gsis": "00-0033280",
+   "name": "Christian McCaffrey",
+   "team": "SF",
+   "named": true,
+   "actual": {
+    "P": 67,
+    "F": 0.5821,
+    "R_team_rate": 0.4328,
+    "S_implied": 0.7701,
+    "carries": 13,
+    "snaps": 39
+   },
+   "B": {
+    "P": 64.8,
+    "F": 0.456,
+    "R": 0.4146,
+    "S": 0.8857,
+    "rusher_per_game": 10.85,
+    "box_carries": 10.85,
+    "box_snaps": 29.55,
+    "team_run_rate": 0.3981
+   },
+   "C": {
+    "P": 65.4,
+    "F": 0.4778,
+    "R": 0.4032,
+    "S": 0.9325,
+    "rusher_per_game": 11.75,
+    "box_carries": 11.75,
+    "box_snaps": 31.25,
+    "team_run_rate": 0.4044
+   }
+  },
+  {
+   "game": "2026_10_SF_DAL",
+   "gsis": "00-0041052",
+   "name": "Kaelon Black",
+   "team": "SF",
+   "named": false,
+   "actual": {
+    "P": 67,
+    "F": 0.3881,
+    "R_team_rate": 0.4328,
+    "S_implied": 0.9775,
+    "carries": 11,
+    "snaps": 26
+   },
+   "B": {
+    "P": 64.8,
+    "F": 0.034,
+    "R": 0.5455,
+    "S": 0.75,
+    "rusher_per_game": 0.9,
+    "box_carries": 0.9,
+    "box_snaps": 2.2,
+    "team_run_rate": 0.3981
+   },
+   "C": {
+    "P": 65.4,
+    "F": 0.013,
+    "R": 0.5882,
+    "S": 0.6,
+    "rusher_per_game": 0.3,
+    "box_carries": 0.3,
+    "box_snaps": 0.85,
+    "team_run_rate": 0.4044
+   }
+  },
+  {
+   "game": "2026_10_WAS_NYG",
+   "gsis": "00-0040715",
+   "name": "Cam Skattebo",
+   "team": "NYG",
+   "named": false,
+   "actual": {
+    "P": 68,
+    "F": 0.8529,
+    "R_team_rate": 0.3824,
+    "S_implied": 0.8117,
+    "carries": 18,
+    "snaps": 58
+   },
+   "B": {
+    "P": 70.0,
+    "F": 0.2829,
+    "R": 0.4444,
+    "S": 0.7784,
+    "rusher_per_game": 6.85,
+    "box_carries": 6.85,
+    "box_snaps": 19.8,
+    "team_run_rate": 0.4307
+   },
+   "C": {
+    "P": 68.6,
+    "F": 0.2391,
+    "R": 0.4939,
+    "S": 0.8395,
+    "rusher_per_game": 6.8,
+    "box_carries": 6.8,
+    "box_snaps": 16.4,
+    "team_run_rate": 0.4344
+   }
+  },
+  {
+   "game": "2026_10_WAS_NYG",
+   "gsis": "00-0037256",
+   "name": "Rachaad White",
+   "team": "WAS",
+   "named": false,
+   "actual": {
+    "P": 72,
+    "F": 0.5,
+    "R_team_rate": 0.4167,
+    "S_implied": 0.7333,
+    "carries": 11,
+    "snaps": 36
+   },
+   "B": {
+    "P": 67.3,
+    "F": 0.0386,
+    "R": 0.5577,
+    "S": 0.5517,
+    "rusher_per_game": 0.8,
+    "box_carries": 0.8,
+    "box_snaps": 2.6,
+    "team_run_rate": 0.4874
+   },
+   "C": {
+    "P": 66.25,
+    "F": 0.0242,
+    "R": 0.3125,
+    "S": 0.6,
+    "rusher_per_game": 0.3,
+    "box_carries": 0.3,
+    "box_snaps": 1.6,
+    "team_run_rate": 0.4611
+   }
+  },
+  {
+   "game": "2026_10_WAS_NYG",
+   "gsis": "00-0039910",
+   "name": "Jayden Daniels",
+   "team": "WAS",
+   "named": false,
+   "actual": {
+    "P": 72,
+    "F": 0.9583,
+    "R_team_rate": 0.4167,
+    "S_implied": 0.3826,
+    "carries": 11,
+    "snaps": 69
+   },
+   "B": {
+    "P": 67.3,
+    "F": 0,
+    "R": 0,
+    "S": 0,
+    "rusher_per_game": 0.0,
+    "box_carries": 5.45,
+    "box_snaps": 67.3,
+    "team_run_rate": 0.4874
+   },
+   "C": {
+    "P": 66.25,
+    "F": 0,
+    "R": 0,
+    "S": 0,
+    "rusher_per_game": 0.0,
+    "box_carries": 6.35,
+    "box_snaps": 66.25,
+    "team_run_rate": 0.4611
+   }
+  }
+ ],
+ "summary": {
+  "all_29": {
+   "actual": {
+    "F": 0.5782,
+    "carries": 445
+   },
+   "B": {
+    "F": 0.3368,
+    "carries": 248.15
+   },
+   "C": {
+    "F": 0.3441,
+    "carries": 262.75
+   }
+  },
+  "named_6": {
+   "actual": {
+    "F": 0.6386,
+    "carries": 97
+   },
+   "B": {
+    "F": 0.4701,
+    "carries": 74.55
+   },
+   "C": {
+    "F": 0.5122,
+    "carries": 84.05
+   }
+  }
+ },
+ "availability_out_or_doubtful": {
+  "B-field": {
+   "no_article_found": 13,
+   "article_on_or_before_cutoff": 8
+  },
+  "C-field-pbv1": {
+   "no_article_found": 13,
+   "article_on_or_before_cutoff": 9
+  }
+ },
+ "availability_carries": {
+  "B-field": {
+   "no_article_found": 7.6,
+   "article_on_or_before_cutoff": 31.9
+  },
+  "C-field-pbv1": {
+   "no_article_found": 5.4,
+   "article_on_or_before_cutoff": 31.45
+  }
+ },
+ "availability_rows": {
+  "B-field": [
+   {
+    "game": "2026_10_CAR_NO",
+    "name": "Jonathon Brooks",
+    "team": "CAR",
+    "status": [
+     "Doubtful"
+    ],
+    "carries": 4.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_CAR_NO",
+    "name": "CJ Donaldson",
+    "team": "NO",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.9,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_HOU_CLE",
+    "name": "Brevin Jordan",
+    "team": "HOU",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_JAX_TEN",
+    "name": "Carnell Tate",
+    "team": "TEN",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_LA_ARI",
+    "name": "Terrance Ferguson",
+    "team": "LA",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [
+     "2026-10-02",
+     "2026-10-05",
+     "2026-10-29",
+     "2026-11-03"
+    ],
+    "article_titles": [
+     "Injury Report, Week 4 at Eagles: Puka Nacua and Kamren Kinchens good to go; Colby Parkinson questionable; Terrance Ferguson, Jaylen Watson and Aaron Donald ruled out",
+     "Injury Updates: Sean McVay hopeful Jaylen Watson (shoulder) and Aaron Donald (back) will play on Monday Night Football vs. Bills, explains why Terrance Ferguson (ankle) landed on IR",
+     "Injury Updates: Rams will not open 21-day practice windows for Myles Garrett or Terrance Ferguson in Week 8; latest on Trent McDuffie, Nate Landman and Davante Adams",
+     "Injury Updates: McVay says Myles Garrett will practice in Week 9; 'more likely than not' Terrance Ferguson also returns to practice"
+    ],
+    "category": "article_on_or_before_cutoff"
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Mo Alie-Cox",
+    "team": "IND",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.2,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [
+     "2026-10-01",
+     "2026-11-14"
+    ],
+    "article_titles": [
+     "Practice Notebook: Ashton Dulin returns to field, Mo Alie-Cox remains sidelined",
+     "Colts place TE Mo Alie-Cox (groin), LB Akeem Davis-Gaither (knee) on IR; sign LB West Weeks to 53-man roster from practice squad; elevate LS Jacob Bobenmoyer and WR Quez Watkins to active roster from practice squad"
+    ],
+    "category": "article_on_or_before_cutoff"
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Jared Wayne",
+    "team": "MIA",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.1,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Chris Bell",
+    "team": "MIA",
+    "status": [
+     "Doubtful"
+    ],
+    "carries": 0.2,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Kyler Murray",
+    "team": "MIN",
+    "status": [
+     "Out"
+    ],
+    "carries": 2.4,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [
+     "2026-10-05"
+    ],
+    "article_titles": [
+     "Kevin O\u2019Connell Updates Donovan Jackson Injury, Recaps Kyler Murray\u2019s Final Stretch Against Miami"
+    ],
+    "category": "article_on_or_before_cutoff"
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "T.J. Hockenson",
+    "team": "MIN",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Josh Jacobs",
+    "team": "GB",
+    "status": [
+     "Out"
+    ],
+    "carries": 13.5,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [
+     "2026-10-19"
+    ],
+    "article_titles": [
+     "Packers RB Josh Jacobs to get full week of practice, game status TBD"
+    ],
+    "category": "article_on_or_before_cutoff"
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Jauan Jennings",
+    "team": "MIN",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.15,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Josh Whyle",
+    "team": "GB",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_NE_DET",
+    "name": "TreVeyon Henderson",
+    "team": "NE",
+    "status": [
+     "Out"
+    ],
+    "carries": 10.45,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [
+     "2026-10-18",
+     "2026-10-30",
+     "2026-11-01",
+     "2026-11-06"
+    ],
+    "article_titles": [
+     "Inactives Analysis: A.J. Brown, Will Campbell, TreVeyon Henderson officially active for Week 6 matchup vs. the Jets",
+     "Injury Report Analysis: WR A.J. Brown, RB TreVeyon Henderson questionable for Week 8 matchup vs. the Dolphins",
+     "Inactives Analysis: Carlton Davis III returns, A.J. Brown and TreVeyon Henderson inactive for Week 8 vs. Dolphins",
+     "Injury Report Analysis: Patriots rule out WR A.J. Brown, RB TreVeyon Henderson; TE Hunter Henry questionable for Sunday vs. Packers"
+    ],
+    "category": "article_on_or_before_cutoff"
+   },
+   {
+    "game": "2026_10_PIT_CIN",
+    "name": "Andrei Iosivas",
+    "team": "CIN",
+    "status": [
+     "Doubtful"
+    ],
+    "carries": 0.2,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [
+     "2026-11-12"
+    ],
+    "article_titles": [
+     "Jalen Davis, Andrei Iosivas, Brian Parker II Cleared to Return to Practice | BENGALS ROSTER UPDATE"
+    ],
+    "category": "article_on_or_before_cutoff"
+   },
+   {
+    "game": "2026_10_SEA_LV",
+    "name": "Sam Darnold",
+    "team": "SEA",
+    "status": [
+     "Out"
+    ],
+    "carries": 5.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [
+     "2026-11-04",
+     "2026-11-05",
+     "2026-11-09",
+     "2026-11-10"
+    ],
+    "article_titles": [
+     "Seahawks QB Sam Darnold Out For Sunday\u2019s Game vs. Arizona Due To Quad Injury",
+     "Seahawks Mailbag: Sam Darnold\u2019s Injury, Trade Deadline & More",
+     "Seahawks QB Drew Lock \u2018Cool As Can Be\u2019 Starting In Place Of An Injured Sam Darnold",
+     "Updates On Sam Darnold, Quenton Nelson & Other Seahawks Injuries"
+    ],
+    "category": "article_on_or_before_cutoff"
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Mike Evans",
+    "team": "SF",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [
+     "2026-10-04",
+     "2026-10-19"
+    ],
+    "article_titles": [
+     "Romello Height, Mike Evans, and More Available vs. Broncos; Inactives for Week 4 #DENvsSF",
+     "Mike Evans Active, Kirk OUT vs. Commanders; Inactives Week 6 #WASvsSF"
+    ],
+    "category": "article_on_or_before_cutoff"
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Tyler Goodson",
+    "team": "DAL",
+    "status": [
+     "Out"
+    ],
+    "carries": 1.2,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Jake Ferguson",
+    "team": "DAL",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.35,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Jonathan Mingo",
+    "team": "DAL",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.3,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Colson Yankoff",
+    "team": "WAS",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.15,
+    "cutoff": "2026-11-11T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   }
+  ],
+  "C-field-pbv1": [
+   {
+    "game": "2026_10_CAR_NO",
+    "name": "Jonathon Brooks",
+    "team": "CAR",
+    "status": [
+     "Doubtful"
+    ],
+    "carries": 2.6,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_CAR_NO",
+    "name": "CJ Donaldson",
+    "team": "NO",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.5,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_HOU_CLE",
+    "name": "Brevin Jordan",
+    "team": "HOU",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.2,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_HOU_CLE",
+    "name": "Marvin Harrison Jr.",
+    "team": "HOU",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [
+     "2026-10-11"
+    ],
+    "article_titles": [
+     "Marvin Harrison Jr. Lands On Inactives List Against Lions"
+    ],
+    "category": "article_on_or_before_cutoff"
+   },
+   {
+    "game": "2026_10_JAX_TEN",
+    "name": "Carnell Tate",
+    "team": "TEN",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.1,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_KC_ATL",
+    "name": "Zachariah Branch",
+    "team": "ATL",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.1,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [
+     "2026-11-02",
+     "2026-11-11",
+     "2026-11-13"
+    ],
+    "article_titles": [
+     "Falcons WR Zachariah Branch, DE Samson Ebukam out vs. Bengals due to injury",
+     "Falcons injury report: Zachariah Branch, Josh Woods, James Pearce Jr. held out of practice",
+     "Falcons injury report: Zachariah Branch out; James Pearce Jr. questionable vs. Chiefs"
+    ],
+    "category": "article_on_or_before_cutoff"
+   },
+   {
+    "game": "2026_10_LAC_BAL",
+    "name": "Brenen Thompson",
+    "team": "LAC",
+    "status": [
+     "Doubtful"
+    ],
+    "carries": 0.1,
+    "cutoff": "2026-11-15T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Mo Alie-Cox",
+    "team": "IND",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [
+     "2026-10-01",
+     "2026-11-14"
+    ],
+    "article_titles": [
+     "Practice Notebook: Ashton Dulin returns to field, Mo Alie-Cox remains sidelined",
+     "Colts place TE Mo Alie-Cox (groin), LB Akeem Davis-Gaither (knee) on IR; sign LB West Weeks to 53-man roster from practice squad; elevate LS Jacob Bobenmoyer and WR Quez Watkins to active roster from practice squad"
+    ],
+    "category": "article_on_or_before_cutoff"
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Jared Wayne",
+    "team": "MIA",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Kyler Murray",
+    "team": "MIN",
+    "status": [
+     "Out"
+    ],
+    "carries": 2.75,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [
+     "2026-10-05"
+    ],
+    "article_titles": [
+     "Kevin O\u2019Connell Updates Donovan Jackson Injury, Recaps Kyler Murray\u2019s Final Stretch Against Miami"
+    ],
+    "category": "article_on_or_before_cutoff"
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "T.J. Hockenson",
+    "team": "MIN",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.15,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Josh Jacobs",
+    "team": "GB",
+    "status": [
+     "Out"
+    ],
+    "carries": 13.65,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [
+     "2026-10-19"
+    ],
+    "article_titles": [
+     "Packers RB Josh Jacobs to get full week of practice, game status TBD"
+    ],
+    "category": "article_on_or_before_cutoff"
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Jauan Jennings",
+    "team": "MIN",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.25,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Josh Whyle",
+    "team": "GB",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.15,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_NE_DET",
+    "name": "TreVeyon Henderson",
+    "team": "NE",
+    "status": [
+     "Out"
+    ],
+    "carries": 9.9,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [
+     "2026-10-18",
+     "2026-10-30",
+     "2026-11-01",
+     "2026-11-06"
+    ],
+    "article_titles": [
+     "Inactives Analysis: A.J. Brown, Will Campbell, TreVeyon Henderson officially active for Week 6 matchup vs. the Jets",
+     "Injury Report Analysis: WR A.J. Brown, RB TreVeyon Henderson questionable for Week 8 matchup vs. the Dolphins",
+     "Inactives Analysis: Carlton Davis III returns, A.J. Brown and TreVeyon Henderson inactive for Week 8 vs. Dolphins",
+     "Injury Report Analysis: Patriots rule out WR A.J. Brown, RB TreVeyon Henderson; TE Hunter Henry questionable for Sunday vs. Packers"
+    ],
+    "category": "article_on_or_before_cutoff"
+   },
+   {
+    "game": "2026_10_PIT_CIN",
+    "name": "Andrei Iosivas",
+    "team": "CIN",
+    "status": [
+     "Doubtful"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [
+     "2026-11-12"
+    ],
+    "article_titles": [
+     "Jalen Davis, Andrei Iosivas, Brian Parker II Cleared to Return to Practice | BENGALS ROSTER UPDATE"
+    ],
+    "category": "article_on_or_before_cutoff"
+   },
+   {
+    "game": "2026_10_SEA_LV",
+    "name": "Sam Darnold",
+    "team": "SEA",
+    "status": [
+     "Out"
+    ],
+    "carries": 4.85,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [
+     "2026-11-04",
+     "2026-11-05",
+     "2026-11-09",
+     "2026-11-10"
+    ],
+    "article_titles": [
+     "Seahawks QB Sam Darnold Out For Sunday\u2019s Game vs. Arizona Due To Quad Injury",
+     "Seahawks Mailbag: Sam Darnold\u2019s Injury, Trade Deadline & More",
+     "Seahawks QB Drew Lock \u2018Cool As Can Be\u2019 Starting In Place Of An Injured Sam Darnold",
+     "Updates On Sam Darnold, Quenton Nelson & Other Seahawks Injuries"
+    ],
+    "category": "article_on_or_before_cutoff"
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Mike Evans",
+    "team": "SF",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [
+     "2026-10-04",
+     "2026-10-19"
+    ],
+    "article_titles": [
+     "Romello Height, Mike Evans, and More Available vs. Broncos; Inactives for Week 4 #DENvsSF",
+     "Mike Evans Active, Kirk OUT vs. Commanders; Inactives Week 6 #WASvsSF"
+    ],
+    "category": "article_on_or_before_cutoff"
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Tyler Goodson",
+    "team": "DAL",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.85,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Jake Ferguson",
+    "team": "DAL",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.3,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Jonathan Mingo",
+    "team": "DAL",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.1,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Colson Yankoff",
+    "team": "WAS",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-11T12:00:00Z",
+    "article_dates": [],
+    "article_titles": [],
+    "category": "no_article_found"
+   }
+  ]
+ },
+ "snapshot_as_of_values": [
+  "2026-11-11T12:00:00Z",
+  "2026-11-14T12:00:00Z",
+  "2026-11-15T12:00:00Z"
+ ],
+ "actual_snap_rate_over_one": [],
+ "actual_max_snap_rate": 0.9583,
+ "injury_ingest": "all week 10 injury_reports rows ingested 2026-11-17T15:30:15Z"
+}

@@ -1,0 +1,519 @@
+{
+ "B-field": {
+  "players": {
+   "verified_pre_cutoff": 2,
+   "not_verified": 19
+  },
+  "carries": {
+   "verified_pre_cutoff": 0.25,
+   "not_verified": 39.25
+  },
+  "detail": [
+   {
+    "game": "2026_10_CAR_NO",
+    "name": "Jonathon Brooks",
+    "status": [
+     "Doubtful"
+    ],
+    "carries": 4.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_CAR_NO",
+    "name": "CJ Donaldson",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.9,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_HOU_CLE",
+    "name": "Brevin Jordan",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_JAX_TEN",
+    "name": "Carnell Tate",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_LA_ARI",
+    "name": "Terrance Ferguson",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "verified_pre_cutoff",
+    "matches": [
+     [
+      "2026-11-13",
+      "Injury Report, Week 10 at Cardinals: Steve Avila and Terrance Ferguson ruled out; Trent McDuffie and Kam Curl questionable"
+     ]
+    ]
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Mo Alie-Cox",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.2,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "verified_pre_cutoff",
+    "matches": [
+     [
+      "2026-11-14",
+      "Colts place TE Mo Alie-Cox (groin), LB Akeem Davis-Gaither (knee) on IR; sign LB West Weeks to 53-man roster from practice squad; elevate LS Jacob Bobenmoyer and WR Quez Watkins to active roster from practice squad"
+     ]
+    ]
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Jared Wayne",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.1,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Chris Bell",
+    "status": [
+     "Doubtful"
+    ],
+    "carries": 0.2,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Kyler Murray",
+    "status": [
+     "Out"
+    ],
+    "carries": 2.4,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "T.J. Hockenson",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Josh Jacobs",
+    "status": [
+     "Out"
+    ],
+    "carries": 13.5,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Jauan Jennings",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.15,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Josh Whyle",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_NE_DET",
+    "name": "TreVeyon Henderson",
+    "status": [
+     "Out"
+    ],
+    "carries": 10.45,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_PIT_CIN",
+    "name": "Andrei Iosivas",
+    "status": [
+     "Doubtful"
+    ],
+    "carries": 0.2,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_SEA_LV",
+    "name": "Sam Darnold",
+    "status": [
+     "Out"
+    ],
+    "carries": 5.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Mike Evans",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Tyler Goodson",
+    "status": [
+     "Out"
+    ],
+    "carries": 1.2,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Jake Ferguson",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.35,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Jonathan Mingo",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.3,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Colson Yankoff",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.15,
+    "cutoff": "2026-11-11T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   }
+  ]
+ },
+ "C-field-pbv1": {
+  "players": {
+   "verified_pre_cutoff": 2,
+   "not_verified": 20
+  },
+  "carries": {
+   "verified_pre_cutoff": 0.15,
+   "not_verified": 36.7
+  },
+  "detail": [
+   {
+    "game": "2026_10_CAR_NO",
+    "name": "Jonathon Brooks",
+    "status": [
+     "Doubtful"
+    ],
+    "carries": 2.6,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_CAR_NO",
+    "name": "CJ Donaldson",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.5,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_HOU_CLE",
+    "name": "Brevin Jordan",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.2,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_HOU_CLE",
+    "name": "Marvin Harrison Jr.",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_JAX_TEN",
+    "name": "Carnell Tate",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.1,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_KC_ATL",
+    "name": "Zachariah Branch",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.1,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "verified_pre_cutoff",
+    "matches": [
+     [
+      "2026-11-13",
+      "Falcons injury report: Zachariah Branch out; James Pearce Jr. questionable vs. Chiefs"
+     ]
+    ]
+   },
+   {
+    "game": "2026_10_LAC_BAL",
+    "name": "Brenen Thompson",
+    "status": [
+     "Doubtful"
+    ],
+    "carries": 0.1,
+    "cutoff": "2026-11-15T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Mo Alie-Cox",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "verified_pre_cutoff",
+    "matches": [
+     [
+      "2026-11-14",
+      "Colts place TE Mo Alie-Cox (groin), LB Akeem Davis-Gaither (knee) on IR; sign LB West Weeks to 53-man roster from practice squad; elevate LS Jacob Bobenmoyer and WR Quez Watkins to active roster from practice squad"
+     ]
+    ]
+   },
+   {
+    "game": "2026_10_MIA_IND",
+    "name": "Jared Wayne",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Kyler Murray",
+    "status": [
+     "Out"
+    ],
+    "carries": 2.75,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "T.J. Hockenson",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.15,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Josh Jacobs",
+    "status": [
+     "Out"
+    ],
+    "carries": 13.65,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Jauan Jennings",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.25,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_MIN_GB",
+    "name": "Josh Whyle",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.15,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_NE_DET",
+    "name": "TreVeyon Henderson",
+    "status": [
+     "Out"
+    ],
+    "carries": 9.9,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_PIT_CIN",
+    "name": "Andrei Iosivas",
+    "status": [
+     "Doubtful"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_SEA_LV",
+    "name": "Sam Darnold",
+    "status": [
+     "Out"
+    ],
+    "carries": 4.85,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Mike Evans",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Tyler Goodson",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.85,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Jake Ferguson",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.3,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_SF_DAL",
+    "name": "Jonathan Mingo",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.1,
+    "cutoff": "2026-11-14T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   },
+   {
+    "game": "2026_10_WAS_NYG",
+    "name": "Colson Yankoff",
+    "status": [
+     "Out"
+    ],
+    "carries": 0.05,
+    "cutoff": "2026-11-11T12:00:00Z",
+    "category": "not_verified",
+    "matches": []
+   }
+  ]
+ }
+}

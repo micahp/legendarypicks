@@ -1,0 +1,65 @@
+{
+ "B": {
+  "exits": 3901,
+  "hazard_share": 0.851,
+  "forced_share": 0.149,
+  "other_share": 0.0,
+  "exits_per_100_on_plays": 28.75,
+  "hazard_per_100_on_plays": 24.46,
+  "forced_per_100_on_plays": 4.28
+ },
+ "C": {
+  "exits": 3849,
+  "hazard_share": 0.875,
+  "forced_share": 0.125,
+  "other_share": 0.0,
+  "exits_per_100_on_plays": 27.55,
+  "hazard_per_100_on_plays": 24.11,
+  "forced_per_100_on_plays": 3.44
+ },
+ "H": {
+  "exits": 4186,
+  "hazard_share": 0.887,
+  "forced_share": 0.113,
+  "other_share": 0.0,
+  "exits_per_100_on_plays": 24.32,
+  "hazard_per_100_on_plays": 21.57,
+  "forced_per_100_on_plays": 2.75
+ },
+ "HS": {
+  "exits": 3316,
+  "hazard_share": 0.834,
+  "forced_share": 0.166,
+  "other_share": 0.0,
+  "exits_per_100_on_plays": 17.13,
+  "hazard_per_100_on_plays": 14.29,
+  "forced_per_100_on_plays": 2.84
+ },
+ "HP": {
+  "exits": 4206,
+  "hazard_share": 0.916,
+  "forced_share": 0.084,
+  "other_share": 0.0,
+  "exits_per_100_on_plays": 24.75,
+  "hazard_per_100_on_plays": 22.66,
+  "forced_per_100_on_plays": 2.09
+ },
+ "HSP": {
+  "exits": 3273,
+  "hazard_share": 0.87,
+  "forced_share": 0.13,
+  "other_share": 0.0,
+  "exits_per_100_on_plays": 16.47,
+  "hazard_per_100_on_plays": 14.33,
+  "forced_per_100_on_plays": 2.14
+ },
+ "HE": {
+  "exits": 3642,
+  "hazard_share": 0.84,
+  "forced_share": 0.16,
+  "other_share": 0.0,
+  "exits_per_100_on_plays": 18.4,
+  "hazard_per_100_on_plays": 15.45,
+  "forced_per_100_on_plays": 2.94
+ }
+}

@@ -1,0 +1,641 @@
+{
+ "by_group": {
+  "HE": {
+   "11": {
+    "cases": 202,
+    "mean_lead_share": 0.432,
+    "picked_rate": 0.45
+   },
+   "12": {
+    "cases": 183,
+    "mean_lead_share": 0.451,
+    "picked_rate": 0.454
+   },
+   "21": {
+    "cases": 55,
+    "mean_lead_share": 0.475,
+    "picked_rate": 0.364
+   },
+   "13": {
+    "cases": 28,
+    "mean_lead_share": 0.368,
+    "picked_rate": 0.357
+   },
+   "11-OL6": {
+    "cases": 28,
+    "mean_lead_share": 0.492,
+    "picked_rate": 0.393
+   },
+   "12-OL6": {
+    "cases": 17,
+    "mean_lead_share": 0.509,
+    "picked_rate": 0.588
+   },
+   "22": {
+    "cases": 6,
+    "mean_lead_share": 0.31,
+    "picked_rate": 0.167
+   },
+   "12-QB2": {
+    "cases": 3,
+    "mean_lead_share": 0.219,
+    "picked_rate": 0.333
+   },
+   "10-OL6": {
+    "cases": 3,
+    "mean_lead_share": 0.625,
+    "picked_rate": 1.0
+   },
+   "20-OL6": {
+    "cases": 3,
+    "mean_lead_share": 0.476,
+    "picked_rate": 0.0
+   },
+   "20": {
+    "cases": 2,
+    "mean_lead_share": 0.354,
+    "picked_rate": 0.5
+   },
+   "11-QB2": {
+    "cases": 2,
+    "mean_lead_share": 0.451,
+    "picked_rate": 0.5
+   },
+   "10-OL7": {
+    "cases": 2,
+    "mean_lead_share": 0.654,
+    "picked_rate": 1.0
+   },
+   "10": {
+    "cases": 1,
+    "mean_lead_share": 0.616,
+    "picked_rate": 1.0
+   },
+   "23-OL1": {
+    "cases": 1,
+    "mean_lead_share": 0.174,
+    "picked_rate": 1.0
+   }
+  },
+  "B": {
+   "11": {
+    "cases": 220,
+    "mean_lead_share": 0.47,
+    "picked_rate": 0.468
+   },
+   "12": {
+    "cases": 200,
+    "mean_lead_share": 0.534,
+    "picked_rate": 0.545
+   },
+   "21": {
+    "cases": 51,
+    "mean_lead_share": 0.42,
+    "picked_rate": 0.353
+   },
+   "13": {
+    "cases": 27,
+    "mean_lead_share": 0.402,
+    "picked_rate": 0.296
+   },
+   "11-OL6": {
+    "cases": 17,
+    "mean_lead_share": 0.352,
+    "picked_rate": 0.353
+   },
+   "22": {
+    "cases": 10,
+    "mean_lead_share": 0.275,
+    "picked_rate": 0.3
+   },
+   "12-OL6": {
+    "cases": 7,
+    "mean_lead_share": 0.228,
+    "picked_rate": 0.143
+   },
+   "21-OL6": {
+    "cases": 3,
+    "mean_lead_share": 0.421,
+    "picked_rate": 0.333
+   },
+   "11-QB2": {
+    "cases": 3,
+    "mean_lead_share": 0.203,
+    "picked_rate": 0.333
+   },
+   "12-QB2": {
+    "cases": 2,
+    "mean_lead_share": 0.2,
+    "picked_rate": 0.5
+   },
+   "10-OL6": {
+    "cases": 1,
+    "mean_lead_share": 0.215,
+    "picked_rate": 0.0
+   },
+   "20-OL6": {
+    "cases": 1,
+    "mean_lead_share": 0.23,
+    "picked_rate": 0.0
+   }
+  },
+  "C": {
+   "11": {
+    "cases": 307,
+    "mean_lead_share": 0.473,
+    "picked_rate": 0.476
+   },
+   "12": {
+    "cases": 186,
+    "mean_lead_share": 0.534,
+    "picked_rate": 0.565
+   },
+   "13": {
+    "cases": 28,
+    "mean_lead_share": 0.461,
+    "picked_rate": 0.429
+   },
+   "21": {
+    "cases": 23,
+    "mean_lead_share": 0.374,
+    "picked_rate": 0.348
+   },
+   "22": {
+    "cases": 4,
+    "mean_lead_share": 0.324,
+    "picked_rate": 0.25
+   },
+   "10": {
+    "cases": 4,
+    "mean_lead_share": 0.268,
+    "picked_rate": 0.0
+   },
+   "20": {
+    "cases": 1,
+    "mean_lead_share": 0.2,
+    "picked_rate": 0.0
+   }
+  },
+  "H": {
+   "11": {
+    "cases": 221,
+    "mean_lead_share": 0.468,
+    "picked_rate": 0.471
+   },
+   "12": {
+    "cases": 202,
+    "mean_lead_share": 0.533,
+    "picked_rate": 0.554
+   },
+   "21": {
+    "cases": 52,
+    "mean_lead_share": 0.428,
+    "picked_rate": 0.365
+   },
+   "13": {
+    "cases": 26,
+    "mean_lead_share": 0.403,
+    "picked_rate": 0.308
+   },
+   "11-OL6": {
+    "cases": 16,
+    "mean_lead_share": 0.359,
+    "picked_rate": 0.375
+   },
+   "22": {
+    "cases": 10,
+    "mean_lead_share": 0.275,
+    "picked_rate": 0.3
+   },
+   "12-OL6": {
+    "cases": 7,
+    "mean_lead_share": 0.228,
+    "picked_rate": 0.143
+   },
+   "21-OL6": {
+    "cases": 3,
+    "mean_lead_share": 0.421,
+    "picked_rate": 0.333
+   },
+   "11-QB2": {
+    "cases": 3,
+    "mean_lead_share": 0.203,
+    "picked_rate": 0.333
+   },
+   "12-QB2": {
+    "cases": 2,
+    "mean_lead_share": 0.2,
+    "picked_rate": 0.5
+   },
+   "10-OL6": {
+    "cases": 1,
+    "mean_lead_share": 0.215,
+    "picked_rate": 0.0
+   },
+   "20-OL6": {
+    "cases": 1,
+    "mean_lead_share": 0.23,
+    "picked_rate": 0.0
+   }
+  },
+  "HS": {
+   "11": {
+    "cases": 199,
+    "mean_lead_share": 0.48,
+    "picked_rate": 0.442
+   },
+   "12": {
+    "cases": 183,
+    "mean_lead_share": 0.506,
+    "picked_rate": 0.508
+   },
+   "21": {
+    "cases": 55,
+    "mean_lead_share": 0.35,
+    "picked_rate": 0.255
+   },
+   "13": {
+    "cases": 29,
+    "mean_lead_share": 0.317,
+    "picked_rate": 0.31
+   },
+   "11-OL6": {
+    "cases": 28,
+    "mean_lead_share": 0.284,
+    "picked_rate": 0.214
+   },
+   "12-OL6": {
+    "cases": 17,
+    "mean_lead_share": 0.278,
+    "picked_rate": 0.294
+   },
+   "22": {
+    "cases": 10,
+    "mean_lead_share": 0.186,
+    "picked_rate": 0.1
+   },
+   "20-OL6": {
+    "cases": 4,
+    "mean_lead_share": 0.401,
+    "picked_rate": 0.25
+   },
+   "10-OL6": {
+    "cases": 3,
+    "mean_lead_share": 0.258,
+    "picked_rate": 0.0
+   },
+   "12-QB2": {
+    "cases": 2,
+    "mean_lead_share": 0.355,
+    "picked_rate": 0.5
+   },
+   "11-QB2": {
+    "cases": 2,
+    "mean_lead_share": 0.35,
+    "picked_rate": 0.0
+   },
+   "10-OL7": {
+    "cases": 2,
+    "mean_lead_share": 0.371,
+    "picked_rate": 0.5
+   },
+   "10": {
+    "cases": 1,
+    "mean_lead_share": 0.086,
+    "picked_rate": 0.0
+   },
+   "20": {
+    "cases": 1,
+    "mean_lead_share": 0.105,
+    "picked_rate": 0.0
+   },
+   "23-OL1": {
+    "cases": 1,
+    "mean_lead_share": 0.539,
+    "picked_rate": 1.0
+   },
+   "21-OL6": {
+    "cases": 1,
+    "mean_lead_share": 0.07,
+    "picked_rate": 0.0
+   },
+   "31": {
+    "cases": 1,
+    "mean_lead_share": 0.101,
+    "picked_rate": 0.0
+   }
+  },
+  "HP": {
+   "11": {
+    "cases": 308,
+    "mean_lead_share": 0.475,
+    "picked_rate": 0.481
+   },
+   "12": {
+    "cases": 187,
+    "mean_lead_share": 0.535,
+    "picked_rate": 0.578
+   },
+   "13": {
+    "cases": 28,
+    "mean_lead_share": 0.461,
+    "picked_rate": 0.429
+   },
+   "21": {
+    "cases": 22,
+    "mean_lead_share": 0.37,
+    "picked_rate": 0.318
+   },
+   "22": {
+    "cases": 4,
+    "mean_lead_share": 0.324,
+    "picked_rate": 0.25
+   },
+   "10": {
+    "cases": 4,
+    "mean_lead_share": 0.268,
+    "picked_rate": 0.0
+   },
+   "20": {
+    "cases": 1,
+    "mean_lead_share": 0.2,
+    "picked_rate": 0.0
+   }
+  },
+  "HSP": {
+   "11": {
+    "cases": 308,
+    "mean_lead_share": 0.506,
+    "picked_rate": 0.464
+   },
+   "12": {
+    "cases": 183,
+    "mean_lead_share": 0.504,
+    "picked_rate": 0.519
+   },
+   "13": {
+    "cases": 31,
+    "mean_lead_share": 0.355,
+    "picked_rate": 0.355
+   },
+   "21": {
+    "cases": 21,
+    "mean_lead_share": 0.4,
+    "picked_rate": 0.286
+   },
+   "22": {
+    "cases": 4,
+    "mean_lead_share": 0.129,
+    "picked_rate": 0.25
+   },
+   "10": {
+    "cases": 4,
+    "mean_lead_share": 0.205,
+    "picked_rate": 0.5
+   },
+   "20": {
+    "cases": 2,
+    "mean_lead_share": 0.287,
+    "picked_rate": 0.5
+   }
+  }
+ },
+ "HE": {
+  "cases": 536,
+  "no_rb_call_found": 0,
+  "lead_not_in_candidates": 22,
+  "mean_lead_weight_share": 0.4443,
+  "lead_picked_rate": 0.4403,
+  "by_lead_weight_share": {
+   "0-20%": {
+    "cases": 42,
+    "mean_share": 0.11,
+    "picked_rate": 0.143
+   },
+   "20-40%": {
+    "cases": 200,
+    "mean_share": 0.311,
+    "picked_rate": 0.305
+   },
+   "40-60%": {
+    "cases": 155,
+    "mean_share": 0.496,
+    "picked_rate": 0.471
+   },
+   "60-80%": {
+    "cases": 137,
+    "mean_share": 0.675,
+    "picked_rate": 0.686
+   },
+   "80-100%": {
+    "cases": 2,
+    "mean_share": 0.896,
+    "picked_rate": 1.0
+   }
+  }
+ },
+ "B": {
+  "cases": 542,
+  "no_rb_call_found": 0,
+  "lead_not_in_candidates": 17,
+  "mean_lead_weight_share": 0.4715,
+  "lead_picked_rate": 0.4631,
+  "by_lead_weight_share": {
+   "0-20%": {
+    "cases": 163,
+    "mean_share": 0.054,
+    "picked_rate": 0.043
+   },
+   "20-40%": {
+    "cases": 95,
+    "mean_share": 0.302,
+    "picked_rate": 0.253
+   },
+   "40-60%": {
+    "cases": 58,
+    "mean_share": 0.536,
+    "picked_rate": 0.5
+   },
+   "60-80%": {
+    "cases": 91,
+    "mean_share": 0.693,
+    "picked_rate": 0.758
+   },
+   "80-100%": {
+    "cases": 135,
+    "mean_share": 0.918,
+    "picked_rate": 0.904
+   }
+  }
+ },
+ "C": {
+  "cases": 553,
+  "no_rb_call_found": 0,
+  "lead_not_in_candidates": 3,
+  "mean_lead_weight_share": 0.4856,
+  "lead_picked_rate": 0.4919,
+  "by_lead_weight_share": {
+   "0-20%": {
+    "cases": 166,
+    "mean_share": 0.05,
+    "picked_rate": 0.042
+   },
+   "20-40%": {
+    "cases": 80,
+    "mean_share": 0.306,
+    "picked_rate": 0.35
+   },
+   "40-60%": {
+    "cases": 71,
+    "mean_share": 0.54,
+    "picked_rate": 0.507
+   },
+   "60-80%": {
+    "cases": 87,
+    "mean_share": 0.69,
+    "picked_rate": 0.77
+   },
+   "80-100%": {
+    "cases": 149,
+    "mean_share": 0.923,
+    "picked_rate": 0.899
+   }
+  }
+ },
+ "H": {
+  "cases": 544,
+  "no_rb_call_found": 0,
+  "lead_not_in_candidates": 15,
+  "mean_lead_weight_share": 0.472,
+  "lead_picked_rate": 0.4706,
+  "by_lead_weight_share": {
+   "0-20%": {
+    "cases": 164,
+    "mean_share": 0.055,
+    "picked_rate": 0.043
+   },
+   "20-40%": {
+    "cases": 95,
+    "mean_share": 0.303,
+    "picked_rate": 0.284
+   },
+   "40-60%": {
+    "cases": 58,
+    "mean_share": 0.536,
+    "picked_rate": 0.5
+   },
+   "60-80%": {
+    "cases": 91,
+    "mean_share": 0.694,
+    "picked_rate": 0.769
+   },
+   "80-100%": {
+    "cases": 136,
+    "mean_share": 0.917,
+    "picked_rate": 0.904
+   }
+  }
+ },
+ "HS": {
+  "cases": 539,
+  "no_rb_call_found": 0,
+  "lead_not_in_candidates": 19,
+  "mean_lead_weight_share": 0.4391,
+  "lead_picked_rate": 0.4082,
+  "by_lead_weight_share": {
+   "0-20%": {
+    "cases": 132,
+    "mean_share": 0.099,
+    "picked_rate": 0.053
+   },
+   "20-40%": {
+    "cases": 138,
+    "mean_share": 0.302,
+    "picked_rate": 0.268
+   },
+   "40-60%": {
+    "cases": 112,
+    "mean_share": 0.515,
+    "picked_rate": 0.491
+   },
+   "60-80%": {
+    "cases": 84,
+    "mean_share": 0.723,
+    "picked_rate": 0.726
+   },
+   "80-100%": {
+    "cases": 73,
+    "mean_share": 0.871,
+    "picked_rate": 0.822
+   }
+  }
+ },
+ "HP": {
+  "cases": 554,
+  "no_rb_call_found": 0,
+  "lead_not_in_candidates": 2,
+  "mean_lead_weight_share": 0.4874,
+  "lead_picked_rate": 0.4982,
+  "by_lead_weight_share": {
+   "0-20%": {
+    "cases": 166,
+    "mean_share": 0.05,
+    "picked_rate": 0.042
+   },
+   "20-40%": {
+    "cases": 80,
+    "mean_share": 0.306,
+    "picked_rate": 0.375
+   },
+   "40-60%": {
+    "cases": 70,
+    "mean_share": 0.541,
+    "picked_rate": 0.5
+   },
+   "60-80%": {
+    "cases": 86,
+    "mean_share": 0.69,
+    "picked_rate": 0.779
+   },
+   "80-100%": {
+    "cases": 152,
+    "mean_share": 0.922,
+    "picked_rate": 0.901
+   }
+  }
+ },
+ "HSP": {
+  "cases": 553,
+  "no_rb_call_found": 0,
+  "lead_not_in_candidates": 4,
+  "mean_lead_weight_share": 0.4871,
+  "lead_picked_rate": 0.4684,
+  "by_lead_weight_share": {
+   "0-20%": {
+    "cases": 105,
+    "mean_share": 0.085,
+    "picked_rate": 0.067
+   },
+   "20-40%": {
+    "cases": 122,
+    "mean_share": 0.31,
+    "picked_rate": 0.311
+   },
+   "40-60%": {
+    "cases": 126,
+    "mean_share": 0.504,
+    "picked_rate": 0.452
+   },
+   "60-80%": {
+    "cases": 99,
+    "mean_share": 0.723,
+    "picked_rate": 0.768
+   },
+   "80-100%": {
+    "cases": 101,
+    "mean_share": 0.867,
+    "picked_rate": 0.802
+   }
+  }
+ }
+}
