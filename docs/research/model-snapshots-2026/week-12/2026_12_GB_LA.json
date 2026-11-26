@@ -1,0 +1,3129 @@
+{
+  "additional_capture": {
+    "frozen_at_utc": "2026-11-25T21:21:55Z",
+    "team_code_normalization": {
+      "aliases_applied": {
+        "LA": "LAR"
+      },
+      "runtime_vocabulary": "backend.team_codes canonical",
+      "source_vocabulary": "nflverse"
+    },
+    "weekly_roster": {
+      "acquired_at_utc": "2026-11-25T21:21:55Z",
+      "name": "roster_weekly_2026.csv.gz",
+      "sha256": "b0e660133e659b24ba90f85a20f483e47990539f13f3953c58e6ca25ef988d00",
+      "size_bytes": 607873,
+      "source_available_utc": "2026-11-25T21:21:55Z",
+      "teams": [
+        "GB",
+        "LA"
+      ],
+      "url": "https://github.com/nflverse/nflverse-data/releases/download/weekly_rosters/roster_weekly_2026.csv.gz",
+      "week": 12
+    }
+  },
+  "as_of": "2026-11-25T21:21:55Z",
+  "capture": {
+    "files": [
+      {
+        "acquired_at_utc": "2026-11-25T19:56:09Z",
+        "last_modified_utc": "2026-11-25T19:46:30Z",
+        "name": "games.parquet",
+        "sha256": "0cf8654ef14f547d5f87fe2a97da09d8a70c98e83bfeea4036459230e626e432",
+        "size_bytes": 524432,
+        "url": "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.parquet"
+      },
+      {
+        "acquired_at_utc": "2026-11-25T19:56:09Z",
+        "last_modified_utc": "2026-11-25T17:56:45Z",
+        "name": "depth_charts_2026.parquet",
+        "sha256": "fbee5945e1b2e98bacffa14eaf2ee9c32145da17ad939a63ecd8ba89bf5875f4",
+        "size_bytes": 3709043,
+        "url": "https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2026.parquet"
+      },
+      {
+        "acquired_at_utc": "2026-11-25T19:56:09Z",
+        "last_modified_utc": "2026-11-25T17:59:53Z",
+        "name": "injuries_2026.parquet",
+        "sha256": "81755632255218a133478f3abddb26264fa2d67f287a405d8743b718bc828ed1",
+        "size_bytes": 70637,
+        "url": "https://github.com/nflverse/nflverse-data/releases/download/injuries/injuries_2026.parquet"
+      }
+    ],
+    "frozen_at_utc": "2026-11-25T19:56:09Z",
+    "kickoff_rule": "nflverse gametime as America/New_York",
+    "team_code_normalization": {
+      "aliases_applied": {
+        "LA": "LAR"
+      },
+      "runtime_vocabulary": "backend.team_codes canonical",
+      "source_vocabulary": "nflverse"
+    }
+  },
+  "evaluation": {
+    "class": "prospective_forecast",
+    "unverified_inputs": [],
+    "verified": true
+  },
+  "model_reference": {
+    "current_streak_context": {
+      "cutoff_utc": "2026-11-25T19:56:09Z",
+      "game_id": "2026_12_GB_LA",
+      "schema": "lp-slc-current-streak-context-1",
+      "source_cutoff_utc": "2026-11-25T19:46:30Z",
+      "source_sha256": "49f1749af10bc32c44e2db4668809771915134da2d4d41609fc953db4e7675a4",
+      "teams": {
+        "GB": "L1",
+        "LAR": "W4"
+      }
+    },
+    "participant_assignment_version": "pregame-role-usage-v1",
+    "play_pool": "nfl_pbp seasons 2022-2025 only; no 2026 outcome is in the pool",
+    "rule_version": "NFL-2026-GAME-STATE-RULES.md / E2 successor rules matrix",
+    "week_12_membership_source_sha256": "b0e660133e659b24ba90f85a20f483e47990539f13f3953c58e6ca25ef988d00"
+  },
+  "roster_finalization_timing": {
+    "before_roster_finalization": true,
+    "status": "before_roster_finalization",
+    "window_opens_utc": "2026-11-25T23:30:00Z"
+  },
+  "roster_snapshot_id": "nflverse-v1-week12:9582a771dd55003b33eb011b7e016901aea8378fb9d525170bbb95421d800328",
+  "rosters": {
+    "away": {
+      "injury_report": {
+        "available": true,
+        "players": [
+          {
+            "gsis_id": "00-0029592",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": "Questionable"
+          },
+          {
+            "gsis_id": "00-0034431",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": "Questionable"
+          },
+          {
+            "gsis_id": "00-0035700",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": "Questionable"
+          },
+          {
+            "gsis_id": "00-0036551",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0036658",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0036932",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": "Questionable"
+          },
+          {
+            "gsis_id": "00-0037076",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": "Questionable"
+          },
+          {
+            "gsis_id": "00-0037091",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": "Questionable"
+          },
+          {
+            "gsis_id": "00-0038090",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": "Questionable"
+          },
+          {
+            "gsis_id": "00-0039819",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": "Questionable"
+          },
+          {
+            "gsis_id": "00-0041470",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0033109",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0037094",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0037817",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0038589",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0039144",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0039146",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0039817",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0039850",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0039936",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0040012",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0040016",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0040033",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          }
+        ],
+        "roster_exclusions_added": 12,
+        "rows": 11,
+        "source_available_utc": "2026-11-25T19:56:09Z",
+        "source_sha256": "81755632255218a133478f3abddb26264fa2d67f287a405d8743b718bc828ed1",
+        "source_timestamp_semantics": "hash_pinned_source_capture",
+        "source_url": "https://github.com/nflverse/nflverse-data/releases/download/injuries/injuries_2026.parquet"
+      },
+      "membership": {
+        "players": [
+          {
+            "gsis_id": "00-0028118",
+            "name": "Tyrod Taylor",
+            "position": "QB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0029592",
+            "name": "Kevin Zeitler",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0032234",
+            "name": "Laken Tomlinson",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0033109",
+            "name": "Javon Hargrave",
+            "position": "DL",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0033858",
+            "name": "Jonnu Smith",
+            "position": "TE",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0034431",
+            "name": "Zaire Franklin",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0035118",
+            "name": "Matthew Orzech",
+            "position": "LS",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0035133",
+            "name": "Keisean Nixon",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0035700",
+            "name": "Josh Jacobs",
+            "position": "RB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0036157",
+            "name": "Kristian Welch",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0036264",
+            "name": "Jordan Love",
+            "position": "QB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0036284",
+            "name": "Mekhi Becton",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0036388",
+            "name": "Xavier McKinney",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0036551",
+            "name": "Aaron Banks",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0036625",
+            "name": "Benjamin St-Juste",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0036648",
+            "name": "Nick Niemann",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0036658",
+            "name": "Isaiah McDuffie",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0036932",
+            "name": "Micah Parsons",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0037041",
+            "name": "Haggai Ndubuisi",
+            "position": "DL",
+            "status": "DEV",
+            "status_description": "P03"
+          },
+          {
+            "gsis_id": "00-0037075",
+            "name": "Devonte Wyatt",
+            "position": "DL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0037076",
+            "name": "Sean Rhyan",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0037091",
+            "name": "Bo Melton",
+            "position": "WR",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0037094",
+            "name": "Jonathan Ford",
+            "position": "DL",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0037364",
+            "name": "Arron Mosby",
+            "position": "LB",
+            "status": "DEV",
+            "status_description": "P07"
+          },
+          {
+            "gsis_id": "00-0037547",
+            "name": "Daniel Whelan",
+            "position": "P",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0037817",
+            "name": "Zach Bako-Bewele",
+            "position": "OL",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0038090",
+            "name": "Skyy Moore",
+            "position": "WR",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0038098",
+            "name": "Pierre Strong",
+            "position": "RB",
+            "status": "DEV",
+            "status_description": "P07"
+          },
+          {
+            "gsis_id": "00-0038124",
+            "name": "Christian Watson",
+            "position": "WR",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0038398",
+            "name": "Karl Brooks",
+            "position": "DL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0038408",
+            "name": "Carrington Valentine",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0038463",
+            "name": "Brenton Cox Jr.",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0038506",
+            "name": "Jordon Riley",
+            "position": "DL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0038545",
+            "name": "Mazi Smith",
+            "position": "DL",
+            "status": "DEV",
+            "status_description": "P07"
+          },
+          {
+            "gsis_id": "00-0038589",
+            "name": "Josh Whyle",
+            "position": "TE",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0038685",
+            "name": "Chris Brooks",
+            "position": "RB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0038996",
+            "name": "Tucker Kraft",
+            "position": "TE",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039112",
+            "name": "Lukas Van Ness",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039144",
+            "name": "Luke Musgrave",
+            "position": "TE",
+            "status": "RES",
+            "status_description": "R04"
+          },
+          {
+            "gsis_id": "00-0039146",
+            "name": "Jayden Reed",
+            "position": "WR",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0039272",
+            "name": "Donovan Jennings",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039811",
+            "name": "MarShawn Lloyd",
+            "position": "RB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039812",
+            "name": "Ty'Ron Hopper",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039813",
+            "name": "Evan Williams",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039817",
+            "name": "Jacob Monk",
+            "position": "OL",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0039818",
+            "name": "Kitan Oladapo",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039819",
+            "name": "Travis Glover",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039831",
+            "name": "Kamal Hadden",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039850",
+            "name": "Edgerrin Cooper",
+            "position": "LB",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0039867",
+            "name": "Javon Bullard",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039904",
+            "name": "Jordan Morgan",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039936",
+            "name": "Thomas Yassmin",
+            "position": "TE",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0040009",
+            "name": "Savion Williams",
+            "position": "WR",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040010",
+            "name": "Barryn Sorrell",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040012",
+            "name": "Collin Oliver",
+            "position": "LB",
+            "status": "RES",
+            "status_description": "R48"
+          },
+          {
+            "gsis_id": "00-0040016",
+            "name": "Warren Brinson",
+            "position": "DL",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0040023",
+            "name": "John Williams",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040033",
+            "name": "Johnathan Baldwin",
+            "position": "DB",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0040083",
+            "name": "Dalton Cooper",
+            "position": "OL",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0040142",
+            "name": "Kaleb Johnson",
+            "position": "RB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040222",
+            "name": "Cam Miller",
+            "position": "QB",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0040310",
+            "name": "John Saunders Jr.",
+            "position": "DB",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0040352",
+            "name": "Coleman Owen",
+            "position": "WR",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0040553",
+            "name": "Quincy Skinner Jr.",
+            "position": "WR",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0040558",
+            "name": "Isaiah Neyor",
+            "position": "WR",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0040598",
+            "name": "Mark Redman",
+            "position": "TE",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040628",
+            "name": "Drake Dabney",
+            "position": "TE",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0040667",
+            "name": "Matthew Golden",
+            "position": "WR",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040689",
+            "name": "Anthony Campbell",
+            "position": "DL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040726",
+            "name": "Anthony Belton",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040869",
+            "name": "Chris McClellan",
+            "position": "DL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040877",
+            "name": "Dani Dennis-Sutton",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040884",
+            "name": "Jager Burton",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040896",
+            "name": "Domani Jackson",
+            "position": "DB",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0040899",
+            "name": "Trey Smack",
+            "position": "K",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040944",
+            "name": "Nyjalik Kelly",
+            "position": "LB",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0040948",
+            "name": "J. Michael Sturdivant",
+            "position": "WR",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040949",
+            "name": "Dillon Wade",
+            "position": "OL",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0041242",
+            "name": "Jack Dingle",
+            "position": "LB",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0041252",
+            "name": "Kenny Fletcher Jr.",
+            "position": "TE",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0041364",
+            "name": "Elijah Culp",
+            "position": "DB",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0041470",
+            "name": "Brandon Cisse",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          }
+        ],
+        "source": "nflverse-weekly-rosters-2026-week-12:b0e660133e659b24ba90f85a20f483e47990539f13f3953c58e6ca25ef988d00",
+        "week": 12
+      },
+      "players": [
+        {
+          "gsis_id": "00-0038398",
+          "player_id": 4373423,
+          "player_name": "Karl Brooks",
+          "pos_abb": "LDE",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040869",
+          "player_id": 4820574,
+          "player_name": "Chris McClellan",
+          "pos_abb": "NT",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0037075",
+          "player_id": 4361791,
+          "player_name": "Devonte Wyatt",
+          "pos_abb": "RDE",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039112",
+          "player_id": 4686906,
+          "player_name": "Lukas Van Ness",
+          "pos_abb": "WLB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0034431",
+          "player_id": 3124005,
+          "player_name": "Zaire Franklin",
+          "pos_abb": "LILB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0036658",
+          "player_id": 4239947,
+          "player_name": "Isaiah McDuffie",
+          "pos_abb": "RILB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0036932",
+          "player_id": 4361423,
+          "player_name": "Micah Parsons",
+          "pos_abb": "SLB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0035133",
+          "player_id": 4259493,
+          "player_name": "Keisean Nixon",
+          "pos_abb": "LCB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039813",
+          "player_id": 4428863,
+          "player_name": "Evan Williams",
+          "pos_abb": "SS",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0036388",
+          "player_id": 4241470,
+          "player_name": "Xavier McKinney",
+          "pos_abb": "FS",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0041470",
+          "player_id": 5076652,
+          "player_name": "Brandon Cisse",
+          "pos_abb": "RCB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039867",
+          "player_id": 4688930,
+          "player_name": "Javon Bullard",
+          "pos_abb": "NB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040016",
+          "player_id": 4429136,
+          "player_name": "Warren Brinson",
+          "pos_abb": "LDE",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0038506",
+          "player_id": 4240677,
+          "player_name": "Jordon Riley",
+          "pos_abb": "NT",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040689",
+          "player_id": 4887255,
+          "player_name": "Anthony Campbell",
+          "pos_abb": "RDE",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0038463",
+          "player_id": 4361776,
+          "player_name": "Brenton Cox Jr.",
+          "pos_abb": "WLB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0036648",
+          "player_id": 4036141,
+          "player_name": "Nick Niemann",
+          "pos_abb": "LILB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039812",
+          "player_id": 4567406,
+          "player_name": "Ty'Ron Hopper",
+          "pos_abb": "RILB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040010",
+          "player_id": 4683643,
+          "player_name": "Barryn Sorrell",
+          "pos_abb": "SLB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0036625",
+          "player_id": 4258206,
+          "player_name": "Benjamin St-Juste",
+          "pos_abb": "LCB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040033",
+          "player_id": 4709980,
+          "player_name": "Johnathan Baldwin II",
+          "pos_abb": "SS",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039818",
+          "player_id": 4374037,
+          "player_name": "Kitan Oladapo",
+          "pos_abb": "FS",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0038408",
+          "player_id": 4430965,
+          "player_name": "Carrington Valentine",
+          "pos_abb": "RCB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039831",
+          "player_id": 4427356,
+          "player_name": "Kamal Hadden",
+          "pos_abb": "NB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0037094",
+          "player_id": 4259762,
+          "player_name": "Jonathan Ford",
+          "pos_abb": "NT",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040012",
+          "player_id": 4683059,
+          "player_name": "Collin Oliver",
+          "pos_abb": "WLB",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0036157",
+          "player_id": 4036153,
+          "player_name": "Kristian Welch",
+          "pos_abb": "LILB",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039850",
+          "player_id": 4430438,
+          "player_name": "Edgerrin Cooper",
+          "pos_abb": "RILB",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040877",
+          "player_id": 4685315,
+          "player_name": "Dani Dennis-Sutton",
+          "pos_abb": "SLB",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0033109",
+          "player_id": 2983055,
+          "player_name": "Javon Hargrave",
+          "pos_abb": "NT",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040899",
+          "player_id": 4869461,
+          "player_name": "Trey Smack",
+          "pos_abb": "PK",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0037547",
+          "player_id": 4248789,
+          "player_name": "Daniel Whelan",
+          "pos_abb": "P",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0037547",
+          "player_id": 4248789,
+          "player_name": "Daniel Whelan",
+          "pos_abb": "H",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0038090",
+          "player_id": 4430191,
+          "player_name": "Skyy Moore",
+          "pos_abb": "PR",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0038090",
+          "player_id": 4430191,
+          "player_name": "Skyy Moore",
+          "pos_abb": "KR",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0035118",
+          "player_id": 4422336,
+          "player_name": "Matt Orzech",
+          "pos_abb": "LS",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040667",
+          "player_id": 4701936,
+          "player_name": "Matthew Golden",
+          "pos_abb": "PR",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0037091",
+          "player_id": 4259305,
+          "player_name": "Bo Melton",
+          "pos_abb": "KR",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040009",
+          "player_id": 4431487,
+          "player_name": "Savion Williams",
+          "pos_abb": "KR",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0038124",
+          "player_id": 4248528,
+          "player_name": "Christian Watson",
+          "pos_abb": "WR",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039904",
+          "player_id": 3821571,
+          "player_name": "Jordan Morgan",
+          "pos_abb": "LT",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0032234",
+          "player_id": 2512477,
+          "player_name": "Laken Tomlinson",
+          "pos_abb": "LG",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0037076",
+          "player_id": 4426411,
+          "player_name": "Sean Rhyan",
+          "pos_abb": "C",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0029592",
+          "player_id": 14931,
+          "player_name": "Kevin Zeitler",
+          "pos_abb": "RG",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040726",
+          "player_id": 4873706,
+          "player_name": "Anthony Belton",
+          "pos_abb": "RT",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0036264",
+          "player_id": 4036378,
+          "player_name": "Jordan Love",
+          "pos_abb": "QB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0038996",
+          "player_id": 4572680,
+          "player_name": "Tucker Kraft",
+          "pos_abb": "TE",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0035700",
+          "player_id": 4047365,
+          "player_name": "Josh Jacobs",
+          "pos_abb": "RB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040667",
+          "player_id": 4701936,
+          "player_name": "Matthew Golden",
+          "pos_abb": "WR",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040023",
+          "player_id": 2312707,
+          "player_name": "John Williams",
+          "pos_abb": "LT",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0036551",
+          "player_id": 4242390,
+          "player_name": "Aaron Banks",
+          "pos_abb": "LG",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040023",
+          "player_id": 2312707,
+          "player_name": "John Williams",
+          "pos_abb": "C",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039819",
+          "player_id": 4361904,
+          "player_name": "Travis Glover",
+          "pos_abb": "RG",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0036284",
+          "player_id": 4240090,
+          "player_name": "Mekhi Becton",
+          "pos_abb": "RT",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0028118",
+          "player_id": 14163,
+          "player_name": "Tyrod Taylor",
+          "pos_abb": "QB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040598",
+          "player_id": 4431346,
+          "player_name": "Mark Redman",
+          "pos_abb": "TE",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040142",
+          "player_id": 4819231,
+          "player_name": "Kaleb Johnson",
+          "pos_abb": "RB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040009",
+          "player_id": 4431487,
+          "player_name": "Savion Williams",
+          "pos_abb": "WR",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0036284",
+          "player_id": 4240090,
+          "player_name": "Mekhi Becton",
+          "pos_abb": "LT",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040884",
+          "player_id": 4569661,
+          "player_name": "Jager Burton",
+          "pos_abb": "LG",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040884",
+          "player_id": 4569661,
+          "player_name": "Jager Burton",
+          "pos_abb": "C",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0032234",
+          "player_id": 2512477,
+          "player_name": "Laken Tomlinson",
+          "pos_abb": "RG",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039819",
+          "player_id": 4361904,
+          "player_name": "Travis Glover",
+          "pos_abb": "RT",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0033858",
+          "player_id": 3054212,
+          "player_name": "Jonnu Smith",
+          "pos_abb": "TE",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039811",
+          "player_id": 4429023,
+          "player_name": "MarShawn Lloyd",
+          "pos_abb": "RB",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0038090",
+          "player_id": 4430191,
+          "player_name": "Skyy Moore",
+          "pos_abb": "WR",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039272",
+          "player_id": 4360887,
+          "player_name": "Donovan Jennings",
+          "pos_abb": "LG",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039817",
+          "player_id": 4428037,
+          "player_name": "Jacob Monk",
+          "pos_abb": "C",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0036284",
+          "player_id": 4240090,
+          "player_name": "Mekhi Becton",
+          "pos_abb": "RG",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0037817",
+          "player_id": 4240435,
+          "player_name": "Zach Bako-Bewele",
+          "pos_abb": "RT",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039144",
+          "player_id": 4428085,
+          "player_name": "Luke Musgrave",
+          "pos_abb": "TE",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0038685",
+          "player_id": 3149687,
+          "player_name": "Chris Brooks",
+          "pos_abb": "RB",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0037091",
+          "player_id": 4259305,
+          "player_name": "Bo Melton",
+          "pos_abb": "WR",
+          "pos_rank": 5,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039272",
+          "player_id": 4360887,
+          "player_name": "Donovan Jennings",
+          "pos_abb": "RG",
+          "pos_rank": 5,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0038589",
+          "player_id": 4360086,
+          "player_name": "Josh Whyle",
+          "pos_abb": "TE",
+          "pos_rank": 5,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0040948",
+          "player_id": 4635009,
+          "player_name": "J. Michael Sturdivant",
+          "pos_abb": "WR",
+          "pos_rank": 6,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039817",
+          "player_id": 4428037,
+          "player_name": "Jacob Monk",
+          "pos_abb": "RG",
+          "pos_rank": 6,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039936",
+          "player_id": 4361027,
+          "player_name": "Thomas Yassmin",
+          "pos_abb": "TE",
+          "pos_rank": 6,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        },
+        {
+          "gsis_id": "00-0039146",
+          "player_id": 4362249,
+          "player_name": "Jayden Reed",
+          "pos_abb": "WR",
+          "pos_rank": 7,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "GB"
+        }
+      ],
+      "snapshot_at": "2026-11-25T17:56:34Z",
+      "source": "nflverse_depth_charts_capture",
+      "team": "GB",
+      "unresolved_depth_rows": []
+    },
+    "home": {
+      "injury_report": {
+        "available": true,
+        "players": [
+          {
+            "gsis_id": "00-0026498",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0031388",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0032228",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0033110",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0033868",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0034114",
+            "practice_status": "Did Not Participate In Practice",
+            "report_status": "Out"
+          },
+          {
+            "gsis_id": "00-0036244",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0036349",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0037191",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0037587",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0037840",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0039058",
+            "practice_status": "Did Not Participate In Practice",
+            "report_status": "Out"
+          },
+          {
+            "gsis_id": "00-0039074",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0039137",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0039138",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0039784",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0040737",
+            "practice_status": "Did Not Participate In Practice",
+            "report_status": "Out"
+          },
+          {
+            "gsis_id": "00-0031381",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0034234",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0037195",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0038905",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0039075",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0039138",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0039751",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0039784",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0039830",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0041414",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0041415",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0041429",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          }
+        ],
+        "roster_exclusions_added": 12,
+        "rows": 17,
+        "source_available_utc": "2026-11-25T19:56:09Z",
+        "source_sha256": "81755632255218a133478f3abddb26264fa2d67f287a405d8743b718bc828ed1",
+        "source_timestamp_semantics": "hash_pinned_source_capture",
+        "source_url": "https://github.com/nflverse/nflverse-data/releases/download/injuries/injuries_2026.parquet"
+      },
+      "membership": {
+        "players": [
+          {
+            "gsis_id": "00-0026498",
+            "name": "Matthew Stafford",
+            "position": "QB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0029822",
+            "name": "Brandon McManus",
+            "position": "K",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0030097",
+            "name": "David Quessenberry",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0031381",
+            "name": "Davante Adams",
+            "position": "WR",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0031388",
+            "name": "Aaron Donald",
+            "position": "DL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0031554",
+            "name": "Eric Kendricks",
+            "position": "LB",
+            "status": "DEV",
+            "status_description": "P07"
+          },
+          {
+            "gsis_id": "00-0032228",
+            "name": "Joe Cardona",
+            "position": "LS",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0033110",
+            "name": "Tyler Higbee",
+            "position": "TE",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0033868",
+            "name": "Myles Garrett",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0034114",
+            "name": "Coleman Shelton",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0034234",
+            "name": "Poona Ford",
+            "position": "DL",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0035355",
+            "name": "Blake Hance",
+            "position": "OL",
+            "status": "DEV",
+            "status_description": "P07"
+          },
+          {
+            "gsis_id": "00-0035602",
+            "name": "Alex Bachman",
+            "position": "WR",
+            "status": "DEV",
+            "status_description": "P07"
+          },
+          {
+            "gsis_id": "00-0035665",
+            "name": "David Long",
+            "position": "DB",
+            "status": "DEV",
+            "status_description": "P07"
+          },
+          {
+            "gsis_id": "00-0036093",
+            "name": "Bill Murray",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0036237",
+            "name": "Larrell Murchison",
+            "position": "DL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0036244",
+            "name": "Colby Parkinson",
+            "position": "TE",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0036339",
+            "name": "Kevin Dotson",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0036349",
+            "name": "Kam Curl",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0036603",
+            "name": "Alaric Jackson",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0036672",
+            "name": "Grant Stuard",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0036802",
+            "name": "Jon Rhattigan",
+            "position": "LB",
+            "status": "DEV",
+            "status_description": "P07"
+          },
+          {
+            "gsis_id": "00-0036849",
+            "name": "Tutu Atwell",
+            "position": "WR",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0037191",
+            "name": "Trent McDuffie",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0037195",
+            "name": "Jaylen Watson",
+            "position": "DB",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0037385",
+            "name": "Michael Niese",
+            "position": "OL",
+            "status": "DEV",
+            "status_description": "P06"
+          },
+          {
+            "gsis_id": "00-0037557",
+            "name": "Ronnie Rivers",
+            "position": "RB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0037587",
+            "name": "Nate Landman",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0037840",
+            "name": "Kyren Williams",
+            "position": "RB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0037841",
+            "name": "Quentin Lake",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0037984",
+            "name": "Pepe Williams",
+            "position": "DB",
+            "status": "DEV",
+            "status_description": "P06"
+          },
+          {
+            "gsis_id": "00-0038359",
+            "name": "Xavier Smith",
+            "position": "WR",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0038366",
+            "name": "Tanner Ingle",
+            "position": "DB",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0038905",
+            "name": "Blake Grupe",
+            "position": "K",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0038941",
+            "name": "Tyler Scott",
+            "position": "WR",
+            "status": "DEV",
+            "status_description": "P06"
+          },
+          {
+            "gsis_id": "00-0039058",
+            "name": "Steve Avila",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039059",
+            "name": "Ethan Evans",
+            "position": "P",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039061",
+            "name": "Desjuan Johnson",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039074",
+            "name": "Davis Allen",
+            "position": "TE",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039075",
+            "name": "Puka Nacua",
+            "position": "WR",
+            "status": "RES",
+            "status_description": "R40"
+          },
+          {
+            "gsis_id": "00-0039077",
+            "name": "Warren McClendon Jr.",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039107",
+            "name": "Stetson Bennett",
+            "position": "QB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039137",
+            "name": "Byron Young",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039138",
+            "name": "Kobie Turner",
+            "position": "DL",
+            "status": "RES",
+            "status_description": "R48"
+          },
+          {
+            "gsis_id": "00-0039151",
+            "name": "Emmanuel Forbes",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039734",
+            "name": "Braden Fiske",
+            "position": "DL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039738",
+            "name": "Blake Corum",
+            "position": "RB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039749",
+            "name": "Tyler Davis",
+            "position": "DL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039750",
+            "name": "Joshua Karty",
+            "position": "K",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039751",
+            "name": "Jordan Whittington",
+            "position": "WR",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0039753",
+            "name": "Beaux Limmer",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039772",
+            "name": "Josh Wallace",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039774",
+            "name": "Omar Speights",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039776",
+            "name": "Jaylen McCollough",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039780",
+            "name": "Cam Lampkin",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0039784",
+            "name": "Justin Dedich",
+            "position": "OL",
+            "status": "RES",
+            "status_description": "R48"
+          },
+          {
+            "gsis_id": "00-0039830",
+            "name": "Dylan McMahon",
+            "position": "OL",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0039834",
+            "name": "Kamren Kinchens",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040580",
+            "name": "Josaiah Stewart",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040585",
+            "name": "Ty Hamilton",
+            "position": "DL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040590",
+            "name": "Konata Mumpfield",
+            "position": "WR",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040595",
+            "name": "Bill Norton",
+            "position": "DL",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0040597",
+            "name": "Brennan Presley",
+            "position": "WR",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0040601",
+            "name": "Jordan Waters",
+            "position": "RB",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0040613",
+            "name": "Shaun Dolac",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0040737",
+            "name": "Terrance Ferguson",
+            "position": "TE",
+            "status": "RES",
+            "status_description": "R48"
+          },
+          {
+            "gsis_id": "00-0040923",
+            "name": "Maximus Pulley",
+            "position": "DB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0041394",
+            "name": "Keagen Trost",
+            "position": "OL",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0041399",
+            "name": "CJ Daniels",
+            "position": "WR",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0041404",
+            "name": "Wesley Bailey",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0041413",
+            "name": "Nick Andersen",
+            "position": "DB",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0041414",
+            "name": "Matthew Caldwell",
+            "position": "QB",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0041415",
+            "name": "Dean Connors",
+            "position": "RB",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0041416",
+            "name": "Nyzier Fourqurean",
+            "position": "DB",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0041421",
+            "name": "Darryl Peterson III",
+            "position": "LB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0041422",
+            "name": "Dan Villari",
+            "position": "TE",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0041428",
+            "name": "Jaxson Moi",
+            "position": "DL",
+            "status": "DEV",
+            "status_description": "P01"
+          },
+          {
+            "gsis_id": "00-0041429",
+            "name": "Eddie Walls III",
+            "position": "LB",
+            "status": "RES",
+            "status_description": "R01"
+          },
+          {
+            "gsis_id": "00-0041510",
+            "name": "Max Klare",
+            "position": "TE",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0041560",
+            "name": "Jack Bouwmeester",
+            "position": "P",
+            "status": "DEV",
+            "status_description": "P03"
+          },
+          {
+            "gsis_id": "00-0041568",
+            "name": "Ty Simpson",
+            "position": "QB",
+            "status": "ACT",
+            "status_description": "A01"
+          },
+          {
+            "gsis_id": "00-0041587",
+            "name": "Daniel Rickert",
+            "position": "LB",
+            "status": "RES",
+            "status_description": "R01"
+          }
+        ],
+        "source": "nflverse-weekly-rosters-2026-week-12:b0e660133e659b24ba90f85a20f483e47990539f13f3953c58e6ca25ef988d00",
+        "week": 12
+      },
+      "players": [
+        {
+          "gsis_id": "00-0039734",
+          "player_id": 4362245,
+          "player_name": "Braden Fiske",
+          "pos_abb": "LDE",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0040585",
+          "player_id": 4431118,
+          "player_name": "Ty Hamilton",
+          "pos_abb": "NT",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0031388",
+          "player_id": 16716,
+          "player_name": "Aaron Donald",
+          "pos_abb": "RDE",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039137",
+          "player_id": 4875196,
+          "player_name": "Byron Young",
+          "pos_abb": "WLB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0037587",
+          "player_id": 4243181,
+          "player_name": "Nate Landman",
+          "pos_abb": "LILB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039774",
+          "player_id": 4428550,
+          "player_name": "Omar Speights",
+          "pos_abb": "RILB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0033868",
+          "player_id": 3122132,
+          "player_name": "Myles Garrett",
+          "pos_abb": "SLB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039772",
+          "player_id": 4572371,
+          "player_name": "Josh Wallace",
+          "pos_abb": "LCB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0036349",
+          "player_id": 4242154,
+          "player_name": "Kam Curl",
+          "pos_abb": "SS",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039834",
+          "player_id": 4596363,
+          "player_name": "Kamren Kinchens",
+          "pos_abb": "FS",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0037191",
+          "player_id": 4426405,
+          "player_name": "Trent McDuffie",
+          "pos_abb": "RCB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0037841",
+          "player_id": 4249128,
+          "player_name": "Quentin Lake",
+          "pos_abb": "NB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0036237",
+          "player_id": 4240123,
+          "player_name": "Larrell Murchison",
+          "pos_abb": "LDE",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0034234",
+          "player_id": 3125114,
+          "player_name": "Poona Ford",
+          "pos_abb": "NT",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039749",
+          "player_id": 4568217,
+          "player_name": "Tyler Davis",
+          "pos_abb": "RDE",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0040580",
+          "player_id": 4682983,
+          "player_name": "Josaiah Stewart",
+          "pos_abb": "WLB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0036672",
+          "player_id": 4240255,
+          "player_name": "Grant Stuard",
+          "pos_abb": "LILB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0040613",
+          "player_id": 4693848,
+          "player_name": "Shaun Dolac",
+          "pos_abb": "RILB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039061",
+          "player_id": 4362294,
+          "player_name": "Desjuan Johnson",
+          "pos_abb": "SLB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039780",
+          "player_id": 4427752,
+          "player_name": "Cam Lampkin",
+          "pos_abb": "LCB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039776",
+          "player_id": 4427120,
+          "player_name": "Jaylen McCollough",
+          "pos_abb": "SS",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0040923",
+          "player_id": 5082391,
+          "player_name": "Maximus Pulley",
+          "pos_abb": "FS",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039151",
+          "player_id": 4429767,
+          "player_name": "Emmanuel Forbes Jr.",
+          "pos_abb": "RCB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039772",
+          "player_id": 4572371,
+          "player_name": "Josh Wallace",
+          "pos_abb": "NB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039138",
+          "player_id": 4250621,
+          "player_name": "Kobie Turner",
+          "pos_abb": "LDE",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0041429",
+          "player_id": 4877357,
+          "player_name": "Eddie Walls III",
+          "pos_abb": "WLB",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0041404",
+          "player_id": 4430919,
+          "player_name": "Wesley Bailey",
+          "pos_abb": "SLB",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0037195",
+          "player_id": 4697639,
+          "player_name": "Jaylen Watson",
+          "pos_abb": "LCB",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0041421",
+          "player_id": 4598574,
+          "player_name": "Darryl Peterson III",
+          "pos_abb": "SLB",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0029822",
+          "player_id": 16339,
+          "player_name": "Brandon McManus",
+          "pos_abb": "PK",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039059",
+          "player_id": 5125875,
+          "player_name": "Ethan Evans",
+          "pos_abb": "P",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039059",
+          "player_id": 5125875,
+          "player_name": "Ethan Evans",
+          "pos_abb": "H",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0038359",
+          "player_id": 4386544,
+          "player_name": "Xavier Smith",
+          "pos_abb": "PR",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0038359",
+          "player_id": 4386544,
+          "player_name": "Xavier Smith",
+          "pos_abb": "KR",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0032228",
+          "player_id": 2575907,
+          "player_name": "Joe Cardona",
+          "pos_abb": "LS",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039750",
+          "player_id": 4566192,
+          "player_name": "Joshua Karty",
+          "pos_abb": "PK",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039751",
+          "player_id": 4569382,
+          "player_name": "Jordan Whittington",
+          "pos_abb": "PR",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0037557",
+          "player_id": 4243003,
+          "player_name": "Ronnie Rivers",
+          "pos_abb": "KR",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0038905",
+          "player_id": 4259619,
+          "player_name": "Blake Grupe",
+          "pos_abb": "PK",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0041415",
+          "player_id": 5082269,
+          "player_name": "Dean Connors",
+          "pos_abb": "KR",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039751",
+          "player_id": 4569382,
+          "player_name": "Jordan Whittington",
+          "pos_abb": "KR",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0040590",
+          "player_id": 4710855,
+          "player_name": "Konata Mumpfield",
+          "pos_abb": "WR",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0036603",
+          "player_id": 4036135,
+          "player_name": "Alaric Jackson",
+          "pos_abb": "LT",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039058",
+          "player_id": 4362474,
+          "player_name": "Steve Avila",
+          "pos_abb": "LG",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039753",
+          "player_id": 4567175,
+          "player_name": "Beaux Limmer",
+          "pos_abb": "C",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0036339",
+          "player_id": 3917599,
+          "player_name": "Kevin Dotson",
+          "pos_abb": "RG",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039077",
+          "player_id": 4426512,
+          "player_name": "Warren McClendon Jr.",
+          "pos_abb": "RT",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0026498",
+          "player_id": 12483,
+          "player_name": "Matthew Stafford",
+          "pos_abb": "QB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0033110",
+          "player_id": 2573401,
+          "player_name": "Tyler Higbee",
+          "pos_abb": "TE",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0037840",
+          "player_id": 4430737,
+          "player_name": "Kyren Williams",
+          "pos_abb": "RB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0041399",
+          "player_id": 4605951,
+          "player_name": "CJ Daniels",
+          "pos_abb": "WR",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0030097",
+          "player_id": 15946,
+          "player_name": "David Quessenberry",
+          "pos_abb": "LT",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0036093",
+          "player_id": 3912189,
+          "player_name": "Bill Murray",
+          "pos_abb": "LG",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0034114",
+          "player_id": 3052180,
+          "player_name": "Coleman Shelton",
+          "pos_abb": "C",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039753",
+          "player_id": 4567175,
+          "player_name": "Beaux Limmer",
+          "pos_abb": "RG",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0041394",
+          "player_id": 4575003,
+          "player_name": "Keagen Trost",
+          "pos_abb": "RT",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039107",
+          "player_id": 4259553,
+          "player_name": "Stetson Bennett IV",
+          "pos_abb": "QB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0036244",
+          "player_id": 4242557,
+          "player_name": "Colby Parkinson",
+          "pos_abb": "TE",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039738",
+          "player_id": 4429096,
+          "player_name": "Blake Corum",
+          "pos_abb": "RB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0036849",
+          "player_id": 4360797,
+          "player_name": "Tutu Atwell",
+          "pos_abb": "WR",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039753",
+          "player_id": 4567175,
+          "player_name": "Beaux Limmer",
+          "pos_abb": "LG",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039830",
+          "player_id": 4430155,
+          "player_name": "Dylan McMahon",
+          "pos_abb": "C",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039784",
+          "player_id": 4360859,
+          "player_name": "Justin Dedich",
+          "pos_abb": "RG",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0041568",
+          "player_id": 4685522,
+          "player_name": "Ty Simpson",
+          "pos_abb": "QB",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039074",
+          "player_id": 4426553,
+          "player_name": "Davis Allen",
+          "pos_abb": "TE",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0037557",
+          "player_id": 4243003,
+          "player_name": "Ronnie Rivers",
+          "pos_abb": "RB",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0038359",
+          "player_id": 4386544,
+          "player_name": "Xavier Smith",
+          "pos_abb": "WR",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0041414",
+          "player_id": 4877717,
+          "player_name": "Matthew Caldwell",
+          "pos_abb": "QB",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0041510",
+          "player_id": 4833029,
+          "player_name": "Max Klare",
+          "pos_abb": "TE",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0041415",
+          "player_id": 5082269,
+          "player_name": "Dean Connors",
+          "pos_abb": "RB",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0031381",
+          "player_id": 16800,
+          "player_name": "Davante Adams",
+          "pos_abb": "WR",
+          "pos_rank": 5,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0040737",
+          "player_id": 4570037,
+          "player_name": "Terrance Ferguson",
+          "pos_abb": "TE",
+          "pos_rank": 5,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039751",
+          "player_id": 4569382,
+          "player_name": "Jordan Whittington",
+          "pos_abb": "WR",
+          "pos_rank": 6,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        },
+        {
+          "gsis_id": "00-0039075",
+          "player_id": 4426515,
+          "player_name": "Puka Nacua",
+          "pos_abb": "WR",
+          "pos_rank": 7,
+          "snapshot_at": "2026-11-25T17:56:34Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LAR"
+        }
+      ],
+      "snapshot_at": "2026-11-25T17:56:34Z",
+      "source": "nflverse_depth_charts_capture",
+      "team": "LAR",
+      "unresolved_depth_rows": [
+        {
+          "player_name": null,
+          "pos_abb": "WLB",
+          "pos_rank": 4
+        }
+      ]
+    }
+  },
+  "schedule": {
+    "availability_classification": "captured_before_cutoff",
+    "away_team": "GB",
+    "game_id": "2026_12_GB_LA",
+    "game_type": "REG",
+    "gameday": "2026-11-25",
+    "gametime": "20:00",
+    "gametime_timezone": "America/New_York",
+    "home_team": "LAR",
+    "ingested_at": null,
+    "kickoff_source_url": "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.parquet",
+    "scheduled_kickoff_utc": "2026-11-26T01:00:00Z",
+    "season": 2026,
+    "source": "nflverse_games_capture",
+    "week": 12
+  },
+  "schema": "lp-nfl-pregame-snapshot-1",
+  "snapshot_sha256": "d2e37544508ca96dfc9b2bac5782c6e6da1777b2738c27808bf4322dd460c232"
+}
