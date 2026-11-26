@@ -158,7 +158,8 @@ def _reproduction_command(args, seed):
         command.append('--slc-v2')
     for flag, sha in (('participation_field', 'participation_field_sha256'),
                       ('participation_snap_counts', 'participation_snap_counts_sha256'),
-                      ('playcall_fg_kicker', 'playcall_fg_kicker_sha256')):  # research tables, so a replay runs the same model
+                      ('playcall_fg_kicker', 'playcall_fg_kicker_sha256'),
+                      ('season_score_file', 'season_score_file_sha256')):  # data inputs, so a replay runs the same model
         if getattr(args, flag, None):
             command.extend([f"--{flag.replace('_', '-')}", str(getattr(args, flag)),
                             f"--{sha.replace('_', '-')}", getattr(args, sha)])
@@ -532,9 +533,22 @@ def _preserve_failed_record(directory, seed, record, outcome, snapshot, rng_plan
     return {'schema': payload['schema'], 'path': str(path), 'sha256': digest}
 
 
+def _write_play_trace(trace_dir, seed, snapshot, record, decisions, error):
+    """One file per seed for step_trace.py: the game record and the decision record of every scrimmage and kick play,
+    in order. A failed game keeps the decisions made before the failure and the error."""
+    schedule = snapshot.get('schedule') or {}
+    trace = {'schema': 'lp-nfl-slc-play-trace-1', 'seed': seed, 'game_id': schedule.get('game_id'),
+             'home': schedule.get('home_team'), 'away': schedule.get('away_team'),
+             'sides': {'A': schedule.get('home_team'), 'B': schedule.get('away_team')},  # the engine's offense labels
+             'error': error, 'decisions': decisions or [], 'record': record}
+    path = Path(trace_dir) / f'seed-{seed}.json'
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(trace, default=str) + '\n', encoding='utf-8')
+
+
 def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validation=None, export_boxscores=False,
                    paired_randomness=False, rng_plan=None, export_plays=False, failure_dir=None,
-                   failure_identities=None, trace_outcome_probabilities=False):
+                   failure_identities=None, trace_outcome_probabilities=False, trace_dir=None):
     record = None
     error = None
     caught_exception = None
@@ -555,6 +569,10 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
         caught_exception = exc
         trace = traceback.format_exc()
         validation_error = record is not None
+    if trace_dir is not None:  # debug: every play's decision record, kept even when the game fails partway
+        if decisions is None and slc_engine.is_slc(ref):
+            decisions = list(ref.contextual_sampler.decisions)
+        _write_play_trace(trace_dir, seed, snapshot, record, decisions, error)
     outcome = _record_outcome(seed, record, error, validation_error)
     if trace is not None:
         outcome['traceback'] = trace
@@ -701,7 +719,7 @@ def _open_seed_ledger(path, header, resume, *, seed_end=None, allowed_seeds=None
 
 def _seed_outcome(seed, finished, ledger, ref, snapshot, *, profile_manifest=None, archive_validation=None,
                   export_boxscores=False, paired_randomness=False, rng_plan=None, export_plays=False,
-                  failure_dir=None, failure_identities=None, trace_outcome_probabilities=False):
+                  failure_dir=None, failure_identities=None, trace_outcome_probabilities=False, trace_dir=None):
     """A finished seed is reused from the ledger unless it errored; anything else is simulated and appended."""
     cached = finished.get(seed)
     has_boxscore = bool(cached and cached.get('outcome', {}).get('boxscore'))
@@ -716,7 +734,8 @@ def _seed_outcome(seed, finished, ledger, ref, snapshot, *, profile_manifest=Non
                                            export_boxscores, paired_randomness, rng_plan=rng_plan,
                                            export_plays=export_plays, failure_dir=failure_dir,
                                            failure_identities=failure_identities,
-                                           trace_outcome_probabilities=trace_outcome_probabilities)
+                                           trace_outcome_probabilities=trace_outcome_probabilities,
+                                           trace_dir=trace_dir)
     row = {'seed': seed, 'outcome': outcome, 'players': contribution}
     ledger.write(json.dumps(row, sort_keys=True) + '\n')
     ledger.flush()
@@ -984,6 +1003,9 @@ def run_batch(args):
                                                            participation_entry_current=args.participation_entry_current_season,
                                                            fg_kicker=((args.playcall_fg_kicker, args.playcall_fg_kicker_sha256)
                                                                       if args.playcall_fg_kicker else None),
+                                                           season_scores=((args.season_score_file,
+                                                                           args.season_score_file_sha256)
+                                                                          if args.season_score_file else None),
                                                            qb_decisions=args.playcall_qb_decisions,
                                                            player_outcomes=args.playcall_player_outcomes,
                                                            player_outcomes_receiver_only=args.playcall_player_outcomes_receiver_only,
@@ -1225,7 +1247,7 @@ def run_batch(args):
                 failure_identities={key: ledger_header.get(key) for key in (
                     'game_id', 'source_snapshot_sha256', 'observed_reference_sha256',
                     'source_commit', 'playcall_artifact_sha256')},
-                trace_outcome_probabilities=args.trace_outcome_probabilities)
+                trace_outcome_probabilities=args.trace_outcome_probabilities, trace_dir=args.trace_dir)
             outcomes.append(outcome)
             if boxscore_handle is not None and seed not in exported_seed_ids and outcome.get('boxscore'):
                 boxscore_handle.write(json.dumps({'type': 'game', **outcome['boxscore']},
@@ -1482,6 +1504,11 @@ def main(argv=None):
     ap.add_argument('--no-participation-entry-current-season', dest='participation_entry_current_season',
                     action='store_false',
                     help='the table-rate bench draw (HS/historical), instead of HE')
+    ap.add_argument('--season-score-file', type=Path, default=None,
+                    help='the nflverse play-by-play release that supplies current-season pre-play scores, with '
+                         '--season-score-file-sha256. A data input, not code: without it the pinned default release is '
+                         'used, and the run stops before loading anything if that file lacks a game available at the cutoff')
+    ap.add_argument('--season-score-file-sha256', default=None)
     ap.add_argument('--playcall-fg-kicker', type=Path, default=None,
                     help='SLC v2 research flag (off by default): field goals by the team kicker: distance +18, 76-yard '
                          'record ceiling, kick share weighted by yard line, kicker make offset (kicker_field_goals.py). '
@@ -1494,6 +1521,10 @@ def main(argv=None):
                     help='SLC research ablation: adjust QB run-role selection using the named QB\'s prior non-scramble run tendency; requires QB decisions')
     ap.add_argument('--playcall-player-outcomes', action='store_true',
                     help='SLC research: player-conditioned QB, receiver and rusher event/yards/touchdown outcome distributions')
+    ap.add_argument('--trace-dir', type=Path, default=None,
+                    help='debug: write seed-<n>.json per simulated seed (the game record and every play decision) for '
+                         'step_trace.py, which steps through the game play by play. A resumed seed is not re-simulated, '
+                         'so it gets no trace')
     ap.add_argument('--trace-outcome-probabilities', action='store_true',
                     help='SLC research diagnostic: export per-play event probabilities before and after each enabled conditioning layer')
     ap.add_argument('--playcall-player-outcomes-receiver-only', action='store_true',
@@ -1687,6 +1718,8 @@ def main(argv=None):
             ap.error('--playcall-pbv1-package requires --participation-field so package draws constrain player participation')
         if args.rng_protocol != rng_protocol.V2:
             ap.error('--playcall-pbv1-package requires --rng-protocol v2')
+    if bool(args.season_score_file) != bool(args.season_score_file_sha256):
+        ap.error('--season-score-file and --season-score-file-sha256 go together')
     if args.playcall_fg_kicker:
         if not args.playcall_fg_kicker_sha256:
             ap.error('--playcall-fg-kicker requires --playcall-fg-kicker-sha256')

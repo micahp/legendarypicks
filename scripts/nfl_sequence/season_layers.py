@@ -44,6 +44,8 @@ class Evidence:
         self.team_games = dict(team_games)
         self.undated = tuple(sorted(undated))
         self.n0 = float(n0)
+        self.score_file = release_path(self.season)  # the pre-play score source; check_score_source() may replace it
+        self.score_sha256 = None
 
     @classmethod
     def for_target(cls, db, season, target_game_id, kickoff, n0=csa.DEFAULT_N0):
@@ -272,6 +274,34 @@ def release_path(season):
 SHIFT_STRENGTH = 25.0  # the point and streak splits' own prior strength, used for the score-clock offset too
 
 
+def check_score_source(db, evidence, path=None, expected_sha256=None):
+    """Fail fast, before any table is loaded, unless the score file is the one named and covers every available game.
+
+    The score file is a build input, not part of the model code: a commit that names one release cannot build a pack for any
+    game after that release. `path` (with its SHA-256) replaces the default release_path(season). Every current-season game
+    the evidence makes available must have regular-season rows in the file, or the refusal names the missing games."""
+    import pyarrow.parquet as pq
+    path = str(path or release_path(evidence.season))
+    with open(path, 'rb') as source:
+        sha = hashlib.sha256(source.read()).hexdigest()
+    if expected_sha256 is not None and sha != expected_sha256:
+        raise ValueError(f'season score file {path} has sha256 {sha}, expected {expected_sha256}')
+    where, params = evidence.sql_filter()
+    con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=30)
+    try:
+        available = {row[0] for row in con.execute(f"SELECT DISTINCT game_id FROM nfl_pbp WHERE {where} AND week <= 18", params)}
+    finally:
+        con.close()
+    table = pq.read_table(path, columns=['game_id', 'season_type']).to_pydict()
+    released = {game for game, kind in zip(table['game_id'], table['season_type']) if kind == 'REG'}
+    missing = sorted(available - released)
+    if missing:
+        raise ValueError(f'season score file {path} has no scores for {len(missing)} game(s) available before the cutoff: '
+                         f'{missing}. Pass a newer nflverse release with --season-score-file and --season-score-file-sha256')
+    evidence.score_file, evidence.score_sha256 = path, sha
+    return {'path': path, 'sha256': sha, 'games_checked': len(available)}
+
+
 def release_scores(season, path=None):
     """((game_id, play_id) -> pre-play scores, file SHA-256) from the nflverse play-by-play release. The pinned raw files of
     earlier seasons do not cover the current season, so its file is identified by the hash recorded here."""
@@ -438,10 +468,10 @@ def apply(ref, db, evidence, adapt_workload=True):
             sampler.share_table, layers['dirichlet_player_target_carry_shares'] = adapt_shares(sampler.share_table, db, evidence)
         frame_layers = (sampler.point_shifts, sampler.streak_shifts, sampler.streak_league)
         if any(table is not None for table in frame_layers) or sampler.score_clock_playcalling_enabled:
-            scores, scores_sha = release_scores(evidence.season)
+            scores, scores_sha = release_scores(evidence.season, evidence.score_file)
             frame = season_frame(db, evidence, scores)
             manifest['season_frame'] = {'plays': len(frame), 'games': len(frame.games), 'score_source_sha256': scores_sha,
-                                        'score_source': PBP_RELEASE.format(season=evidence.season)}
+                                        'score_source': evidence.score_file}  # the file release_scores read
             cutoff = evidence.season + 1  # the frame holds only the current season
             team_index = sampler.layer.team_index  # the key space every shift lookup uses
             if sampler.point_shifts is not None:
