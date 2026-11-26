@@ -10,6 +10,7 @@ from dataclasses import asdict, dataclass
 
 import ceg_contract as contract
 import ceg_contract_v3 as contract_v3
+import game_state
 import penalty_enforcement
 import reducer
 from event_expansion import EXPANDED_DEFAULT, EventExpansionSwitches
@@ -897,7 +898,8 @@ def _apply_v3_kick(state, play, switches):
                       'return_touchdown': scoring.kind == 'touchdown'})
         return AppliedEvent(None, scoring.kind, flags, scorer)
     if kick.result == 'missed':
-        expected_restart = min(80, 100 - kick.kick_spot.yardline_100)
+        actual_kick_spot = game_state.kick_spot_yardline_100(kick_spot)
+        expected_restart = game_state.missed_field_goal_spot(actual_kick_spot)
         if _v3_spot(kick.receiving_restart_spot, 'receiving_team', 'missed_field_goal_restart') != expected_restart:
             raise UnsupportedEventTransition('missed_field_goal_restart_spot_invalid')
         if _v3_spot(kick.dead_ball_spot, 'kicking_team', 'missed_field_goal_dead_ball') != 0:

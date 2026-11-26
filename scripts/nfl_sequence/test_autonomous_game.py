@@ -580,6 +580,41 @@ class AutonomousSpecialTeamsTests(unittest.TestCase):
         else:
             self.assertEqual(applied.terminal, 'field_goal_attempt')
 
+    def test_missed_field_goal_restart_uses_live_holder_spot_not_line_of_scrimmage(self):
+        source = self._source()
+        source.seed = 300016
+        source.team_by_side = {'A': 'AAA', 'B': 'BBB'}
+        source.event_manifest_sha256 = 'f' * 64
+        call = {'lineups': {'kicking': {'kicker': 'AAA-K'}},
+                'player_profiles': {'AAA-K': {'ratings': {'KPW': 70, 'KAC': 70}}}}
+        source._special_teams_call = lambda *_args: (call, {}, {'source': 'fixture'})
+        facts = {'result': 'missed', 'possession_after': 'receiving_team',
+                 'kick_spot_yardline_100': 44, 'distance_yards': 61,
+                 'dead_ball_yardline_100': 0, 'elapsed_seconds': 3.5,
+                 'clock_runoff_seconds': 4, 'scoring': None}
+        source.session = SimpleNamespace(special_teams=lambda _call: (
+            {'status': 'complete', 'schema_version': 'gridiron.autonomous-special-teams.v1',
+             'result': facts, 'events': [], 'trajectory': {}},
+            {'engine_commit': 'fixture'}))
+
+        with tempfile.TemporaryDirectory() as tmp:
+            ratings_path = Path(tmp) / 'ratings.json'
+            ratings_path.write_text('{}')
+            source._rating_profile_path = lambda: str(ratings_path)
+            with patch.object(gridiron_bridge, '_ratings', return_value=(
+                    {'AAA-K': {'ratings': {'KPW': 70, 'KAC': 70}}}, {'source': 'fixture'})):
+                generated = source._execute_live_special_teams(
+                    'field_goal', 'A', 'B', 44, 16,
+                    {'play_id': 16, 'participants': {}, 'decision_note': {}})
+
+        self.assertNotIn('blocker', generated)
+        self.assertEqual(generated['event_record'].kick.kick_spot.yardline_100, 44)
+        self.assertEqual(generated['event_record'].kick.receiving_restart_spot.yardline_100, 49)
+        applied = source.apply_event(
+            {'offense': 'A', 'defense': 'B', 'down': 4, 'togo': 8, 'yl': 44},
+            generated['event_record'])
+        self.assertEqual(applied.flags['field_goal_restart_yardline_100'], 49)
+
     def test_generated_blocked_field_goal_recovery_enters_slc_transition(self):
         source = self._source()
         source._decision_seed = lambda _play_index, _purpose: 0

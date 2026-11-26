@@ -21,7 +21,7 @@ import roster_preflight
 import v1_complete_roster
 from scripts import nfl_team_codes
 
-ENGINE_COMMIT = 'ddd19cfe1021f8ab7dd8ca5b0452f7273ad3194b'
+ENGINE_COMMIT = '72640b1ea0774bb345d2b1bcac7d2cb3fdeabe7c'
 PLAYBOOK_MANIFEST_SHA256 = '220af2a590b2e7ddf5c28a32977aadd4d5a5e6e128ca8392da8bac37ef0917ac'
 DEFENSE_SLOTS = ('LEDGE', 'LDT', 'RDT', 'REDGE', 'MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS')
 DEFENSE_POSITION_CANDIDATES = {

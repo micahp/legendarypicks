@@ -895,6 +895,11 @@ class AutonomousGameExecution:
             return {'blocker': 'autonomous_special_teams_team_identity_invalid'}
         kicking_club = self.team_by_side[kicking_side]
         receiving_club = self.team_by_side[receiving_side]
+        # GridIron's field-goal input yardline is the line of scrimmage. The
+        # rules restart is measured from the holder's spot, seven yards behind
+        # the line, where the live executor places the ball for the kick.
+        kick_spot_yardline = (game_state.kick_spot_yardline_100(int(yardline_100))
+                              if kind == 'field_goal' else int(yardline_100))
         try:
             call, player_rows, rating_provenance = self._special_teams_call(
                 kind, kicking_club, receiving_club, yardline_100, play_index)
@@ -1040,7 +1045,7 @@ class AutonomousGameExecution:
                     distance_yards=(30 if free_kick_kind == 'safety_free_kick' else 25)
                     if choice == 'at_distance_from_kick' else None)
         elif result_name == 'missed':
-            restart_yardline = game_state.missed_field_goal_spot(int(yardline_100))
+            restart_yardline = game_state.missed_field_goal_spot(kick_spot_yardline)
             restart_spot = ceg_contract_v3.FieldSpotV3(restart_yardline, 'receiving_team')
             dead_spot = ceg_contract_v3.FieldSpotV3(0, 'kicking_team')
             possession_after = 'receiving_team'
@@ -1090,6 +1095,8 @@ class AutonomousGameExecution:
             result_name = 'blocked'
         kick = ceg_contract_v3.KickV3(
             kind=kick_kind, kicking_team=kicking_side, receiving_team=receiving_side,
+            # The contract's pre-kick state spot is the LOS. Miss enforcement
+            # separately derives the actual holder spot from that LOS.
             kick_spot=ceg_contract_v3.FieldSpotV3(int(yardline_100), 'kicking_team'),
             distance_yards=(int(facts['distance_yards']) if type(facts.get('distance_yards')) in (int, float)
                             and math.isfinite(facts['distance_yards']) else None),
