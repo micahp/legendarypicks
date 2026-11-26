@@ -212,7 +212,7 @@ def _ratings(path):
 
 
 def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_path, *, seed, family, state,
-               ratings_path=None):
+               ratings_path=None, prepared_participation=None):
     snapshot = pregame_snapshot.load_frozen_snapshot(snapshot_path)
     checks, resolved = roster_preflight.check(snapshot)
     if roster_preflight.failed(checks) or roster_preflight.exclusions_applied(snapshot, resolved)[1] != 'PASS':
@@ -241,10 +241,17 @@ def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_pat
     field = (field_path if isinstance(field_path, participation_field.Field)
              else participation_field.Field.load(field_path, field_hash))
     roster = snapshot['rosters'][offense_side]['players']
-    selected = live_participation.advance(field, team=offense_team, season=season, resolved=resolved[offense_side],
-                                           roster=roster, group='11', seed=seed)
+    selected = prepared_participation
+    if selected is None:
+        selected = live_participation.advance(field, team=offense_team, season=season, resolved=resolved[offense_side],
+                                              roster=roster, group='11', seed=seed)
+    elif (selected['team'] != offense_team or selected['group'] != '11' or
+          selected['source_sha256'] != field.sha256):
+        raise ValueError('gridiron_prepared_participation_mismatch')
     allowed = v1_complete_roster.eligible_ids(resolved[offense_side])
     players = {selected['qb1']: 'QB', **selected['slots']}
+    if not set(players).issubset(allowed):
+        raise ValueError('gridiron_prepared_participation_ineligible')
     for role in ('LT', 'LG', 'C', 'RG', 'RT'):
         rows = [p for p in roster if p['gsis_id'] in allowed and p['gsis_id'] not in players
                 and p['pos_abb'] == role and type(p['pos_rank']) is int and p['pos_rank'] > 0]
