@@ -23,7 +23,15 @@ def configure(field, snapshot, snaps=None, entry_current=False):
     for side in ('home', 'away'):
         team = snapshot['rosters'][side]['team']
         allowed = v1_complete_roster.eligible_ids(resolved[side])
-        rosters[team] = [p for p in snapshot['rosters'][side]['players'] if p['gsis_id'] in allowed]
+        # Use the resolver's full eligible population, including membership-only
+        # backups. Unranked players sort after every real depth rank; this is
+        # only an internal ordering key, not an asserted depth-chart rank.
+        ranked = [p['depth_rank'] for p in resolved[side]['players'] if p.get('depth_rank') is not None]
+        unranked_key = max(ranked, default=0) + 1
+        rosters[team] = [{'gsis_id': p['gsis_id'], 'player_name': p['name'], 'pos_abb': p['pos'],
+                          'pos_rank': p['depth_rank'] if p['depth_rank'] is not None else unranked_key,
+                          'rank_source': 'published_depth' if p['depth_rank'] is not None else 'unranked_sort_only'}
+                         for p in resolved[side]['players'] if p['gsis_id'] in allowed]
         qbs[team] = next(r['gsis_id'] for r in resolved[side]['roles'] if r['role'] == 'QB1')
         if pf.starter_qb(rosters[team]) != qbs[team]:
             raise ValueError('shared_participation_qb_mismatch:' + team)
@@ -34,6 +42,10 @@ def configure(field, snapshot, snaps=None, entry_current=False):
     if snaps is not None:
         if snaps.season != season:
             raise ValueError('shared_participation_snap_season_mismatch')
+        if any(w < week for _team, w in snaps.team_snaps):
+            missing = [team for team in rosters if not snaps.weeks_before(team, week)]
+            if missing:
+                raise ValueError('shared_participation_snap_coverage_missing:' + ','.join(missing))
         update = snap_update.apply(field, snaps, week, rosters, snap_update.PLAYER_N0)
     return rosters, qbs, update
 
@@ -57,6 +69,8 @@ class Policy:
             group = self.field.draw_group(team, previous.get('group', pf.START), cell, draw)
         else:
             cell = None
+        if group is None or not any(g == group for _pos, g in self.field.position_prior):
+            raise ValueError('shared_participation_group_not_in_fitted_table:' + str(group))
         lineup, record = self.field.advance(team, previous.get('lineup', {}), group,
                                             self.rosters[team], draw, prev_group=previous.get('group'),
                                             slots=previous.get('slots'))
