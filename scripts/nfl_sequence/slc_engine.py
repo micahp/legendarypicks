@@ -272,9 +272,10 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, transition_
         field = pf.Field.load(*participation_field)
         if not field.seasons or max(field.seasons) >= season:
             raise ValueError(f'participation field is fitted on {field.seasons}; a {season} game needs earlier seasons only')
+        field.entry_current = bool(participation_entry_current)
+        if field.entry_current and not participation_snap_counts:
+            raise ValueError('HE bench entry needs cutoff-safe snap counts')
         ref.contextual_sampler.participation_field = field
-        # HE (current-season entry weight) is the default; it needs the snap counts, so without them the draw is the table rate
-        field.entry_current = bool(participation_entry_current and participation_snap_counts)
         if participation_snap_counts:  # research flag: this season's published snap counts before the game's week
             import snap_update
             snaps = snap_update.SnapCounts.load(*participation_snap_counts)

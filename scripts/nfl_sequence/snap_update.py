@@ -240,7 +240,7 @@ def apply(field, snaps, week, rosters, player_n0, group_n0=GROUP_N0):
     if snaps.season is None:
         raise ValueError('snap counts have no season')
     field.group_tilt, field.player_weight = pf.TeamKeyed(), pf.TeamKeyed(team_at=0)
-    field.entry_share = pf.TeamKeyed(team_at=0)  # the bench-draw weights when field.entry_current is on
+    field.entry_share = pf.TeamKeyed(team_at=0)  # bench-draw weights when HE entry is enabled
     record = {'snap_counts_sha256': snaps.sha256, 'season': snaps.season, 'week': week, 'group_n0': group_n0,
               'player_n0': player_n0, 'teams': {}}
     for team, players in sorted(rosters.items()):
@@ -251,7 +251,7 @@ def apply(field, snaps, week, rosters, player_n0, group_n0=GROUP_N0):
         weights, status = ({}, Counter({'player_weights_off': 1})) if player_n0 is None else \
             player_weights(field, snaps, team, week, players, player_n0)
         field.player_weight.update(weights)
-        for p in players:  # current-season share for the bench draw; a player with no earlier active game keeps the table rate
+        for p in players:  # players without earlier active snaps retain their historical rate
             if p['pos_abb'] in SNAP_CLASS:
                 games, share = snaps.player_share(team, week, p['gsis_id'])
                 if games:
@@ -259,5 +259,8 @@ def apply(field, snaps, week, rosters, player_n0, group_n0=GROUP_N0):
         record['teams'][team] = {'earlier_games': len(weeks), 'last_week_used': max(weeks) if weeks else None,
                                  'group_lambda': [round(x, 6) for x in lam] if lam is not None else None,
                                  'player_weights': {pid: round(w, 6) for (_t, pid), w in sorted(weights.items())},
-                                 'player_status': dict(sorted(status.items()))}
+                                 'player_status': dict(sorted(status.items())),
+                                 'entry_current': getattr(field, 'entry_current', False),
+                                 'entry_share': {pid: share for (t, pid), share in field.entry_share.items()
+                                                 if t == pf.nfl_team_codes.to_db(team)}}
     return record
