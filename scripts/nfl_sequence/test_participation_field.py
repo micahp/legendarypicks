@@ -211,5 +211,44 @@ class OneOffensiveIdentity(unittest.TestCase):
         self.assertEqual(roles_used, {'RB', 'WR'})  # both roles occur over the draws; one slot per snap is tested above
 
 
+
+class FeasibleRotation(unittest.TestCase):
+    def test_no_bench_vetoes_proposed_exits_and_preserves_stints(self):
+        field = _field()
+        field.leave_prob = lambda *args: 1.0
+        roster = [_player('qb1', 'QB'), _player('rb1', 'RB'), _player('te1', 'TE'),
+                  *[_player(f'wr{i}', 'WR', i) for i in range(1, 4)]]
+        lineup = {p['gsis_id']: 3 for p in roster if p['pos_abb'] != 'QB'}
+        nxt, record = field.advance('KC', lineup, '11', roster, random.Random(1), prev_group='11')
+        self.assertEqual(record['status'], 'ok')
+        self.assertEqual(nxt, {pid: 4 for pid in lineup})
+        self.assertEqual(record['rotation_vetoed'], sorted(lineup))
+        self.assertEqual(record['leavers'], [])
+        self.assertEqual(record['entrants'], [])
+        self.assertEqual(field.status['short'], 0)
+
+    def test_real_shortage_still_fails(self):
+        field = _field()
+        roster = [_player('qb1', 'QB'), _player('rb1', 'RB'),
+                  *[_player(f'wr{i}', 'WR', i) for i in range(1, 4)]]
+        _, record = field.advance('KC', {}, '11', roster, random.Random(2))
+        self.assertEqual(record['status'], 'short')
+        self.assertEqual(record['short'], {'TE': 1})
+
+    def test_hybrid_can_move_to_fill_another_slot(self):
+        field = _field()
+        field.leave_prob = lambda *args: 0.0
+        roster = [_player('qb1', 'QB'), _player('hy', 'RB'), _player('hy', 'WR'),
+                  _player('rb2', 'RB'), _player('te1', 'TE'),
+                  _player('wr1', 'WR'), _player('wr2', 'WR')]
+        lineup = {'hy': 2, 'te1': 2, 'wr1': 2, 'wr2': 2}
+        slots = {'hy': 'RB', 'te1': 'TE', 'wr1': 'WR', 'wr2': 'WR'}
+        nxt, record = field.advance('KC', lineup, '11', roster, random.Random(3),
+                                    prev_group='11', slots=slots)
+        self.assertEqual(record['status'], 'ok')
+        self.assertEqual(record['slots']['hy'], 'WR')
+        self.assertEqual(record['slots']['rb2'], 'RB')
+        self.assertEqual(nxt['hy'], 3)
+
 if __name__ == '__main__':
     unittest.main()
