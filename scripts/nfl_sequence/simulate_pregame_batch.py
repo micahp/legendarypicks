@@ -1018,7 +1018,7 @@ def run_batch(args):
                                                                'qb_run_role_style', False),
                                                            score_clock_playcalling=resolved_profile['enabled_layers'].get(
                                                                'score_clock_playcalling', True),
-                                                           participation_entry_current=getattr(args, 'participation_entry_current', False),
+                                                           participation_entry_current=getattr(args, 'participation_entry_current', True),
                                                            personnel_first=not args.no_personnel_first,
                                                            season_adapt=args.playcall_season_adapt,
                                                            pass_label_mode=args.playcall_pass_label_mode,
@@ -1194,7 +1194,7 @@ def run_batch(args):
         ledger_header['research_integration'] = {'participation_field': {
             'table': str(args.participation_field), 'table_sha256': args.participation_field_sha256,
             'fit_seasons': ref.contextual_sampler.participation_field.seasons, 'personnel_label': 'lineup grouping',
-            'entry_current': getattr(args, 'participation_entry_current', False)}}
+            'entry_current': getattr(args, 'participation_entry_current', True)}}
     if args.participation_snap_counts:  # research flag: the current-season snap counts and what they set, in the ledger
         ledger_header['research_integration']['participation_snap_counts'] = {
             'file': str(args.participation_snap_counts), 'sha256': args.participation_snap_counts_sha256,
@@ -1481,8 +1481,8 @@ def main(argv=None):
                     help='SLC v1 research flag (off by default): the personnel label is drawn from the PBV1 RB-only package '
                          'sampler, refitted on the training table for seasons before each game (pbv1_package.TABLE_SHA256); '
                          'the table path is the frozen docs/research/pbv1-package-integration-2026-11-02 CSV')
-    ap.add_argument('--participation-entry-current', action='store_true',
-                    help='research HE bench entry using earlier active-game snap share; requires snap counts')
+    ap.add_argument('--participation-entry-current', action=argparse.BooleanOptionalAction, default=True,
+                    help='HE bench entry enabled for participation by default; --no-participation-entry-current for control')
     ap.add_argument('--no-personnel-first', action='store_true',
                     help='draw the run or dropback call before the personnel and formation (the order before personnel-first)')
     ap.add_argument('--participation-field', type=Path, default=None,
@@ -1706,8 +1706,8 @@ def main(argv=None):
             ap.error('--participation-field cannot run with --playcall-pbv1-package; both set the personnel label')
         if not args.playcall_artifact:
             ap.error('--participation-field requires --playcall-artifact (the SLC engine)')
-    if args.participation_entry_current and not args.participation_snap_counts:
-        ap.error('--participation-entry-current requires --participation-snap-counts')
+    if args.participation_field and args.participation_entry_current and not args.participation_snap_counts:
+        ap.error('default HE requires --participation-snap-counts; use --no-participation-entry-current for the control')
     if args.participation_snap_counts:
         if not args.participation_field:
             ap.error('--participation-snap-counts requires --participation-field')
