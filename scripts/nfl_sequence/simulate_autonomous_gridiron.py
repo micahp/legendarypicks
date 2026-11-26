@@ -39,7 +39,7 @@ def run(args):
         str(args.db), regulation_only=True, safety_kick_table=True, overtime_table=True)
     snap_path = getattr(args, 'participation_snap_counts', None)
     snap_hash = getattr(args, 'participation_snap_counts_sha256', None)
-    entry_current = getattr(args, 'participation_entry_current', False)
+    entry_current = getattr(args, 'participation_entry_current', True)
     if bool(snap_path) != bool(snap_hash) or (entry_current and not snap_path):
         raise ValueError('participation snap-count path/hash required together for HE')
     record = autonomous_game.play_autonomous_game(
@@ -107,7 +107,8 @@ def main(argv=None):
     parser.add_argument('--participation-sha256', required=True)
     parser.add_argument('--participation-snap-counts', type=Path)
     parser.add_argument('--participation-snap-counts-sha256')
-    parser.add_argument('--participation-entry-current', action='store_true')
+    parser.add_argument('--participation-entry-current', action=argparse.BooleanOptionalAction, default=True,
+                        help='HE enabled by default; --no-participation-entry-current for control')
     parser.add_argument('--playbook-dir', type=Path, required=True)
     parser.add_argument('--playbook-manifest', type=Path, required=True)
     parser.add_argument('--engine-root', type=Path, required=True)
