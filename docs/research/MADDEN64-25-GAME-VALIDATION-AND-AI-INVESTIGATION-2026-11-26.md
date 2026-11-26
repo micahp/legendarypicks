@@ -30,6 +30,47 @@ For every one of the 50 team-game records, the total-offense counter equals pass
 
 The 11 fumble events are recorded. Team turnovers exceed interceptions by seven across the sample, and for each team-game the difference is no greater than that game’s fumble count. This is consistent with seven lost fumbles, but the archive does not establish which recorded fumbles were lost; treat that as an inference, not a verified event label.
 
+## Accelerated gameplay and scoring compensation (NHL 95 analogy)
+
+**Hypothesis:** Madden 64 may compensate for its elevated offensive opportunity rate by suppressing offensive efficiency, analogous to the high goalie effectiveness observed in the NHL 95 research. This is an observed aggregate tradeoff, not evidence of a deliberately engineered balancing mechanism or a particular defensive AI rule.
+
+### Pace-normalized evidence
+
+Use the archived 25 games, not an extrapolation of mean scores from mixed quarter lengths. For each group, elapsed game-clock seconds = both teams' summed possession counters. Offensive opportunity proxy = candidate pass attempts + rush attempts + sacks; combined points = both final score counters. Normalize pooled counts by multiplying by 3,600 / elapsed seconds. The three overtime games contribute 895 extra seconds; no regulation-only split is claimed.
+
+| Quarter length | Games | Elapsed clock (s) | Opportunity proxy | Combined points | Opportunities / 60 min | Points / 60 min | Net yards / opportunity |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 3 min | 8 | 5837 | 397 | 92 | 244.85 | 56.74 | 3.39 |
+| 5 min | 9 | 11100 | 721 | 116 | 233.84 | 37.62 | 2.89 |
+| 10 min | 8 | 19718 | 1271 | 263 | 232.05 | 48.02 | 3.00 |
+| Pooled | 25 | 36655 | 2389 | 471 | 234.63 | 46.26 | 3.03 |
+
+The 1997 NFL comparison uses regular-season league totals from [Pro Football Reference, NFL & AFL season-by-season team offense](https://www.pro-football-reference.com/years/AFLNFL/index.htm) (1997 row: 30 teams, 240 games, 9,957 points, 30,620 offensive plays, 151,135 net yards, 8,844 completions, 15,729 pass attempts, 479 interceptions, 13,639 rush attempts, 54,260 rush yards; 1,252 sacks inferred as plays minus attempts minus rushes). NFL per-game counts are per scheduled 60-minute game, including overtime in final totals; actual elapsed NFL overtime is not subtracted here. Madden is per 60 elapsed game-clock minutes. This denominator difference is explicit and does not establish exact pace equivalence.
+
+| Metric | Madden 64 archive | 1997 NFL |
+|---|---:|---:|
+| Combined offensive opportunities / plays per 60 min / scheduled game | 234.63 | 127.58 |
+| Combined points per 60 min / scheduled game | 46.26 | 41.49 |
+| Net offensive yards per opportunity / play | 3.03 | 4.94 |
+| Completion rate | 38.73% | 56.23% |
+| Interceptions per attempt | 8.01% | 3.05% |
+| Sacks per dropback | 6.01% | 7.37% |
+| Rush yards per carry | 0.91 | 3.98 |
+| Total points per offensive opportunity / play (includes non-offensive scoring) | 0.197 | 0.325 |
+
+Madden records about 84% more offensive opportunities per equivalent clock duration, yet only 11% more combined points. Total points per recorded opportunity are about 39% lower. This is consistent with scoring compensation. The rates rely on candidate event labels and counters, not a complete snap ledger. A high pace is established relative to game-clock time, not necessarily faster physical movement or faster real-world play. The single CPU matchup and three quarter settings do not establish causality or generality.
+
+### Candidate mechanisms and implications
+
+- NHL 95: elevated shot opportunities offset by effective goalies (prior project observation; not independently quantified in this report).
+- Madden 64: elevated offensive opportunities accompanied by low completions, high interceptions and extremely low rushing efficiency. Coverage/ball contest, target choice, blocking and tackling are plausible mechanisms; sacks are not elevated relative to the historical reference. No claim of a direct goalie-equivalent component, intentional tuning or a specific code path is justified yet.
+- **Playable retro football:** pace/efficiency compensation may be a useful design choice if it improves the experience; evaluate scoring, play count and user control separately.
+- **V1 Complete / predictive simulation:** do not copy Madden's suppressed efficiencies as calibration targets. Require independently realistic play frequency, clock runoff, legal transitions, outcome distributions and player statistics against real football, not just plausible final scores.
+
+### Falsifiable follow-up
+
+First finish the small controlled traces below, using recorder V2 plus actual snap/call identity, game clock start/end, live/dead-ball duration, ball release and catch/contact outcomes. Distinguish accelerated between-snap cadence from accelerated player movement. Test whether the opportunity/efficiency tradeoff persists under matched teams, seed sets, difficulty and quarter settings, then against a second matchup or a real-era matchup baseline. Record points by source (offense, defense, special teams), drive counts, play mix, and opportunity-level efficiency. If the low efficiency disappears with corrected event attribution or is confined to this matchup/settings, reject the generalized compensation hypothesis. If it persists, identify a specific causal mechanism with controlled changes before claiming intentional balance. Do not start a large new batch solely to confirm a plausible aggregate observation.
+
 ## Reconciliation and replay validation
 
 - **Team counters:** sampled end-state team counters at indices 0–12, 15–22, and 57 match final RAM values in all 50 team-games. The counter comparison has zero mismatches. Index 57 is the score candidate.
