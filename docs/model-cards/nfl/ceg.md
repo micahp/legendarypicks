@@ -1,0 +1,5 @@
+# SLC-CEG
+
+[Registry](README.md) · [Canonical definition and source map](../../architecture/CEG.md)
+
+**Conditional Event Generation.** Fitted conditional event distributions produce new coherent play facts instead of selecting historical rows. Inputs: cutoff-safe canonical event tables, context and trained parameter artifact; outputs typed events, game/player distributions where supported. Original plan and phase evidence are linked in the definition. Research branch pin `8d86d430`, base frozen V2 `8a1d9842`. Phase 7 CEG-SEL+E: 300 realism games and 1,160 forecast games reported complete with reads blocked; 20.11 points vs 23.01 in 2025. Week 11 13-game home-win Brier .245 vs market .183, V2 .205. Phase 9 did not establish team terms beating situation-only drive points. Team strength and player attribution remain unresolved; no release. [Phase 7 report](https://github.com/micahp/legendarypicks/blob/8d86d430/docs/research/slc-ceg-2026-11-24/PHASE7-EVALUATION-REPORT.md); [Phase 9 report](https://github.com/micahp/legendarypicks/blob/8d86d430/docs/research/slc-ceg-2026-11-24/PHASE9-TEAM-STRENGTH-REPORT.md). See [comparison](../../evaluation/MODEL-COMPARISON.md).

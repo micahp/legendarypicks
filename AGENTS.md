@@ -8,6 +8,22 @@ section numbers unchanged). Read the matching section there when a rule touches 
 verify against ground truth: the whole population, the real data, an independent source. Assume a
 gap remains until you have measured it.
 
+## CANONICAL MODEL DOCUMENTATION — 2026-11-26
+
+Read [docs/README.md](docs/README.md), [architecture](docs/architecture/README.md), [glossary](docs/architecture/GLOSSARY.md) and the relevant [model card](docs/model-cards/README.md) before modeling work. These are the maintained navigation/definition layer, with exact source and evidence pins. Dated research reports and handoffs are supporting evidence, not competing model definitions; older rules and explicit owner decisions remain binding unless explicitly superseded.
+
+- When a change affects a named model or architecture, update its canonical card/definition in the same changeset (or explicitly record why not applicable). Record purpose, execution flow, inputs/cutoff, exact code/config/artifact identity, limitations, evaluation cohort and status. Every new model/component must be discoverable from the handbook; never hide its only definition on a feature branch or in chat.
+- Preserve frozen results and historical artifacts. Link to exact source commits, distinguish design from implemented and integrated behavior, and separate legality, realism, prediction and adoption. Never infer deployment from a model card or rename an existing model silently.
+- Before new work, review research and decision indexes, existing code, failed experiments and blockers. Reuse existing mechanisms; prioritize objective and integration, set simple baselines and stopping conditions, and stop redundant investigations. Do not make extra research a delivery gate without evidence/owner approval.
+- Use specifications for contracts and intended behavior, research for experiments, decisions for rationale, evaluation for comparable cohorts, archive for historical handoffs. Preserve old paths or forwarding notices; check incoming links and machine dependencies before moves. Do not move locked input files or change reproducibility hashes.
+- Review actual end-to-end source and tests; disclose what was not run. A documentation-only change does not authorize a model/rules change, a production deployment, or a merge. Maintain no fast-host runs without owner approval.
+
+## REPOSITORY ROOT HYGIENE — 2026-11-26
+
+- The root is reserved for `README.md`, `AGENTS.md`, `CHANGELOG.md`, source directories and required build/test/configuration/operational entry points. Do not create one-off task briefs, results, reports, plans, handoffs, agent notes or scratch evidence at the root.
+- Put maintained specifications in `docs/specifications/` (or an existing canonical domain location), task briefs and plans in the relevant `docs/` domain, research/evaluation evidence alongside its experiment, and superseded handoffs in `docs/archive/`. Use the existing canonical location rather than duplicating a document. Keep transient agent output outside tracked source unless it is required evidence.
+- Former root documents are indexed in [docs/archive/root-history/README.md](docs/archive/root-history/README.md). Their original blobs are preserved; no root forwarding files. Archive placement does not establish task completion. For a move, check active references and machine consumers, update navigation, preserve evidence and reproducibility, and report remaining unverified dependencies. Review the root in documentation-cleanup changes and reject new ad hoc root documents.
+
 ## LATEST E1 VIEWER + OOB DECISION — 2026-10-24 (takes precedence)
 
 **Gridiron E1 repin DONE:** [`f2a00a09`](https://github.com/micahp/gridiron-physics/commit/f2a00a0973e901c7590220cd569dde80cdf6245c) is already pinned to LP `641e1b2ea7882389778a14e6c52b58583f7e9917`. Reports **25/25 Node tests**, E0a pass and ten Chromium DOM checks, plus `clock_clamped_plays` summary validation. The new LP SHA is **accepted as current read-only research pin**; earlier AGENTS text saying the viewer is still on `945754` is **stale historical status**. See [current LP integration decision](docs/research/E1-DRIVE-INTEGRATION-DECISION-2026-10-24.md).

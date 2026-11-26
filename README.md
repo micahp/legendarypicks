@@ -4,6 +4,10 @@ Legendary Picks is a sports data and prediction product for following live games
 
 This repository began as an FCL / NBA Top Shot experiment. NBA Top Shot moved into the core product space, so Legendary Picks pivoted away from that dependency and became an independent, data-first sports product. The old Flow setup is historical scaffolding, not the product architecture or a supported development path.
 
+## Research and modeling documentation
+
+**Start with the [Legendary Picks handbook](docs/README.md)** for model definitions (SLC, CEG, Gridiron, Liquid AI), versioned model cards, evaluation and research evidence. [Model registry](docs/model-cards/README.md) · [Glossary](docs/architecture/GLOSSARY.md).
+
 ## Architecture
 
 ```text
@@ -38,6 +42,10 @@ The browser request path is database-backed. It must not scrape ESPN, load large
 | `backend/data/` | SQLite databases and checked data artifacts. Databases are never baked into an image. |
 | `docs/` | Product specifications, runbooks, data contracts, migration plans, and handoffs. |
 
+## Repository root hygiene
+
+Keep the root for project entry points (`README.md`, `AGENTS.md`, `CHANGELOG.md`), source directories, and files required by build, test, configuration or deployment tooling. Put new task briefs and plans in the appropriate `docs/` area, results and evidence in the associated research/report area, and superseded handoffs in the archive. Do not create `TASK-*`, `RESULT-*`, `CODEX-TASK-*`, or other one-off Markdown files at the root. Preserve historical evidence and verify consumers before relocating tracked files.
+
 ## Development
 
 The normal development stack is Next.js plus FastAPI:
@@ -65,7 +73,8 @@ For managed development, the shared `dev` worktree normally serves the frontend 
 
 ## Key documents
 
-- [`ORIENTATION.md`](ORIENTATION.md) — current architecture and safe onboarding path.
+- [Project handbook](docs/README.md) — maintained architecture, research and model navigation; start with this README and `AGENTS.md` for onboarding.
+- [Former root task and result archive](docs/archive/root-history/README.md) — historical briefs, reports, handoffs, plans and assessments (not current instructions).
 - [`AGENTS.md`](AGENTS.md) — mandatory engineering, UI, data, and operations rules.
 - [`docs/RUNBOOK-prod-promotion.md`](docs/RUNBOOK-prod-promotion.md) — required procedure before a production promotion.
 - [`docs/IDENTITY-SPINE-STATE.md`](docs/IDENTITY-SPINE-STATE.md) — canonical player identity status and safeguards.

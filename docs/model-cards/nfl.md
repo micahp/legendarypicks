@@ -1,5 +1,7 @@
 # NFL model card
 
+**Navigation update (2026-11-26):** [NFL sequence model registry](nfl/README.md) covers SLC V1/V1.5/V1.6/V1.7/V2, PBV1, Pure/Simplified, CEG and V1 Complete. [Model architecture](../architecture/README.md) explains their relationships; [evaluation](../evaluation/MODEL-COMPARISON.md) preserves distinct cohorts. The historical team-rating and player-projection card below retains its October 17 evidence; it is not a complete inventory of the later sequence models.
+
 **Scope:** NFL regular-season game forecasts, player projections and team playoff-odds simulations implemented in this repository. The game forecasts are locked as separate model versions. Evidence through 2026-10-17, including research branches where named. This is not a claim of betting advantage.
 
 ## Where our NFL models actually stand
