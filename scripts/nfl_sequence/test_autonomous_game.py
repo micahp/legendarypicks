@@ -82,6 +82,49 @@ class AutonomousPassInterferenceTests(unittest.TestCase):
 
 
 class AutonomousPossessionHistoryTests(unittest.TestCase):
+    def test_defensive_fumble_return_uses_endpoint_yards_after_raw_coordinate_check(self):
+        source = object.__new__(autonomous_game.AutonomousGameExecution)
+        source.event_manifest_sha256 = 'f' * 64
+        call = {
+            'play_id': 'fumble-return-endpoint-quantization', 'seed': '300015',
+            'offense': {'team': 'GB', 'lineup': {'QB': 'qb1', 'RB': 'fumbler'},
+                        'call': {'family': 'run', 'concept': 'inside_zone'}},
+        }
+        fumble = {
+            'fumbler_id': 'fumbler', 'recoverer_id': 'recoverer',
+            'recovery_side': 'D', 'recovery_team': 'LAR',
+            'fumble_spot': {'x': 32.298354409535946, 'y': 27.634532709169928},
+            'recovery_spot': {'x': 32.528160532074864, 'y': 27.18059331740051},
+            'dead_ball_spot': {'x': 35.25672075085281, 'y': 27.444130240879},
+            'return_yards': 2.728560218777943,
+        }
+        result = {
+            'schema_version': 'gridiron.autonomous-result.v1',
+            'result': {'event': 'tackle', 'possession_team': 'LAR', 'carrier_id': 'recoverer',
+                       'yards_gained': -3.257, 'is_touchdown': False, 'turnover': True,
+                       'elapsed_seconds': 3.867, 'fumble': fumble},
+            'participants': {'sackers': []}, 'events': [],
+        }
+        state = {'offense': 'B', 'defense': 'A', 'down': 3, 'togo': 12, 'yl': 32}
+
+        generated = source._ceg_play(
+            call, result, 'run', -3, state, -1, 32, 35.25672075085281, 'tackle',
+            None, None, None)
+
+        self.assertEqual(generated.possession.recovery_spot_yardline_100, 33)
+        self.assertEqual(generated.possession.dead_ball_yardline_100, 35)
+        self.assertEqual(generated.possession.return_yards, 2)
+        applied = event_expansion_rules.apply_scrimmage_play(
+            state, generated, switches=EventExpansionSwitches())
+        self.assertEqual(applied.state_after['offense'], 'A')
+        self.assertEqual(applied.flags['return_yards'], 2)
+
+        result['result']['fumble'] = {**fumble, 'return_yards': 2.4}
+        with self.assertRaisesRegex(ValueError, 'gridiron_fumble_return_yards_disagree_with_raw_endpoints'):
+            source._ceg_play(
+                call, result, 'run', -3, state, -1, 32, 35.25672075085281, 'tackle',
+                None, None, None)
+
     def test_interception_return_fumble_recovered_by_original_offense_maps_by_history(self):
         source = object.__new__(autonomous_game.AutonomousGameExecution)
         source.event_manifest_sha256 = 'f' * 64

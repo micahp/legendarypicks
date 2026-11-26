@@ -28,6 +28,7 @@ SPECIAL_TEAMS_RATING_KEYS = frozenset({
     'SPD', 'ACC', 'AGI', 'STR', 'AWR', 'PUR', 'TAK', 'BSH', 'RBK', 'IBL',
     'CTH', 'CAR', 'BCV', 'ELU', 'TRK', 'PRC', 'KPW', 'KAC',
 })
+GRIDIRON_FUMBLE_RETURN_RAW_TOLERANCE_YARDS = 0.001
 GRIDIRON_SCRIMMAGE_DEAD_BALL_REASONS = frozenset({
     'tackle', 'out_of_bounds', 'incomplete', 'sack', 'touchdown', 'safety',
 })
@@ -654,8 +655,14 @@ class AutonomousGameExecution:
                     fumble_spot_yardline_100=fumble_y)
             else:
                 return_yards = int(round(dead_y - recovery_y))
-                if fumble_info.get('return_yards') is not None and int(round(fumble_info['return_yards'])) != return_yards:
-                    raise ValueError('gridiron_fumble_return_yards_disagree_with_endpoint')
+                raw_return_yards = fumble_info.get('return_yards')
+                if (isinstance(raw_return_yards, bool)
+                        or not isinstance(raw_return_yards, (int, float))
+                        or not math.isfinite(raw_return_yards)):
+                    raise ValueError('gridiron_fumble_return_yards_missing_or_invalid')
+                raw_endpoint_delta = (dead_spot_x - recovery_x) * -direction
+                if abs(raw_return_yards - raw_endpoint_delta) > GRIDIRON_FUMBLE_RETURN_RAW_TOLERANCE_YARDS:
+                    raise ValueError('gridiron_fumble_return_yards_disagree_with_raw_endpoints')
                 possession = ceg_contract.PossessionV2(
                     team='defense', how='fumble_recovery', turnover_spot_yardline_100=fumble_y,
                     recovery_spot_yardline_100=recovery_y, dead_ball_yardline_100=dead_y,
