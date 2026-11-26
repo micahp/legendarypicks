@@ -15,6 +15,7 @@ Start here. This is the maintained navigation layer for current definitions, mod
 | Active specs and contracts | [Specifications](specifications/README.md) |
 | What has been investigated and why | [Research index](research/README.md), [Decisions](decisions/README.md) |
 | Old handoffs and superseded indexes | [Archive](archive/README.md) |
+| Former root task briefs, plans and results | [Former root documents](archive/root-history/README.md) |
 
 Product and engineering: [root README](../README.md), [data spine](DATA-SPINE.md), [developer standards](DEV-STANDARDS.md), [agent rules](../AGENTS.md). Existing evidence, manifests, source contracts and dated reports remain available at their original paths or pinned historical commits. No code or production state is changed by this handbook.
 

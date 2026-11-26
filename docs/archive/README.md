@@ -10,4 +10,6 @@ Historical context, not current authoritative instructions. Old paths retain for
 
 [Historical session context archive](context/README.md): 102 additional dated/context handoffs archived as original blobs, grouped by month. Original locations have forwarding notices and pinned original links. The archive copies deliberately retain their original bytes; use pinned originals for historical relative-link context. This is a branch-only, reviewable migration; machine consumers of old context paths have not been exhaustively audited.
 
+[Former repository-root documents](root-history/README.md): 58 original root Markdown files, grouped by purpose and pinned to their original blobs. These have no root forwarding files; the maintained onboarding entry points are the root README, AGENTS.md and handbook. Archived task status is not assumed closed.
+
 Do not move research data, code-consumed contracts, locked manifests or artifact directories without updating their references and verifying replay. Remaining historical reports and active specifications retain their original paths.

@@ -1,6 +1,6 @@
 # SPEC → DeepSeek: Prop Settlement Pipeline (the core product)
 
-Onboard via ORIENTATION.md → AGENTS.md → this. Do AFTER the identity spine lands (settlement matches
+Onboard via [project README](../README.md) → [AGENTS.md](../AGENTS.md) → this. Do AFTER the identity spine lands (settlement matches
 prop→stat by `player_id`, which the spine provides). Phase by phase, fresh subprocess each, build-
 verified + committed per phase. Don't touch `scores.tsx`/`GameCard.tsx`.
 
