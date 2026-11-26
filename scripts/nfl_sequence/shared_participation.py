@@ -67,7 +67,9 @@ class Policy:
             raise ValueError('shared_participation_invalid_selection')
         return {'team': team, 'group': group, 'lineup': lineup, 'slots': record['slots'],
                 'qb1': self.qbs[team], 'selection': record, 'cell': cell,
-                'source_sha256': self.field.sha256, 'policy_version': VERSION}
+                'source_sha256': self.field.sha256, 'policy_version': VERSION,
+                'entry_current': self.provenance['entry_current'], 'snap_update': self.update,
+                'scope': 'offensive_skill_players_only'}
 
     def commit(self, selected):
         self.previous[selected['team']] = selected

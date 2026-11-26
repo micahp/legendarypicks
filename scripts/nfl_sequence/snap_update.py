@@ -33,7 +33,7 @@ SCHEMA = 'lp.nfl.snap-counts.v1'
 def snap_team(code):
     """The nflverse spelling of a club (snap counts and weekly rosters keep STL, OAK, SD before the moves), through
     backend/team_codes.py. Raises on an unknown code."""
-    return pf.nfl_team_codes.to_nflverse(code)
+    return pf.nfl_team_codes.to_nflverse_team_code(pf.team_codes.normalize('nfl', code))
 
 
 SNAP_CLASS = {'RB': 'RB', 'FB': 'RB', 'TE': 'TE', 'WR': 'WR'}
@@ -71,7 +71,7 @@ class SnapCounts:
 
     def weeks_before(self, team, week):
         """The team's games before `week` that have published team snaps."""
-        team = pf.nfl_team_codes.to_db(team)  # the keys are database codes; compare in the same vocabulary
+        team = pf.team_codes.normalize('nfl', team)  # the keys are database codes; compare in the same vocabulary
         return sorted(w for (t, w) in self.team_snaps if t == team and w < week)
 
     def class_shares(self, team, week):
@@ -262,5 +262,5 @@ def apply(field, snaps, week, rosters, player_n0, group_n0=GROUP_N0):
                                  'player_status': dict(sorted(status.items())),
                                  'entry_current': getattr(field, 'entry_current', False),
                                  'entry_share': {pid: share for (t, pid), share in field.entry_share.items()
-                                                 if t == pf.nfl_team_codes.to_db(team)}}
+                                                 if t == pf.team_codes.normalize('nfl', team)}}
     return record

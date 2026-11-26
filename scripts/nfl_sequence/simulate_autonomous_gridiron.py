@@ -37,6 +37,11 @@ def run(args):
 
     reference, excluded_kickoffs = e2_reference.load(
         str(args.db), regulation_only=True, safety_kick_table=True, overtime_table=True)
+    snap_path = getattr(args, 'participation_snap_counts', None)
+    snap_hash = getattr(args, 'participation_snap_counts_sha256', None)
+    entry_current = getattr(args, 'participation_entry_current', False)
+    if bool(snap_path) != bool(snap_hash) or (entry_current and not snap_path):
+        raise ValueError('participation snap-count path/hash required together for HE')
     record = autonomous_game.play_autonomous_game(
         args.seed, reference,
         snapshot_path=str(args.snapshot),
@@ -47,6 +52,8 @@ def run(args):
         engine_root=str(args.engine_root),
         ratings_path=str(rating_profile),
         paired_randomness=args.paired_randomness,
+        participation_snap_counts=(snap_path, snap_hash) if snap_path else None,
+        participation_entry_current=entry_current,
     )
     validation = game_state.validate_game(record)
     payload = {
@@ -58,6 +65,8 @@ def run(args):
             'snapshot_sha256': snapshot['snapshot_sha256'],
             'snapshot_file_sha256': _sha(args.snapshot),
             'participation_field_sha256': args.participation_sha256,
+            'participation_snap_counts_sha256': snap_hash,
+            'participation_entry_current': entry_current,
             'playbook_manifest_sha256': _sha(args.playbook_manifest),
             'playbook_manifest_expected_sha256': gridiron_bridge.PLAYBOOK_MANIFEST_SHA256,
             'ratings_profile_sha256': _sha(rating_profile),
@@ -96,6 +105,9 @@ def main(argv=None):
     parser.add_argument('--game-id')
     parser.add_argument('--participation-field', type=Path, required=True)
     parser.add_argument('--participation-sha256', required=True)
+    parser.add_argument('--participation-snap-counts', type=Path)
+    parser.add_argument('--participation-snap-counts-sha256')
+    parser.add_argument('--participation-entry-current', action='store_true')
     parser.add_argument('--playbook-dir', type=Path, required=True)
     parser.add_argument('--playbook-manifest', type=Path, required=True)
     parser.add_argument('--engine-root', type=Path, required=True)
