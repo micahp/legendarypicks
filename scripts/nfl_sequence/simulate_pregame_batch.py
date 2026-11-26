@@ -1018,6 +1018,7 @@ def run_batch(args):
                                                                'qb_run_role_style', False),
                                                            score_clock_playcalling=resolved_profile['enabled_layers'].get(
                                                                'score_clock_playcalling', True),
+                                                           participation_entry_current=getattr(args, 'participation_entry_current', False),
                                                            personnel_first=not args.no_personnel_first,
                                                            season_adapt=args.playcall_season_adapt,
                                                            pass_label_mode=args.playcall_pass_label_mode,
@@ -1057,7 +1058,7 @@ def run_batch(args):
             'context_mode', 'context_bandwidth', 'context_min_source_games', 'team_tendency', 'try_policy',
             'no_safety_table', 'slc_blocker_fix', 'slc_fg_ordinary_cutoff', 'slc_v2',
             'playcall_season_adapt', 'season_adapt_n0', 'participation_field', 'participation_field_sha256',
-            'participation_snap_counts', 'participation_snap_counts_sha256', 'playcall_pbv1_package',
+            'participation_snap_counts', 'participation_snap_counts_sha256', 'participation_entry_current', 'playcall_pbv1_package',
             'playcall_fg_kicker', 'playcall_fg_kicker_sha256', 'historical_archive_reconstruction')}
         settings = {key: str(value) if isinstance(value, Path) else value for key, value in settings.items()}
         settings.update(source_snapshot_sha256=source_snapshot_sha256,
@@ -1192,7 +1193,8 @@ def run_batch(args):
     if args.participation_field:  # research flag: the lineup table is pinned in the ledger like PBV1's
         ledger_header['research_integration'] = {'participation_field': {
             'table': str(args.participation_field), 'table_sha256': args.participation_field_sha256,
-            'fit_seasons': ref.contextual_sampler.participation_field.seasons, 'personnel_label': 'lineup grouping'}}
+            'fit_seasons': ref.contextual_sampler.participation_field.seasons, 'personnel_label': 'lineup grouping',
+            'entry_current': getattr(args, 'participation_entry_current', False)}}
     if args.participation_snap_counts:  # research flag: the current-season snap counts and what they set, in the ledger
         ledger_header['research_integration']['participation_snap_counts'] = {
             'file': str(args.participation_snap_counts), 'sha256': args.participation_snap_counts_sha256,
@@ -1479,6 +1481,8 @@ def main(argv=None):
                     help='SLC v1 research flag (off by default): the personnel label is drawn from the PBV1 RB-only package '
                          'sampler, refitted on the training table for seasons before each game (pbv1_package.TABLE_SHA256); '
                          'the table path is the frozen docs/research/pbv1-package-integration-2026-11-02 CSV')
+    ap.add_argument('--participation-entry-current', action='store_true',
+                    help='research HE bench entry using earlier active-game snap share; requires snap counts')
     ap.add_argument('--no-personnel-first', action='store_true',
                     help='draw the run or dropback call before the personnel and formation (the order before personnel-first)')
     ap.add_argument('--participation-field', type=Path, default=None,
@@ -1702,6 +1706,8 @@ def main(argv=None):
             ap.error('--participation-field cannot run with --playcall-pbv1-package; both set the personnel label')
         if not args.playcall_artifact:
             ap.error('--participation-field requires --playcall-artifact (the SLC engine)')
+    if args.participation_entry_current and not args.participation_snap_counts:
+        ap.error('--participation-entry-current requires --participation-snap-counts')
     if args.participation_snap_counts:
         if not args.participation_field:
             ap.error('--participation-snap-counts requires --participation-field')

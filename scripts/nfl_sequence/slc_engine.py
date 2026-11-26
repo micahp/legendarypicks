@@ -151,6 +151,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, transition_
                    player_outcomes_receiver_only=False, blocker_fixes=None, fg_ordinary_cutoff=60,
                    qb_run_role_style=None, score_clock_playcalling=True, personnel_first=True, season_adapt=False, season_adapt_n0=4.0,
                    pbv1_table=None, participation_field=None, participation_snap_counts=None, fg_kicker=None,
+                   participation_entry_current=False,
                    workload_adaptive=None, experimental_workload_estimator=None, pass_label_mode='legacy', season_scores=None):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it.
@@ -273,6 +274,9 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, transition_
         field = pf.Field.load(*participation_field)
         if not field.seasons or max(field.seasons) >= season:
             raise ValueError(f'participation field is fitted on {field.seasons}; a {season} game needs earlier seasons only')
+        field.entry_current = bool(participation_entry_current)
+        if field.entry_current and not participation_snap_counts:
+            raise ValueError('HE bench entry needs cutoff-safe snap counts')
         ref.contextual_sampler.participation_field = field
         if participation_snap_counts:  # research flag: this season's published snap counts before the game's week
             import snap_update

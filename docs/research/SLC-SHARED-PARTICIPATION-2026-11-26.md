@@ -1,0 +1,3 @@
+# Shared participation candidate — 2026-11-26
+
+Port of PR #56 HE bench-entry weighting only. PBV1 coupling is deliberately excluded: current V2 rejects simultaneous PBV1/field and the branch must not bypass the personnel-first contract. This candidate does not change the frozen V2 package. With HE disabled, the bench draw still uses Field.rate. With HE enabled, earlier active-game snap share is used; missing prior active games fall back to rate. Entry and leave weights remain distinct. No forecast scores or calibration runs performed by the author. Verify field hashes, cutoff, entry/exit and replay before grading.

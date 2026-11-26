@@ -185,6 +185,9 @@ class Field:
         # multiplier on the player's on-field rate.
         self.group_tilt = TeamKeyed()
         self.player_weight = TeamKeyed(team_at=0)
+        # PR #56 HE candidate; explicitly enabled per game, not a frozen default.
+        self.entry_current = False
+        self.entry_share = TeamKeyed(team_at=0)
         # A player's leave hazard scaled by ((1 - his rate) / (1 - his class's on-field mean rate)) ** leave_power, so a
         # regular leaves less often than a backup. 0 (no scaling) unless the table sets it.
         self.leave_power = float(data.get('leave_power', 0.0))
@@ -364,12 +367,17 @@ class Field:
                      'count_removed': count_removed, 'entrants': sorted(entrants), 'short': short,
                      'slots': dict(sorted(kept_slot.items()))}
 
+    def entry_weight(self, pid, team, group, pos):
+        if getattr(self, 'entry_current', False) and (team, pid) in self.entry_share:
+            return self.entry_share[(team, pid)]
+        return self.rate(pid, team, group, pos)
+
     def _weighted(self, pool, k, team, group, draw, cls):
         """k distinct players, each drawn in proportion to his on-field rate at class `cls` for this team and grouping."""
         pool = list(pool)
         out = []
         for _ in range(min(k, len(pool))):
-            weights = [max(self.rate(p['gsis_id'], team, group, cls), FLOOR) for p in pool]
+            weights = [max(self.entry_weight(p['gsis_id'], team, group, cls), FLOOR) for p in pool]
             pick = draw.choices(pool, weights=weights, k=1)[0]
             out.append(pick)
             pool = [p for p in pool if p is not pick]
