@@ -6,6 +6,7 @@ class PersistentLineupTest(unittest.TestCase):
     def test_stints_persist_by_team_and_prepare_does_not_commit(self):
         field = Mock()
         field.sha256 = 'test'
+        field.position_prior = {('RB', '11'): 1.0}
         def advance(team, lineup, group, roster, draw, prev_group=None, slots=None):
             pid = team + '-rb'
             return {pid: lineup.get(pid, 0) + 1}, {'status':'ok','slots':{pid:'RB'}}
