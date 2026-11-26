@@ -11,8 +11,8 @@
 <path d="M52 226H708" stroke="#08795d" stroke-dasharray="5 6" opacity=".7"/>
 <text x="55" y="215" font-size="15" fill="#08795d">Catch height</text>
 <path d="M95 254 Q365 -72 670 291" fill="none" stroke="#865a32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 5"/>
-<ellipse cx="372" cy="110" rx="13" ry="7" fill="#865a32" transform="rotate(16 372 110)"/>
-<circle cx="609.35" cy="225.67" r="7" fill="#08795d"/>
+<ellipse cx="366.25" cy="100.25" rx="13" ry="7" fill="#865a32" transform="rotate(16 366.25 100.25)"/>
+<circle cx="609.35" cy="225.29" r="7" fill="#08795d"/>
 <circle cx="670" cy="291" r="7" fill="#ad422f"/>
 <path d="M609.35 226V291" stroke="#08795d" stroke-dasharray="4 5"/>
 <circle cx="92" cy="273" r="20" fill="#285a99" stroke="#fff" stroke-width="2"/><text x="92" y="278" font-size="14" fill="#fff" font-weight="700" text-anchor="middle">QB</text><circle cx="426" cy="271" r="20" fill="#285a99" stroke="#fff" stroke-width="2"/><text x="426" y="276" font-size="14" fill="#fff" font-weight="700" text-anchor="middle">DB</text>

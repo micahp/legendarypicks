@@ -141,3 +141,7 @@ flowchart TD
 ```
 
 [Candidate code and handoff at e39e5bdd](https://github.com/micahp/legendarypicks/blob/e39e5bdd/docs/research/SLC-CEG-PLAYER-INTEGRATION-2026-11-26.md). The candidate replaces the Phase 6 retrospective opportunity-recipient candidate set with an eligible simulated lineup. Player attribution is not player-conditioned outcome ability. Formation-conditioned intent, defensive/kick attribution, complete official snap accounting, prospective validation and actual artifact/runtime verification are open. Earlier status in this page describes the frozen CEG research pin, not this later candidate.
+
+For a fixed-layout alternative to the fit/inference diagram, see [CEG fit and runtime SVG](diagrams/ceg-fit-runtime.svg).
+
+![CEG offline fit and event-generation runtime](diagrams/ceg-fit-runtime.svg)

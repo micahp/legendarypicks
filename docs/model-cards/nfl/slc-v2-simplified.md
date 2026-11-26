@@ -59,3 +59,7 @@ Support-aware checks both raw support and Kish effective sample size (ESS); the 
 ### What to measure
 
 Compare identical frozen input snapshots and seeds; measure candidate count, ESS, maximum weight share, order dependence, blocked seeds, football realism and out-of-sample Brier. A wider pool or fewer blocked seeds is not necessarily better predictive performance. CEG is a separate conditional generator, not a fifth row-filter mode.
+
+For a fixed-layout comparison with the complete labels, see [conditioning-methods.svg](../../architecture/diagrams/conditioning-methods.svg).
+
+![Four historical row conditioning methods](../../architecture/diagrams/conditioning-methods.svg)

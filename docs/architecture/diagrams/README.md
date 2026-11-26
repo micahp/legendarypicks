@@ -7,6 +7,8 @@ Standalone SVGs have explicit viewBox dimensions, box widths and label positions
 | Diagram | Purpose |
 |---|---|
 | [Model family](model-family.svg) | Full-label fixed-layout alternative to the shared architecture flow |
+| [CEG fit/runtime](ceg-fit-runtime.svg) | Training/inference boundary and generated event lifecycle |
+| [Conditioning methods](conditioning-methods.svg) | Four historical row-filtering alternatives |
 | [Catch point](catch-point.svg) | Side view of catch-height versus ground-landing pursuit |
 | [Player perception](player-perception.svg) | Assigned zone, observed cues and reachable catch opportunity |
 | [Check-release](check-release.svg) | Protection, release and proactive contest eligibility |
