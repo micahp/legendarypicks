@@ -882,6 +882,16 @@ def _apply_v3_kick(state, play, switches):
         flags['fumble_recovery_team'] = _v3_team(kick.possession_after, state)
         flags['fumble_lost_team'] = (state['defense']
                                      if kick.possession_after == 'kicking_team' else None)
+        if kick.receiving_restart_spot is not None:
+            if kick.possession_after != 'receiving_team' or _v3_spot(
+                    kick.dead_ball_spot, 'receiving_team', 'muff_touchback_dead_ball') != 100:
+                raise UnsupportedEventTransition('kick_muff_touchback_requires_receiving_end_zone_dead_ball')
+            dead = kick.receiving_restart_spot
+            expected_restart = 80 if kick.kind in ('punt', 'safety_kick') else (
+                20 if kick.kick_spot.yardline_100 in (50, 80) else 65)
+            if _v3_spot(dead, 'receiving_team', 'muff_touchback_restart') != expected_restart:
+                raise UnsupportedEventTransition('kick_muff_touchback_restart_spot_invalid')
+            flags['touchback'] = True
     if dead is None:
         raise UnsupportedEventTransition('kick_v3_dead_ball_or_restart_spot_required')
     final_role = kick.possession_after

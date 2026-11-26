@@ -237,7 +237,9 @@ def _return_facts(facts, kick):
     if facts.scoring_kind is None:
         if facts.scoring_team is not None:
             _fail('kick_return_scorer_without_scoring_kind')
-        if dead_y in (0, 100):
+        if dead_y in (0, 100) and not (
+                kick.result == 'muff' and kick.receiving_restart_spot is not None
+                and kick.possession_after == 'receiving_team'):
             _fail('kick_return_goal_line_needs_touchdown_or_safety_fact')
     elif facts.scoring_kind == 'touchdown':
         if facts.scoring_team != facts.returning_team or dead_y != 0:
@@ -638,9 +640,18 @@ def validate_v3(state, play, require_clock=True):
         _spot(kick.receiving_restart_spot, 'kick_receiving_restart')
         if kick.receiving_restart_spot.frame != 'receiving_team':
             _fail('kick_receiving_restart_frame_must_be_receiving_team')
-    if kick.receiving_restart_spot is not None and kick.result not in ('touchback', 'missed') \
+    if kick.receiving_restart_spot is not None and kick.result not in ('touchback', 'missed', 'muff') \
             and not (play.scoring is not None and play.scoring.kind == 'safety'):
         _fail('receiving_restart_spot_without_restart_context')
+    if kick.result == 'muff' and kick.receiving_restart_spot is not None:
+        if kick.possession_after != 'receiving_team' or kick.recovery_team != 'receiving_team':
+            _fail('muff_touchback_requires_receiving_team_recovery')
+        if kick.return_facts is None or _in_frame(kick.dead_ball_spot, 'receiving_team') != 100:
+            _fail('muff_touchback_requires_receiving_end_zone_dead_ball')
+        expected = 80 if kick.kind in ('punt', 'safety_kick') else (
+            20 if kick.kick_spot.yardline_100 in (50, 80) else 65)
+        if kick.receiving_restart_spot.yardline_100 != expected:
+            _fail('muff_touchback_restart_spot_invalid')
 
     if play.scoring is not None and play.scoring.kind == 'safety':
         _safety_facts(kick.safety, kick)

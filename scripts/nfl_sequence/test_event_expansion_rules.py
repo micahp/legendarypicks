@@ -66,6 +66,33 @@ class EventExpansionRulesTests(unittest.TestCase):
         self.assertEqual(applied.flags['returner_id'], 'post-recovery-runner')
         self.assertFalse(applied.flags['punt_return'])
 
+    def test_ceg_play_3_muffed_kick_touchback_uses_restart_spot_and_keeps_fumble(self):
+        recovery = c3.FieldSpotV3(1, 'kicking_team')
+        dead = c3.FieldSpotV3(0, 'kicking_team')
+        recoverer = c.PlayerRoleV2.named('recoverer')
+        return_facts = c3.KickReturnV3(
+            'receiving_team', c.PlayerRoleV2.none(), None, dead, -1,
+            c.PlayerRoleV2.named('muffing-player'), recoverer,
+            c.PlayerRoleV2.named('post-recovery-runner'), recovery,
+            c3.FieldSpotV3(1, 'kicking_team'))
+        kick = c3.KickV3(
+            'kickoff', 'A', 'B', c3.FieldSpotV3(65, 'kicking_team'), 35, 'muff',
+            possession_after='receiving_team', dead_ball_spot=dead,
+            receiving_restart_spot=c3.FieldSpotV3(65, 'receiving_team'),
+            recovery_team='receiving_team', recovery_spot=recovery,
+            recoverer=recoverer, return_facts=return_facts)
+        play = c3.GeneratedPlayV3(
+            contract=c3.CONTRACT_V3_VERSION, call=c.PlayCallV2('kickoff'), event='kickoff',
+            yards_gained=None, fumble=True, provenance=P, clock=c.ClockV2(0), kick=kick,
+            players=c.PlayerRolesV2(kicker=c.PlayerRoleV2.named('kicker')))
+        applied = apply_v3_play(
+            {'offense': 'A', 'defense': 'B', 'down': 1, 'togo': 10, 'yl': 65}, play)
+        self.assertEqual(applied.state_after, {
+            'offense': 'B', 'defense': 'A', 'down': 1, 'togo': 10, 'yl': 65})
+        self.assertTrue(applied.flags['touchback'])
+        self.assertTrue(applied.flags['fumble'])
+        self.assertEqual(applied.flags['fumble_return_yards'], -1)
+
     def test_ceg_play_3_kickoff_oob_applies_typed_restart_choice(self):
         oob = c3.KickoffOutOfBoundsV3(
             'kicking_team_out_of_bounds', 'at_distance_from_kick',

@@ -1071,6 +1071,13 @@ class AutonomousGameExecution:
                 recoverer=recoverer, post_recovery_returner=post_returner,
                 recovery_spot=recovery_spot, fumble_spot=fumble_spot,
                 scoring_kind=facts.get('scoring'), scoring_team=facts.get('scoring_team'))
+            if facts.get('touchback'):
+                restart_yardline = facts.get('receiving_restart_yardline_100')
+                restart_spot = (spot(100 - restart_yardline, 'receiving_team')
+                                if type(restart_yardline) is int else None)
+                if restart_spot is None:
+                    return {'blocker': 'kick_muff_touchback_restart_spot_missing',
+                            'execution': {'call': call, 'result': result, 'timing': timing}}
         elif result_name == 'touchback':
             if type(facts.get('dead_ball_yardline_100')) is not int:
                 return {'blocker': 'kick_touchback_restart_spot_missing'}

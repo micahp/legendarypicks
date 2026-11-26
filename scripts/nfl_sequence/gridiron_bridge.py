@@ -21,7 +21,7 @@ import roster_preflight
 import v1_complete_roster
 from scripts import nfl_team_codes
 
-ENGINE_COMMIT = '5da59737d9019cd5d87575b3158dd261b0928d9b'
+ENGINE_COMMIT = '058571b5f23c43418d3cbb5a202214b1b99b8f55'
 PLAYBOOK_MANIFEST_SHA256 = '220af2a590b2e7ddf5c28a32977aadd4d5a5e6e128ca8392da8bac37ef0917ac'
 DEFENSE_SLOTS = ('LEDGE', 'LDT', 'RDT', 'REDGE', 'MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS')
 DEFENSE_POSITION_CANDIDATES = {
@@ -59,7 +59,7 @@ SCRIMMAGE_RATING_KEYS = frozenset({
     'TAK', 'BTK', 'ELU', 'BCV', 'TRK', 'PUR', 'CAR', 'PRC', 'CTH', 'CIT', 'THA',
 })
 CEG_CONTRACT_V3_COMMIT = '1aeabdba'
-CEG_CONTRACT_V3_SHA256 = '87ec169d8b6c845b3468c04e14eb871894bd30ae0b03d2efed0974b795cd0c91'
+CEG_CONTRACT_V3_SHA256 = 'e4339c033a5933be74cf38492f83b21d8e63822d238ffa1cd2ccf0e6431abc35'
 
 
 def _scrimmage_ratings(ratings, *, family, player_id, quarterback_id):

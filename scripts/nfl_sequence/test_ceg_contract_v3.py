@@ -98,6 +98,23 @@ class CegPlay3SpecialTeams(unittest.TestCase):
                              scoring=v2.ScoringV2('touchdown', 'receiving_team'))
         self.assertIsNone(c.validate_v3(None, record))
 
+    def test_receiving_muff_touchback_keeps_physical_spots_and_restart_distinct(self):
+        recovery = c.FieldSpotV3(1, 'kicking_team')
+        dead = c.FieldSpotV3(0, 'kicking_team')
+        recoverer = v2.PlayerRoleV2.named('recoverer')
+        facts = c.KickReturnV3(
+            'receiving_team', v2.PlayerRoleV2.none(), None, dead, -1,
+            v2.PlayerRoleV2.named('muffing-player'), recoverer,
+            v2.PlayerRoleV2.named('post-recovery-runner'), recovery,
+            c.FieldSpotV3(1, 'kicking_team'))
+        kick = c.KickV3(
+            'kickoff', 'A', 'B', c.FieldSpotV3(65, 'kicking_team'), 35, 'muff',
+            possession_after='receiving_team', dead_ball_spot=dead,
+            receiving_restart_spot=c.FieldSpotV3(65, 'receiving_team'),
+            recovery_team='receiving_team', recovery_spot=recovery,
+            recoverer=recoverer, return_facts=facts)
+        self.assertIsNone(c.validate_v3(None, kickoff_record(kick, fumble=True)))
+
     def test_punt_fair_catch_and_downed_are_typed_outcomes(self):
         dead = c.FieldSpotV3(30, 'receiving_team')
         fair = c.KickV3('punt', 'A', 'B', c.FieldSpotV3(40, 'kicking_team'), 45,

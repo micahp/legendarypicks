@@ -498,6 +498,48 @@ class AutonomousSpecialTeamsTests(unittest.TestCase):
         self.assertIn('punt_return', applied.flags)
         self.assertEqual(generated['execution']['result']['diagnostics']['outcome_inputs'], [])
 
+    def test_gridiron_kickoff_muff_touchback_crosses_slc_adapter_and_reducer(self):
+        source = self._source()
+        kicking = [f'AAA-P{i}' for i in range(11)]
+        receiving = [f'BBB-P{i}' for i in range(11)]
+        source.rating_rows[receiving[0]]['ratings']['CTH'] = 1
+        profiles = {pid: {'ratings': {key: value for key, value in row['ratings'].items()
+                                      if key in autonomous_game.SPECIAL_TEAMS_RATING_KEYS},
+                          'physics': {}}
+                    for pid, row in source.rating_rows.items()}
+        player_rows = {p['gsis_id']: p for side in ('home', 'away')
+                       for p in source.snapshot['rosters'][side]['players']}
+        call = {
+            'schema_version': 'gridiron.autonomous-special-teams.v1', 'kind': 'kickoff',
+            'seed': '5', 'kicking_team': 'AAA', 'receiving_team': 'BBB',
+            'yardline_100': 65, 'ball_lateral_yards': 26.67,
+            'lineups': {'kicking': {'kicker': kicking[1],
+                                    'coverage': [pid for pid in kicking if pid != kicking[1]]},
+                        'receiving': {'returner': receiving[0], 'blockers': receiving[1:]}},
+            'player_profiles': profiles,
+        }
+        source._special_teams_call = lambda *_args: (call, player_rows, {'source': 'test-ratings'})
+        source.session = gridiron_bridge.GridironSession(source.engine_root)
+        try:
+            generated = source._execute_live_special_teams('kickoff', 'AAA', 'BBB', 65, 11)
+        finally:
+            source.session.close()
+        self.assertNotIn('blocker', generated)
+        facts = generated['execution']['result']['result']
+        self.assertEqual((facts['result'], facts['touchback'], facts['return_yards']),
+                         ('muff', True, -1))
+        event = generated['event_record']
+        self.assertEqual(event.kick.result, 'muff')
+        self.assertEqual(event.kick.receiving_restart_spot.yardline_100, 65)
+        self.assertEqual(event.kick.return_facts.recovery_spot.yardline_100, 1)
+        applied = source.apply_event(
+            {'offense': 'A', 'defense': 'B', 'down': 1, 'togo': 10, 'yl': 65}, event)
+        self.assertEqual(applied.state_after,
+                         {'offense': 'B', 'defense': 'A', 'down': 1, 'togo': 10, 'yl': 65})
+        self.assertTrue(applied.flags['touchback'])
+        self.assertTrue(applied.flags['fumble'])
+        self.assertEqual(applied.flags['fumbler_id'], receiving[0])
+
     def test_generated_scrimmage_fumble_recovery_crosses_gridiron_slc_runtime(self):
         source = self._source()
         source.snapshot['schedule']['game_id'] = 'generated-fumble-test'
