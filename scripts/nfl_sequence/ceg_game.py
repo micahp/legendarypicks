@@ -578,14 +578,15 @@ def main(argv=None):
     r.add_argument('--player-snap-counts-sha256')
     r.add_argument('--opportunity-artifact', type=Path)
     r.add_argument('--opportunity-sha256')
-    r.add_argument('--entry-current', action='store_true')
+    r.add_argument('--entry-current', action=argparse.BooleanOptionalAction, default=None,
+                   help='HE enabled by default for player-aware runs; --no-entry-current for control')
     args = ap.parse_args(argv)
     if args.cmd == 'run':
         companions = (args.player_field, args.player_field_sha256, args.player_snap_counts,
                       args.player_snap_counts_sha256, args.opportunity_artifact, args.opportunity_sha256)
         if args.player_snapshot and not all(companions):
             ap.error('player-aware CEG requires every pinned player input')
-        if not args.player_snapshot and (any(companions) or args.entry_current):
+        if not args.player_snapshot and (any(companions) or args.entry_current is not None):
             ap.error('player inputs require --player-snapshot')
     return build(args) if args.cmd == 'build' else run(args)
 

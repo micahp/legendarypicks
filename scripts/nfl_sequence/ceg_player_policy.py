@@ -131,7 +131,7 @@ def load_inputs(args, art):
     snaps = snap_update.SnapCounts.load(args.player_snap_counts, args.player_snap_counts_sha256)
     if snaps.season != season:
         raise ValueError('CEG snap-count season mismatch')
-    return snapshot, args.player_field, args.player_field_sha256, snaps, opportunity, args.entry_current
+    return snapshot, args.player_field, args.player_field_sha256, snaps, opportunity, getattr(args, 'entry_current', None) is not False
 
 
 def tally(box, outcome):
