@@ -77,5 +77,7 @@ This sequence is aimed at the concrete V1 Complete concern documented in the Gri
 
 - [Archived 25-game full event/counter data](madden64-statistical-study/additional-25-data/additional-25-full-data.csv)
 - [Archived team-game counters](madden64-statistical-study/additional-25-data/additional-25-game-stats.csv)
+- [Derived 50-row opportunity-based stats CSV](madden64-statistical-study/additional-25-data/additional-25-advanced-stats.csv)
+- [Advanced-stat definitions, aggregate rates, and reconciliation results](madden64-statistical-study/additional-25-advanced-stats.json), rebuilt by [`derive_advanced_stats.py`](../../tools/madden64-study/derive_advanced_stats.py)
 - [25-game run results and provenance](madden64-statistical-study/additional-25-run-results.json)
 - [Existing mechanics matrix](MADDEN64-MECHANICS-MATRIX.md)
