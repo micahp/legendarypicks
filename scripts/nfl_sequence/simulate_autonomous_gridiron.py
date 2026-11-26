@@ -86,7 +86,7 @@ def run(args):
     args.output.parent.mkdir(parents=True, exist_ok=True)
     if args.output.exists():
         raise FileExistsError(f'refusing to overwrite autonomous game output: {args.output}')
-    args.output.write_text(json.dumps(payload, indent=2, sort_keys=True) + '\n')
+    args.output.write_text(json.dumps(payload, sort_keys=True, separators=(',', ':')) + '\n')
     return payload
 
 

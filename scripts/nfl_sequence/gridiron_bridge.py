@@ -21,7 +21,7 @@ import roster_preflight
 import v1_complete_roster
 from scripts import nfl_team_codes
 
-ENGINE_COMMIT = '92bfb77d0ec7efcbba40d1adfc5c0cab0db120f3'
+ENGINE_COMMIT = 'faadcd11e299db6ce8f87ab0f50f7fcdf5a08be7'
 PLAYBOOK_MANIFEST_SHA256 = '220af2a590b2e7ddf5c28a32977aadd4d5a5e6e128ca8392da8bac37ef0917ac'
 DEFENSE_SLOTS = ('LEDGE', 'LDT', 'RDT', 'REDGE', 'MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS')
 DEFENSE_POSITION_CANDIDATES = {
@@ -58,6 +58,8 @@ SCRIMMAGE_RATING_KEYS = frozenset({
     'SPD', 'ACC', 'AGI', 'STR', 'AWR', 'RBK', 'IBL', 'PBK', 'BSH', 'PMV', 'FMV',
     'TAK', 'BTK', 'ELU', 'BCV', 'TRK', 'PUR', 'CAR', 'PRC', 'CTH', 'CIT', 'THA',
 })
+CEG_CONTRACT_V3_COMMIT = '1aeabdba'
+CEG_CONTRACT_V3_SHA256 = '87ec169d8b6c845b3468c04e14eb871894bd30ae0b03d2efed0974b795cd0c91'
 
 
 def _scrimmage_ratings(ratings, *, family, player_id, quarterback_id):
@@ -108,6 +110,13 @@ def _check_engine(root):
     if subprocess.run(['git', '-C', str(root), 'diff', '--quiet', 'HEAD', '--', 'engine'], check=False).returncode:
         raise ValueError('gridiron_engine_modified')
     return commit
+
+
+def _check_ceg_contract_v3():
+    path = Path(__file__).resolve().with_name('ceg_contract_v3.py')
+    if not path.is_file() or _sha(path) != CEG_CONTRACT_V3_SHA256:
+        raise ValueError('ceg_play_3_contract_hash_mismatch')
+    return CEG_CONTRACT_V3_COMMIT
 
 
 def _profile(path, manifest_path, season, team):

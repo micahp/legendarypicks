@@ -1,8 +1,9 @@
 import unittest
 
 import ceg_contract as c
+import ceg_contract_v3 as c3
 from event_expansion import EventExpansionSwitches
-from event_expansion_rules import (apply_field_goal_play, apply_kickoff_play, apply_punt_play,
+from event_expansion_rules import (apply_field_goal_play, apply_kickoff_play, apply_punt_play, apply_v3_play,
                                    apply_scrimmage_play, UnsupportedEventTransition)
 
 
@@ -25,6 +26,90 @@ def record(**kw):
 
 
 class EventExpansionRulesTests(unittest.TestCase):
+    def test_ceg_play_3_downed_and_fair_catch_punts_are_distinct_nonreturns(self):
+        provenance = P
+        dead = c3.FieldSpotV3(30, 'receiving_team')
+        for result, catcher in (('downed', None), ('fair_catch', c.PlayerRoleV2.named('pc'))):
+            kick = c3.KickV3('punt', 'A', 'B', c3.FieldSpotV3(40, 'kicking_team'), 45,
+                             result, possession_after='receiving_team', dead_ball_spot=dead,
+                             fair_catcher=catcher)
+            play = c3.GeneratedPlayV3(
+                contract=c3.CONTRACT_V3_VERSION, call=c.PlayCallV2('punt'), event='punt',
+                yards_gained=None, provenance=provenance, clock=c.ClockV2(5), kick=kick,
+                players=c.PlayerRolesV2(punter=c.PlayerRoleV2.named('punter')))
+            applied = apply_v3_play(S, play)
+            self.assertEqual(applied.state_after, {'offense': 'B', 'defense': 'A',
+                                                   'down': 1, 'togo': 10, 'yl': 30})
+            self.assertFalse(applied.flags['punt_return'])
+            self.assertEqual(applied.flags['fair_catch'], result == 'fair_catch')
+
+    def test_ceg_play_3_muff_attributes_the_recovery_and_post_recovery_returner(self):
+        muffing = c.PlayerRoleV2.named('muffing-player')
+        recoverer = c.PlayerRoleV2.named('recoverer')
+        runner = c.PlayerRoleV2.named('post-recovery-runner')
+        recovery, dead = c3.FieldSpotV3(70, 'kicking_team'), c3.FieldSpotV3(75, 'kicking_team')
+        facts = c3.KickReturnV3('receiving_team', c.PlayerRoleV2.none(), None, dead, 5,
+                                muffing, recoverer, runner, recovery, c3.FieldSpotV3(70, 'kicking_team'))
+        kick = c3.KickV3('punt', 'A', 'B', c3.FieldSpotV3(40, 'kicking_team'), 45, 'muff',
+                         possession_after='receiving_team', dead_ball_spot=dead,
+                         recovery_team='receiving_team', recovery_spot=recovery,
+                         recoverer=recoverer, return_facts=facts)
+        play = c3.GeneratedPlayV3(
+            contract=c3.CONTRACT_V3_VERSION, call=c.PlayCallV2('punt'), event='punt',
+            yards_gained=None, fumble=True, provenance=P, clock=c.ClockV2(5), kick=kick,
+            players=c.PlayerRolesV2(punter=c.PlayerRoleV2.named('punter')))
+        applied = apply_v3_play(S, play)
+        self.assertEqual(applied.state_after['offense'], 'B')
+        self.assertEqual(applied.flags['return_yards'], 5)
+        self.assertEqual(applied.flags['fumbler_id'], 'muffing-player')
+        self.assertEqual(applied.flags['recoverer_id'], 'recoverer')
+        self.assertEqual(applied.flags['returner_id'], 'post-recovery-runner')
+        self.assertFalse(applied.flags['punt_return'])
+
+    def test_ceg_play_3_kickoff_oob_applies_typed_restart_choice(self):
+        oob = c3.KickoffOutOfBoundsV3(
+            'kicking_team_out_of_bounds', 'at_distance_from_kick',
+            c3.FieldSpotV3(60, 'kicking_team'), c3.FieldSpotV3(60, 'receiving_team'),
+            distance_yards=25)
+        kick = c3.KickV3('kickoff', 'A', 'B', c3.FieldSpotV3(65, 'kicking_team'), 35,
+                         'out_of_bounds', possession_after='receiving_team',
+                         dead_ball_spot=c3.FieldSpotV3(60, 'kicking_team'),
+                         out_of_bounds_spot=c3.FieldSpotV3(60, 'kicking_team'), kickoff_oob=oob)
+        play = c3.GeneratedPlayV3(
+            contract=c3.CONTRACT_V3_VERSION, call=c.PlayCallV2('kickoff'), event='kickoff',
+            yards_gained=None, provenance=P, clock=c.ClockV2(5), kick=kick,
+            players=c.PlayerRolesV2(kicker=c.PlayerRoleV2.named('kicker')))
+        applied = apply_v3_play({'offense': 'A', 'defense': 'B', 'down': 1, 'togo': 10, 'yl': 65}, play)
+        self.assertEqual(applied.state_after['offense'], 'B')
+        self.assertEqual(applied.state_after['yl'], 60)
+        self.assertEqual(applied.flags['kickoff_out_of_bounds_enforcement']['choice'],
+                         'at_distance_from_kick')
+
+    def test_ceg_play_3_punt_return_safety_names_scorer_and_pending_free_kick(self):
+        safety = c3.KickSafetyV3(
+            scoring_team='kicking_team', possessing_team='receiving_team',
+            safety_dead_ball_spot=c3.FieldSpotV3(100, 'receiving_team'),
+            free_kick_team='receiving_team', free_kick_spot=c3.FieldSpotV3(80, 'receiving_team'),
+            free_kick_spot_basis='own_20', receiving_team='kicking_team', restart_status='pending')
+        returner = c.PlayerRoleV2.named('returner')
+        return_facts = c3.KickReturnV3(
+            'receiving_team', returner, c3.FieldSpotV3(95, 'receiving_team'),
+            c3.FieldSpotV3(100, 'receiving_team'), -5,
+            c.PlayerRoleV2.none(), c.PlayerRoleV2.none(), c.PlayerRoleV2.none(),
+            scoring_kind='safety', scoring_team='kicking_team')
+        kick = c3.KickV3(
+            'punt', 'A', 'B', c3.FieldSpotV3(40, 'kicking_team'), 45, 'return',
+            possession_after='receiving_team', dead_ball_spot=c3.FieldSpotV3(0, 'kicking_team'),
+            return_facts=return_facts, safety=safety)
+        play = c3.GeneratedPlayV3(
+            contract=c3.CONTRACT_V3_VERSION, call=c.PlayCallV2('punt'), event='punt',
+            yards_gained=None, provenance=P, clock=c.ClockV2(5),
+            scoring=c.ScoringV2('safety', 'kicking_team'), kick=kick,
+            players=c.PlayerRolesV2(punter=c.PlayerRoleV2.named('punter'), returner=returner))
+        applied = apply_v3_play(S, play)
+        self.assertEqual((applied.terminal, applied.scoring_team), ('safety', 'A'))
+        self.assertTrue(applied.flags['safety'])
+
     def test_existing_run_transition_uses_the_frozen_reducer(self):
         result = apply_scrimmage_play(S, record())
         self.assertEqual(result.state_after,

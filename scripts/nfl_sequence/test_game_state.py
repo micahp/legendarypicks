@@ -3,6 +3,7 @@
 Run: python3 -m unittest scripts/nfl_sequence/test_game_state.py
 """
 import copy
+import hashlib
 import random
 import json
 import sys
@@ -16,7 +17,9 @@ import game_stats  # noqa: E402
 import rules_matrix as rm  # noqa: E402
 import football_assertions  # noqa: E402
 import ceg_contract  # noqa: E402
+import ceg_contract_v3  # noqa: E402
 import event_expansion_rules  # noqa: E402
+from execution_evidence import compact_live_execution  # noqa: E402
 from event_expansion import EventExpansionSwitches  # noqa: E402
 
 
@@ -2356,6 +2359,9 @@ class AutonomousGameLifecycle(unittest.TestCase):
                     'clock_starts_on': 'legal_touch', 'event_record': event_record}
 
         def apply_event(self, state, event_record):
+            if isinstance(event_record, ceg_contract_v3.GeneratedPlayV3):
+                return event_expansion_rules.apply_v3_play(
+                    state, event_record, switches=EventExpansionSwitches())
             if event_record.event == 'punt':
                 return event_expansion_rules.apply_punt_play(
                     state, event_record, switches=EventExpansionSwitches())
@@ -2370,6 +2376,216 @@ class AutonomousGameLifecycle(unittest.TestCase):
 
         def overtime_first_choice(self, _winner, _loser, _score):
             return 'receive'
+
+    def test_compact_execution_keeps_22_player_replay_proof_without_frames(self):
+        player_ids = [f'P{i}' for i in range(22)]
+        execution = {
+            'call': {'player_profiles': {pid: {} for pid in player_ids}},
+            'result': {
+                'call': {'duplicate': True},
+                'events': [{'type': 'assignment_executed', 'player_id': pid} for pid in player_ids],
+                'diagnostics': {'assignments_executed': 22, 'expected_assignments': 22},
+                'trajectory': {'roster': [{'id': pid} for pid in player_ids], 'stride': 3,
+                               'frames': [[0, 0, 0], [1, 1, 1]]},
+            },
+            'viewer': 'gridiron_result.trajectory.frames',
+        }
+        compact = compact_live_execution(execution)
+        self.assertNotIn('frames', compact['result']['trajectory'])
+        self.assertEqual(compact['result']['trajectory']['frame_count'], 2)
+        self.assertTrue(compact['result']['trajectory']['replay_from_stored_call'])
+        self.assertNotIn('events', compact['result'])
+        self.assertEqual(compact['result']['event_summary']['assignment_player_ids'], sorted(player_ids))
+        self.assertEqual(compact['result']['event_summary']['sha256'], hashlib.sha256(
+            json.dumps(execution['result']['events'], sort_keys=True, separators=(',', ':')).encode()
+        ).hexdigest())
+        self.assertNotIn('call', compact['result'])
+        self.assertEqual(len(compact['result']['replay_result_sha256']), 64)
+        self.assertTrue(gs._has_22_player_execution(compact))
+        self.assertEqual(compact['viewer'], 'rerun_stored_call_for_gridiron_result.trajectory.frames')
+
+    def test_generated_v3_kickoff_serializes_and_enters_game_lifecycle(self):
+        class V3KickoffSource(self.Source):
+            def kick(source, kind, kicker, receiver, context):
+                provenance = ceg_contract.ProvenanceV2(
+                    'controlled-v3-kickoff', 'test', 'b' * 64,
+                    components=('live-kick-fixture',), draw_ids=(kind,))
+                event_record = ceg_contract_v3.GeneratedPlayV3(
+                    contract=ceg_contract_v3.CONTRACT_V3_VERSION,
+                    call=ceg_contract.PlayCallV2('kickoff', provenance=provenance),
+                    event='kickoff', yards_gained=None, provenance=provenance,
+                    clock=ceg_contract.ClockV2(0),
+                    kick=ceg_contract_v3.KickV3(
+                        kind='kickoff', kicking_team=kicker, receiving_team=receiver,
+                        kick_spot=ceg_contract_v3.FieldSpotV3(65, 'kicking_team'),
+                        distance_yards=65, result='touchback', possession_after='receiving_team',
+                        dead_ball_spot=ceg_contract_v3.FieldSpotV3(0, 'kicking_team'),
+                        receiving_restart_spot=ceg_contract_v3.FieldSpotV3(65, 'receiving_team')),
+                    players=ceg_contract.PlayerRolesV2(
+                        kicker=ceg_contract.PlayerRoleV2.named(f'{kicker}-K')))
+                return {'clock_runoff_seconds': 0, 'clock_starts_on': 'legal_touch',
+                        'event_record': event_record,
+                        'participants': {'kicker_id': f'{kicker}-K', 'kicker_name': 'Kicker',
+                                         'kicker_position': 'K', 'kicker_team': kicker,
+                                         'kicker_side': kicker, 'attribution': 'autonomous_execution'}}
+
+        record = gs.play_game(182, ref({}, []), winner_choice='receive', winner='A',
+                              execution_source=V3KickoffSource(), max_drives=0)
+        self.assertEqual(record['blocker'], 'drive_limit')
+        kickoff = record['kickoffs'][0]
+        self.assertEqual(kickoff['result'], 'touchback')
+        self.assertEqual(kickoff['spot_yardline_100'], 65)
+        self.assertEqual(kickoff['ceg_event']['contract'], 'ceg-play-3')
+        self.assertEqual(record['stats']['team']['A'].get('kickoffs', 0), 0)
+        self.assertEqual(record['stats']['team']['B']['kickoffs'], 1)
+        player = next(row for row in record['stats']['player'] if row['player_id'] == 'B-K')
+        self.assertEqual(player['kicking']['kickoffs'], 1)
+
+    def test_generated_v3_muff_recovery_stats_keep_all_three_player_roles(self):
+        class MuffKickSource(self.Source):
+            def kick(source, kind, kicker, receiver, _context):
+                provenance = ceg_contract.ProvenanceV2(
+                    'controlled-v3-muff', 'test', 'd' * 64,
+                    components=('live-muff-fixture',), draw_ids=(kind,))
+                muffing = ceg_contract.PlayerRoleV2.named('A-MUFF')
+                recoverer = ceg_contract.PlayerRoleV2.named('A-REC')
+                post_returner = ceg_contract.PlayerRoleV2.named('A-RET')
+                event_record = ceg_contract_v3.GeneratedPlayV3(
+                    contract=ceg_contract_v3.CONTRACT_V3_VERSION,
+                    call=ceg_contract.PlayCallV2('kickoff', provenance=provenance),
+                    event='kickoff', yards_gained=None, provenance=provenance,
+                    clock=ceg_contract.ClockV2(2), fumble=True,
+                    kick=ceg_contract_v3.KickV3(
+                        kind='kickoff', kicking_team=kicker, receiving_team=receiver,
+                        kick_spot=ceg_contract_v3.FieldSpotV3(65, 'kicking_team'),
+                        distance_yards=40, result='muff', possession_after='receiving_team',
+                        dead_ball_spot=ceg_contract_v3.FieldSpotV3(48, 'kicking_team'),
+                        recovery_team='receiving_team',
+                        recovery_spot=ceg_contract_v3.FieldSpotV3(55, 'receiving_team'),
+                        recoverer=recoverer,
+                        return_facts=ceg_contract_v3.KickReturnV3(
+                            returning_team='receiving_team',
+                            returner=ceg_contract.PlayerRoleV2.none(), return_start_spot=None,
+                            dead_ball_spot=ceg_contract_v3.FieldSpotV3(52, 'receiving_team'),
+                            return_yards=3, muffing_returner=muffing, recoverer=recoverer,
+                            post_recovery_returner=post_returner,
+                            recovery_spot=ceg_contract_v3.FieldSpotV3(55, 'receiving_team'),
+                            fumble_spot=ceg_contract_v3.FieldSpotV3(58, 'receiving_team'))),
+                    players=ceg_contract.PlayerRolesV2(
+                        kicker=ceg_contract.PlayerRoleV2.named(f'{kicker}-K'),
+                        returner=post_returner, recoverer=recoverer, fumbler=muffing))
+                return {'clock_runoff_seconds': 2, 'clock_starts_on': 'legal_touch',
+                        'event_record': event_record,
+                        'participants': {'kicker_id': f'{kicker}-K', 'fumbler_side': receiver,
+                                         'fumbler_name': 'Muffing Returner',
+                                         'recoverer_name': 'Recoverer',
+                                         'returner_name': 'Post Recovery Returner',
+                                         'attribution': 'autonomous_execution'}}
+
+        record = gs.play_game(183, ref({}, []), winner_choice='receive', winner='A',
+                              execution_source=MuffKickSource(), max_drives=0)
+        self.assertEqual(record['blocker'], 'drive_limit')
+        kickoff = record['kickoffs'][0]
+        self.assertEqual(kickoff['result'], 'muff')
+        self.assertEqual(kickoff['possession_after'], 'A')
+        self.assertEqual(record['stats']['team']['A']['fumbles'], 1)
+        self.assertEqual(record['stats']['team']['A']['fumble_recoveries'], 1)
+        self.assertEqual(record['stats']['team']['A']['fumble_return_yards'], 3)
+        players = {row['player_id']: row for row in record['stats']['player']}
+        self.assertEqual(players['A-MUFF']['miscellaneous']['fumbles'], 1)
+        self.assertEqual(players['A-REC']['miscellaneous']['fumble_recoveries'], 1)
+        self.assertEqual(players['A-RET']['returning']['fumble_return_yds'], 3)
+
+    def test_v3_return_safety_scores_then_uses_typed_safety_kick_for_next_drive(self):
+        class V3SafetySource(self.Source):
+            def __init__(self):
+                self.first_play = True
+
+            def event_source(self, state, context):
+                if not self.first_play:
+                    return super().event_source(state, context)
+                self.first_play = False
+                return {
+                    'event': 'punt', 'clock_runoff_seconds': 5,
+                    'row': {'game_id': 'v3-safety-lifecycle', 'play_id': context['play_index'],
+                            'play_type': 'punt', 'yards_gained': None, 'penalty': 0,
+                            'live_elapsed_seconds': 5, 'dead_ball_seconds': 0, 'clock_stopped': True,
+                            'participants': {'attribution': 'autonomous_execution', 'timeout': False,
+                                             'out_of_bounds': False}},
+                }
+
+            def special_teams(self, event, state, _row, *_args):
+                if event != 'punt':
+                    return None
+                provenance = ceg_contract.ProvenanceV2(
+                    'controlled-v3-return-safety', 'test', 'e' * 64,
+                    components=('punt_return_safety',), draw_ids=('return-safety',))
+                returner = ceg_contract.PlayerRoleV2.named('B-PR')
+                safety = ceg_contract_v3.KickSafetyV3(
+                    scoring_team='kicking_team', possessing_team='receiving_team',
+                    safety_dead_ball_spot=ceg_contract_v3.FieldSpotV3(100, 'receiving_team'),
+                    free_kick_team='receiving_team',
+                    free_kick_spot=ceg_contract_v3.FieldSpotV3(80, 'receiving_team'),
+                    free_kick_spot_basis='own_20', receiving_team='kicking_team',
+                    restart_status='pending')
+                return_facts = ceg_contract_v3.KickReturnV3(
+                    'receiving_team', returner, ceg_contract_v3.FieldSpotV3(95, 'receiving_team'),
+                    ceg_contract_v3.FieldSpotV3(100, 'receiving_team'), -5,
+                    ceg_contract.PlayerRoleV2.none(), ceg_contract.PlayerRoleV2.none(),
+                    ceg_contract.PlayerRoleV2.none(), scoring_kind='safety',
+                    scoring_team='kicking_team')
+                kick = ceg_contract_v3.KickV3(
+                    'punt', state['offense'], state['defense'],
+                    ceg_contract_v3.FieldSpotV3(state['yl'], 'kicking_team'), 45, 'return',
+                    possession_after='receiving_team',
+                    dead_ball_spot=ceg_contract_v3.FieldSpotV3(0, 'kicking_team'),
+                    return_facts=return_facts, safety=safety)
+                event_record = ceg_contract_v3.GeneratedPlayV3(
+                    contract=ceg_contract_v3.CONTRACT_V3_VERSION,
+                    call=ceg_contract.PlayCallV2('punt', provenance=provenance), event='punt',
+                    yards_gained=None, provenance=provenance, clock=ceg_contract.ClockV2(5),
+                    scoring=ceg_contract.ScoringV2('safety', 'kicking_team'), kick=kick,
+                    players=ceg_contract.PlayerRolesV2(
+                        punter=ceg_contract.PlayerRoleV2.named('A-P'), returner=returner))
+                return {'clock_runoff_seconds': 5, 'event_record': event_record,
+                        'participants': {'punter_id': 'A-P', 'returner_id': 'B-PR',
+                                         'returner_team': 'B', 'returner_side': 'B',
+                                         'attribution': 'autonomous_execution'}}
+
+            def kick(self, kind, kicker, receiver, context):
+                if kind != 'safety_free_kick':
+                    return super().kick(kind, kicker, receiver, context)
+                provenance = ceg_contract.ProvenanceV2(
+                    'controlled-v3-safety-kick', 'test', 'f' * 64,
+                    components=('safety_free_kick',), draw_ids=(kind,))
+                event_record = ceg_contract_v3.GeneratedPlayV3(
+                    contract=ceg_contract_v3.CONTRACT_V3_VERSION,
+                    call=ceg_contract.PlayCallV2('kickoff', provenance=provenance),
+                    event='kickoff', yards_gained=None, provenance=provenance,
+                    clock=ceg_contract.ClockV2(0),
+                    kick=ceg_contract_v3.KickV3(
+                        'safety_kick', kicker, receiver, ceg_contract_v3.FieldSpotV3(80, 'kicking_team'),
+                        35, 'touchback', possession_after='receiving_team',
+                        dead_ball_spot=ceg_contract_v3.FieldSpotV3(0, 'kicking_team'),
+                        receiving_restart_spot=ceg_contract_v3.FieldSpotV3(80, 'receiving_team')),
+                    players=ceg_contract.PlayerRolesV2(
+                        kicker=ceg_contract.PlayerRoleV2.named(f'{kicker}-K')))
+                return {'clock_runoff_seconds': 0, 'clock_starts_on': 'legal_touch',
+                        'event_record': event_record,
+                        'participants': {'kicker_id': f'{kicker}-K', 'attribution': 'autonomous_execution'}}
+
+        record = gs.play_game(184, ref({}, []), winner_choice='receive', winner='A',
+                              execution_source=V3SafetySource(), max_drives=2)
+        self.assertEqual(record['points']['A'], 2)
+        self.assertEqual(record['drives'][0]['terminal'], 'safety')
+        self.assertEqual(record['stats']['team']['A']['safeties'], 1)
+        safety_kick = next(event for event in record['kickoffs']
+                           if event['kind'] == 'safety_free_kick')
+        self.assertEqual(safety_kick['ceg_event']['contract'], 'ceg-play-3')
+        self.assertEqual(safety_kick['possession_after'], 'A')
+        self.assertEqual(safety_kick['spot_yardline_100'], 80)
+        self.assertEqual(record['drives'][1]['offense_team'], 'A')
+        self.assertEqual(record['drives'][1]['plays'][0]['state_before']['yardline_100'], 80)
 
     def test_generated_plays_complete_through_the_shared_regulation_game_lifecycle(self):
         reference = ref({}, [])

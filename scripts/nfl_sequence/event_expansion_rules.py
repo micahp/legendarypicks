@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 
 import ceg_contract as contract
+import ceg_contract_v3 as contract_v3
 import penalty_enforcement
 import reducer
 from event_expansion import EXPANDED_DEFAULT, EventExpansionSwitches
@@ -678,3 +679,239 @@ def apply_kickoff_play(state, play, switches=EXPANDED_DEFAULT):
         after = {'offense': state['defense'], 'defense': state['offense'], 'down': 1,
                  'togo': min(10, 100 - dead_spot), 'yl': 100 - dead_spot}
     return AppliedEvent(after, 'kickoff', flags)
+
+
+def apply_v3_play(state, play, switches=EXPANDED_DEFAULT):
+    """Apply a frozen ceg-play-3 kick result or ordered turnover-return chain."""
+    if not isinstance(switches, EventExpansionSwitches):
+        raise ValueError('event expansion switches must be typed')
+    contract_v3.validate_v3(state, play)
+    if play.kick is None:
+        return _apply_v3_turnover_chain(state, play, switches)
+    return _apply_v3_kick(state, play, switches)
+
+
+def _v3_spot(spot, team_frame, label):
+    try:
+        return contract_v3._in_frame(spot, team_frame)
+    except (TypeError, ValueError) as exc:
+        raise UnsupportedEventTransition(label + '_spot_frame_invalid') from exc
+
+
+def _v3_team(role, state):
+    if role in ('offense', 'kicking_team'):
+        return state['offense']
+    if role in ('defense', 'receiving_team'):
+        return state['defense']
+    raise UnsupportedEventTransition('ceg_play_3_team_role_invalid:' + str(role))
+
+
+def _v3_next_state(state, offense, yardline, label):
+    if type(yardline) is not int or not 1 <= yardline <= 99:
+        raise UnsupportedEventTransition(label + '_restart_spot_out_of_bounds_without_score')
+    defense = state['defense'] if offense == state['offense'] else state['offense']
+    return {'offense': offense, 'defense': defense, 'down': 1,
+            'togo': min(10, yardline), 'yl': yardline}
+
+
+def _apply_v3_turnover_chain(state, play, switches):
+    chain = play.turnover_chain
+    _require_switch(switches, 'interception_returns' if chain.initial_turnover == 'interception'
+                    else 'fumble_returns')
+    _require_switch(switches, 'fumble_returns')
+    dead_offense = _v3_spot(chain.dead_ball_spot, 'offense', 'turnover_chain_dead_ball')
+    final_offense = _v3_team(chain.final_possession_team, state)
+    flags = {'turnover': True, 'interception': chain.initial_turnover == 'interception',
+             'fumble': True, 'turnover_chain': {
+                 'initial_turnover': chain.initial_turnover,
+                 'initial_possession_team': _v3_team(chain.initial_possession_team, state),
+                 'turnover_spot_yardline_100': _v3_spot(chain.turnover_spot, 'offense', 'turnover'),
+                 'initial_returner_id': chain.initial_returner.stat_player_id,
+                 'initial_return_yards': chain.initial_return_yards,
+                 'fumbler_id': chain.fumbler.stat_player_id,
+                 'fumble_spot_yardline_100': _v3_spot(chain.fumble_spot, 'offense', 'fumble'),
+                 'recoverer_id': chain.recoverer.stat_player_id,
+                 'recovery_team': _v3_team(chain.recovery_team, state),
+                 'recovery_spot_yardline_100': _v3_spot(chain.recovery_spot, 'offense', 'recovery'),
+                 'returner_id': chain.post_recovery_returner.stat_player_id,
+                 'return_yards': chain.post_recovery_return_yards,
+                 'dead_ball_yardline_100': dead_offense,
+                 'final_possession_team': final_offense,
+             }, 'return_yards': chain.post_recovery_return_yards,
+             'returner_id': chain.post_recovery_returner.stat_player_id,
+             'recoverer_id': chain.recoverer.stat_player_id,
+             'fumbler_id': chain.fumbler.stat_player_id,
+             'fumble_recovery_team': final_offense,
+             'fumble_return_yards': chain.post_recovery_return_yards,
+             'fumble_lost_team': (_v3_team(chain.initial_possession_team, state)
+                                  if final_offense != _v3_team(chain.initial_possession_team, state) else None),
+             'possession_change': final_offense != state['offense']}
+    if chain.scoring_kind == 'touchdown':
+        scorer = _v3_team(chain.scoring_team, state)
+        flags.update({'touchdown': True, 'return_touchdown': True, 'scoring_team': scorer})
+        return AppliedEvent(None, 'touchdown', flags, scorer)
+    if chain.scoring_kind == 'safety':
+        scorer = _v3_team(chain.scoring_team, state)
+        flags.update({'safety': True, 'scoring_team': scorer})
+        return AppliedEvent(None, 'safety', flags, scorer)
+    return AppliedEvent(_v3_next_state(state, final_offense,
+                                       dead_offense if final_offense == state['offense'] else 100 - dead_offense,
+                                       'turnover_chain'),
+                        'turnover' if final_offense != state['offense'] else None, flags)
+
+
+def _apply_v3_kick(state, play, switches):
+    kick = play.kick
+    if (kick.kicking_team, kick.receiving_team) != (state['offense'], state['defense']):
+        raise UnsupportedEventTransition('kick_v3_team_roles_disagree_with_pre_kick_state')
+    kick_spot = _v3_spot(kick.kick_spot, 'kicking_team', 'kick')
+    if kick_spot != state['yl']:
+        raise UnsupportedEventTransition('kick_v3_spot_disagrees_with_pre_kick_state')
+    is_punt = kick.kind == 'punt'
+    is_field_goal = kick.kind == 'field_goal'
+    flags = ({'punt': True, 'punt_attempt': True, 'punt_return': False,
+              'fair_catch': False} if is_punt else
+             {'field_goal_attempt': True, 'field_goal_result': kick.result} if is_field_goal else
+             {'kickoff': True, 'kickoff_return': False, 'fair_catch': False})
+    if kick.result in ('return', 'muff', 'fair_catch', 'downed', 'out_of_bounds',
+                       'short_of_landing_zone', 'touchback', 'onside_recovery',
+                       'kicking_team_recovery', 'blocked'):
+        _require_switch(switches, 'punt_return_events' if is_punt or kick.kind in ('kickoff', 'safety_kick')
+                        else 'blocked_kick_transitions')
+    if kick.result == 'period_expired':
+        flags['period_expired'] = True
+        return AppliedEvent(None, 'end_of_period', flags)
+
+    if kick.result == 'made':
+        if not is_field_goal:
+            raise UnsupportedEventTransition('non_field_goal_cannot_be_made')
+        return AppliedEvent(None, 'field_goal_attempt', flags, state['offense'])
+
+    if kick.result == 'missed':
+        if not is_field_goal:
+            raise UnsupportedEventTransition('non_field_goal_cannot_be_missed')
+        flags['field_goal_restart_yardline_100'] = _v3_spot(
+            kick.receiving_restart_spot, 'receiving_team', 'missed_field_goal_restart')
+        return AppliedEvent(None, 'field_goal_attempt', flags)
+
+    if kick.result == 'blocked':
+        if not is_field_goal:
+            raise UnsupportedEventTransition('blocked_punt_live_recovery_not_supported')
+        facts = kick.blocked_field_goal_return
+        recovery_team = _v3_team(facts.recovery_team, state)
+        dead_kicking = _v3_spot(facts.dead_ball_spot, 'kicking_team', 'blocked_field_goal_dead')
+        flags.update({'field_goal_result': 'blocked', 'blocked_kick': {
+            'kick_type': 'field_goal', 'recovery_role': facts.recovery_team,
+            'recovery_yardline_100': _v3_spot(facts.recovery_spot, 'kicking_team', 'blocked_field_goal_recovery'),
+            'dead_ball_yardline_100': dead_kicking, 'return_yards': facts.return_yards,
+            'recoverer_id': facts.recoverer.stat_player_id,
+            'returner_id': facts.post_block_returner.stat_player_id,
+            'execution_source': 'gridiron_live_player_execution'}})
+        if facts.scoring_kind:
+            scorer = _v3_team(facts.scoring_team, state)
+            flags.update({'touchdown': facts.scoring_kind == 'touchdown',
+                          'safety': facts.scoring_kind == 'safety',
+                          'return_touchdown': facts.scoring_kind == 'touchdown',
+                          'scoring_team': scorer})
+            return AppliedEvent(None, facts.scoring_kind, flags, scorer)
+        if recovery_team != state['offense']:
+            next_yard = 100 - dead_kicking
+            return AppliedEvent(_v3_next_state(state, recovery_team, next_yard, 'blocked_field_goal'),
+                                'turnover', flags)
+        # A same-team recovery keeps the down series live and can still turn
+        # fourth down over if the carrier does not reach the line to gain.
+        net_yards = state['yl'] - dead_kicking
+        next_team = state['offense']
+        if net_yards >= state['togo']:
+            next_down, next_togo = 1, min(10, dead_kicking)
+        elif state['down'] >= 4:
+            next_team = state['defense']
+            next_down, next_togo = 1, min(10, 100 - dead_kicking)
+            flags.update({'turnover': True, 'turnover_on_downs': True,
+                          'possession_change': True})
+        else:
+            next_down, next_togo = state['down'] + 1, state['togo'] - net_yards
+        after = {'offense': next_team,
+                 'defense': state['defense'] if next_team == state['offense'] else state['offense'],
+                 'down': next_down, 'togo': next_togo,
+                 'yl': dead_kicking if next_team == state['offense'] else 100 - dead_kicking}
+        return AppliedEvent(after, 'turnover_on_downs' if next_team != state['offense'] else None, flags)
+
+    return_facts = kick.return_facts
+    if return_facts is not None:
+        start = return_facts.recovery_spot if kick.result == 'muff' else return_facts.return_start_spot
+        return_team = _v3_team(return_facts.returning_team, state)
+        returner = (return_facts.post_recovery_returner if kick.result == 'muff'
+                    else return_facts.returner)
+        flags.update({'return_yards': return_facts.return_yards,
+                      'returner_id': returner.stat_player_id,
+                      'recoverer_id': return_facts.recoverer.stat_player_id if kick.result == 'muff' else None,
+                      'punt_return': bool(is_punt and kick.result == 'return'),
+                      'kickoff_return': bool(not is_punt and kick.result == 'return'),
+                      'fumble': kick.result == 'muff',
+                      'fumbler_id': return_facts.muffing_returner.stat_player_id
+                      if kick.result == 'muff' else None,
+                      'fumble_return_yards': return_facts.return_yards
+                      if kick.result == 'muff' else None,
+                      'fair_catch': kick.result == 'fair_catch'})
+        if start is not None:
+            flags['return_start_yardline_100'] = _v3_spot(start, 'kicking_team', 'kick_return_start')
+    if kick.result == 'fair_catch':
+        flags.update({'fair_catch': True, 'returner_id': kick.fair_catcher.stat_player_id})
+    dead = kick.dead_ball_spot
+    if kick.result in ('out_of_bounds', 'short_of_landing_zone') and kick.kickoff_oob is not None:
+        dead = kick.kickoff_oob.restart_spot
+        flags['kickoff_out_of_bounds'] = True
+        flags['penalty'] = True
+        flags['penalty_accepted'] = True
+        flags['kickoff_out_of_bounds_enforcement'] = {
+            'cause': kick.kickoff_oob.cause, 'choice': kick.kickoff_oob.choice,
+            'restart_yardline_100': kick.kickoff_oob.restart_spot.yardline_100,
+            'rule_basis': 'NFL Rule 6-2-4'}
+    if kick.result == 'touchback':
+        dead = kick.receiving_restart_spot
+        flags['touchback'] = True
+        expected_restart = 80 if kick.kind in ('punt', 'safety_kick') else 65
+        if _v3_spot(dead, 'receiving_team', 'touchback_restart') != expected_restart:
+            raise UnsupportedEventTransition('kick_v3_touchback_restart_spot_invalid')
+        if _v3_spot(kick.dead_ball_spot, 'kicking_team', 'touchback_dead_ball') != 0:
+            raise UnsupportedEventTransition('kick_v3_touchback_dead_ball_spot_invalid')
+    if kick.result == 'muff':
+        flags['fumble'] = True
+        flags['fumble_recovery_team'] = _v3_team(kick.possession_after, state)
+        flags['fumble_lost_team'] = (state['defense']
+                                     if kick.possession_after == 'kicking_team' else None)
+    if dead is None:
+        raise UnsupportedEventTransition('kick_v3_dead_ball_or_restart_spot_required')
+    final_role = kick.possession_after
+    if final_role is None:
+        raise UnsupportedEventTransition('kick_v3_possession_after_required')
+    next_offense = _v3_team(final_role, state)
+    final_yard = _v3_spot(dead, final_role, 'kick_v3_next_offense')
+
+    scoring = play.scoring
+    if scoring is not None:
+        scorer = _v3_team(scoring.team, state)
+        flags.update({'scoring_team': scorer, 'touchdown': scoring.kind == 'touchdown',
+                      'safety': scoring.kind == 'safety',
+                      'return_touchdown': scoring.kind == 'touchdown'})
+        return AppliedEvent(None, scoring.kind, flags, scorer)
+    if kick.result == 'missed':
+        expected_restart = min(80, 100 - kick.kick_spot.yardline_100)
+        if _v3_spot(kick.receiving_restart_spot, 'receiving_team', 'missed_field_goal_restart') != expected_restart:
+            raise UnsupportedEventTransition('missed_field_goal_restart_spot_invalid')
+        if _v3_spot(kick.dead_ball_spot, 'kicking_team', 'missed_field_goal_dead_ball') != 0:
+            raise UnsupportedEventTransition('missed_field_goal_dead_ball_spot_invalid')
+        flags['field_goal_restart_yardline_100'] = expected_restart
+        return AppliedEvent(None, 'field_goal_attempt', flags)
+    if final_yard in (0, 100):
+        raise UnsupportedEventTransition('kick_v3_goal_line_dead_ball_needs_explicit_score')
+    if is_field_goal:
+        if kick.result == 'blocked':
+            raise UnsupportedEventTransition('blocked_field_goal_transition_not_classified')
+        return AppliedEvent(None, 'field_goal_attempt', flags)
+    flags['possession_change'] = next_offense != state['offense']
+    if is_punt:
+        return AppliedEvent(_v3_next_state(state, next_offense, final_yard, 'kick_v3'), 'punt', flags)
+    return AppliedEvent(_v3_next_state(state, next_offense, final_yard, 'kick_v3'),
+                        'turnover' if next_offense != state['offense'] else 'kickoff', flags)

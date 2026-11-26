@@ -70,15 +70,31 @@ def team_stats(drives, points, kickoff_events=()):
                 t['turnovers'] += 1
             if ev == 'interception':
                 t['interceptions'] += 1
-            if ev == 'fumble_lost' or (out.get('fumble') and out.get('turnover')):
+            if ev == 'fumble_lost':
                 t['fumbles_lost'] += 1
             if out.get('fumble'):
-                t['fumbles'] += 1
-                recovery_team = play['state_before']['defense_team'] if out.get('turnover') else play['state_before']['offense_team']
+                fumbler_side = part.get('fumbler_side')
+                fumbler_team = fumbler_side if fumbler_side in points else play['state_before']['offense_team']
+                team(fumbler_team)['fumbles'] += 1
+                lost_team = out.get('fumble_lost_team')
+                if lost_team is None and out.get('turnover'):
+                    lost_team = fumbler_team
+                if lost_team is not None:
+                    if ev != 'fumble_lost':
+                        team(lost_team)['fumbles_lost'] += 1
+                    if lost_team != play['state_before']['offense_team']:
+                        team(lost_team)['turnovers'] += 1
+                recovery_team = out.get('fumble_recovery_team')
+                if recovery_team not in points:
+                    recovery_team = (play['state_before']['defense_team'] if out.get('turnover')
+                                     else play['state_before']['offense_team'])
                 recovered = team(recovery_team)
                 recovered['fumble_recoveries'] += 1
-                if out.get('turnover') and out.get('return_yards') is not None:
-                    recovered['fumble_return_yards'] += int(out['return_yards'])
+                fumble_return_yards = out.get('fumble_return_yards')
+                if fumble_return_yards is None and out.get('turnover'):
+                    fumble_return_yards = out.get('return_yards')
+                if fumble_return_yards is not None:
+                    recovered['fumble_return_yards'] += int(fumble_return_yards)
             # Regular punts set `punt`; `punt_attempt` is only present on some
             # special-team outcomes (notably blocked kicks). Count either flag
             # once so ordinary punts are not omitted from the team boxscore.
@@ -133,6 +149,10 @@ def team_stats(drives, points, kickoff_events=()):
             if unassigned_overtime_offensive_td:
                 # No player row exists for this observed OT score, so exclude it from player reconciliation.
                 scored['observed_overtime_touchdowns'] += 1
+        elif d['terminal'] == 'safety':
+            scorer = (d['plays'][-1]['outcome'].get('scoring_team') if d['plays'] else None)
+            if scorer is not None:
+                team(scorer)['safeties'] += 1
         scoring = d.get('points_scored_on_drive') or {}
         try_result = scoring.get('try')
         if isinstance(try_result, dict):
@@ -155,6 +175,26 @@ def team_stats(drives, points, kickoff_events=()):
                 raise ValueError('kickoff touchdown is missing its scoring team')
             team(scorer)['touchdowns'] += 1
             team(scorer)['return_touchdowns'] += 1
+        if event.get('terminal') == 'safety':
+            scorer = event.get('scoring_team')
+            if scorer is None:
+                raise ValueError('kickoff safety is missing its scoring team')
+            team(scorer)['safeties'] += 1
+        flags = event.get('flags') or {}
+        if flags.get('fumble'):
+            fumbler_team = (event.get('participants') or {}).get('fumbler_side')
+            fumbler_team = fumbler_team if fumbler_team in points else event['receiving_team']
+            team(fumbler_team)['fumbles'] += 1
+            lost_team = flags.get('fumble_lost_team')
+            if lost_team is not None:
+                team(lost_team)['fumbles_lost'] += 1
+                team(lost_team)['turnovers'] += 1
+            recovery_team = flags.get('fumble_recovery_team')
+            if recovery_team in points:
+                recovered = team(recovery_team)
+                recovered['fumble_recoveries'] += 1
+                if flags.get('fumble_return_yards') is not None:
+                    recovered['fumble_return_yards'] += int(flags['fumble_return_yards'])
     for name, pts in points.items():
         team(name)['points'] = pts
     return {name: dict(sorted(t.items())) for name, t in sorted(teams.items())}
@@ -226,18 +266,26 @@ def player_lines(drives, kickoff_events=()):
                 if fumbler:
                     fumble_stats = line(fumbler, part, 'fumbler')['miscellaneous']
                     fumble_stats['fumbles'] += 1
-                    if out.get('turnover') and ev != 'fumble_lost':
+                    fumbler_side = part.get('fumbler_side')
+                    lost_team = out.get('fumble_lost_team')
+                    if ev != 'fumble_lost' and (lost_team == fumbler_side
+                                                   or (lost_team is None and out.get('turnover'))):
                         fumble_stats['fumbles_lost'] += 1
                 recoverer = part.get('recoverer_id') or out.get('recoverer_id')
                 if recoverer:
-                    recovery_role = 'returner' if out.get('turnover') else 'recoverer'
-                    recovery_stats = line(recoverer, part, recovery_role)['miscellaneous']
+                    recovery_stats = line(recoverer, part, 'recoverer')['miscellaneous']
                     recovery_stats['fumble_recoveries'] += 1
-                    if out.get('turnover'):
-                        recovery_stats['fumble_return_yards'] += int(out.get('return_yards') or 0)
-                        recovery = line(recoverer, part, recovery_role)['returning']
+                    fumble_return_yards = out.get('fumble_return_yards')
+                    if fumble_return_yards is not None:
+                        recovery_stats['fumble_return_yards'] += int(fumble_return_yards)
+                        chain = out.get('turnover_chain') or {}
+                        returner = (part.get('post_recovery_returner_id')
+                                    or chain.get('returner_id')
+                                    or part.get('returner_id') or recoverer)
+                        role = 'returner' if part.get('returner_id') == returner else 'recoverer'
+                        recovery = line(returner, part, role)['returning']
                         recovery['fumble_returns'] += 1
-                        recovery['fumble_return_yds'] += int(out.get('return_yards') or 0)
+                        recovery['fumble_return_yds'] += int(fumble_return_yards)
                         recovery['td'] += int(bool(out.get('return_touchdown')))
             if ev in ('pass_complete', 'pass_incomplete', 'interception', 'sack') and part['passer_id']:
                 p = line(part['passer_id'], part, 'passer')['passing']
@@ -282,9 +330,34 @@ def player_lines(drives, kickoff_events=()):
                 r['punt_return_yds'] += int(out.get('return_yards') or 0)
                 r['td'] += int(bool(out.get('return_touchdown')))
     for event in kickoff_events:
+        part = event.get('participants') or {}
+        kicker_id = part.get('kicker_id')
+        if kicker_id:
+            line(kicker_id, part, 'kicker')['kicking']['kickoffs'] += 1
+        flags = event.get('flags') or {}
+        if flags.get('fumble'):
+            fumbler = part.get('fumbler_id') or part.get('muffing_returner_id')
+            if fumbler:
+                fumble_stats = line(fumbler, part, 'fumbler')['miscellaneous']
+                fumble_stats['fumbles'] += 1
+                if flags.get('fumble_lost_team') == part.get('fumbler_side'):
+                    fumble_stats['fumbles_lost'] += 1
+            recoverer = part.get('recoverer_id') or flags.get('recoverer_id')
+            if recoverer:
+                recovery_stats = line(recoverer, part, 'recoverer')['miscellaneous']
+                recovery_stats['fumble_recoveries'] += 1
+                yards = flags.get('fumble_return_yards')
+                if yards is not None:
+                    recovery_stats['fumble_return_yards'] += int(yards)
+                    returner = (part.get('post_recovery_returner_id')
+                                or part.get('returner_id') or recoverer)
+                    role = 'returner' if part.get('returner_id') == returner else 'recoverer'
+                    returning = line(returner, part, role)['returning']
+                    returning['fumble_returns'] += 1
+                    returning['fumble_return_yds'] += int(yards)
+                    returning['td'] += int(bool(flags.get('return_touchdown')))
         pid = event.get('returner_id')
         if event.get('result') == 'return' and pid and not event.get('fair_catch'):
-            part = event.get('participants') or {}
             entry = lines.setdefault(pid, {'passing': defaultdict(int), 'rushing': defaultdict(int),
                                            'receiving': defaultdict(int), 'kicking': defaultdict(int),
                                            'returning': defaultdict(int), 'miscellaneous': defaultdict(int),

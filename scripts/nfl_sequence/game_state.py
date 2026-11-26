@@ -52,6 +52,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import e1_drive as e1  # noqa: E402
+from execution_evidence import compact_live_execution  # noqa: E402
 import game_stats  # noqa: E402
 import pre_event as pe  # noqa: E402
 import reducer  # noqa: E402
@@ -741,16 +742,35 @@ def _has_22_player_execution(execution):
         return False
     result = execution.get('result', execution)
     trajectory = result.get('trajectory') if isinstance(result, dict) else None
-    if not isinstance(trajectory, dict):
-        return False
-    roster = trajectory.get('roster')
-    frames, stride = trajectory.get('frames'), trajectory.get('stride')
-    return (isinstance(roster, list) and len(roster) == 22
-            and len({row.get('id') for row in roster if isinstance(row, dict)}) == 22
-            and isinstance(frames, list) and bool(frames) and type(stride) is int
-            and all(isinstance(frame, list) and len(frame) == stride
-                    and all(isinstance(value, (int, float)) and math.isfinite(value) for value in frame)
-                    for frame in frames))
+    if isinstance(trajectory, dict):
+        roster = trajectory.get('roster')
+        frames, stride = trajectory.get('frames'), trajectory.get('stride')
+        if (isinstance(roster, list) and len(roster) == 22
+                and len({row.get('id') for row in roster if isinstance(row, dict)}) == 22
+                and isinstance(frames, list) and bool(frames) and type(stride) is int
+                and all(isinstance(frame, list) and len(frame) == stride
+                        and all(isinstance(value, (int, float)) and math.isfinite(value) for value in frame)
+                        for frame in frames)):
+            return True
+        if not trajectory.get('frames_omitted') or not trajectory.get('replay_from_stored_call'):
+            return False
+    diagnostics = result.get('diagnostics') if isinstance(result, dict) else None
+    call = execution.get('call')
+    profiles = call.get('player_profiles') if isinstance(call, dict) else None
+    profile_ids = (call.get('player_profile_ids') if isinstance(call, dict) else None)
+    if profile_ids is None and isinstance(profiles, dict):
+        profile_ids = sorted(profiles)
+    events = result.get('events') if isinstance(result, dict) else None
+    assignments = ([event.get('player_id') for event in events if isinstance(event, dict)
+                    and event.get('type') == 'assignment_executed'] if isinstance(events, list) else [])
+    event_summary = result.get('event_summary') if isinstance(result, dict) else None
+    if isinstance(event_summary, dict):
+        assignments = event_summary.get('assignment_player_ids', [])
+    return (isinstance(diagnostics, dict)
+            and diagnostics.get('assignments_executed') == 22
+            and diagnostics.get('expected_assignments') == 22
+            and isinstance(profile_ids, list) and len(profile_ids) == 22
+            and len(set(assignments)) == 22 and set(assignments) == set(profile_ids))
 
 
 def _autonomous_execution_complete(drives, kickoff_events):
@@ -921,12 +941,14 @@ class _Game:
             self.block('autonomous_kick_result_invalid')
             return
         if event_record is None:
-            self.block('autonomous_kick_ceg_play_2_record_missing')
+            self.block('autonomous_kick_ceg_play_3_record_missing')
             return
         if event_record.clock is None or event_record.clock.runoff_seconds != runoff:
             self.block('autonomous_kick_clock_contract_mismatch')
             return
-        kick_spot = event_record.kick.kick_spot_yardline_100
+        kick_spot_fact = getattr(event_record.kick, 'kick_spot', None)
+        kick_spot = (kick_spot_fact.yardline_100 if kick_spot_fact is not None else
+                     event_record.kick.kick_spot_yardline_100)
         kick_state = {'offense': kicker, 'defense': receiver, 'down': 1,
                       'togo': 10, 'yl': int(kick_spot)}
         try:
@@ -934,15 +956,12 @@ class _Game:
         except (AssertionError, ValueError) as invalid:
             self.block('autonomous_kick_transition_unsupported:' + str(invalid))
             return
-        if applied.terminal == 'end_of_period':
-            self.block('autonomous_kick_period_expired_transition_not_integrated')
-            return
-        if applied.terminal not in ('kickoff', 'touchdown') or (
-                applied.terminal == 'kickoff' and applied.state_after is None):
+        if (applied.terminal not in ('kickoff', 'turnover', 'touchdown', 'safety', 'end_of_period')
+                or (applied.terminal in ('kickoff', 'turnover') and applied.state_after is None)):
             self.block('autonomous_kick_transition_result_invalid')
             return
         clock_before = self.clock
-        expires = runoff >= clock_before
+        expires = runoff >= clock_before or applied.terminal == 'end_of_period'
         after_clock = 0 if expires else clock_before - runoff
         after_clock, stopped = (0, False) if expires else two_minute_stop(
             self.quarter, clock_before, after_clock, self.warned_quarters)
@@ -951,20 +970,44 @@ class _Game:
         self.clock = after_clock
         next_offense = applied.state_after['offense'] if applied.state_after is not None else None
         spot = applied.state_after['yl'] if applied.state_after is not None else None
+        kick = event_record.kick
+        return_facts = getattr(kick, 'return_facts', None)
+        blocked_return = getattr(kick, 'blocked_field_goal_return', None)
+        returner_id = (return_facts.post_recovery_returner.stat_player_id
+                       if return_facts is not None and kick.result == 'muff' else
+                       return_facts.returner.stat_player_id if return_facts is not None else
+                       blocked_return.post_block_returner.stat_player_id if blocked_return is not None else
+                       kick.fair_catcher.stat_player_id if getattr(kick, 'fair_catcher', None) is not None else
+                       getattr(getattr(kick, 'returner', None), 'stat_player_id', None))
+        return_yards = (return_facts.return_yards if return_facts is not None else
+                        blocked_return.return_yards if blocked_return is not None else
+                        getattr(kick, 'return_yards', None))
+        recoverer_id = (return_facts.recoverer.stat_player_id
+                        if return_facts is not None and kick.result == 'muff' else
+                        blocked_return.recoverer.stat_player_id if blocked_return is not None else
+                        getattr(kick, 'recoverer', None).stat_player_id
+                        if getattr(kick, 'recoverer', None) is not None else None)
+        fumbler_id = (return_facts.muffing_returner.stat_player_id
+                      if return_facts is not None and kick.result == 'muff' else None)
+        possession_after = (kicker if kick.possession_after == 'kicking_team' else
+                            receiver if kick.possession_after == 'receiving_team' else None)
         event = {
             'kind': kind, 'kicking_team': kicker, 'receiving_team': receiver, 'quarter': self.quarter,
             'clock_before': clock_before, 'runoff_seconds': runoff, 'clock_after': after_clock,
             'clock_clamped_to_zero': False, 'clock_expired_during_kickoff': expires,
             'two_minute_warning': stopped, 'runoff_overrun_seconds': max(0, runoff - clock_before),
             'spot_yardline_100': spot, 'after_drive': len(self.drives),
-            'result': event_record.kick.result, 'possession_after': next_offense,
-            'return_yards': event_record.kick.return_yards,
-            'returner_id': event_record.kick.returner.stat_player_id,
+            'result': kick.result, 'possession_after': possession_after,
+            'return_yards': return_yards, 'returner_id': returner_id,
             'terminal': applied.terminal, 'flags': applied.flags,
             'scoring_team': applied.scoring_team,
             'participants': {**(result.get('participants') or {}),
                              'attribution': 'autonomous_execution',
-                             'returner_id': event_record.kick.returner.stat_player_id,
+                             'returner_id': returner_id,
+                             'recoverer_id': recoverer_id,
+                             'fumbler_id': fumbler_id,
+                             'muffing_returner_id': fumbler_id,
+                             'post_recovery_returner_id': (returner_id if kick.result == 'muff' else None),
                              },
             'ceg_event': asdict(event_record),
             'clock_transition': {'clock_starts_on': result.get('clock_starts_on', 'legal_touch'),
@@ -975,17 +1018,16 @@ class _Game:
                                  'restart_trigger': 'period_restart' if expires else 'next_snap',
                                  'restart_clock_seconds': after_clock},
             'clock_rule': clock_rule, 'source': 'autonomous_execution',
-            'execution': result.get('execution'),
-            'fair_catch': bool(event_record.probabilities.get('fair_catch')),
+            'execution': compact_live_execution(result.get('execution')),
+            'fair_catch': kick.result == 'fair_catch',
         }
-        scorer = applied.scoring_team if applied.terminal == 'touchdown' else None
-        if scorer is not None:
+        scorer = applied.scoring_team if applied.terminal in ('touchdown', 'safety') else None
+        if scorer is not None and applied.terminal == 'touchdown':
             if hasattr(self.execution_source, 'set_offense'):
                 self.execution_source.set_offense(scorer)
             else:
                 self.execution_source.current_team = scorer
             situation = self._try_situation(scorer)
-            situation['offense_direction'] = self.ledger.attacks_x100(scorer, self.quarter)
             self.points[scorer] += TD_POINTS
             try_points, try_result, why = self.execution_source.try_after_touchdown(situation)
             if why:
@@ -1001,8 +1043,13 @@ class _Game:
             event['points_scored'] = TD_POINTS + try_points
             if opponent_points:
                 event['opponent_points'] = opponent_points
-            event['try'] = try_result
+            event['try'] = dict(try_result)
+            if event['try'].get('execution') is not None:
+                event['try']['execution'] = compact_live_execution(event['try']['execution'])
             event['try_situation'] = situation
+        elif scorer is not None:
+            self.points[scorer] += SAFETY_POINTS
+            event['points_scored'] = SAFETY_POINTS
         self.events.append(event)
         if expires:
             boundary = quarter_end_kind(self.quarter)
@@ -1010,6 +1057,8 @@ class _Game:
                 self._new_quarter('change_of_ends_during_return')
                 if scorer is None:
                     self._take_possession(next_offense, spot)
+                elif applied.terminal == 'safety':
+                    self._apply(('kick', 'safety_free_kick', other(scorer, self.ledger.teams), scorer))
                 else:
                     self._apply(('kick', 'post_score', scorer, other(scorer, self.ledger.teams)))
             elif boundary == 'halftime':
@@ -1018,7 +1067,9 @@ class _Game:
                 self._regulation_over()
             return
         if scorer is not None:
-            next_kick = ('kick', 'post_score', scorer, other(scorer, self.ledger.teams))
+            next_kick = (('kick', 'safety_free_kick', other(scorer, self.ledger.teams), scorer)
+                         if applied.terminal == 'safety' else
+                         ('kick', 'post_score', scorer, other(scorer, self.ledger.teams)))
             if self.quarter == 5 and self._overtime_after_score(next_kick):
                 return
             self._apply(next_kick)
@@ -1292,7 +1343,7 @@ class _Game:
                 reasons.append({'kind': 'first_down', 'team': None})
             if outcome.get('touchdown') or play['event_type'] == 'field_goal_attempt' or outcome.get('safety'):
                 reasons.append({'kind': 'score_or_try_transition', 'team': None})
-            if outcome.get('turnover') or outcome.get('punt'):
+            if outcome.get('possession_change', outcome.get('turnover') or outcome.get('punt')):
                 reasons.append({'kind': 'possession_change', 'team': None})
             if outcome.get('quarter_change') or after.get('end_of_drive') in ('halftime', 'end_of_regulation', 'end_of_overtime'):
                 reasons.append({'kind': 'period_end', 'team': None})
@@ -1577,6 +1628,7 @@ class _Game:
             'margin': self.points[scorer] + TD_POINTS - self.points[opponent], 'quarter': self.quarter, 'clock': self.clock,
             'opening_drive': scorer == self.offense and sum(1 for d in self.drives if d['offense_team'] == scorer) == 1,
             'first_td': sum(1 for d in self.drives if d.get('touchdown_scored_by')) == 1,
+            'offense_direction': self.ledger.attacks_x100(scorer, self.quarter),
         }
 
     def _overtime_decided(self):
@@ -1783,6 +1835,9 @@ class _Game:
             kick_spot = kick_spot_yardline_100(snap_yl)  # the holder's spot: where the ball is actually kicked from
             bucket = fg_bucket(snap_yl)  # the published make-rate cells are keyed on the snap position, so the bucket is too
             result = plays[-1]['outcome'].get('field_goal_result')
+            if result == 'blocked':
+                self.block('blocked_field_goal_terminal_lifecycle_unresolved')
+                return
             if result not in ('made', 'missed'):
                 if self.execution_source is not None:
                     self.block('autonomous_field_goal_result_missing')
@@ -1806,7 +1861,19 @@ class _Game:
                 self._continue(('kick', 'post_field_goal', self.offense, other(self.offense, self.ledger.teams)))
             else:  # the other team takes over at the spot of the kick, the same dead-ball spot (rules file, section 4)
                 self._mark_two_minute_warning(plays[-1])
-                if self.pregame_snapshot or self.execution_source is not None:
+                if self.execution_source is not None:
+                    receiving_spot = plays[-1]['outcome'].get('field_goal_restart_yardline_100')
+                    if type(receiving_spot) is not int or not 1 <= receiving_spot <= 99:
+                        self.block('autonomous_missed_field_goal_ceg_play_3_restart_missing')
+                        return
+                    transition = {'status': 'live_execution_rule_restart',
+                                  'baseline_yardline_100': receiving_spot,
+                                  'receiving_start_yardline_100': receiving_spot,
+                                  'spot_adjustment_yards': 0,
+                                  'source': 'ceg-play-3 live miss and Rule 11-4-2'}
+                    plays[-1]['outcome']['field_goal_return'] = transition
+                    self._continue(('possession', self.defense, receiving_spot))
+                elif self.pregame_snapshot:
                     transition = self._missed_field_goal_transition(snap_yl, kick_spot)
                     if transition is None:
                         return
@@ -1824,7 +1891,6 @@ class _Game:
             situation = p_two = None
             if self.execution_source is not None:
                 situation = self._try_situation(scorer)
-                situation['offense_direction'] = self.ledger.attacks_x100(scorer, self.quarter)
                 try_points, try_record, why = self.execution_source.try_after_touchdown(situation)
             else:
                 if self.ref.try_policy is not None:
@@ -1844,6 +1910,8 @@ class _Game:
                 return
             if opponent_points:
                 self.points[other(scorer, self.ledger.teams)] += opponent_points
+            if try_record.get('execution') is not None:
+                try_record['execution'] = compact_live_execution(try_record['execution'])
             drive['points_scored_on_drive'] = {
                 'team': scorer, 'points': TD_POINTS + try_points,
                 **({'opponent_points': opponent_points} if opponent_points else {}),
@@ -2179,7 +2247,9 @@ def _validate_game_impl(record):
                     diagnostics = live_result.get('diagnostics') or {}
                     call = execution.get('call') or {}
                     kicker_id = ((call.get('lineups') or {}).get('kicking') or {}).get('kicker')
-                    kicker_ratings = ((call.get('player_profiles') or {}).get(kicker_id) or {}).get('ratings') or {}
+                    kicker_profile = ((call.get('player_profiles') or {}).get(kicker_id)
+                                      or (call.get('player_special_ratings') or {}).get(kicker_id) or {})
+                    kicker_ratings = kicker_profile.get('ratings') or kicker_profile
                     if (not isinstance(generated, dict)
                             or generated.get('source') != 'gridiron_live_ball_trajectory'
                             or generated.get('result') not in ('made', 'missed', 'blocked')
@@ -2227,11 +2297,15 @@ def _validate_game_impl(record):
                         f"drive {drive['index']} play {play['sequence']} has incomplete live blocked-field-goal facts")
                 execution = play.get('autonomous_execution') or {}
                 result = (execution.get('result') or {}).get('result') or {}
-                if (result.get('result') != 'blocked'
-                        or not any(item.get('type') == 'kick_blocked'
-                                   for item in (execution.get('result') or {}).get('events', []))
-                        or not any(item.get('type') == 'kick_recovery'
-                                   for item in (execution.get('result') or {}).get('events', []))):
+                live_result = execution.get('result') or {}
+                event_summary = live_result.get('event_summary') or {}
+                event_types = event_summary.get('types') or {}
+                live_events = live_result.get('events') or []
+                has_block_event = (event_types.get('kick_blocked', 0) > 0 if event_summary else
+                                   any(item.get('type') == 'kick_blocked' for item in live_events))
+                has_recovery_event = (event_types.get('kick_recovery', 0) > 0 if event_summary else
+                                      any(item.get('type') == 'kick_recovery' for item in live_events))
+                if result.get('result') != 'blocked' or not has_block_event or not has_recovery_event:
                     raise AssertionError(
                         f"drive {drive['index']} play {play['sequence']} lacks live block and recovery events")
                 continue

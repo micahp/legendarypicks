@@ -32,6 +32,7 @@ import holdout  # noqa: E402
 import reducer  # noqa: E402  the shared reducer
 import field_goal_feasibility as fg_feasibility  # noqa: E402
 import football_assertions  # noqa: E402
+from execution_evidence import compact_live_execution  # noqa: E402
 
 DEFAULT_DB = e0.DEFAULT_DB
 POOL_SEASONS = (2022, 2023, 2024, 2025)
@@ -532,12 +533,23 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                         'yardage_boundary_adjustment': yardage_boundary_adjustment,
                         'touchdown': flags['touchdown'],
                         'turnover': flags['turnover'] or flags['turnover_on_downs'],
+                        'possession_change': flags.get('possession_change',
+                                                       flags['turnover'] or flags['turnover_on_downs']
+                                                       or flags['punt']),
+                        'turnover_chain': flags.get('turnover_chain'),
                         'turnover_on_downs': flags['turnover_on_downs'],
                         'punt': flags['punt'], 'punt_attempt': flags['punt_attempt'],
                         'punt_return': flags.get('punt_return', False),
                         'return_touchdown': flags.get('return_touchdown', False),
                         'fair_catch': flags.get('fair_catch', False),
                         'return_yards': flags.get('return_yards'),
+                        'returner_id': flags.get('returner_id'),
+                        'fumbler_id': flags.get('fumbler_id'),
+                        'recoverer_id': flags.get('recoverer_id'),
+                        'fumble_recovery_team': flags.get('fumble_recovery_team'),
+                        'fumble_return_yards': flags.get('fumble_return_yards'),
+                        'fumble_lost_team': flags.get('fumble_lost_team'),
+                        'field_goal_restart_yardline_100': flags.get('field_goal_restart_yardline_100'),
                         'blocked_kick': flags.get('blocked_kick'),
                         'field_goal_attempt': flags['field_goal_attempt'],
                         'field_goal_result': flags.get('field_goal_result'),
@@ -576,7 +588,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         if event_source is not None and row.get('participants') is not None:
             play['participants'] = row['participants']
         if event_source is not None and generated.get('execution') is not None:
-            play['autonomous_execution'] = generated['execution']
+            play['autonomous_execution'] = compact_live_execution(generated['execution'])
         plays.append(play)
         if execution_observer is not None:
             execution_observer('play_recorded', {'play_index': play_index})
@@ -680,7 +692,7 @@ def check_drive(plays, terminal):
         terminal_kick_score = (p['event_type'] in ('punt', 'field_goal_attempt')
                                and sa.get('end_of_drive') in ('touchdown', 'safety')
                                and o.get('scoring_team') is not None)
-        possession_change_flag = o['turnover'] or o['punt']
+        possession_change_flag = o.get('possession_change', o['turnover'] or o['punt'])
         if terminal_safety:
             # The drive state keeps the snap offense until the separate safety
             # free-kick lifecycle. An interception or fumble still counts.
