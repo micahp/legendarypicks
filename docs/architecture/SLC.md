@@ -26,17 +26,17 @@ Pregame cutoff and provenance, player eligibility, independent seed streams and 
 
 ```mermaid
 flowchart TD
-  A["Frozen matchup + pregame data"] --> B["Game state: score, clock, down, distance, spot"]
-  B --> C["Personnel + formation + eligible player selection"]
-  C --> D["Play intent / event probabilities"]
-  D --> E["Mandatory compatible historical row pool"]
-  E --> F["Optional row conditioning"]
+  A["Frozen matchup + pregame<br/>data"] --> B["Game state: score,<br/>clock, down, distance,<br/>spot"]
+  B --> C["Personnel + formation +<br/>eligible player<br/>selection"]
+  C --> D["Play intent / event<br/>probabilities"]
+  D --> E["Mandatory compatible<br/>historical row pool"]
+  E --> F["Optional row<br/>conditioning"]
   F --> G["Weighted source-row draw"]
-  G --> H["Event, yards, runoff, possession facts"]
-  H --> I["Rules / reducer / statistics"]
+  G --> H["Event, yards, runoff,<br/>possession facts"]
+  H --> I["Rules / reducer /<br/>statistics"]
   I --> J{"Game complete?"}
   J -->|No| B
-  J -->|Yes| K["Seeded game and player forecasts"]
+  J -->|Yes| K["Seeded game and player<br/>forecasts"]
 ```
 
 The diagram is a conceptual personnel-first V2 research path, not the exact frozen V1/V1.5/V1.6/V1.7 order. See individual model cards and their pinned manifests for enabled layers. [Four conditioning methods](../model-cards/nfl/slc-v2-simplified.md#conditioning-methods-visual) shows the part of this flow that changes. CEG replaces the row draw, not the need for a rules engine.

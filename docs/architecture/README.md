@@ -34,18 +34,22 @@ Other NFL team-rating and player-projection models (v1 points, EPA, Elo, Marcel-
 
 ```mermaid
 flowchart TD
-  A["Pregame roster + cutoff-valid context"] --> B["Participation, personnel, formation and coaching policy"]
-  B --> C["SLC V1 through V2: historical row sampling"]
-  B --> D["CEG: conditional event distributions"]
-  B --> E["V1 Complete: live 22-player execution"]
+  A["Pregame roster +<br/>cutoff-valid context"] --> B["Participation,<br/>personnel, formation and<br/>coaching policy"]
+  B --> C["SLC V1 through V2:<br/>historical row sampling"]
+  B --> D["CEG: conditional event<br/>distributions"]
+  B --> E["V1 Complete: live<br/>22-player execution"]
   C --> F["Historical source facts"]
-  D --> G["Generated statistical facts"]
+  D --> G["Generated statistical<br/>facts"]
   E --> H["Physical event facts"]
-  F --> I["Football rules and statistics"]
+  F --> I["Football rules and<br/>statistics"]
   G --> I
   H --> I
-  I --> J["Seeded distributions / evaluation"]
-  J --> K["Versioned packaging and parity checks"]
+  I --> J["Seeded distributions /<br/>evaluation"]
+  J --> K["Versioned packaging and<br/>parity checks"]
 ```
 
 **Target architecture, not fully shared runtime.** November 26 candidate CEG and V1 Complete share identical `shared_participation.py` source (blob `71731da9` at their initial published pins); V2 retains existing pre-event implementation. [PR #56](https://github.com/micahp/legendarypicks/pull/56) supplies HE bench-entry research, not mandatory PBV1 coupling; [PR #51](https://github.com/micahp/legendarypicks/pull/51) supplies packaging infrastructure, not the play generator. See the [SLC](SLC.md), [conditioning arms](../model-cards/nfl/slc-v2-simplified.md#conditioning-methods-visual), [CEG](CEG.md), [Gridiron](GRIDIRON.md) and [Liquid AI](LIQUID-AI.md) diagrams.
+
+For a fixed-layout, full-label alternative, see [model-family.svg](diagrams/model-family.svg). For spatial examples, see the [SVG schematic gallery](diagrams/README.md).
+
+![Three NFL sequence execution strategies, with full labels](diagrams/model-family.svg)

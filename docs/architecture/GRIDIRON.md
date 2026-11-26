@@ -22,19 +22,25 @@ Known live-play defects: receiver future landing access, defender exact-state pr
 
 ```mermaid
 flowchart TD
-  A["LP frozen roster, ratings and state"] --> B["Persistent skill-player participation"]
-  B --> C["Supported personnel and formation"]
-  C --> D["Coaching call and assignments"]
-  D --> E["Python bridge / pinned Node session"]
-  E --> F["22 role controllers: perceive, decide, execute"]
-  F --> G["Shared world: motion, ball, contacts"]
+  A["LP frozen roster,<br/>ratings and state"] --> B["Persistent skill-player<br/>participation"]
+  B --> C["Supported personnel and<br/>formation"]
+  C --> D["Coaching call and<br/>assignments"]
+  D --> E["Python bridge / pinned<br/>Node session"]
+  E --> F["22 role controllers:<br/>perceive, decide,<br/>execute"]
+  F --> G["Shared world: motion,<br/>ball, contacts"]
   G --> F
-  G -->|Terminal event| H["Whistle + trajectory + attributed facts"]
+  G -->|Terminal event| H["Whistle + trajectory +<br/>attributed facts"]
   H --> I["LP typed event adapter"]
-  I --> J["Rules, stats, clock, possession"]
+  I --> J["Rules, stats, clock,<br/>possession"]
   J --> K{"Game complete?"}
   K -->|No| A
   K -->|Yes| L["Game distribution"]
 ```
 
 This diagram describes the intended execution architecture with the November 26 [persistent-lineup candidate](https://github.com/micahp/legendarypicks/blob/847b3a22/docs/research/SLC-SHARED-PARTICIPATION-2026-11-26.md). Only offensive skill lineups persist; fixed 11 personnel, authored formation, defensive starters and restricted call library remain. No claim of all formations, defensive rotation or full-game validation. The physical world generates the outcome; no preassigned eventual receiver or historical outcome row.
+
+## Physical execution schematic
+
+![Side-view comparison of catch-height and ground-landing estimates](diagrams/catch-point.svg)
+
+The green path illustrates the candidate's observed catch-height estimate; the red path illustrates the earlier ground-landing estimate. Neither guarantees possession. See [candidate source](https://github.com/micahp/gridiron-physics/blob/61eac5b4/engine/autonomous/passing.js).

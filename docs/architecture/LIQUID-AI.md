@@ -33,38 +33,52 @@ Correct assignment and reaction logic, remove privileged observations, integrate
 
 ```mermaid
 flowchart TD
-  A["Assigned role + pre-snap responsibilities"] --> B["Local observable cues and remembered state"]
-  B --> C["Role state / transition guard"]
-  D["Ratings and bounded capabilities"] --> C
-  C --> E["Intent: move, block, rush, cover, throw, pursue"]
-  E --> F["Shared snapshot action arbitration"]
-  F --> G["Physics step and legal contacts"]
-  G --> H{"Possession / ball phase / whistle changed?"}
+  A["Assigned role + pre-snap<br/>responsibilities"] --> B["Local observable cues<br/>and remembered state"]
+  B --> C["Role state / transition<br/>guard"]
+  D["Ratings and bounded<br/>capabilities"] --> C
+  C --> E["Intent: move, block,<br/>rush, cover, throw,<br/>pursue"]
+  E --> F["Shared snapshot action<br/>arbitration"]
+  F --> G["Physics step and legal<br/>contacts"]
+  G --> H{"Possession / ball phase<br/>/ whistle changed?"}
   H -->|Live transition| B
   H -->|No| B
-  H -->|Whistle| I["Terminal facts and next snap"]
+  H -->|Whistle| I["Terminal facts and next<br/>snap"]
 ```
 
 Example target role-state graphs (conceptual; not a claim of standalone FSM classes):
 
+**Quarterback**
+
 ```mermaid
-flowchart LR
-  subgraph QB["Quarterback"]
-    A["Receive"] --> B["Drop / read"]
-    B --> C["Throw"]
-    B --> D["Escape"]
-    D --> B
-    D --> E["Scramble / carry"]
-    D --> F["Legal throwaway"]
-    B --> G["Sack by external contact"]
-  end
-  subgraph WR["Receiver or check-release back"]
-    H["Assigned protection"] --> I["Released"]
-    I --> J["Run route"]
-    J --> K["Observed catch opportunity"]
-    K --> L["Contest"]
-    L --> M["Carry or support"]
-  end
+flowchart TD
+ A["Receive snap"] --> B["Drop and read"]
+ B --> C["Throw"]
+ B --> D["Escape"]
+ D --> B
+ D --> E["Scramble / carry"]
+ D --> F["Legal throwaway"]
+ B --> G["Sack by<br/>external contact"]
+```
+
+**Check-release receiver**
+
+```mermaid
+flowchart TD
+ H["Assigned protection"] --> I["Released"]
+ I --> J["Run route"]
+ J --> K["Observed catch<br/>opportunity"]
+ K --> L["Contest"]
+ L --> M["Carry or support"]
 ```
 
 November 26 branch [e1f98a4](https://github.com/micahp/gridiron-physics/tree/e1f98a4) reports checklist completion, adds per-engagement shed RNG and throwaway guards, and strengthens selected tests. It remains an unmerged candidate. The separate [61eac5b4](https://github.com/micahp/gridiron-physics/tree/61eac5b4) candidate gates proactive receiver contact on release and uses an observed catch-height projection for assigned defenders. Do not conflate their pins or declare full-game readiness from local test reports. Source review shows e1f98a4 still checks only route kind in catchCandidates and still uses the ground-landing estimator for defenders. Reconcile and validate both changes before selecting a combined engine.
+
+## Spatial controller schematics
+
+![Top-down defender observation and assigned coverage](diagrams/player-perception.svg)
+
+This is a conceptual responsibility and reachability guard, not a claim that all contact paths enforce recognition.
+
+![Check-release protection, route release and catch contest](diagrams/check-release.svg)
+
+The proactive receiving gate is a specific candidate change at [61eac5b4](https://github.com/micahp/gridiron-physics/blob/61eac5b4/engine/autonomous/passing.js); accidental tips remain outside its scope. [Editable schematic sources](diagrams/README.md).

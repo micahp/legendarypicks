@@ -6,23 +6,52 @@ Research pin `41a759e3`, [conditioning implementation](https://github.com/micahp
 
 ## Conditioning methods (visual)
 
+**Legacy — sequential hard filters**
+
 ```mermaid
 flowchart TD
-  A["Mandatory eligible event pool + base weights"] --> B{"Optional conditioning mode"}
-  B -->|Legacy| L["Apply predicates sequentially; skip empty intersections"]
-  B -->|Disabled / Simplified| D["Keep eligible pool and base weights"]
-  B -->|Support-aware| S["Intersect all optional conditions"]
-  S --> T{"At least 20 rows and ESS at least 10?"}
-  T -->|No, optional predicates remain| R["Relax predicate maximizing normalized support"]
-  R --> T
-  T -->|Yes or none remain| W["Use remaining rows; log low support"]
-  B -->|Soft| X["Shrink bounded likelihood ratios toward base pool"]
-  X --> Y["Combine factors by geometric mean"]
-  Y --> Z["Keep eligible rows; multiply base weights"]
-  L --> O["Draw historical outcome row"]
-  D --> O
-  W --> O
-  Z --> O
+ A["Mandatory eligible<br/>event pool"] --> B["Next optional filter"]
+ B --> C{"Nonempty match?"}
+ C -->|Yes| D["Keep matched subset"]
+ C -->|No| E["Skip this filter"]
+ D --> F{"More filters?"}
+ E --> F
+ F -->|Yes| B
+ F -->|No| G["Weighted row draw"]
+```
+
+**Simplified — optional filters disabled**
+
+```mermaid
+flowchart TD
+ A["Mandatory eligible<br/>event pool"] --> B["Keep all eligible rows"]
+ B --> C["Retain base weights"]
+ C --> D["Weighted row draw"]
+```
+
+**Support-aware — preserve adequate support**
+
+```mermaid
+flowchart TD
+ A["Mandatory eligible<br/>event pool"] --> B["Intersect all optional<br/>conditions"]
+ B --> C{"20 rows and<br/>ESS of at least 10?"}
+ C -->|Yes| D["Weighted row draw"]
+ C -->|No| E{"Optional filters<br/>remain?"}
+ E -->|Yes| F["Relax the condition<br/>maximizing support"]
+ F --> C
+ E -->|No| G["Log insufficient support"]
+ G --> D
+```
+
+**Soft — continuous contextual weights**
+
+```mermaid
+flowchart TD
+ A["Mandatory eligible<br/>event pool"] --> B["Bound condition<br/>likelihood ratios"]
+ B --> C["Shrink toward base pool"]
+ C --> D["Combine by<br/>geometric mean"]
+ D --> E["Multiply base weights"]
+ E --> F["Weighted row draw"]
 ```
 
 Support-aware checks both raw support and Kish effective sample size (ESS); the normalized relaxation score is the smaller of count/20 and ESS/10. If the eligible pool itself is insufficient, the algorithm relaxes all optional conditions and records the failure, not fake support. Soft defaults at the reviewed pin: ratio cap 4, shrinkage prior 25, unsupported conditions skipped, no optional hard exclusion. Legacy is order dependent: an earlier nonempty filter can prevent a later condition from ever applying. Simplified removes optional row filters, not mandatory event compatibility, cutoff, roster or legality constraints. These defaults describe [slc_row_conditioning.py at 41a759e3](https://github.com/micahp/legendarypicks/blob/41a759e3/scripts/nfl_sequence/slc_row_conditioning.py), not an adopted package.

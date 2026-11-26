@@ -80,15 +80,15 @@ Phase 7 reports 300/300 realism games and 1,160/1,160 forecast games completed w
 ```mermaid
 flowchart TD
   subgraph Fit["Offline fit"]
-    A["Cutoff-eligible historical PBP"] --> B["Timing-separated features and labels"]
-    B --> C["Fit and shrink component distributions"]
-    C --> D["Versioned parameter artifact"]
+    A["Cutoff-eligible<br/>historical PBP"] --> B["Timing-separated<br/>features and labels"]
+    B --> C["Fit and shrink component<br/>distributions"]
+    C --> D["Versioned parameter<br/>artifact"]
   end
-  subgraph Run["Inference: no historical row lookup"]
-    E["Frozen matchup and game state"] --> F["Conditional intent / outcome draws"]
+  subgraph Run["Inference: no historical<br/>row lookup"]
+    E["Frozen matchup and game<br/>state"] --> F["Conditional intent /<br/>outcome draws"]
     D --> F
     F --> G["Typed GeneratedPlay"]
-    G --> H["Clock, penalties, kicks, rules and stats"]
+    G --> H["Clock, penalties, kicks,<br/>rules and stats"]
     H --> I{"Game complete?"}
     I -->|No| E
     I -->|Yes| J["Game distribution"]
@@ -101,7 +101,7 @@ flowchart TD
 flowchart TD
   I["Intent distribution"] --> R["Designed run"]
   I --> P["Dropback"]
-  I --> K["Kneel / spike / punt / FG"]
+  I --> K["Kneel / spike / punt /<br/>FG"]
   R --> Y["Run yards"]
   P --> O{"Dropback outcome"}
   O --> S["Sack yards"]
@@ -128,16 +128,16 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  A["Frozen roster + injuries + snap-count artifact"] --> B["Shared persistent offensive skill lineup"]
-  C["Fitted opportunity counts and situation factors"] --> D["Eligible on-field opportunity draw"]
-  B --> E["CEG intent and dropback branch"]
+  A["Frozen roster + injuries<br/>+ snap-count artifact"] --> B["Shared persistent<br/>offensive skill lineup"]
+  C["Fitted opportunity<br/>counts and situation<br/>factors"] --> D["Eligible on-field<br/>opportunity draw"]
+  B --> E["CEG intent and dropback<br/>branch"]
   E -->|Designed run or targeted pass| D
-  D --> F["Named rusher or intended receiver"]
-  E -->|Sack, scramble, throwaway, kneel, spike| Q["Resolved QB where relevant"]
-  F --> G["Team / situation outcome distribution"]
+  D --> F["Named rusher or intended<br/>receiver"]
+  E -->|Sack, scramble, throwaway, kneel, spike| Q["Resolved QB where<br/>relevant"]
+  F --> G["Team / situation outcome<br/>distribution"]
   Q --> G
-  G --> H["GeneratedPlay with player IDs"]
-  H --> I["E1 accepted-play facts and player stats"]
+  G --> H["GeneratedPlay with<br/>player IDs"]
+  H --> I["E1 accepted-play facts<br/>and player stats"]
 ```
 
 [Candidate code and handoff at e39e5bdd](https://github.com/micahp/legendarypicks/blob/e39e5bdd/docs/research/SLC-CEG-PLAYER-INTEGRATION-2026-11-26.md). The candidate replaces the Phase 6 retrospective opportunity-recipient candidate set with an eligible simulated lineup. Player attribution is not player-conditioned outcome ability. Formation-conditioned intent, defensive/kick attribution, complete official snap accounting, prospective validation and actual artifact/runtime verification are open. Earlier status in this page describes the frozen CEG research pin, not this later candidate.

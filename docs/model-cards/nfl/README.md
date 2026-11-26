@@ -31,3 +31,5 @@ Frozen source policy: [Executable registry at e0d3f603](https://github.com/micah
 | How do autonomous football players produce outcomes? | [Gridiron execution](../../architecture/GRIDIRON.md#v1-complete-execution-visual) and [role controllers](../../architecture/LIQUID-AI.md#reactive-controller-architecture-visual) |
 
 Each diagram distinguishes historical, implemented candidate, and target architecture. Update the relevant diagram when execution ordering, model inputs or outcomes change.
+
+For fixed-layout architecture and physical geometry, see the [SVG schematic gallery](../../architecture/diagrams/README.md).
