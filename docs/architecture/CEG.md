@@ -74,3 +74,74 @@ Research branch: [research/slc-ceg-2026-11-24](https://github.com/micahp/legenda
 ## Current status
 
 Phase 7 reports 300/300 realism games and 1,160/1,160 forecast games completed with data reads blocked; this is scoped checker evidence, not independently proven complete NFL rule semantics. Mean points 20.11 vs 23.01 actual (2025); W11 13-game Brier CEG .245, V2 .205, market .183. Phase 9 did not establish a team-strength candidate beating no team terms on held-out drive points. Player attribution and scoring/team differentiation remain open. No promotion. See [model comparison](../evaluation/MODEL-COMPARISON.md).
+
+## CEG training versus execution (visual)
+
+```mermaid
+flowchart TD
+  subgraph Fit["Offline fit"]
+    A["Cutoff-eligible<br/>historical PBP"] --> B["Timing-separated<br/>features and labels"]
+    B --> C["Fit and shrink component<br/>distributions"]
+    C --> D["Versioned parameter<br/>artifact"]
+  end
+  subgraph Run["Inference: no historical<br/>row lookup"]
+    E["Frozen matchup and game<br/>state"] --> F["Conditional intent /<br/>outcome draws"]
+    D --> F
+    F --> G["Typed GeneratedPlay"]
+    G --> H["Clock, penalties, kicks,<br/>rules and stats"]
+    H --> I{"Game complete?"}
+    I -->|No| E
+    I -->|Yes| J["Game distribution"]
+  end
+```
+
+## Scrimmage generation (visual)
+
+```mermaid
+flowchart TD
+  I["Intent distribution"] --> R["Designed run"]
+  I --> P["Dropback"]
+  I --> K["Kneel / spike / punt /<br/>FG"]
+  R --> Y["Run yards"]
+  P --> O{"Dropback outcome"}
+  O --> S["Sack yards"]
+  O --> Q["Scramble yards"]
+  O --> A{"Pass attempt type"}
+  A -->|Throwaway| U["Incomplete"]
+  A -->|Targeted| T["Air yards"]
+  T --> C{"Targeted outcome"}
+  C -->|Complete| V["YAC + yards"]
+  C -->|Incomplete| U
+  C -->|Interception| N["Turnover / return"]
+  Y --> F{"Eligible fumble draw"}
+  S --> F
+  Q --> F
+  V --> F
+  F -->|Lost| N
+  F -->|Retained or none| G["GeneratedPlay"]
+  U --> G
+  N --> G
+  K --> G
+```
+
+## Player-aware candidate (November 26; not validated)
+
+```mermaid
+flowchart TD
+  A["Frozen roster + injuries<br/>+ snap-count artifact"] --> B["Shared persistent<br/>offensive skill lineup"]
+  C["Fitted opportunity<br/>counts and situation<br/>factors"] --> D["Eligible on-field<br/>opportunity draw"]
+  B --> E["CEG intent and dropback<br/>branch"]
+  E -->|Designed run or targeted pass| D
+  D --> F["Named rusher or intended<br/>receiver"]
+  E -->|Sack, scramble, throwaway, kneel, spike| Q["Resolved QB where<br/>relevant"]
+  F --> G["Team / situation outcome<br/>distribution"]
+  Q --> G
+  G --> H["GeneratedPlay with<br/>player IDs"]
+  H --> I["E1 accepted-play facts<br/>and player stats"]
+```
+
+[Candidate code and handoff at e39e5bdd](https://github.com/micahp/legendarypicks/blob/e39e5bdd/docs/research/SLC-CEG-PLAYER-INTEGRATION-2026-11-26.md). The candidate replaces the Phase 6 retrospective opportunity-recipient candidate set with an eligible simulated lineup. Player attribution is not player-conditioned outcome ability. Formation-conditioned intent, defensive/kick attribution, complete official snap accounting, prospective validation and actual artifact/runtime verification are open. Earlier status in this page describes the frozen CEG research pin, not this later candidate.
+
+For a fixed-layout alternative to the fit/inference diagram, see [CEG fit and runtime SVG](diagrams/ceg-fit-runtime.svg).
+
+![CEG offline fit and event-generation runtime](diagrams/ceg-fit-runtime.svg)

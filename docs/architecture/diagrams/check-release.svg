@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 412" width="760" height="412" role="img" aria-labelledby="title desc">
+<title id="title">Check-release: protection before route</title><desc id="desc">Three illustrative top-down play fragments show an engaged blocker, a released player running a route, and a possible catch contest.</desc>
+<defs><marker id="blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#285a99"/></marker><marker id="green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#08795d"/></marker><marker id="red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#ad422f"/></marker><marker id="gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#4e6074"/></marker></defs>
+<rect width="760" height="412" rx="12" fill="#f8fafc"/>
+<g fill="#162b43" font-family="Arial,Helvetica,sans-serif" font-size="17">
+<text x="26" y="38" font-size="24" font-weight="700">Check-release: protection before route</text>
+
+<text x="26" y="63" font-size="15" fill="#4e6074">Top view · three moments in one illustrative assignment</text>
+<rect x="26" y="84" width="228" height="252" rx="8" fill="#e7f1eb" stroke="#c9d9d0"/><path d="M26 165H254 M26 226H254 M26 287H254" stroke="#fff" stroke-width="2"/><rect x="266" y="84" width="228" height="252" rx="8" fill="#e7f1eb" stroke="#c9d9d0"/><path d="M266 165H494 M266 226H494 M266 287H494" stroke="#fff" stroke-width="2"/><rect x="506" y="84" width="228" height="252" rx="8" fill="#e7f1eb" stroke="#c9d9d0"/><path d="M506 165H734 M506 226H734 M506 287H734" stroke="#fff" stroke-width="2"/>
+<text x="40" y="111" font-weight="700">1  Protect</text><text x="280" y="111" font-weight="700">2  Release</text><text x="520" y="111" font-weight="700">3  Contest</text>
+<circle cx="96" cy="262" r="20" fill="#285a99" stroke="#fff" stroke-width="2"/><text x="96" y="267" font-size="14" fill="#fff" font-weight="700" text-anchor="middle">QB</text><circle cx="144" cy="209" r="20" fill="#285a99" stroke="#fff" stroke-width="2"/><text x="144" y="214" font-size="14" fill="#fff" font-weight="700" text-anchor="middle">RB</text><circle cx="144" cy="167" r="20" fill="#ad422f" stroke="#fff" stroke-width="2"/><text x="144" y="172" font-size="14" fill="#fff" font-weight="700" text-anchor="middle">LB</text>
+<path d="M132 190H156" fill="none" stroke="#ad422f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+<text x="40" y="307" font-size="15" fill="#ad422f">Engaged</text><text x="40" y="326" font-size="15" fill="#ad422f">No proactive catch</text>
+<circle cx="337" cy="262" r="20" fill="#285a99" stroke="#fff" stroke-width="2"/><text x="337" y="267" font-size="14" fill="#fff" font-weight="700" text-anchor="middle">QB</text><circle cx="384" cy="209" r="20" fill="#285a99" stroke="#fff" stroke-width="2"/><text x="384" y="214" font-size="14" fill="#fff" font-weight="700" text-anchor="middle">RB</text><circle cx="352" cy="157" r="20" fill="#ad422f" stroke="#fff" stroke-width="2"/><text x="352" y="162" font-size="14" fill="#fff" font-weight="700" text-anchor="middle">LB</text>
+<path d="M405 207 Q453 196 452 150" fill="none" stroke="#285a99" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#blue)"/>
+<text x="280" y="307" font-size="15" >Protection resolved</text><text x="280" y="326" font-size="15" >Route becomes active</text>
+<circle cx="560" cy="262" r="20" fill="#285a99" stroke="#fff" stroke-width="2"/><text x="560" y="267" font-size="14" fill="#fff" font-weight="700" text-anchor="middle">QB</text><circle cx="644" cy="173" r="20" fill="#285a99" stroke="#fff" stroke-width="2"/><text x="644" y="178" font-size="14" fill="#fff" font-weight="700" text-anchor="middle">RB</text><circle cx="683" cy="150" r="20" fill="#ad422f" stroke="#fff" stroke-width="2"/><text x="683" y="155" font-size="14" fill="#fff" font-weight="700" text-anchor="middle">DB</text>
+<ellipse cx="630" cy="144" rx="10" ry="6" fill="#865a32"/>
+<path d="M579 247 Q604 190 625 152" fill="none" stroke="#865a32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 5"/>
+<circle cx="636" cy="151" r="32" fill="none" stroke="#08795d" stroke-dasharray="4 5"/>
+<text x="520" y="307" font-size="15" fill="#08795d">Observed + reachable</text><text x="520" y="326" font-size="15" fill="#08795d">Catch not guaranteed</text>
+<text x="26" y="368" font-size="15" fill="#4e6074">Candidate rule: route assignment + released if required + not engaged.</text>
+<text x="26" y="391" font-size="15" fill="#4e6074">Accidental tips off blockers are outside this proactive receiving action.</text>
+
+</g></svg>

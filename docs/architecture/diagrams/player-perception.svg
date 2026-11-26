@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 424" width="760" height="424" role="img" aria-labelledby="title desc">
+<title id="title">Perception before pursuit</title><desc id="desc">Top-down conceptual sketch of a defender's observation cone, assigned zone, and estimated catch point. Geometry and timing are illustrative.</desc>
+<defs><marker id="blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#285a99"/></marker><marker id="green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#08795d"/></marker><marker id="red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#ad422f"/></marker><marker id="gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#4e6074"/></marker></defs>
+<rect width="760" height="424" rx="12" fill="#f8fafc"/>
+<g fill="#162b43" font-family="Arial,Helvetica,sans-serif" font-size="17">
+<text x="26" y="38" font-size="24" font-weight="700">Perception before pursuit</text>
+
+<text x="26" y="63" font-size="15" fill="#4e6074">Top view · conceptual cues and responsibility</text>
+<rect x="30" y="82" width="700" height="270" rx="8" fill="#e7f1eb" stroke="#c9d9d0"/>
+<path d="M30 146H730 M30 210H730 M30 274H730" stroke="#fff" stroke-width="2"/>
+<rect x="300" y="100" width="245" height="228" rx="6" fill="#285a99" fill-opacity=".06" stroke="#285a99" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="313" y="121" font-size="15" fill="#285a99" font-weight="700">Assigned zone</text>
+<path d="M365 260 L233 142 A177 177 0 0 1 542 214 Z" fill="#285a99" fill-opacity=".13" stroke="#285a99" stroke-opacity=".45"/>
+<text x="175" y="164" font-size="15" fill="#285a99">Observed field</text>
+<circle cx="365" cy="260" r="20" fill="#285a99" stroke="#fff" stroke-width="2"/><text x="365" y="265" font-size="14" fill="#fff" font-weight="700" text-anchor="middle">DB</text><circle cx="484" cy="176" r="20" fill="#a65b29" stroke="#fff" stroke-width="2"/><text x="484" y="181" font-size="14" fill="#fff" font-weight="700" text-anchor="middle">WR</text>
+<ellipse cx="440" cy="138" rx="11" ry="6" fill="#865a32" transform="rotate(-20 440 138)"/>
+<circle cx="513" cy="216" r="25" fill="#08795d" fill-opacity=".12" stroke="#08795d" stroke-dasharray="4 4"/>
+<circle cx="513" cy="216" r="5" fill="#08795d"/>
+<path d="M386 251 Q448 226 484 218" fill="none" stroke="#08795d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#green)"/>
+<text x="551" y="206" font-size="15" fill="#08795d">Estimated</text><text x="551" y="225" font-size="15" fill="#08795d">catch point</text>
+<path d="M640 286h26m-13-13v26" stroke="#ad422f" stroke-width="2"/>
+<text x="608" y="319" font-size="15" fill="#ad422f">Outside zone</text>
+<text x="26" y="379" font-size="15" fill="#4e6074">Break after an observed throw, reaction delay and a reachable opportunity.</text>
+<text x="26" y="402" font-size="15" fill="#4e6074">Zone and cone are illustrative, not engine dimensions or measured trajectories.</text>
+
+</g></svg>

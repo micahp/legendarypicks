@@ -19,3 +19,17 @@ Read model cards by identity, not by branch or informal version number. All entr
 | [V1 Complete](slc-v1-complete.md) | Autonomous 22-player physical execution; incomplete |
 
 Frozen source policy: [Executable registry at e0d3f603](https://github.com/micahp/legendarypicks/blob/e0d3f603/scripts/nfl_sequence/slc_model_registry.py). This documentation is an index, not a replacement for the manifest. V1 points / EPA / Elo and Spec B are separate NFL model families.
+
+## Visual architecture reference
+
+| Question | Diagram |
+|---|---|
+| What is shared across SLC, CEG and V1 Complete? | [Family comparison](../../architecture/README.md#model-family-comparison-visual) |
+| How does a historical-row simulator run? | [SLC execution](../../architecture/SLC.md#historical-row-execution-visual) |
+| How do legacy, simplified, support-aware and soft filters differ? | [Conditioning methods](slc-v2-simplified.md#conditioning-methods-visual) |
+| How does CEG fit and generate events? | [CEG training, scrimmage and player flows](../../architecture/CEG.md#ceg-training-versus-execution-visual) |
+| How do autonomous football players produce outcomes? | [Gridiron execution](../../architecture/GRIDIRON.md#v1-complete-execution-visual) and [role controllers](../../architecture/LIQUID-AI.md#reactive-controller-architecture-visual) |
+
+Each diagram distinguishes historical, implemented candidate, and target architecture. Update the relevant diagram when execution ordering, model inputs or outcomes change.
+
+For fixed-layout architecture and physical geometry, see the [SVG schematic gallery](../../architecture/diagrams/README.md).

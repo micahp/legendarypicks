@@ -218,3 +218,9 @@ No LP live forecast/lock/grading updates, production writes, shared engine chang
 
 ## Commits
 - No AI attribution. Plain messages saying what and why. Do not commit `__pycache__` or `venv`.
+
+## Modeling architecture diagrams — 2026-11-26
+
+When a modeling change alters runtime data flow, ordering, conditioning, attribution or shared interfaces, update the canonical GitHub-rendered Mermaid diagram and model card in the handbook (see [NFL diagram index](docs/model-cards/nfl/README.md#visual-architecture-reference)). Label proposed versus implemented versus independently tested paths and cite exact source pins. Do not treat an agent's completed checklist as proof of integrated full-game correctness. Preserve frozen manifests and control pins; no silent model identity changes.
+
+Preserve meaningful diagram labels. Use explicit multiline Mermaid labels and vertical flows; split wide diagrams instead of relying on a fixed minimum width that can shrink on narrow screens. Use editable SVG when precise node sizing, spatial geometry or physical illustrations are needed. Include accessible descriptions, relative image links, and a light/dark-safe background; see [schematic guide](docs/architecture/diagrams/README.md). Inspect rendered desktop and narrow widths before claiming visual verification.
