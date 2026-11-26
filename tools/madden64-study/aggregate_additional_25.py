@@ -31,8 +31,12 @@ COUNTERS = {
     12: "first_downs_candidate",
     57: "score_candidate",
 }
-RAW_COLUMNS = ["frame", "quarter", "clock", "down", "distance", "yard", "team",
-               "kind", "index", "value", "rng", "player_row", "drive_team_candidate"]
+RAW_COLUMNS_V1 = ["frame", "quarter", "clock", "down", "distance", "yard", "team",
+                  "kind", "index", "value", "rng", "player_row", "drive_team_candidate"]
+RAW_COLUMNS_V2 = ["frame", "period", "period_type", "mode_state", "clock", "down",
+                  "distance", "yard", "team", "kind", "index", "value", "rng",
+                  "player_row", "drive_team_candidate", "game_id", "chunk_id",
+                  "hook_seq", "hook_id"]
 SIGNED_DISPLAY_COUNTERS = {0, 1, 2, 10}
 
 
@@ -47,9 +51,31 @@ def digest(path):
 def read_csv(path):
     with path.open(newline="", encoding="utf-8") as stream:
         reader = csv.DictReader(stream)
-        if reader.fieldnames != RAW_COLUMNS:
+        if reader.fieldnames == RAW_COLUMNS_V2:
+            return list(reader)
+        if reader.fieldnames != RAW_COLUMNS_V1:
             raise SystemExit(f"Unexpected schema in {path}: {reader.fieldnames}")
-        return list(reader)
+        normalized = []
+        for row in reader:
+            kind = row["kind"]
+            # V1 wrote mode_state into `quarter` on hook rows, while state and
+            # counter samples used the actual period. Do not reinterpret a
+            # hook row's mode byte as regulation/overtime.
+            period = row["quarter"] if kind in ("state", "total") else ""
+            p = int(period) if period not in (None, "") else None
+            period_type = ({1: "regulation", 2: "regulation", 3: "regulation", 4: "regulation",
+                            5: "overtime", 6: "game_end_state", 7: "pre_game_state"}.get(p, "unknown"))
+            normalized.append({
+                "frame": row["frame"], "period": period, "period_type": period_type,
+                "mode_state": row["quarter"] if kind in ("event", "staged") else "",
+                "clock": row["clock"], "down": row["down"], "distance": row["distance"],
+                "yard": row["yard"], "team": row["team"], "kind": kind,
+                "index": row["index"], "value": row["value"], "rng": row["rng"],
+                "player_row": row["player_row"],
+                "drive_team_candidate": row["drive_team_candidate"],
+                "game_id": "", "chunk_id": "", "hook_seq": "", "hook_id": "",
+            })
+        return normalized
 
 
 def main():
@@ -89,7 +115,14 @@ def main():
         if digest(csv_path) != game["merged_csv_sha256"]:
             raise SystemExit(f"Merged CSV hash mismatch: {csv_path}")
         rows = read_csv(csv_path)
-        entered_overtime = any(int(raw["quarter"]) == 5 for raw in rows)
+        for raw in rows:
+            if raw["game_id"] not in ("", game_id):
+                raise SystemExit(f"Recorder game ID mismatch in {csv_path}: {raw['game_id']}")
+            if raw["hook_id"]:
+                expected = f"{game_id}:{raw['chunk_id']}:{raw['hook_seq']}"
+                if raw["hook_id"] != expected:
+                    raise SystemExit(f"Malformed hook invocation ID in {csv_path}: {raw['hook_id']}")
+        entered_overtime = any(raw["period"] == "5" for raw in rows)
         count = Counter(row["kind"] for row in rows)
         for key in ("event", "staged", "total", "state"):
             kinds[key] += count[key]
@@ -141,9 +174,9 @@ def main():
         by_quarter[quarter].append(row)
 
         for raw in rows:
-            all_rows.append({"game_id": game_id, "quarter_minutes": quarter, **raw})
+            all_rows.append({**raw, "game_id": game_id, "quarter_minutes": quarter})
 
-    full_columns = ["game_id", "quarter_minutes", *RAW_COLUMNS]
+    full_columns = ["game_id", "quarter_minutes", *[c for c in RAW_COLUMNS_V2 if c != "game_id"]]
     with FULL_CSV.open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=full_columns)
         writer.writeheader()

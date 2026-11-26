@@ -86,7 +86,7 @@ if any(any(c.isspace() for c in str(p)) for p in (args.root, args.start)):
 folder = args.root / "chunks" / args.game_id
 folder.mkdir(parents=True, exist_ok=True)
 manifest = folder / "manifest.json"
-fingerprint = {"schema": 1, "game_id": args.game_id, "frames": args.frames,
+fingerprint = {"schema": 1, "recorder_schema": 2, "game_id": args.game_id, "frames": args.frames,
                "initial_state_sha256": digest(args.start), "rom_sha256": digest(args.rom),
                "driver_sha256": digest(args.driver), "runner_sha256": digest(Path(__file__)),
                "emulator_sha256": digest(args.emulator), "core_sha256": digest(args.core),
@@ -144,7 +144,7 @@ while not ledger["completed"] and len(ledger["chunks"]) < args.max_chunks:
             lines.append("press A 8")
         if number == 1 and args.seed is not None:
             lines.append(f"seed {args.seed}")
-        lines.append(f"gamechunk {output.as_posix()} {args.frames}")
+        lines.append(f"gamechunk {output.as_posix()} {args.frames} {args.game_id} {number}")
         ledger["pending"] = {"output": str(output), "command": lines[-1], "input_state_sha256": digest(state),
                              "emulator_pid": args.emulator_pid}
         atomic(manifest, json.dumps(ledger, indent=2) + "\n")

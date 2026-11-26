@@ -9,7 +9,8 @@
 --   record <path.csv> <frames>                 sample candidate team counters each frame
 --   hookrecord <path.csv> <frames>             capture raw staged records at candidate routine
 --   game <path.csv> <maxframes>                stop on experimental end transition
---   gamechunk <path.csv> <frames>              bounded chunk; reads armed.txt (0 or 1)
+--   gamechunk <path.csv> <frames> <game_id> <chunk_number>
+--                                                bounded v2 chunk; reads armed.txt (0 or 1)
 --   dumpram <path>                             first 0x90000 bytes of N64 RDRAM
 -- capture-hooks.flag enables event/staged records; capture-hook-screenshots.flag
 -- additionally saves a screenshot for every execution-hook hit.
@@ -38,7 +39,15 @@ while true do
     os.remove(W .. "cmd.txt")
     local log = {}
     for _, l in ipairs(lines) do
-      local c, a, b = string.match(l, "^(%S+)%s+(.+)%s+(%d+)$"); if not c then c, a = string.match(l, "^(%S+)%s*(%S*)"); b = nil end
+      local c, a, b, run_game_id, run_chunk_id
+      local gc_path, gc_frames, gc_game_id, gc_chunk_id = string.match(l,
+        "^gamechunk%s+(%S+)%s+(%d+)%s+([%w_-]+)%s+(%d+)$")
+      if gc_path then
+        c, a, b, run_game_id, run_chunk_id = "gamechunk", gc_path, gc_frames, gc_game_id, gc_chunk_id
+      else
+        c, a, b = string.match(l, "^(%S+)%s+(.+)%s+(%d+)$")
+        if not c then c, a = string.match(l, "^(%S+)%s*(%S*)"); b = nil end
+      end
       if c == "press" then hold(a, tonumber(b) or 4)
       elseif c == "wait" then for i = 1, tonumber(a) do emu.frameadvance() end
       elseif c == "shot" then client.screenshot(a)
@@ -52,16 +61,44 @@ while true do
       elseif c == "hookrecord" or c == "game" or c == "gamechunk" then
         local count = assert(tonumber(b), "hookrecord requires a frame count")
         local out = assert(io.open(a, "w"))
-        out:write("frame,quarter,clock,down,distance,yard,team,kind,index,value,rng,player_row,drive_team_candidate\n")
+        out:write("frame,period,period_type,mode_state,clock,down,distance,yard,team,kind,index,value,rng,player_row,drive_team_candidate,game_id,chunk_id,hook_seq,hook_id\n")
+        local normalized_path = string.gsub(a, "\\", "/")
+        local path_game_id, path_chunk_id = string.match(normalized_path,
+          "/chunks/([%w_-]+)/chunk%-(%d+)%.csv$")
+        assert(c ~= "gamechunk" or run_game_id or path_game_id,
+          "gamechunk v2 requires game_id and chunk_number")
+        assert(c ~= "gamechunk" or run_chunk_id or path_chunk_id,
+          "gamechunk v2 requires game_id and chunk_number")
+        local game_id = run_game_id or path_game_id or ("adhoc_" .. tostring(emu.framecount()))
+        local chunk_id = run_chunk_id or path_chunk_id or "1"
         local hits = 0
+        local hook_seq = 0
         local capture_hooks = exists(W .. "capture-hooks.flag")
         local capture_hook_screenshots = exists(W .. "capture-hook-screenshots.flag")
         local pending_screenshot = nil
+        local function period_type(period)
+          if period >= 1 and period <= 4 then return "regulation" end
+          if period == 5 then return "overtime" end
+          if period == 6 then return "game_end_state" end
+          if period == 7 then return "pre_game_state" end
+          return "unknown"
+        end
+        local function write_row(frame, period, mode_state, clock, down, distance, yard,
+                                 team, kind, index, value, rng, player_row, drive_team,
+                                 row_hook_seq, hook_id)
+          out:write(string.format("%d,%d,%s,%d,%d,%d,%d,%d,%d,%s,%s,%d,%u,%s,%d,%s,%s,%s,%s\n",
+            frame, period, period_type(period), mode_state, clock, down, distance, yard,
+            team, kind, index, value, rng, tostring(player_row), drive_team, game_id, chunk_id,
+            tostring(row_hook_seq), hook_id))
+        end
         local hook = event.on_bus_exec(function()
           hits = hits + 1
+          hook_seq = hook_seq + 1
+          local hook_id = game_id .. ":" .. chunk_id .. ":" .. tostring(hook_seq)
           if capture_hooks and capture_hook_screenshots then pending_screenshot = emu.framecount() end
-          local q = memory.read_u16_be(0x876dc, "RDRAM")
-          local clock = memory.read_u16_be(0x87aac, "RDRAM")
+          local period = memory.read_s32_be(0x89538, "RDRAM")
+          local mode_state = memory.read_u16_be(0x876dc, "RDRAM")
+          local clock = memory.read_s32_be(0x8953c, "RDRAM")
           local down = memory.read_s32_be(0x89544, "RDRAM")
           local distance = memory.read_s32_be(0x89548, "RDRAM")
           local yard = memory.read_s32_be(0x8954c, "RDRAM")
@@ -78,14 +115,15 @@ while true do
                 local kind = memory.read_u8(p + 1, "RDRAM")
                 local value = memory.read_s16_be(p + 2, "RDRAM")
                 local player_row = slot < 11 and memory.read_u16_be(0x81860 + team * 0x214c + 2 * slot, "RDRAM") or -1
-                out:write(string.format("%d,%d,%d,%d,%d,%d,%d,event,%d:%d,%d,%u,%d,%d\n",
-                  emu.framecount(), q, clock, down, distance, yard, team, slot, kind, value, rng, player_row, drive_team))
+                write_row(emu.framecount(), period, mode_state, clock, down, distance, yard,
+                  team, "event", tostring(slot) .. ":" .. tostring(kind), value, rng,
+                  player_row, drive_team, hook_seq, hook_id)
               end
               for i = 0, 22 do
                 local value = memory.read_s16_be(0x82d50 + team * 0x214c + i * 2, "RDRAM")
                 if value ~= 0 then
-                  out:write(string.format("%d,%d,%d,%d,%d,%d,%d,staged,%d,%d,%u,,%d\n",
-                    emu.framecount(), q, clock, down, distance, yard, team, i, value, rng, drive_team))
+                  write_row(emu.framecount(), period, mode_state, clock, down, distance, yard,
+                    team, "staged", tostring(i), value, rng, "", drive_team, hook_seq, hook_id)
                 end
               end
             end
@@ -108,6 +146,7 @@ while true do
             pending_screenshot = nil
           end
           local q = memory.read_s32_be(0x89538, "RDRAM")
+          local mode_state = memory.read_u16_be(0x876dc, "RDRAM")
           local clock = memory.read_s32_be(0x8953c, "RDRAM")
           local down = memory.read_s32_be(0x89544, "RDRAM")
           local distance = memory.read_s32_be(0x89548, "RDRAM")
@@ -121,7 +160,8 @@ while true do
           local state = string.format("%d,%d,%d,%d,%d", q, clock, down, distance, yard)
           local state_key = state .. ":" .. drive_team
           if previous.state ~= state_key then
-            out:write(string.format("%d,%s,-1,state,0,0,%u,,%d\n", emu.framecount(), state, rng, drive_team))
+            write_row(emu.framecount(), q, mode_state, clock, down, distance, yard,
+              -1, "state", "0", 0, rng, "", drive_team, "", "")
             previous.state = state_key
           end
           for team = 0, 1 do
@@ -129,7 +169,8 @@ while true do
               local key = team * 100 + index
               local value = memory.read_u16_be(0x82d22 + team * 0x214c + 2 * index, "RDRAM")
               if previous[key] ~= value then
-                out:write(string.format("%d,%s,%d,total,%d,%d,%u,,%d\n", emu.framecount(), state, team, index, value, rng, drive_team))
+                write_row(emu.framecount(), q, mode_state, clock, down, distance, yard,
+                  team, "total", tostring(index), value, rng, "", drive_team, "", "")
                 previous[key] = value
               end
             end
