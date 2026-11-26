@@ -578,8 +578,10 @@ def main(argv=None):
     r.add_argument('--player-snap-counts-sha256')
     r.add_argument('--opportunity-artifact', type=Path)
     r.add_argument('--opportunity-sha256')
-    r.add_argument('--entry-current', action=argparse.BooleanOptionalAction, default=None,
-                   help='HE enabled by default for player-aware runs; --no-entry-current for control')
+    r.add_argument('--entry-current', dest='entry_current', action='store_true', default=None,
+                   help='enable HE bench entry for player-aware runs')
+    r.add_argument('--no-entry-current', dest='entry_current', action='store_false', default=None,
+                   help='use historical table-rate bench entry for the control')
     args = ap.parse_args(argv)
     if args.cmd == 'run':
         companions = (args.player_field, args.player_field_sha256, args.player_snap_counts,
