@@ -11,7 +11,7 @@ from dataclasses import asdict, dataclass
 import ceg_contract as contract
 import penalty_enforcement
 import reducer
-from event_expansion import FROZEN_CONTROL, EventExpansionSwitches
+from event_expansion import EXPANDED_DEFAULT, EventExpansionSwitches
 from penalty_event_mapping import (PenaltyTypeMappingError, classify_penalty_type,
                                    nominal_yards_for)
 
@@ -69,25 +69,52 @@ def _apply_penalty(before, after, play, switches):
         return after, None, True
     switch = 'pre_snap_penalties' if penalty.phase == 'pre_snap' else 'live_ball_penalties'
     _require_switch(switches, switch)
-    if penalty.disposition == 'offsetting':
-        raise UnsupportedEventTransition('offsetting_penalty_rules_not_yet_integrated')
     if penalty.phase == 'pre_snap' and penalty.disposition != 'accepted':
-        raise UnsupportedEventTransition('pre_snap_no_play_penalty_must_be_accepted')
-    if len(penalty.fouls) != 1:
-        raise UnsupportedEventTransition('multiple_penalty_fouls_need_joint_ruling')
-    foul = penalty.fouls[0]
-    if foul.team not in ('offense', 'defense'):
-        raise UnsupportedEventTransition('scrimmage_penalty_team_role_unsupported:' + foul.team)
-    try:
-        classification = classify_penalty_type(
-            foul.penalty_type, foul.team, block_subtype=foul.block_subtype)
-        nominal_yards = nominal_yards_for(classification)
-    except PenaltyTypeMappingError as exc:
-        raise UnsupportedEventTransition(str(exc)) from exc
-    if foul.yards_assessed != nominal_yards:
-        raise UnsupportedEventTransition(
-            f'penalty_nominal_yards_disagree_with_rule:{foul.team}:'
-            f'{classification.penalty_type}:expected={nominal_yards}:got={foul.yards_assessed}')
+        if penalty.disposition != 'offsetting':
+            raise UnsupportedEventTransition('pre_snap_no_play_penalty_must_be_accepted')
+
+    classifications = []
+    for index, foul in enumerate(penalty.fouls):
+        if foul.team not in ('offense', 'defense'):
+            raise UnsupportedEventTransition('scrimmage_penalty_team_role_unsupported:' + foul.team)
+        try:
+            classification = classify_penalty_type(
+                foul.penalty_type, foul.team, block_subtype=foul.block_subtype)
+            nominal_yards = nominal_yards_for(classification)
+        except PenaltyTypeMappingError as exc:
+            raise UnsupportedEventTransition(str(exc)) from exc
+        if foul.yards_assessed != nominal_yards:
+            raise UnsupportedEventTransition(
+                f'penalty_nominal_yards_disagree_with_rule:{foul.team}:'
+                f'{classification.penalty_type}:expected={nominal_yards}:got={foul.yards_assessed}')
+        classifications.append((foul, classification))
+
+    if penalty.disposition == 'offsetting':
+        if {foul.team for foul, _ in classifications} != {'offense', 'defense'}:
+            raise UnsupportedEventTransition('offsetting_penalties_need_opposing_teams')
+        if penalty.phase == 'pre_snap' and play.event != 'no_play':
+            raise UnsupportedEventTransition('offsetting_pre_snap_penalty_requires_no_play_event')
+        if (play.event in ('interception', 'fumble_lost')
+                and after is not None and after.get('offense') != before.get('offense')):
+            raise UnsupportedEventTransition('offsetting_penalty_turnover_sequence_needs_foul_order')
+        state = _down_state(before)
+        enforcement = {'state': asdict(state), 'accepted': False, 'yards': 0,
+                       'rule_basis': 'offsetting live-ball fouls; replay down',
+                       'play_counts': False, 'replay_down': True,
+                       'automatic_first_down': False, 'loss_of_down': False,
+                       'turnover_on_downs': False, 'clock_action': 'replay_down',
+                       'enforcement_spot': 'previous', 'safety': False,
+                       'offsetting': True,
+                       'fouls': [{'penalty_type': foul.penalty_type, 'team': foul.team,
+                                  'foul_spot': foul.foul_spot,
+                                  'offender_id': foul.player.stat_player_id}
+                                 for foul, _ in classifications]}
+        return _state_from_down_state(before, state), enforcement, False
+
+    if penalty.disposition == 'accepted' and len(penalty.fouls) != 1:
+        raise UnsupportedEventTransition('multiple_accepted_fouls_need_shared_ceg_play_2_rules')
+    selected_index = 0
+    foul, classification = classifications[selected_index]
     state_before = _down_state(before)
     terminal_play = penalty.phase == 'live_ball' and (
         after is None or (penalty.disposition == 'accepted' and after.get('offense') != before.get('offense')))
@@ -119,12 +146,26 @@ def _apply_penalty(before, after, play, switches):
     if (penalty.automatic_first_down is not None
             and penalty.automatic_first_down != enforcement.automatic_first_down):
         raise UnsupportedEventTransition('penalty_first_down_fact_disagrees_with_rules')
+    enforcement_record = asdict(enforcement)
+    enforcement_record['selected_foul_index'] = selected_index
+    enforcement_record['offender_team'] = foul.team
+    enforcement_record['offender_id'] = foul.player.stat_player_id
+    enforcement_record['penalty_type'] = foul.penalty_type
+    if len(classifications) > 1:
+        enforcement_record['nullified_fouls'] = [
+            {'penalty_type': other_foul.penalty_type, 'team': other_foul.team,
+             'offender_id': other_foul.player.stat_player_id}
+            for index, (other_foul, _) in enumerate(classifications) if index != selected_index]
+    if enforcement.safety:
+        enforcement_record['scoring_team'] = before['defense']
+        enforcement_record['play_counts'] = False
+        return None, enforcement_record, False
     if terminal_play and enforcement.accepted and not enforcement.play_counts:
-        return _state_from_down_state(before, enforcement.state), asdict(enforcement), False
+        return _state_from_down_state(before, enforcement.state), enforcement_record, False
     return (after if terminal_play and not enforcement.accepted else
             None if terminal_play and enforcement.play_counts else
             _state_from_down_state(before, enforcement.state),
-            asdict(enforcement), True)
+            enforcement_record, True)
 
 
 def _defensive_recovery(before, play):
@@ -157,18 +198,21 @@ def _defensive_recovery(before, play):
 
     flags = {'turnover': True, 'interception': possession.how == 'interception',
              'fumble': possession.how == 'fumble_recovery', 'return_yards': return_yards,
-             'return_team': before['defense']}
+             'return_team': before['defense'],
+             'returner_id': possession.returner.stat_player_id,
+             'recoverer_id': possession.recovered_by.stat_player_id}
     if play.event == 'sack':
         flags['sack'] = True
     if dead_spot == 100:
         if play.scoring is None or play.scoring.kind != 'touchdown' or play.scoring.team != 'defense':
             raise UnsupportedEventTransition('defensive_return_goal_line_needs_touchdown_fact')
         flags['touchdown'] = True
+        flags['return_touchdown'] = True
         return AppliedEvent(None, 'touchdown', flags, before['defense'])
     if possession.touchback:
         if dead_spot != 0 or play.scoring is not None:
             raise UnsupportedEventTransition('defensive_touchback_fact_disagrees_with_dead_ball')
-        restart = possession.next_possession_yardline_100
+        restart = possession.next_yardline_100
         after = {'offense': before['defense'], 'defense': before['offense'], 'down': 1,
                  'togo': min(10, restart), 'yl': restart}
         flags['touchback'] = True
@@ -186,14 +230,15 @@ def _defensive_recovery(before, play):
     return AppliedEvent(after, 'turnover', flags)
 
 
-def _apply_base_play(state, play):
+def _apply_base_play(state, play, yards_override=None):
     event = {'scramble': 'run', 'kneel': 'run', 'spike': 'pass_incomplete'}.get(play.event, play.event)
     if event not in ('run', 'pass_complete', 'pass_incomplete', 'sack', 'field_goal_attempt'):
         raise UnsupportedEventTransition('base_event_transition_unavailable:' + str(play.event))
     if event == 'field_goal_attempt':
         return None, 'field_goal_attempt', {'field_goal_attempt': True}
     try:
-        after, terminal, flags = reducer.apply_play(state, event, play.yards_gained)
+        after, terminal, flags = reducer.apply_play(
+            state, event, play.yards_gained if yards_override is None else yards_override)
     except (AssertionError, ValueError) as exc:
         raise UnsupportedEventTransition('base_event_reducer_rejected:' + str(exc)) from exc
     if play.scoring is not None:
@@ -211,7 +256,7 @@ def _apply_base_play(state, play):
     return after, terminal, flags
 
 
-def apply_scrimmage_play(state, play, switches=FROZEN_CONTROL):
+def apply_scrimmage_play(state, play, switches=EXPANDED_DEFAULT):
     """Validate and apply a non-kick ceg-play-2 fact against an E1-style state.
 
     This does not mutate the released runner, random streams, or stats.  The
@@ -225,10 +270,12 @@ def apply_scrimmage_play(state, play, switches=FROZEN_CONTROL):
         raise UnsupportedEventTransition('kick_transition_not_integrated_in_scrimmage_adapter')
     if play.event == 'no_play':
         after, enforcement, _ = _apply_penalty(state, state, play, switches)
-        foul = play.penalty.fouls[0]
+        foul_index = 0
+        foul = play.penalty.fouls[foul_index]
         flags = {'no_play': True, 'snap_occurred': False, 'penalty': True,
                  'penalty_accepted': enforcement['accepted'], 'penalty_yards': enforcement['yards'],
                  'penalty_type': foul.penalty_type, 'penalty_offender_team': foul.team,
+                 'penalty_offender_id': foul.player.stat_player_id,
                  'automatic_first_down': enforcement['automatic_first_down'],
                  'first_down': enforcement['automatic_first_down']}
         return AppliedEvent(after, None, flags, penalty_enforcement=enforcement)
@@ -261,8 +308,9 @@ def apply_scrimmage_play(state, play, switches=FROZEN_CONTROL):
     if play.event == 'interception' or (play.fumble and play.possession.team == 'defense'):
         result = _defensive_recovery(state, play)
     elif play.fumble and play.possession.team == 'offense':
-        after, terminal, flags = _apply_base_play(state, play)
         dead_spot = _int_spot(play.possession.dead_ball_yardline_100, 'offense_fumble_dead_ball_spot')
+        net_yards = state['yl'] - dead_spot
+        after, terminal, flags = _apply_base_play(state, play, yards_override=net_yards)
         if terminal == 'touchdown' and dead_spot != 0:
             raise UnsupportedEventTransition('offensive_fumble_touchdown_spot_mismatch')
         if terminal == 'safety' and dead_spot != 100:
@@ -283,11 +331,24 @@ def apply_scrimmage_play(state, play, switches=FROZEN_CONTROL):
     if play.penalty is not None:
         after, enforcement, play_counts = _apply_penalty(state, result.state_after, play, switches)
         flags = dict(result.flags)
-        foul = play.penalty.fouls[0]
-        terminal = result.terminal
-        scoring_team = result.scoring_team
-        if not play_counts:
-            terminal = ('turnover_on_downs' if enforcement['turnover_on_downs'] else None)
+        foul_index = enforcement.get('selected_foul_index', 0)
+        foul = play.penalty.fouls[foul_index]
+        terminal = result.terminal if not enforcement.get('accepted') or enforcement.get('play_counts') else None
+        scoring_team = result.scoring_team if terminal is not None else None
+        if enforcement.get('safety'):
+            terminal = 'safety'
+            scoring_team = state['defense']
+            for name in ('touchdown', 'turnover', 'interception', 'fumble', 'touchback',
+                         'punt_return', 'return_touchdown', 'possession_retained', 'first_down',
+                         'scoring_team'):
+                if name in flags:
+                    flags[name] = False if name != 'scoring_team' else None
+            for name in ('return_yards', 'return_team', 'returner_id', 'recovered_by'):
+                flags.pop(name, None)
+            flags['safety'] = True
+            flags['scoring_team'] = state['defense']
+        elif enforcement.get('accepted') and not play_counts:
+            terminal = 'turnover_on_downs' if enforcement['turnover_on_downs'] else None
             scoring_team = None
             for name in ('touchdown', 'safety', 'turnover', 'interception', 'fumble', 'touchback',
                          'punt_return', 'return_touchdown', 'possession_retained', 'first_down',
@@ -298,12 +359,23 @@ def apply_scrimmage_play(state, play, switches=FROZEN_CONTROL):
                 flags.pop(name, None)
             flags['turnover_on_downs'] = enforcement['turnover_on_downs']
             flags['first_down'] = enforcement['automatic_first_down']
+        if enforcement.get('offsetting'):
+            for name in ('touchdown', 'safety', 'turnover', 'interception', 'fumble', 'touchback',
+                         'punt_return', 'return_touchdown', 'possession_retained', 'first_down',
+                         'scoring_team'):
+                if name in flags:
+                    flags[name] = False if name != 'scoring_team' else None
+            for name in ('return_yards', 'return_team', 'returner_id', 'recovered_by'):
+                flags.pop(name, None)
+            flags['turnover_on_downs'] = False
+            flags['first_down'] = False
         flags.update({
             'penalty': True,
             'penalty_accepted': enforcement['accepted'],
             'penalty_yards': enforcement['yards'],
             'penalty_type': foul.penalty_type,
             'penalty_offender_team': foul.team,
+            'penalty_offender_id': foul.player.stat_player_id,
             'automatic_first_down': enforcement['automatic_first_down'],
             'first_down': flags.get('first_down', False) or enforcement['automatic_first_down'],
         })
@@ -311,10 +383,13 @@ def apply_scrimmage_play(state, play, switches=FROZEN_CONTROL):
     return result
 
 
-def apply_punt_play(state, play, switches=FROZEN_CONTROL):
+def apply_punt_play(state, play, switches=EXPANDED_DEFAULT):
     """Apply classified punt, return, touchback or muff facts in one field frame."""
     if not isinstance(switches, EventExpansionSwitches):
         raise ValueError('event expansion switches must be typed')
+    if play.kick is not None and play.kick.result in ('downed', 'fair_catch', 'out_of_bounds'):
+        raise UnsupportedEventTransition(
+            'punt_result_requires_ceg_play_2_extension:' + play.kick.result)
     contract.validate_v2(state, play)
     if play.event != 'punt' or play.kick is None or play.kick.kind != 'punt':
         raise UnsupportedEventTransition('punt_transition_requires_typed_punt_record')
@@ -323,24 +398,26 @@ def apply_punt_play(state, play, switches=FROZEN_CONTROL):
         raise UnsupportedEventTransition('punt_team_roles_disagree_with_pre_kick_state')
     if kick.kick_spot_yardline_100 != state['yl']:
         raise UnsupportedEventTransition('punt_spot_disagrees_with_pre_kick_state')
-    if kick.result in ('return', 'muff', 'touchback'):
+    if kick.result in ('return', 'muff', 'touchback', 'downed', 'fair_catch', 'out_of_bounds'):
         _require_switch(switches, 'punt_return_events')
     if kick.result == 'period_expired':
         return AppliedEvent(None, 'end_of_period', {'punt_attempt': True, 'period_expired': True})
     if kick.result == 'blocked':
         raise UnsupportedEventTransition('blocked_punt_requires_existing_classified_blocked_kick_path')
-    if kick.result not in ('return', 'touchback', 'muff'):
+    if kick.result not in ('return', 'touchback', 'muff', 'downed', 'fair_catch', 'out_of_bounds'):
         raise UnsupportedEventTransition('punt_result_not_supported:' + str(kick.result))
 
     dead_spot = _int_spot(kick.dead_ball_yardline_100, 'punt_dead_ball_spot')
     return_yards = kick.return_yards or 0
     possession_side = kick.possession_after
     flags = {'punt': True, 'punt_attempt': True,
-             'punt_return': (kick.result == 'return' and not kick.out_of_bounds
-                             and kick.returner.status != 'none' and not play.probabilities.get('fair_catch')),
-             'fair_catch': bool(play.probabilities.get('fair_catch')),
-             'fumble': kick.result == 'muff',
-             'return_yards': return_yards, 'returner_id': kick.returner.stat_player_id}
+             'punt_return': kick.result == 'return' and kick.returner.status != 'none',
+             'fair_catch': kick.result == 'fair_catch' or bool(play.probabilities.get('fair_catch'))}
+    if kick.result in ('return', 'muff'):
+        flags.update({'return_yards': kick.return_yards or 0,
+                      'returner_id': kick.returner.stat_player_id})
+    if kick.result == 'muff':
+        flags['fumble'] = True
 
     if kick.result == 'return':
         if possession_side != 'receiving_team':
@@ -373,6 +450,17 @@ def apply_punt_play(state, play, switches=FROZEN_CONTROL):
             expected_dead = recovery + return_yards
             if not 0 <= expected_dead <= 100 or dead_spot != expected_dead:
                 raise UnsupportedEventTransition('kicking_team_return_yards_disagree_with_dead_ball_spot')
+    elif kick.result in ('downed', 'fair_catch', 'out_of_bounds'):
+        if possession_side != 'receiving_team':
+            raise UnsupportedEventTransition('nonreturn_punt_must_award_receiving_team')
+        if kick.result == 'fair_catch':
+            start = _int_spot(kick.return_start_yardline_100, 'fair_catch_spot')
+            if kick.returner.status == 'none' or start != dead_spot:
+                raise UnsupportedEventTransition('fair_catch_spot_or_catcher_invalid')
+        elif kick.returner.status != 'none' or kick.return_yards is not None:
+            raise UnsupportedEventTransition('downed_or_out_of_bounds_punt_has_returner_or_yards')
+        if kick.result == 'out_of_bounds' and not kick.out_of_bounds:
+            raise UnsupportedEventTransition('punt_out_of_bounds_flag_missing')
     elif possession_side != 'receiving_team':
         raise UnsupportedEventTransition('punt_touchback_must_award_receiving_team')
     elif dead_spot != 20:
@@ -407,7 +495,7 @@ def apply_punt_play(state, play, switches=FROZEN_CONTROL):
     return AppliedEvent(after, 'punt', flags)
 
 
-def apply_field_goal_play(state, play, switches=FROZEN_CONTROL):
+def apply_field_goal_play(state, play, switches=EXPANDED_DEFAULT):
     """Validate and classify a generated field-goal attempt for the E1 game loop."""
     if not isinstance(switches, EventExpansionSwitches):
         raise ValueError('event expansion switches must be typed')
@@ -417,10 +505,62 @@ def apply_field_goal_play(state, play, switches=FROZEN_CONTROL):
     kick = play.kick
     if (kick.kicking_team, kick.receiving_team) != (state['offense'], state['defense']):
         raise UnsupportedEventTransition('field_goal_team_roles_disagree_with_pre_kick_state')
-    if kick.result == 'blocked':
-        raise UnsupportedEventTransition('blocked_field_goal_requires_classified_blocked_kick_transition')
     if kick.result not in ('made', 'missed', 'period_expired'):
-        raise UnsupportedEventTransition('field_goal_result_not_supported:' + str(kick.result))
+        if kick.result != 'blocked':
+            raise UnsupportedEventTransition('field_goal_result_not_supported:' + str(kick.result))
+        _require_switch(switches, 'blocked_kick_transitions')
+        if kick.recovery_team not in ('kicking_team', 'receiving_team'):
+            raise UnsupportedEventTransition('blocked_field_goal_recovery_team_missing')
+        recovery_spot = _int_spot(kick.recovery_yardline_100, 'blocked_field_goal_recovery_spot')
+        dead_spot = _int_spot(kick.dead_ball_yardline_100, 'blocked_field_goal_dead_ball_spot')
+        flags = {'field_goal_attempt': True, 'field_goal_result': 'blocked',
+                 'blocked_kick': {'kick_type': 'field_goal',
+                                  'recovery_role': kick.recovery_team,
+                                  'recovery_yardline_100': recovery_spot,
+                                  'dead_ball_yardline_100': dead_spot,
+                                  'return_yards': kick.return_yards,
+                                  'recoverer_id': kick.recoverer.stat_player_id,
+                                  'returner_id': kick.returner.stat_player_id,
+                                  'execution_source': 'gridiron_live_player_execution'}}
+        if play.scoring is not None:
+            if dead_spot not in (0, 100):
+                raise UnsupportedEventTransition('blocked_field_goal_score_needs_goal_line_endpoint')
+            scoring_team = (state['offense'] if play.scoring.team == 'kicking_team' else
+                            state['defense'] if play.scoring.team == 'receiving_team' else None)
+            if scoring_team is None:
+                raise UnsupportedEventTransition('blocked_field_goal_scoring_role_invalid')
+            flags['touchdown' if play.scoring.kind == 'touchdown' else 'safety'] = True
+            flags['return_touchdown'] = play.scoring.kind == 'touchdown'
+            flags['scoring_team'] = scoring_team
+            return AppliedEvent(None, play.scoring.kind, flags, scoring_team)
+        if dead_spot in (0, 100):
+            raise UnsupportedEventTransition('blocked_field_goal_goal_line_endpoint_needs_score_fact')
+        if recovery_spot in (0, 100):
+            raise UnsupportedEventTransition('blocked_field_goal_recovery_goal_line_needs_explicit_score')
+        if kick.recovery_team == 'receiving_team':
+            if (kick.return_yards is None or recovery_spot + kick.return_yards != dead_spot):
+                raise UnsupportedEventTransition('blocked_field_goal_return_geometry_mismatch')
+            after = {'offense': state['defense'], 'defense': state['offense'], 'down': 1,
+                     'togo': min(10, 100 - dead_spot), 'yl': 100 - dead_spot}
+            flags['turnover'] = True
+            flags['return_yards'] = kick.return_yards
+            flags['return_team'] = 'defense'
+            flags['returner_id'] = kick.returner.stat_player_id
+            return AppliedEvent(after, 'turnover', flags)
+        outcome = {'kick_type': 'field_goal', 'classification_status': 'classified_recovery',
+                   'recovery_role': 'kicking_team',
+                   'recovery_yards_from_los': state['yl'] - recovery_spot,
+                   'return_endpoint_yards_from_los': state['yl'] - dead_spot,
+                   'receiving_team_touched_beyond_line': kick.receiving_team_touched_beyond_line}
+        try:
+            after, terminal, reducer_flags = reducer.apply_blocked_kick(
+                state, 'blocked_field_goal', outcome)
+        except (AssertionError, ValueError) as exc:
+            raise UnsupportedEventTransition('blocked_field_goal_reducer_rejected:' + str(exc)) from exc
+        flags.update(reducer_flags)
+        return AppliedEvent(after, terminal, flags,
+                            state['offense'] if terminal == 'touchdown' else
+                            state['defense'] if terminal == 'safety' else None)
     flags = {'field_goal_attempt': True, 'field_goal_result': kick.result}
     if kick.result == 'period_expired':
         flags['period_expired'] = True
@@ -431,10 +571,12 @@ def apply_field_goal_play(state, play, switches=FROZEN_CONTROL):
                         state['offense'] if kick.result == 'made' else None)
 
 
-def apply_kickoff_play(state, play, switches=FROZEN_CONTROL):
+def apply_kickoff_play(state, play, switches=EXPANDED_DEFAULT):
     """Apply an autonomous free kick in the kicking team's yardline frame."""
     if not isinstance(switches, EventExpansionSwitches):
         raise ValueError('event expansion switches must be typed')
+    if play.kick is not None and play.kick.result == 'out_of_bounds':
+        raise UnsupportedEventTransition('kickoff_out_of_bounds_requires_ceg_play_2_extension')
     contract.validate_v2(state, play)
     if play.event != 'kickoff' or play.kick is None or play.kick.kind != 'kickoff':
         raise UnsupportedEventTransition('kickoff_transition_requires_typed_kickoff_record')
@@ -459,6 +601,26 @@ def apply_kickoff_play(state, play, switches=FROZEN_CONTROL):
                  'togo': 10, 'yl': 100 - expected_dead}
         flags['touchback'] = True
         flags['turnover'] = True
+        return AppliedEvent(after, 'kickoff', flags)
+    if kick.result == 'out_of_bounds':
+        out_spot = _int_spot(kick.out_of_bounds_spot_yardline_100, 'kickoff_out_of_bounds_spot')
+        yards_from_kick = 30 if kick.restart_option == '30_yards_from_safety_kick' else 25
+        expected_dead = (out_spot if kick.restart_option == 'inbounds_spot'
+                         else kick.kick_spot_yardline_100 - yards_from_kick)
+        if (not kick.out_of_bounds or kick.possession_after != 'receiving_team'
+                or dead_spot != expected_dead):
+            raise UnsupportedEventTransition('kickoff_out_of_bounds_enforcement_spot_mismatch')
+        if (kick.restart_option == '30_yards_from_safety_kick') != (kick.kick_spot_yardline_100 == 80):
+            raise UnsupportedEventTransition('kickoff_out_of_bounds_restart_distance_mismatch')
+        flags.update({'kickoff_out_of_bounds': True, 'penalty': True,
+                      'penalty_accepted': True,
+                      'penalty_enforcement': {'accepted': True, 'play_counts': False,
+                                              'offender_team': 'offense', 'yards': 0,
+                                              'rule_basis': 'NFL Rule 6-2-4',
+                                              'restart_option': kick.restart_option,
+                                              'out_of_bounds_spot_yardline_100': out_spot}})
+        after = {'offense': state['defense'], 'defense': state['offense'], 'down': 1,
+                 'togo': min(10, 100 - dead_spot), 'yl': 100 - dead_spot}
         return AppliedEvent(after, 'kickoff', flags)
     if kick.result == 'return':
         start = _int_spot(kick.return_start_yardline_100, 'kickoff_return_start_spot')

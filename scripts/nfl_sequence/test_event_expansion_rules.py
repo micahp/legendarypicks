@@ -43,7 +43,7 @@ class EventExpansionRulesTests(unittest.TestCase):
                                     interceptor=c.PlayerRoleV2.named('db1'),
                                     returner=c.PlayerRoleV2.named('db1')))
         with self.assertRaisesRegex(UnsupportedEventTransition, 'event_switch_disabled:interception_returns'):
-            apply_scrimmage_play(S, interception)
+            apply_scrimmage_play(S, interception, EventExpansionSwitches.from_enabled(()))
         enabled = EventExpansionSwitches.from_enabled(('interception_returns',))
         result = apply_scrimmage_play(S, interception, enabled)
         self.assertEqual(result.state_after,
@@ -89,7 +89,7 @@ class EventExpansionRulesTests(unittest.TestCase):
             'defense', 'interception', turnover_spot_yardline_100=0,
             dead_ball_yardline_100=0, return_yards=0,
             returner=c.PlayerRoleV2.unmodelled('interceptor'),
-            touchback=True, next_possession_yardline_100=20)
+            touchback=True, next_yardline_100=20)
         interception = record(
             call=c.PlayCallV2('dropback'), event='interception', yards_gained=0,
             air_yards=None, yards_after_catch=None, possession=possession,
@@ -282,14 +282,65 @@ class EventExpansionRulesTests(unittest.TestCase):
         self.assertTrue(result.flags['no_play'])
         self.assertTrue(result.flags['penalty'])
 
-    def test_offsetting_penalties_fail_until_joint_enforcement_exists(self):
+    def test_offsetting_live_ball_penalties_replay_the_down_without_counting_play(self):
         penalty = c.PenaltyV2(
             'live_ball', (c.PenaltyFoulV2('offensive_holding', 'offense', 10),
                           c.PenaltyFoulV2('defensive_holding', 'defense', 5)),
             'offsetting', provenance=P)
         call = record(penalty=penalty)
-        with self.assertRaisesRegex(UnsupportedEventTransition, 'offsetting_penalty_rules_not_yet_integrated'):
-            apply_scrimmage_play(S, call, EventExpansionSwitches.from_enabled(('live_ball_penalties',)))
+        result = apply_scrimmage_play(
+            S, call, EventExpansionSwitches.from_enabled(('live_ball_penalties',)))
+        self.assertEqual(result.state_after, S)
+        self.assertIsNone(result.terminal)
+        self.assertFalse(result.penalty_enforcement['accepted'])
+        self.assertTrue(result.penalty_enforcement['offsetting'])
+        self.assertFalse(result.penalty_enforcement['play_counts'])
+        self.assertTrue(result.flags['penalty'])
+
+    def test_offsetting_penalties_with_turnover_fail_closed_without_foul_order(self):
+        possession = c.PossessionV2(
+            'defense', 'interception', turnover_spot_yardline_100=40,
+            dead_ball_yardline_100=50, return_yards=10,
+            returner=c.PlayerRoleV2.named('db1'))
+        penalty = c.PenaltyV2(
+            'live_ball', (c.PenaltyFoulV2('offensive_holding', 'offense', 10),
+                          c.PenaltyFoulV2('defensive_holding', 'defense', 5)),
+            'offsetting', provenance=P)
+        interception = record(call=c.PlayCallV2('dropback'), event='interception',
+                              yards_gained=0, air_yards=None, yards_after_catch=None,
+                              possession=possession, penalty=penalty,
+                              players=c.PlayerRolesV2(passer=c.PlayerRoleV2.named('qb1'),
+                                                      interceptor=c.PlayerRoleV2.named('db1'),
+                                                      returner=c.PlayerRoleV2.named('db1')))
+        with self.assertRaisesRegex(UnsupportedEventTransition,
+                                    'offsetting_penalty_turnover_sequence_needs_foul_order'):
+            apply_scrimmage_play(S, interception, EventExpansionSwitches())
+
+    def test_multiple_accepted_fouls_fail_closed_until_shared_contract_supports_selection(self):
+        penalty = c.PenaltyV2(
+            'live_ball', (c.PenaltyFoulV2('defensive_holding', 'defense', 5),
+                          c.PenaltyFoulV2('offensive_holding', 'offense', 10)),
+            'accepted', automatic_first_down=True, provenance=P)
+        call = record(call=c.PlayCallV2('dropback'), event='pass_incomplete',
+                      yards_gained=0, air_yards=None, yards_after_catch=None, penalty=penalty,
+                      players=c.PlayerRolesV2(passer=c.PlayerRoleV2.named('qb1')))
+        with self.assertRaisesRegex(ValueError, 'multiple_fouls_need_offsetting_or_named_rules_support'):
+            apply_scrimmage_play(S, call, EventExpansionSwitches())
+
+    def test_accepted_offensive_foul_in_own_end_zone_is_a_safety(self):
+        state = {'offense': 'A', 'defense': 'B', 'down': 2, 'togo': 7, 'yl': 99}
+        penalty = c.PenaltyV2(
+            'live_ball', (c.PenaltyFoulV2('offensive_holding', 'offense', 10,
+                                          foul_spot=100),),
+            'accepted', provenance=P)
+        call = record(call=c.PlayCallV2('designed_run'), yards_gained=0,
+                      penalty=penalty)
+        result = apply_scrimmage_play(
+            state, call, EventExpansionSwitches.from_enabled(('live_ball_penalties',)))
+        self.assertEqual((result.terminal, result.scoring_team), ('safety', 'B'))
+        self.assertIsNone(result.state_after)
+        self.assertTrue(result.flags['safety'])
+        self.assertFalse(result.flags['touchdown'])
 
     def test_punt_return_touchdown_uses_explicit_return_endpoint(self):
         kick = c.KickV2('punt', 'A', 'B', 40, 45, 'return',
@@ -304,7 +355,7 @@ class EventExpansionRulesTests(unittest.TestCase):
         result = apply_punt_play(S, punt, EventExpansionSwitches.from_enabled(('punt_return_events',)))
         self.assertEqual((result.terminal, result.scoring_team), ('touchdown', 'B'))
 
-    def test_punt_return_safety_credits_the_kicking_team(self):
+    def test_punt_return_safety_fails_closed_until_shared_contract_supports_it(self):
         kick = c.KickV2('punt', 'A', 'B', 40, 45, 'return',
                         possession_after='receiving_team', return_start_yardline_100=5,
                         dead_ball_yardline_100=0, return_yards=-5,
@@ -314,9 +365,8 @@ class EventExpansionRulesTests(unittest.TestCase):
                       scoring=c.ScoringV2('safety', 'kicking_team'),
                       players=c.PlayerRolesV2(punter=c.PlayerRoleV2.named('p1'),
                                               returner=c.PlayerRoleV2.named('pr1')))
-        result = apply_punt_play(S, punt, EventExpansionSwitches())
-        self.assertEqual((result.terminal, result.scoring_team), ('safety', 'A'))
-        self.assertTrue(result.flags['safety'])
+        with self.assertRaisesRegex(c.ContractViolationV2, 'kick_safety_unsupported'):
+            apply_punt_play(S, punt, EventExpansionSwitches())
 
     def test_punt_touchback_requires_the_punt_event_switch(self):
         kick = c.KickV2('punt', 'A', 'B', 40, 45, 'touchback',
@@ -326,7 +376,7 @@ class EventExpansionRulesTests(unittest.TestCase):
                       players=c.PlayerRolesV2(punter=c.PlayerRoleV2.named('p1')))
         with self.assertRaisesRegex(UnsupportedEventTransition,
                                     'event_switch_disabled:punt_return_events'):
-            apply_punt_play(S, punt)
+            apply_punt_play(S, punt, EventExpansionSwitches.from_enabled(()))
         result = apply_punt_play(
             S, punt, EventExpansionSwitches.from_enabled(('punt_return_events',)))
         self.assertEqual((result.state_after['offense'], result.state_after['yl']), ('B', 80))
@@ -336,7 +386,7 @@ class EventExpansionRulesTests(unittest.TestCase):
                        players=c.PlayerRolesV2(rusher=c.PlayerRoleV2.named('qb1')))
         with self.assertRaisesRegex(UnsupportedEventTransition,
                                     'event_switch_disabled:kneel_events'):
-            apply_scrimmage_play(S, kneel)
+            apply_scrimmage_play(S, kneel, EventExpansionSwitches.from_enabled(()))
         result = apply_scrimmage_play(
             S, kneel, EventExpansionSwitches.from_enabled(('kneel_events',)))
         self.assertEqual(result.state_after['down'], 3)
@@ -347,7 +397,7 @@ class EventExpansionRulesTests(unittest.TestCase):
                        players=c.PlayerRolesV2(passer=c.PlayerRoleV2.named('qb1')))
         with self.assertRaisesRegex(UnsupportedEventTransition,
                                     'event_switch_disabled:spike_events'):
-            apply_scrimmage_play(S, spike)
+            apply_scrimmage_play(S, spike, EventExpansionSwitches.from_enabled(()))
         result = apply_scrimmage_play(
             S, spike, EventExpansionSwitches.from_enabled(('spike_events',)))
         self.assertTrue(result.flags['spike'])
@@ -447,6 +497,52 @@ class EventExpansionRulesTests(unittest.TestCase):
             scoring=c.ScoringV2('touchdown', 'receiving_team'))
         result = apply_kickoff_play(state, returned, EventExpansionSwitches())
         self.assertEqual((result.terminal, result.scoring_team), ('touchdown', 'B'))
+
+    def test_kickoff_return_safety_fails_closed_until_shared_contract_supports_it(self):
+        state = {**S, 'offense': 'A', 'defense': 'B', 'yl': 65}
+        returned = record(
+            call=c.PlayCallV2('kickoff'), event='kickoff', yards_gained=None,
+            air_yards=None, yards_after_catch=None,
+            kick=c.KickV2('kickoff', 'A', 'B', 65, 65, 'return',
+                          possession_after='receiving_team', return_start_yardline_100=5,
+                          dead_ball_yardline_100=0, return_yards=-5,
+                          returner=c.PlayerRoleV2.named('kr1')),
+            players=c.PlayerRolesV2(returner=c.PlayerRoleV2.named('kr1')),
+            scoring=c.ScoringV2('safety', 'kicking_team'))
+        with self.assertRaisesRegex(c.ContractViolationV2, 'kick_safety_unsupported'):
+            apply_kickoff_play(state, returned, EventExpansionSwitches())
+
+    def test_punt_nonreturns_keep_distinct_event_class_and_no_return_stats(self):
+        state = {**S, 'offense': 'A', 'defense': 'B', 'yl': 40}
+        cases = ('downed', 'out_of_bounds', 'fair_catch')
+        for result_name in cases:
+            with self.subTest(result=result_name):
+                kick = c.KickV2(
+                    'punt', 'A', 'B', 40, 50, result_name,
+                    possession_after='receiving_team',
+                    dead_ball_yardline_100=30,
+                    return_start_yardline_100=(30 if result_name == 'fair_catch' else None),
+                    returner=(c.PlayerRoleV2.named('catcher') if result_name == 'fair_catch'
+                              else c.PlayerRoleV2.none()))
+                play = record(call=c.PlayCallV2('punt'), event='punt', yards_gained=None,
+                              air_yards=None, yards_after_catch=None, kick=kick,
+                              players=c.PlayerRolesV2(punter=c.PlayerRoleV2.unmodelled('punter'),
+                                                      returner=kick.returner))
+                with self.assertRaisesRegex(UnsupportedEventTransition,
+                                            'punt_result_requires_ceg_play_2_extension:' + result_name):
+                    apply_punt_play(state, play, EventExpansionSwitches())
+
+    def test_kickoff_out_of_bounds_fails_closed_without_shared_contract_fields(self):
+        state = {**S, 'offense': 'A', 'defense': 'B', 'yl': 65}
+        play = record(
+            call=c.PlayCallV2('kickoff'), event='kickoff', yards_gained=None,
+            air_yards=None, yards_after_catch=None,
+            kick=c.KickV2('kickoff', 'A', 'B', 65, 65, 'out_of_bounds',
+                          possession_after='receiving_team', dead_ball_yardline_100=40,
+                          out_of_bounds=True))
+        with self.assertRaisesRegex(UnsupportedEventTransition,
+                                    'kickoff_out_of_bounds_requires_ceg_play_2_extension'):
+            apply_kickoff_play(state, play, EventExpansionSwitches())
 
     def test_kickoff_onside_recovery_retains_kicking_team_possession(self):
         state = {**S, 'offense': 'A', 'defense': 'B', 'yl': 65}

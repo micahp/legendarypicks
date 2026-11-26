@@ -1,8 +1,7 @@
-"""Opt-in feature identity for the frozen Week 11 V2 event-expansion branch.
+"""Event feature identity for the frozen Week 11 model and expanded execution.
 
-The registry changes configuration identity only.  A switch has no effect
-until a mechanism has a verified classifier, rule transition, and statistics
-adapter.  Keeping every switch false preserves the frozen V2 execution path.
+The named frozen model retains its original configuration. Expanded execution
+uses every implemented rule by default; ablation configurations are explicit.
 """
 from __future__ import annotations
 
@@ -20,6 +19,7 @@ SWITCH_NAMES = (
     'sack_fumble_transitions',
     'own_end_zone_recovery',
     'punt_return_events',
+    'blocked_kick_transitions',
     'overtime_fourth_down_policy',
     'turnover_terminal_events',
     'kneel_events',
@@ -37,6 +37,7 @@ class EventExpansionSwitches:
     sack_fumble_transitions: bool = True
     own_end_zone_recovery: bool = True
     punt_return_events: bool = True
+    blocked_kick_transitions: bool = True
     overtime_fourth_down_policy: bool = True
     turnover_terminal_events: bool = True
     kneel_events: bool = True
@@ -70,3 +71,4 @@ class EventExpansionSwitches:
 
 
 FROZEN_CONTROL = EventExpansionSwitches.from_enabled(())
+EXPANDED_DEFAULT = EventExpansionSwitches()
