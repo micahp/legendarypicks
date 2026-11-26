@@ -666,10 +666,26 @@ def check_drive(plays, terminal):
         changed = sb['offense_team'] != sa['offense_team']
         defensive_touchdown = (sa.get('end_of_drive') == 'touchdown' and o['touchdown']
                                 and o['turnover'] and o.get('scoring_team') == sb['defense_team'])
+        terminal_safety = sa.get('end_of_drive') == 'safety'
+        if bool(o.get('safety')) != terminal_safety:
+            raise AssertionError(f'play {i + 1}: safety flag and terminal disagree')
+        if terminal_safety:
+            scoring_team = o.get('scoring_team')
+            if scoring_team is not None and scoring_team not in (sb['offense_team'], sb['defense_team']):
+                raise AssertionError(f'play {i + 1}: safety scoring team is not in the game state')
+            if p.get('sampling', {}).get('source') == 'autonomous_execution' and scoring_team is None:
+                raise AssertionError(f'play {i + 1}: autonomous safety is missing its scoring team')
+            if changed:
+                raise AssertionError(f'play {i + 1}: safety possession waits for the free-kick transition')
         terminal_kick_score = (p['event_type'] in ('punt', 'field_goal_attempt')
                                and sa.get('end_of_drive') in ('touchdown', 'safety')
                                and o.get('scoring_team') is not None)
-        if changed != (o['turnover'] or o['punt']) and not defensive_touchdown and not terminal_kick_score:
+        possession_change_flag = o['turnover'] or o['punt']
+        if terminal_safety:
+            # The drive state keeps the snap offense until the separate safety
+            # free-kick lifecycle. An interception or fumble still counts.
+            possession_change_flag = False
+        if changed != possession_change_flag and not defensive_touchdown and not terminal_kick_score:
             raise AssertionError(f'play {i + 1}: possession change does not match the turnover or punt flag')
         if o['touchdown'] != (sa.get('end_of_drive') == 'touchdown'):
             raise AssertionError(f'play {i + 1}: touchdown flag and terminal disagree')

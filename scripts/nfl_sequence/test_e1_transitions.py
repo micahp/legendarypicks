@@ -659,6 +659,33 @@ class HistoricalPoolCutoff(unittest.TestCase):
 
 
 class AutonomousEventSource(unittest.TestCase):
+    @staticmethod
+    def _defensive_safety_play(next_offense='B'):
+        before = {'quarter': 2, 'clock_seconds': 640, 'offense_team': 'B', 'defense_team': 'A',
+                  'down': 2, 'yards_to_go': 11, 'yardline_100': 14}
+        after = {'quarter': 2, 'clock_seconds': 637, 'offense_team': next_offense,
+                 'defense_team': 'A' if next_offense == 'B' else 'B', 'down': None,
+                 'yards_to_go': None, 'yardline_100': None, 'end_of_drive': 'safety'}
+        outcome = {'yards_gained': None, 'touchdown': False, 'turnover': True,
+                   'turnover_on_downs': False, 'punt': False, 'punt_attempt': False,
+                   'field_goal_attempt': False, 'safety': True, 'scoring_team': 'B',
+                   'quarter_change': False, 'clock_runoff_seconds': 3,
+                   'clock_clamped_to_zero': False}
+        return {'event_type': 'interception', 'state_before': before, 'state_after': after,
+                'outcome': outcome,
+                'field': {'before': {'dir': 1, 'los': 86}, 'after': {'dir': None, 'los': None}}}
+
+    def test_defensive_safety_after_turnover_restarts_with_scoring_team(self):
+        play = self._defensive_safety_play()
+        summary = e1.check_drive([play], 'safety')
+        self.assertEqual(summary['turnovers'], 1)
+        self.assertEqual(summary['terminal'], 'safety')
+
+    def test_safety_transition_must_defer_possession_until_free_kick(self):
+        play = self._defensive_safety_play(next_offense='A')
+        with self.assertRaisesRegex(AssertionError, 'safety possession waits'):
+            e1.check_drive([play], 'safety')
+
     def test_blocked_live_field_goal_may_end_in_a_turnover(self):
         before = {'quarter': 1, 'clock_seconds': 800, 'offense_team': 'A', 'defense_team': 'B',
                   'down': 4, 'yards_to_go': 8, 'yardline_100': 35}
