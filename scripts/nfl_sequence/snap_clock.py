@@ -1,10 +1,11 @@
-"""Snap-to-snap game clock from the pinned snap clock table (build_snap_clock.py).
+"""Game-clock transitions from the pinned snap clock table (build_snap_clock.py).
 
 A run or pass uses the clock as follows. The live ball is drawn from the real snap-to-whistle times for that kind
 of play. The clock rules then decide whether the clock runs after the whistle. It stops after an incompletion, after a
 timeout, and after an out-of-bounds play in the last 2:00 of Q2 or the last 5:00 of Q4. If the clock runs, the offense
-first decides its tempo (no-huddle or huddle) from the window and the score. Then the dead-ball seconds are drawn for that
-tempo. The two-minute warning stops the clock at 2:00 in Q2 and Q4.
+first decides its tempo (no-huddle or huddle) from the window and the score. Then the dead-ball game-clock seconds are
+drawn for that tempo. After a possession change, the game clock starts on the next snap, so no dead-ball runoff is
+charged. Play-clock and wall-clock time to the next snap are separate.
 """
 import hashlib
 import json
@@ -48,10 +49,19 @@ class SnapClock:
         if manifest['output_sha256'] != sha:
             raise ValueError(f'snap clock table {path} does not match its manifest')
         data = json.loads(raw)
-        if data.get('schema') != 'lp-e2-snap-clock-2':
+        if data.get('schema') != 'lp-e2-snap-clock-3':
             raise ValueError(f'snap clock table {path} has unsupported schema {data.get("schema")!r}')
-        if not data.get('possession_change_dead_seconds') or not data.get('possession_change_no_huddle'):
+        if not data.get('possession_change_no_huddle'):
             raise ValueError(f'snap clock table {path} lacks possession-change timing')
+        semantics = data.get('timing_semantics', {})
+        if (semantics.get('dead_interval_max_seconds') != 40
+                or semantics.get('possession_change_dead_seconds') != 0
+                or semantics.get('wall_time_to_next_snap') != 'not modeled'
+                or semantics.get('play_clock') != 'not modeled'):
+            raise ValueError(f'snap clock table {path} lacks separated timing semantics')
+        for key, histogram in data.get('dead_seconds', {}).items():
+            if any(not 0 <= float(seconds) <= 40 for seconds in histogram):
+                raise ValueError(f'snap clock table {path} has illegal same-possession dead interval in {key}')
         return cls(data, sha)
 
     def live(self, rng, kind):
@@ -77,7 +87,11 @@ class SnapClock:
             snaps = sum(cells[k]['snaps'] for k in group if k in cells)
             if snaps >= MIN_TEMPO:
                 return sum(cells[k]['no_huddle'] for k in group if k in cells) / snaps, level
-        return self.no_huddle_p(win, score), 'same_possession_fallback'
+        snaps = sum(cell['snaps'] for cell in cells.values())
+        if snaps < MIN_TEMPO:
+            raise ValueError('too few possession-change tempo observations')
+        no_huddle = sum(cell['no_huddle'] for cell in cells.values())
+        return no_huddle / snaps, 'all_possession_changes'
 
     def dead(self, rng, win, score, tempo):
         cells = self.data['dead_seconds']
@@ -89,19 +103,6 @@ class SnapClock:
             if sum(histogram.values()) >= MIN_DEAD:
                 return _draw(rng, histogram), level
         raise ValueError(f'too few dead-ball times for {win} {score} {tempo}')
-
-    def possession_change_dead(self, rng, win, score, tempo):
-        cells = self.data.get('possession_change_dead_seconds', {})
-        for level, keys in (('cell', [f'{win}|{score}|{tempo}']),
-                            ('score_side', [k for k in cells if k.startswith(f'{win}|{_side(score)}')
-                                            and k.endswith(tempo)]),
-                            ('window', [k for k in cells if k.startswith(f'{win}|') and k.endswith(tempo)]),
-                            ('other_window', [f'other|{score}|{tempo}'])):
-            histogram = _merge(cells[k] for k in keys if k in cells)
-            if sum(histogram.values()) >= MIN_DEAD:
-                return _draw(rng, histogram), level
-        seconds, level = self.dead(rng, win, score, tempo)
-        return seconds, f'same_possession_fallback:{level}'
 
     def runoff_after_live(self, rng, *, quarter, qsr, event, live_seconds, out_of_bounds,
                           timeout_called, margin, possession_change=False):
@@ -117,9 +118,9 @@ class SnapClock:
         elif possession_change:
             p_no_huddle, record['tempo_level'] = self.possession_change_no_huddle_p(win, score)
             tempo = 'no_huddle' if rng.random() < p_no_huddle else 'huddle'
-            dead, record['dead_level'] = self.possession_change_dead(rng, win, score, tempo)
+            dead, record['dead_level'] = 0.0, 'clock_starts_on_next_snap'
             record['tempo'] = tempo
-            record['stop'] = 'possession_change_ready'
+            record['stop'] = 'clock_starts_on_next_snap'
         elif event == 'pass_incomplete':
             dead, record['stop'] = 0.0, 'incomplete_pass'
         elif out_of_bounds and win != 'other':
@@ -137,7 +138,12 @@ class SnapClock:
             elif qsr - live_seconds - dead < 120:
                 dead, record['two_minute_warning'] = qsr - live_seconds - 120, 'clock_stopped_at_2:00'
         record['dead_seconds'] = dead
-        return int(round(live_seconds + dead)), record
+        record['game_clock_live_seconds'] = live_seconds
+        record['game_clock_dead_seconds'] = dead
+        record['game_clock_runoff_seconds'] = int(round(live_seconds + dead))
+        record['wall_time_to_next_snap'] = None
+        record['play_clock_seconds'] = None
+        return record['game_clock_runoff_seconds'], record
 
     def runoff(self, rng, *, quarter, qsr, event, out_of_bounds, timeout_called, margin):
         """(runoff seconds, record) for one run or pass whose offense keeps the ball in the same quarter."""

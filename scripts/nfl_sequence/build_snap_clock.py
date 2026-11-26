@@ -30,7 +30,8 @@ COLUMNS = ['game_id', 'play_id', 'season_type', 'qtr', 'quarter_seconds_remainin
            'qb_spike', 'qb_kneel', 'sack', 'timeout', 'penalty', 'score_differential', 'home_timeouts_remaining',
            'away_timeouts_remaining', 'touchdown', 'interception', 'fumble_lost']
 SNAPS = ('run', 'pass')
-NEXT = ('run', 'pass', 'punt', 'field_goal')
+NEXT = ('run', 'pass', 'qb_kneel', 'qb_spike', 'punt', 'field_goal')
+MAX_PLAY_CLOCK_SECONDS = 40
 
 
 def window(quarter, qsr):
@@ -87,7 +88,6 @@ def sha256(path):
 def main():
     live = defaultdict(Counter)        # kind -> {half-second bin: n}
     dead = defaultdict(Counter)        # 'window|score|tempo' -> {second: n}
-    change_dead = defaultdict(Counter)  # after a possession change, relative to the next offense
     oob_ready = defaultdict(Counter)   # window -> {second: n}
     tempo = defaultdict(lambda: [0, 0])  # 'window|score' -> [snaps, no_huddle]
     change_tempo = defaultdict(lambda: [0, 0])
@@ -129,10 +129,14 @@ def main():
                     value = row['game_seconds_remaining'] - nxt['game_seconds_remaining'] - secs
                     if value < -2:
                         counts['change dead: game clock ran less than live ball (dropped)'] += 1
+                    elif value > MAX_PLAY_CLOCK_SECONDS:
+                        counts['change dead: exceeds 40-second play clock (excluded)'] += 1
                     else:
-                        change_dead[f'{change_key}|{"no_huddle" if nxt["no_huddle"] == 1 else "huddle"}'][
-                            max(0, round(value))] += 1
-                        counts['change dead: kept'] += 1
+                        # NFL Rule 4 starts the game clock on the snap after a
+                        # change of possession. Retain the observed interval
+                        # only in build counts; never turn it into game-clock
+                        # runoff or reuse same-possession timing here.
+                        counts['change dead: excluded; game clock starts on next snap'] += 1
                 elif timeout_or_penalty:
                     counts['change dead: timeout or penalty in gap'] += 1
                 elif secs is None:
@@ -164,6 +168,9 @@ def main():
             if value < -2:
                 counts['dead: game clock ran less than the live ball (dropped)'] += 1
                 continue
+            if value > MAX_PLAY_CLOCK_SECONDS:
+                counts['dead: exceeds 40-second play clock (excluded)'] += 1
+                continue
             second = max(0, round(value))
             if row['out_of_bounds'] == 1:
                 oob_ready[win][second] += 1
@@ -171,11 +178,17 @@ def main():
                 dead[f'{key}|{"no_huddle" if nxt["no_huddle"] == 1 else "huddle"}'][second] += 1
             counts['dead: kept'] += 1
     table = {
-        'schema': 'lp-e2-snap-clock-2',
+        'schema': 'lp-e2-snap-clock-3',
+        'timing_semantics': {
+            'live_seconds': 'game-clock seconds consumed from snap to whistle',
+            'dead_seconds': 'game-clock seconds consumed between whistle and next snap for same possession',
+            'possession_change_dead_seconds': 0,
+            'wall_time_to_next_snap': 'not modeled',
+            'play_clock': 'not modeled',
+            'dead_interval_max_seconds': MAX_PLAY_CLOCK_SECONDS,
+        },
         'live_seconds': {k: {str(b): n for b, n in sorted(v.items())} for k, v in sorted(live.items())},
         'dead_seconds': {k: {str(b): n for b, n in sorted(v.items())} for k, v in sorted(dead.items())},
-        'possession_change_dead_seconds': {k: {str(b): n for b, n in sorted(v.items())}
-                                           for k, v in sorted(change_dead.items())},
         'oob_ready_dead_seconds': {k: {str(b): n for b, n in sorted(v.items())} for k, v in sorted(oob_ready.items())},
         'no_huddle': {k: {'snaps': v[0], 'no_huddle': v[1]} for k, v in sorted(tempo.items())},
         'possession_change_no_huddle': {k: {'snaps': v[0], 'no_huddle': v[1]}

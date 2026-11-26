@@ -81,6 +81,24 @@ class AutonomousPassInterferenceTests(unittest.TestCase):
                 self.assertTrue(applied.flags['penalty'])
 
 
+class AutonomousTimeoutRulesTests(unittest.TestCase):
+    def test_possession_change_does_not_call_a_redundant_team_timeout(self):
+        model = object.__new__(autonomous_game.AutonomousTimeoutDecisions)
+        model.execution = SimpleNamespace(
+            coaching_quality=lambda *_args: 99,
+            _decision_seed=lambda *_args: 1)
+        model.left = {'A': 3, 'B': 3}
+        model.points = {'A': 0, 'B': 7}
+        caller, record = model.decide(
+            None,
+            {'offense': 'A', 'quarter': 4, 'clock': 80},
+            {'offense': 'B', 'defense': 'A', 'down': 1},
+            None, 'interception', {'clock_stopped': False, 'out_of_bounds': False})
+        self.assertIsNone(caller)
+        self.assertEqual(record['decision'], 'possession_change_already_stops_clock')
+        self.assertEqual(model.left, {'A': 3, 'B': 3})
+
+
 class AutonomousPossessionHistoryTests(unittest.TestCase):
     def test_defensive_fumble_return_uses_endpoint_yards_after_raw_coordinate_check(self):
         source = object.__new__(autonomous_game.AutonomousGameExecution)
@@ -143,8 +161,8 @@ class AutonomousPossessionHistoryTests(unittest.TestCase):
         call = {'play_id': 'fumble-rounding-directions', 'seed': '300015',
                 'offense': {'team': 'GB', 'lineup': {'QB': 'qb1'},
                             'call': {'family': 'run', 'concept': 'inside_zone'}}}
-        coords = {'fumbler_id': 'fumbler', 'recoverer_id': 'recoverer', 'recovery_team': 'GB',
-                  'return_yards': None, 'return_displacement_yards': None}
+        coords = {'fumbler_id': 'fumbler', 'recoverer_id': 'recoverer', 'returner_id': 'recoverer',
+                  'recovery_team': 'GB'}
         result = {'schema_version': 'gridiron.autonomous-result.v1',
                   'result': {'event': 'tackle', 'possession_team': 'GB', 'carrier_id': 'recoverer',
                              'yards_gained': 0, 'is_touchdown': False, 'turnover': False,
@@ -159,10 +177,11 @@ class AutonomousPossessionHistoryTests(unittest.TestCase):
                            'fumble_spot': {'x': 40.5, 'y': 26.5},
                            'recovery_spot': {'x': 40.5, 'y': 26.5},
                            'dead_ball_spot': {'x': dead_x, 'y': 26.5}}
-                    if recovery_side == 'D':
-                        # The continuous displacement follows the defense against offense direction.
-                        row['return_yards'] = 1
-                        row['return_displacement_yards'] = (dead_x - 40.5) * -direction
+                    row['return_yards'] = -1 if recovery_side == 'O' else 1
+                    # Continuous geometry follows the carrier's advance direction;
+                    # statistical yards use rounded endpoints in the offense frame.
+                    row['return_displacement_yards'] = (dead_x - 40.5) * (
+                        direction if recovery_side == 'O' else -direction)
                     result['result']['fumble'] = row
                     state = {'offense': 'A', 'defense': 'B', 'down': 2, 'togo': 7, 'yl': 40}
                     generated = source._ceg_play(
@@ -174,6 +193,8 @@ class AutonomousPossessionHistoryTests(unittest.TestCase):
                     self.assertEqual(generated.possession.dead_ball_yardline_100,
                                      autonomous_game._gridiron_yardline_round(
                                          100 - dead_x if direction == 1 else dead_x, 'test'))
+                    self.assertEqual(generated.possession.return_yards,
+                                     -1 if recovery_side == 'O' else 1)
 
     def test_interception_return_fumble_recovered_by_original_offense_maps_by_history(self):
         source = object.__new__(autonomous_game.AutonomousGameExecution)
@@ -207,7 +228,8 @@ class AutonomousPossessionHistoryTests(unittest.TestCase):
                        'fumble': {'fumbler_id': 'db1', 'fumble_spot': {'x': 47, 'y': 20},
                                   'recovery_team': 'AAA', 'recovery_side': 'O',
                                   'recoverer_id': 'ol1', 'recovery_spot': {'x': 48, 'y': 20},
-                                  'dead_ball_spot': {'x': 50, 'y': 20}, 'return_yards': 2}},
+                                  'returner_id': 'ol1', 'dead_ball_spot': {'x': 50, 'y': 20},
+                                  'return_yards': 2, 'return_displacement_yards': 2}},
             'events': [
                 {'type': 'throw', 'target_id': 'wr1'},
                 {'type': 'interception', 'player_id': 'db1', 'at': {'x': 45, 'y': 20}},
@@ -238,6 +260,8 @@ class AutonomousPossessionHistoryTests(unittest.TestCase):
         self.assertEqual(applied.state_after, {'offense': 'A', 'defense': 'B', 'down': 1, 'togo': 10, 'yl': 50})
         self.assertTrue(applied.flags['interception'])
         self.assertFalse(applied.flags['possession_change'])
+        self.assertEqual(generated['event_record'].possession.returner.player_id, 'ol1')
+        self.assertEqual(generated['event_record'].turnover_chain.post_recovery_return_yards, 2)
 
 
 class AutonomousTryExecutionTests(unittest.TestCase):
@@ -491,7 +515,8 @@ class AutonomousSpecialTeamsTests(unittest.TestCase):
         for pid in defense_ids:
             profiles[pid]['ratings'].update({'TAK': 99, 'STR': 99, 'PRC': 99})
         state = {'offense': 'A', 'defense': 'B', 'down': 1, 'togo': 10, 'yl': 60}
-        generated = None
+        generated_by_direction = {}
+        selected_seed_by_direction = {}
         with gridiron_bridge.GridironSession(source.engine_root) as session:
             front_check = {
                 'schema_version': 'gridiron.autonomous-play.v1',
@@ -514,40 +539,107 @@ class AutonomousSpecialTeamsTests(unittest.TestCase):
                              set(offense_ids + defense_ids))
             self.assertEqual(sum(event['type'] == 'assignment_executed'
                                  for event in front_result['events']), 22)
-            for seed in range(12):
+            for direction, seeds in ((1, range(12)), (-1, (3,))):
+                for seed in seeds:
+                    call = {
+                        'schema_version': 'gridiron.autonomous-play.v1',
+                        'mode': 'autonomous_from_snap',
+                        'play_id': f'generated-fumble-test:{direction}:{seed}',
+                        'seed': str(seed), 'output_mode': 'result_only',
+                        'situation': {'quarter': 1, 'clock_seconds': 600, 'down': 1,
+                                      'yards_to_go': 10,
+                                      'yardline_100': 40 if direction == 1 else 60,
+                                      'offense_direction': direction, 'ball_lateral_yards': 26.67},
+                        'offense': {'team': 'AAA', 'formation': 'singleback_11',
+                                    'call': {'family': 'run', 'concept': 'inside_zone',
+                                             'direction': 'right', 'snap_type': 'under_center'},
+                                    'lineup': offense_lineup},
+                        'defense': {'team': 'BBB', 'call': {'front': 'nickel_over', 'coverage': 'cover_3',
+                                    'run_fit': 'spill_force'}, 'lineup': defense_lineup},
+                        'player_profiles': profiles,
+                    }
+                    result, timing = session.play(call)
+                    if (result['result'].get('fumble') or {}).get('recovery_side') == 'D':
+                        generated_by_direction[direction] = source._map_scrimmage_result(
+                            call, result, timing, {}, state,
+                            {'direction': direction, 'play_index': seed},
+                            {'selection': 'controlled live fumble scenario'}, 'run')
+                        selected_seed_by_direction[direction] = seed
+                        break
+        self.assertEqual(set(generated_by_direction), {-1, 1},
+                         'live run fumbles must cross the adapter in both field directions')
+        self.assertEqual(selected_seed_by_direction, {1: 3, -1: 3})
+        for generated in generated_by_direction.values():
+            execution = generated['execution']['result']
+            self.assertEqual(len(execution['trajectory']['roster']), 22)
+            self.assertTrue(any(event['type'] == 'fumble' for event in execution['events']))
+            self.assertTrue(any(event['type'] == 'fumble_recovery' for event in execution['events']))
+            self.assertEqual(generated['event_record'].possession.how, 'fumble_recovery')
+            self.assertTrue(generated['event_record'].fumble)
+            applied = source.apply_event(state, generated['event_record'])
+            self.assertEqual(applied.terminal, 'turnover')
+            self.assertEqual(applied.state_after['offense'], 'B')
+            self.assertTrue(applied.flags['fumble'])
+
+    def test_generated_pass_fumble_crosses_gridiron_slc_runtime(self):
+        source = self._source()
+        source.snapshot['schedule']['game_id'] = 'generated-pass-fumble-test'
+        offense_ids = [f'AAA-P{i}' for i in range(11)]
+        defense_ids = [f'BBB-P{i}' for i in range(11)]
+        offense_lineup = dict(zip(('QB', 'RB', 'LT', 'LG', 'C', 'RG', 'RT', 'TE', 'WR1', 'WR2', 'WR3'),
+                                  offense_ids))
+        defense_lineup = dict(zip(('LEDGE', 'LDT', 'RDT', 'REDGE', 'MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS'),
+                                  defense_ids))
+        ratings = {name: 70 for name in (
+            'SPD', 'ACC', 'AGI', 'STR', 'AWR', 'RBK', 'IBL', 'PBK', 'BSH', 'PMV',
+            'FMV', 'TAK', 'BTK', 'ELU', 'BCV', 'TRK', 'PUR', 'CAR', 'PRC', 'CTH', 'CIT')}
+        profiles = {pid: {'ratings': dict(ratings), 'physics': {}} for pid in offense_ids + defense_ids}
+        for pid in offense_ids:
+            profiles[pid]['ratings']['CAR'] = 1
+        for pid in defense_ids:
+            profiles[pid]['ratings'].update({'TAK': 99, 'STR': 99, 'PRC': 99})
+        state = {'offense': 'A', 'defense': 'B', 'down': 1, 'togo': 10, 'yl': 60}
+        with gridiron_bridge.GridironSession(source.engine_root) as session:
+            for direction, seed in ((1, '13'), (-1, '4')):
                 call = {
                     'schema_version': 'gridiron.autonomous-play.v1',
-                    'mode': 'autonomous_from_snap', 'play_id': f'generated-fumble-test:{seed}',
-                    'seed': str(seed), 'output_mode': 'result_only',
+                    'mode': 'autonomous_from_snap',
+                    'play_id': f'generated-pass-fumble-test:{direction}:{seed}',
+                    'seed': seed, 'output_mode': 'result_only',
                     'situation': {'quarter': 1, 'clock_seconds': 600, 'down': 1,
-                                  'yards_to_go': 10, 'yardline_100': 40,
-                                  'offense_direction': 1, 'ball_lateral_yards': 26.67},
+                                  'yards_to_go': 10,
+                                  'yardline_100': 40 if direction == 1 else 60,
+                                  'offense_direction': direction, 'ball_lateral_yards': 26.67},
                     'offense': {'team': 'AAA', 'formation': 'singleback_11',
-                                'call': {'family': 'run', 'concept': 'inside_zone',
-                                         'direction': 'right', 'snap_type': 'under_center'},
+                                'call': {'family': 'pass', 'concept': 'slant_flat',
+                                         'direction': 'right', 'snap_type': 'shotgun'},
                                 'lineup': offense_lineup},
-                    'defense': {'team': 'BBB', 'call': {'front': 'nickel_over', 'coverage': 'cover_3',
-                                'run_fit': 'spill_force'}, 'lineup': defense_lineup},
+                    'defense': {'team': 'BBB', 'call': {'front': 'nickel', 'coverage': 'cover_1'},
+                                'lineup': defense_lineup},
                     'player_profiles': profiles,
                 }
                 result, timing = session.play(call)
-                if (result['result'].get('fumble') or {}).get('recovery_side') == 'D':
-                    generated = source._map_scrimmage_result(
-                        call, result, timing, {}, state,
-                        {'direction': 1, 'play_index': seed},
-                        {'selection': 'controlled live fumble scenario'}, 'run')
-                    break
-        self.assertIsNotNone(generated, 'seeded 22-player execution must generate a defensive recovery')
-        execution = generated['execution']['result']
-        self.assertEqual(len(execution['trajectory']['roster']), 22)
-        self.assertTrue(any(event['type'] == 'fumble' for event in execution['events']))
-        self.assertTrue(any(event['type'] == 'fumble_recovery' for event in execution['events']))
-        self.assertEqual(generated['event_record'].possession.how, 'fumble_recovery')
-        self.assertTrue(generated['event_record'].fumble)
-        applied = source.apply_event(state, generated['event_record'])
-        self.assertEqual(applied.terminal, 'turnover')
-        self.assertEqual(applied.state_after['offense'], 'B')
-        self.assertTrue(applied.flags['fumble'])
+                fumble = result['result'].get('fumble')
+                self.assertIsNotNone(fumble,
+                    f'fixed pass scenario must fumble at direction {direction}: {result["result"]}')
+                self.assertEqual(fumble['recovery_side'], 'D')
+                generated = source._map_scrimmage_result(
+                    call, result, timing, {}, state,
+                    {'direction': direction, 'play_index': int(seed)},
+                    {'selection': 'controlled live pass-fumble scenario'}, 'pass')
+                execution = generated['execution']['result']
+                self.assertTrue(any(event['type'] == 'throw' for event in execution['events']))
+                self.assertTrue(any(event['type'] == 'fumble' for event in execution['events']))
+                self.assertTrue(any(event['type'] == 'fumble_recovery' for event in execution['events']))
+                self.assertEqual(generated['event_record'].possession.how, 'fumble_recovery')
+                self.assertEqual(generated['event_record'].possession.returner.player_id,
+                                 fumble['returner_id'])
+                self.assertEqual(generated['event_record'].possession.return_yards,
+                                 fumble['return_yards'])
+                applied = source.apply_event(state, generated['event_record'])
+                self.assertEqual(applied.terminal, 'turnover')
+                self.assertEqual(applied.state_after['offense'], 'B')
+                self.assertTrue(applied.flags['fumble'])
 
     def test_generated_punt_return_touchdown_crosses_gridiron_slc_runtime(self):
         source = self._source()

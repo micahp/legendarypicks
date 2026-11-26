@@ -1,18 +1,20 @@
 {
  "counts": {
+  "change dead: exceeds 40-second play clock (excluded)": 5,
+  "change dead: excluded; game clock starts on next snap": 2123,
   "change dead: game clock ran less than live ball (dropped)": 83,
-  "change dead: kept": 2129,
-  "change dead: no usable live time": 982,
-  "change dead: timeout or penalty in gap": 535,
-  "dead: clock stopped by rule or no live time": 17801,
+  "change dead: no usable live time": 981,
+  "change dead: timeout or penalty in gap": 530,
+  "dead: clock stopped by rule or no live time": 17788,
+  "dead: exceeds 40-second play clock (excluded)": 5157,
   "dead: game clock ran less than the live ball (dropped)": 8,
-  "dead: kept": 73049,
-  "dead: next snap not the same offense in the same quarter": 23934,
-  "dead: timeout, penalty or untimed row in the gap": 16482,
+  "dead: kept": 67807,
+  "dead: next snap not the same offense in the same quarter": 24694,
+  "dead: timeout, penalty or untimed row in the gap": 16394,
   "live: no usable wall times": 6633,
   "snaps": 132171
  },
- "output_sha256": "a3e5085125993cda5812b09016ce1d35ff4419df1257b7dfd95e7153f62ce1c4",
+ "output_sha256": "a2f938e36468372470ab6026711fd0aa353b19c5021ed3845a0aa96c4e5809b1",
  "sources": {
   "play_by_play_2022.parquet": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09",
   "play_by_play_2023.parquet": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776",

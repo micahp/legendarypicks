@@ -40,6 +40,42 @@ def _gridiron_yardline_round(value, label):
     return math.floor(value + 0.5)
 
 
+def _validate_gridiron_fumble_return(fumble, direction):
+    """Validate continuous geometry and whole-yard stats as separate facts."""
+    if direction not in (-1, 1):
+        raise ValueError('gridiron_fumble_return_direction_invalid')
+    side = fumble.get('recovery_side')
+    if side not in ('O', 'D'):
+        raise ValueError('gridiron_fumble_recovery_team_invalid')
+    recovery = fumble.get('recovery_spot') or {}
+    dead = fumble.get('dead_ball_spot') or {}
+    recovery_x = recovery.get('x')
+    dead_x = dead.get('x')
+    if any(isinstance(value, bool) or not isinstance(value, (int, float))
+           or not math.isfinite(value) or not 0 <= value <= 100
+           for value in (recovery_x, dead_x)):
+        raise ValueError('gridiron_fumble_return_endpoint_missing_or_invalid')
+    recovery_y = _gridiron_yardline_round(
+        100 - recovery_x if direction == 1 else recovery_x, 'recovery')
+    dead_y = _gridiron_yardline_round(100 - dead_x if direction == 1 else dead_x, 'dead_ball')
+    advance_sign = -1 if side == 'O' else 1
+    expected_stat_yards = (dead_y - recovery_y) * advance_sign
+    stat_yards = fumble.get('return_yards')
+    if type(stat_yards) is not int:
+        raise ValueError('gridiron_fumble_statistical_return_yards_missing_or_invalid')
+    if stat_yards != expected_stat_yards:
+        raise ValueError('gridiron_fumble_statistical_return_yards_disagree_with_rounded_spots')
+    displacement = fumble.get('return_displacement_yards')
+    if (isinstance(displacement, bool) or not isinstance(displacement, (int, float))
+            or not math.isfinite(displacement)):
+        raise ValueError('gridiron_fumble_return_displacement_missing_or_invalid')
+    expected_displacement = (dead_x - recovery_x) * (direction if side == 'O' else -direction)
+    if abs(displacement - expected_displacement) > GRIDIRON_FUMBLE_RETURN_RAW_TOLERANCE_YARDS:
+        raise ValueError('gridiron_fumble_return_yards_disagree_with_raw_endpoints')
+    return {'recovery_yardline_100': recovery_y, 'dead_ball_yardline_100': dead_y,
+            'return_yards': stat_yards, 'return_displacement_yards': displacement}
+
+
 GRIDIRON_SCRIMMAGE_DEAD_BALL_REASONS = frozenset({
     'tackle', 'out_of_bounds', 'incomplete', 'sack', 'touchdown', 'safety',
 })
@@ -183,6 +219,9 @@ class AutonomousTimeoutDecisions:
         self.clock = execution.snap_clock
 
     def decide(self, _rng, before, after, terminal, event, row):
+        if (after is not None and after.get('offense') != before.get('offense')):
+            return None, {'caller_team': None,
+                          'decision': 'possession_change_already_stops_clock'}
         if (after is None or after.get('down') is None or terminal in ('touchdown', 'safety', 'field_goal_attempt', 'punt')
                 or event == 'pass_incomplete' or row.get('out_of_bounds')):
             return None, {'caller_team': None, 'decision': 'no_live_clock_value'}
@@ -405,6 +444,8 @@ class AutonomousGameExecution:
         final_x = outcome['final_ball_spot']['x_yards']
         events = result['events']
         fumble = outcome.get('fumble')
+        fumble_geometry = (_validate_gridiron_fumble_return(fumble, direction)
+                           if fumble is not None else None)
         classification = classify_live_scrimmage_result(call, result)
         pass_interference = next((item for item in events if item['type'] == 'pass_interference'), None)
         if (pass_interference is None
@@ -474,10 +515,10 @@ class AutonomousGameExecution:
             row['participants'].update({
                 'fumbler_id': fumble['fumbler_id'],
                 'recoverer_id': fumble['recoverer_id'],
-                'returner_id': fumble['recoverer_id'] if fumble['recovery_side'] == 'D' else None,
+                'returner_id': fumble.get('returner_id') or outcome.get('carrier_id'),
                 'fumble_spot_yards_gained': gain,
                 'fumble_recovery_team': state['defense'] if fumble['recovery_side'] == 'D' else state['offense'],
-                'fumble_return_yards': fumble.get('return_yards') if fumble['recovery_side'] == 'D' else None,
+                'fumble_return_yards': fumble_geometry['return_yards'],
             })
             if event == 'run':
                 row['participants']['rushing_yards'] = gain
@@ -524,19 +565,21 @@ class AutonomousGameExecution:
                 or recovery_role is None):
             raise ValueError('gridiron_interception_return_fumble_roles_incomplete')
 
+        fumble_geometry = _validate_gridiron_fumble_return(facts, direction)
+
         def yardline(point):
             x = (point or {}).get('x')
-            if not isinstance(x, (int, float)) or not math.isfinite(x):
+            if (isinstance(x, bool) or not isinstance(x, (int, float))
+                    or not math.isfinite(x) or not 0 <= x <= 100):
                 raise ValueError('gridiron_interception_return_fumble_spot_missing')
-            return int(round(100 - x if direction == 1 else x))
+            return _gridiron_yardline_round(100 - x if direction == 1 else x, 'turnover_chain')
 
         interception_y = yardline(interception.get('at'))
         fumble_y = yardline(facts.get('fumble_spot'))
-        recovery_y = yardline(facts.get('recovery_spot'))
-        dead_y = yardline(facts.get('dead_ball_spot'))
+        recovery_y = fumble_geometry['recovery_yardline_100']
+        dead_y = fumble_geometry['dead_ball_yardline_100']
         initial_return_yards = fumble_y - interception_y
-        post_return_yards = (recovery_y - dead_y if recovery_role == 'offense'
-                             else dead_y - recovery_y)
+        post_return_yards = fumble_geometry['return_yards']
         scoring_kind = base.scoring.kind if base.scoring is not None else None
         scoring_team = base.scoring.team if base.scoring is not None else None
         chain = ceg_contract_v3.ScrimmageTurnoverChainV3(
@@ -627,6 +670,8 @@ class AutonomousGameExecution:
         players = result.get('participants', {})
         offense_players = call['offense']['lineup']
         fumble_info = outcome.get('fumble')
+        fumble_geometry = (_validate_gridiron_fumble_return(fumble_info, direction)
+                           if fumble_info is not None else None)
         original_carrier = fumble_info.get('fumbler_id') if fumble_info else outcome.get('carrier_id')
         passer_id = None if event == 'run' and original_carrier != offense_players['QB'] else offense_players['QB']
         rusher_id = (fumble_info.get('fumbler_id') if fumble_info and event == 'run'
@@ -642,7 +687,10 @@ class AutonomousGameExecution:
         possession = None
         fumbler_id = fumble_info.get('fumbler_id') if fumble_info else None
         recoverer_id = fumble_info.get('recoverer_id') if fumble_info else None
-        returner_id = recoverer_id if fumble_info and fumble_info.get('recovery_side') == 'D' else None
+        returner_id = ((fumble_info.get('returner_id') or outcome.get('carrier_id'))
+                       if fumble_info else None)
+        if fumble_info is not None and (not returner_id or not recoverer_id):
+            raise ValueError('gridiron_fumble_return_roles_incomplete')
         roles = ceg_contract.PlayerRolesV2(
             passer=(ceg_contract.PlayerRoleV2.named(passer_id) if passer_id else ceg_contract.PlayerRoleV2.none()),
             rusher=(ceg_contract.PlayerRoleV2.named(rusher_id) if rusher_id else ceg_contract.PlayerRoleV2.none()),
@@ -671,28 +719,16 @@ class AutonomousGameExecution:
                 possession = ceg_contract.PossessionV2(
                     team='offense', how='kept', recovery_spot_yardline_100=recovery_y,
                     dead_ball_yardline_100=dead_y, recovered_by=ceg_contract.PlayerRoleV2.named(recoverer_id),
+                    return_yards=fumble_geometry['return_yards'],
+                    returner=ceg_contract.PlayerRoleV2.named(returner_id),
                     fumble_spot_yardline_100=fumble_y)
             else:
-                return_yards = dead_y - recovery_y
-                raw_return_yards = fumble_info.get('return_yards')
-                if type(raw_return_yards) is not int:
-                    raise ValueError('gridiron_fumble_statistical_return_yards_missing_or_invalid')
-                if raw_return_yards != return_yards:
-                    raise ValueError('gridiron_fumble_statistical_return_yards_disagree_with_rounded_spots')
-                return_displacement = fumble_info.get('return_displacement_yards')
-                if (isinstance(return_displacement, bool)
-                        or not isinstance(return_displacement, (int, float))
-                        or not math.isfinite(return_displacement)):
-                    raise ValueError('gridiron_fumble_return_displacement_missing_or_invalid')
-                raw_endpoint_delta = (dead_spot_x - recovery_x) * -direction
-                if abs(return_displacement - raw_endpoint_delta) > GRIDIRON_FUMBLE_RETURN_RAW_TOLERANCE_YARDS:
-                    raise ValueError('gridiron_fumble_return_yards_disagree_with_raw_endpoints')
                 possession = ceg_contract.PossessionV2(
                     team='defense', how='fumble_recovery', turnover_spot_yardline_100=fumble_y,
                     recovery_spot_yardline_100=recovery_y, dead_ball_yardline_100=dead_y,
-                    return_yards=return_yards,
+                    return_yards=fumble_geometry['return_yards'],
                     recovered_by=ceg_contract.PlayerRoleV2.named(recoverer_id),
-                    returner=ceg_contract.PlayerRoleV2.named(recoverer_id),
+                    returner=ceg_contract.PlayerRoleV2.named(returner_id),
                     fumble_spot_yardline_100=fumble_y)
             if touchdown:
                 scoring = ceg_contract.ScoringV2('touchdown', fumble_role)

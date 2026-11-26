@@ -69,13 +69,35 @@ class Rules(unittest.TestCase):
             random.Random(1), quarter=1, qsr=600, event='interception', live_seconds=4.2,
             out_of_bounds=False, timeout_called=False, margin=0, possession_change=True)
         self.assertEqual((seconds, record['dead_seconds'], record['stop']),
-                         (26, 22, 'possession_change_ready'))
+                         (4, 0.0, 'clock_starts_on_next_snap'))
+        self.assertEqual(record['wall_time_to_next_snap'], None)
+        self.assertEqual(record['play_clock_seconds'], None)
 
     def test_timeout_stops_post_whistle_clock_after_a_turnover(self):
         seconds, record = self.clock.runoff_after_live(
             random.Random(1), quarter=1, qsr=600, event='interception', live_seconds=4.2,
             out_of_bounds=False, timeout_called=True, margin=0, possession_change=True)
         self.assertEqual((seconds, record['dead_seconds'], record['stop']), (4, 0.0, 'timeout'))
+
+    def test_two_minute_warning_clamps_a_turnover_to_the_warning_and_has_no_dead_runoff(self):
+        seconds, record = self.clock.runoff_after_live(
+            random.Random(1), quarter=2, qsr=123, event='interception', live_seconds=5,
+            out_of_bounds=False, timeout_called=False, margin=0, possession_change=True)
+        self.assertEqual(seconds, 5)
+        self.assertEqual(record['dead_seconds'], 0)
+        self.assertEqual(record['two_minute_warning'], 'after_the_down')
+
+    def test_possession_change_tempo_falls_back_only_to_possession_change_evidence(self):
+        data = table(no_huddle=1000)
+        for cell in data['possession_change_no_huddle'].values():
+            cell['no_huddle'] = 0
+        data['possession_change_no_huddle']['other|trailing_1_to_8'] = {
+            'snaps': 1, 'no_huddle': 1}
+        clock = sc.SnapClock(data, 'x')
+        probability, level = clock.possession_change_no_huddle_p('other', 'trailing_1_to_8')
+        self.assertEqual(level, 'window')
+        self.assertLess(probability, 0.01,
+                        'unsupported turnover tempo uses turnover evidence, not same-possession evidence')
 
     def test_kicks_and_turnovers_are_not_timed_here(self):
         with self.assertRaises(ValueError):
@@ -87,9 +109,10 @@ class Rules(unittest.TestCase):
         seconds, record = clock.runoff_after_live(
             random.Random(17), quarter=3, qsr=600, event='interception', live_seconds=4.4,
             out_of_bounds=False, timeout_called=False, margin=0, possession_change=True)
-        self.assertGreater(seconds, 4)
-        self.assertEqual(record['stop'], 'possession_change_ready')
-        self.assertIn('dead_level', record)
+        self.assertEqual(seconds, 4)
+        self.assertEqual(record['stop'], 'clock_starts_on_next_snap')
+        self.assertEqual(record['game_clock_dead_seconds'], 0)
+        self.assertEqual(record['wall_time_to_next_snap'], None)
 
 
 if __name__ == '__main__':
