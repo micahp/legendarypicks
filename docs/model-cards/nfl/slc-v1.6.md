@@ -1,8 +1,8 @@
-# SLC V1.6
+# SLC V1.6 (ALT - cond. pass lbl, xct dist + yrd, + sack suppress. fix)
 
 [NFL sequence registry](README.md) · [Architecture](../../architecture/SLC.md)
 
-**Objective and definition:** Conditional pass labels, exact-distance yardage, season adaptation; removes coverage-outcome layer relative to V1 stack.
+**Objective and definition:** Alternative to V1.5's current-season weighting approach: conditional pass labels, exact-distance and yardage conditioning, and a sack-suppression fix. Retains season adaptation and removes the coverage-outcome layer relative to the V1 stack. The shorthand in the title describes the design motivation, not the complete frozen configuration or a claim that sack rates are fully calibrated.
 
 **Frozen identity:** `v1.6`, source `1bb3bd50` in the inspected [executable registry](https://github.com/micahp/legendarypicks/blob/e0d3f603/scripts/nfl_sequence/slc_model_registry.py). The registry specifies exact commit, profile, layer flags, build args, input dependencies and cutoff. Consult the actual package manifest for a specific run; branch head is not package identity.
 

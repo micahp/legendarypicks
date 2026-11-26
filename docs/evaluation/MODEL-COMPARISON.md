@@ -12,7 +12,7 @@ Do not create a single leaderboard by mixing cohorts, targets, quote timing or s
 |---|---:|---:|---:|
 | Market | .183 | 7.8 | 10.8 |
 | Frozen V2 | .205 | 9.9 | 12.3 |
-| Frozen V1.6 | .230 | 10.0 | 13.1 |
+| Frozen V1.6 (ALT - cond. pass lbl, xct dist + yrd, + sack suppress. fix) | .230 | 10.0 | 13.1 |
 | CEG-SEL+E | .245 | 12.1 | 11.2 |
 | Coin | .250 | — | — |
 
