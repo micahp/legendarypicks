@@ -133,8 +133,87 @@
             "gsis_id": "00-0039459",
             "practice_status": "Full Participation in Practice",
             "report_status": null
+          },
+          {
+            "gsis_id": "00-0034320",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0036290",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0036480",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0036634",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0037031",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0037081",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0037329",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0037395",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0037544",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0038136",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0038440",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0040167",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0041170",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
           }
         ],
+        "roster_exclusions_added": 13,
         "rows": 5,
         "source": "nflverse injuries_2026.parquet",
         "source_available_utc": "2026-11-25T19:56:09Z",
@@ -2449,8 +2528,93 @@
             "gsis_id": "00-0041447",
             "practice_status": "Did Not Participate In Practice",
             "report_status": null
+          },
+          {
+            "gsis_id": "00-0034377",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0035544",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0035707",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0036272",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0036926",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0037197",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0037236",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0037281",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0037297",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0039018",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0039362",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0039660",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0041442",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
+          },
+          {
+            "gsis_id": "00-0041446",
+            "reason": "membership_reserve",
+            "report_status": "Out",
+            "source": "roster_resolution"
           }
         ],
+        "roster_exclusions_added": 14,
         "rows": 7,
         "source": "nflverse injuries_2026.parquet",
         "source_available_utc": "2026-11-25T19:56:09Z",
@@ -4857,5 +5021,5 @@
   },
   "schema": "lp-nfl-pregame-snapshot-1",
   "snapshot_date_utc": "2026-11-26T11:00:02Z",
-  "snapshot_sha256": "1d4e2ec50caa068d4485d65d8f6962a3adedacdcfb752c6d942c7bae9f9380c3"
+  "snapshot_sha256": "9cbcb8fcd61caa25377ce9e27831a4c86cf674768d89fa48c9b725b75ea09deb"
 }
