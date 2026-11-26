@@ -1060,7 +1060,7 @@ def run_batch(args):
                                                                (args.participation_snap_counts,
                                                                 args.participation_snap_counts_sha256)
                                                                if args.participation_snap_counts else None),
-                                                           participation_entry_current=args.participation_entry_current_season,
+                                                           participation_entry_current=args.participation_entry_current,
                                                            fg_kicker=((args.playcall_fg_kicker, args.playcall_fg_kicker_sha256)
                                                                       if args.playcall_fg_kicker else None),
                                                            season_scores=((args.season_score_file,
@@ -1079,7 +1079,6 @@ def run_batch(args):
                                                                'qb_run_role_style', False),
                                                            score_clock_playcalling=resolved_profile['enabled_layers'].get(
                                                                'score_clock_playcalling', True),
-                                                           participation_entry_current=getattr(args, 'participation_entry_current', True),
                                                            personnel_first=not args.no_personnel_first,
                                                            season_adapt=args.playcall_season_adapt,
                                                            pass_label_mode=args.playcall_pass_label_mode,
@@ -1545,8 +1544,12 @@ def main(argv=None):
                     help='SLC v1 research flag (off by default): the personnel label is drawn from the PBV1 RB-only package '
                          'sampler, refitted on the training table for seasons before each game (pbv1_package.TABLE_SHA256); '
                          'the table path is the frozen docs/research/pbv1-package-integration-2026-11-02 CSV')
-    ap.add_argument('--participation-entry-current', action=argparse.BooleanOptionalAction, default=True,
-                    help='HE bench entry enabled for participation by default; --no-participation-entry-current for control')
+    ap.add_argument('--participation-entry-current', '--participation-entry-current-season',
+                    dest='participation_entry_current', action='store_true', default=True,
+                    help='HE bench entry enabled for participation by default')
+    ap.add_argument('--no-participation-entry-current', '--no-participation-entry-current-season',
+                    dest='participation_entry_current', action='store_false',
+                    help='use historical table-rate bench entry instead of HE')
     ap.add_argument('--no-personnel-first', action='store_true',
                     help='draw the run or dropback call before the personnel and formation (the order before personnel-first)')
     ap.add_argument('--participation-field', type=Path, default=None,
@@ -1562,15 +1565,6 @@ def main(argv=None):
                          '--participation-field and --participation-snap-counts-sha256')
     ap.add_argument('--participation-snap-counts-sha256', default=None,
                     help='the expected SHA-256 of the --participation-snap-counts file; a different file is refused')
-    ap.add_argument('--participation-entry-current-season', dest='participation_entry_current_season',
-                    action='store_true', default=True,
-                    help='default on (HE): the bench draw weights each player by his current-season share of team snaps '
-                         'from --participation-snap-counts, and falls back to the table rate when he has no earlier active '
-                         'game. Applies only with --participation-field and --participation-snap-counts; without both, the '
-                         'draw is the table rate. Leave hazards are unchanged.')
-    ap.add_argument('--no-participation-entry-current-season', dest='participation_entry_current_season',
-                    action='store_false',
-                    help='the table-rate bench draw (HS/historical), instead of HE')
     ap.add_argument('--season-score-file', type=Path, default=None,
                     help='the nflverse play-by-play release that supplies current-season pre-play scores, with '
                          '--season-score-file-sha256. A data input, not code: without it the pinned default release is '
