@@ -286,7 +286,7 @@ class AutonomousGameExecution:
         self.coaching_profiles = coaching_profiles or {}
         self.snap_clock = snap_clock.SnapClock.load()
         self.contract_v3_commit = gridiron_bridge._check_ceg_contract_v3()
-        self.session = gridiron_bridge.GridironSession(self.engine_root)
+        self.session = gridiron_bridge.GridironSession(self.engine_root, player_evaluation_mode='shared_snapshot')
         self.event_switches = EventExpansionSwitches()
         self.event_manifest_sha256 = hashlib.sha256(
             (f'{self.session.commit}:{gridiron_bridge.PLAYBOOK_MANIFEST_SHA256}:{participation_sha256}:'

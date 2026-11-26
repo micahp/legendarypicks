@@ -1,6 +1,9 @@
 """Cross-engine translation checks. No historical outcome is supplied to Gridiron."""
 import copy
+import json
 import math
+import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -9,7 +12,7 @@ import autonomous_game
 import gridiron_bridge as bridge
 import participation_field
 
-ENGINE = Path('/root/gridiron-v1-complete-implementation')
+ENGINE = Path(os.environ.get('GRIDIRON_ENGINE_TEST_ROOT', '/root/gridiron-v1-player-state'))
 
 @pytest.fixture
 def play():
@@ -358,6 +361,46 @@ def test_assigned_pass_rejects_coverage_without_example_assignment_mapping():
         session.play(call)
 
 
+def test_session_requests_and_checks_shared_evaluation(monkeypatch):
+    session = object.__new__(bridge.GridironSession)
+    session.commit = 'test-engine'
+    session.player_evaluation_mode = 'shared_snapshot'
+    monkeypatch.setattr(bridge, '_validate_result', lambda _call, result: result)
+    call = {'offense': {'call': {'family': 'pass', 'concept': 'assigned'}},
+            'defense': {'call': {'coverage': 'cover_1'}},
+            'assignments': _coverage_assignment_fixture('man')}
+    requests = []
+    def request(op, **kwargs):
+        requests.append((op, copy.deepcopy(kwargs)))
+        return {'value': {'diagnostics': {'player_evaluation_mode': 'shared_snapshot'}}, 'engine_ms': 0}
+    session.request = request
+    session.play(call)
+    assert requests[0][1]['call']['player_evaluation_mode'] == 'shared_snapshot'
+    session.request = lambda *_args, **_kwargs: {'value': {'diagnostics': {}}, 'engine_ms': 0}
+    with pytest.raises(ValueError, match='gridiron_player_evaluation_mode_mismatch'):
+        session.play(call)
+
+
+@pytest.mark.skipif(not (ENGINE / 'test/autonomous-fixtures.mjs').exists(),
+                    reason='pinned Gridiron fixture unavailable')
+@pytest.mark.parametrize('family', ['run', 'pass'])
+def test_shared_session_executes_pinned_gridiron_scrimmage(family):
+    script = ("import {buildSampleCall} from './test/autonomous-fixtures.mjs';"
+              "const family=process.argv[1];"
+              "const options=family==='run'?{family,concept:'inside_zone',direction:'right'}:"
+              "{family,concept:'assigned',snap_type:'shotgun',coverage:'cover_1'};"
+              "console.log(JSON.stringify(buildSampleCall(options))); ")
+    call = json.loads(subprocess.check_output(
+        ['node', '--input-type=module', '-e', script, family], cwd=str(ENGINE), text=True))
+    with bridge.GridironSession(str(ENGINE), player_evaluation_mode='shared_snapshot') as session:
+        result, timing = session.play(call)
+    assert result['status'] == 'complete'
+    assert result['diagnostics']['assignments_executed'] == 22
+    assert result['diagnostics']['player_evaluation_mode'] == 'shared_snapshot'
+    assert result['diagnostics']['reconciliation']['ok'] is True
+    assert timing['engine_commit'] == bridge.ENGINE_COMMIT
+
+
 @pytest.mark.parametrize(('coverage', 'wrong_kind', 'required_kind'), [
     ('cover_1', 'zone', 'man'), ('cover_3', 'man', 'zone'),
 ])
@@ -381,7 +424,8 @@ def test_assigned_pass_rejects_explicit_assignments_that_contradict_coverage(
 
 @pytest.mark.skipif(not (ENGINE / 'engine/autonomous/slc-server.js').exists(),
                     reason='optional pinned Gridiron research checkout unavailable')
-def test_persistent_session_executes_generated_punt_return_with_all_22_players():
+@pytest.mark.parametrize('evaluation_mode', [None, 'shared_snapshot'])
+def test_persistent_session_executes_generated_punt_return_with_all_22_players(evaluation_mode):
     ids = ['P', *[f'C{i}' for i in range(10)], 'PR', *[f'R{i}' for i in range(10)]]
     call = {
         'schema_version': 'gridiron.autonomous-special-teams.v1', 'kind': 'punt', 'seed': 42,
@@ -393,18 +437,22 @@ def test_persistent_session_executes_generated_punt_return_with_all_22_players()
             'CTH': 78, 'CAR': 78, 'BCV': 75, 'ELU': 75, 'TRK': 65, 'PRC': 70,
             'KPW': 70, 'KAC': 70}} for pid in ids},
     }
-    with bridge.GridironSession(str(ENGINE)) as session:
+    with bridge.GridironSession(str(ENGINE), player_evaluation_mode=evaluation_mode) as session:
         result, timing = session.special_teams(call)
     assert result['status'] == 'complete'
     assert result['diagnostics']['assignments_executed'] == 22
     assert result['events'][-1]['type'] == 'whistle'
     assert result['result']['result'] in ('return', 'touchback', 'muff', 'downed', 'fair_catch', 'out_of_bounds')
     assert timing['engine_ms'] >= 0
+    if evaluation_mode:
+        assert result['diagnostics']['player_evaluation_mode'] == evaluation_mode
+        assert timing['engine_commit'] == bridge.ENGINE_COMMIT
 
 
 @pytest.mark.skipif(not (ENGINE / 'engine/autonomous/slc-server.js').exists(),
                     reason='optional pinned Gridiron research checkout unavailable')
-def test_persistent_session_executes_generated_field_goal_with_all_22_players():
+@pytest.mark.parametrize('evaluation_mode', [None, 'shared_snapshot'])
+def test_persistent_session_executes_generated_field_goal_with_all_22_players(evaluation_mode):
     ids = ['K', *[f'O{i}' for i in range(10)], 'R', *[f'D{i}' for i in range(10)]]
     call = {
         'schema_version': 'gridiron.autonomous-special-teams.v1', 'kind': 'field_goal', 'seed': 42,
@@ -416,7 +464,7 @@ def test_persistent_session_executes_generated_field_goal_with_all_22_players():
             'CTH': 78, 'CAR': 78, 'BCV': 75, 'ELU': 75, 'TRK': 65, 'PRC': 70,
             'KPW': 70, 'KAC': 70}} for pid in ids},
     }
-    with bridge.GridironSession(str(ENGINE)) as session:
+    with bridge.GridironSession(str(ENGINE), player_evaluation_mode=evaluation_mode) as session:
         result, timing = session.special_teams(call)
     assert result['status'] == 'complete'
     assert result['diagnostics']['assignments_executed'] == 22
@@ -424,3 +472,6 @@ def test_persistent_session_executes_generated_field_goal_with_all_22_players():
     assert result['result']['result'] in ('made', 'missed', 'blocked')
     assert len(result['trajectory']['roster']) == 22
     assert timing['engine_ms'] >= 0
+    if evaluation_mode:
+        assert result['diagnostics']['player_evaluation_mode'] == evaluation_mode
+        assert timing['engine_commit'] == bridge.ENGINE_COMMIT
