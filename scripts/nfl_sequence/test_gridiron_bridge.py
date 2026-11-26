@@ -49,6 +49,37 @@ def test_interception_changes_possession_at_defense_relative_spot(play):
     assert stats['qb']['passing']['int'] == 1
 
 
+def test_mirrored_direction_completion_reduces_forward_gain(play):
+    call, result, state = play
+    state.update(yl=40, offense_direction=-1)
+    call['situation'].update(offense_direction=-1, yardline_100=40)
+    result['result'].update(yards_gained=12.3, final_ball_spot={'x_yards': 27.7})
+
+    reduced = bridge.reduce_result(call, result, state)
+
+    assert reduced['play']['event_type'] == 'pass_complete'
+    assert reduced['state_at_whistle']['yl'] == 28
+    assert reduced['player_statistics'][0]['passing']['yds'] == 12
+
+
+def test_mirrored_direction_interception_uses_defense_relative_spot(play):
+    call, result, state = play
+    state.update(yl=40, offense_direction=-1)
+    call['situation'].update(offense_direction=-1, yardline_100=40)
+    result['result'].update(event='interception', yards_gained=5.0,
+                            final_ball_spot={'x_yards': 35.0}, turnover=True,
+                            possession_team='SF', carrier_id='db')
+    result['events'] = [{'type': 'throw', 'target_id': 'wr'}, {'type': 'interception'}]
+
+    reduced = bridge.reduce_result(call, result, state)
+
+    assert reduced['terminal'] == 'turnover'
+    assert reduced['state_at_whistle']['offense'] == 'SF'
+    assert reduced['state_at_whistle']['yl'] == 65
+    stats = {row['player_id']: row for row in reduced['player_statistics']}
+    assert stats['qb']['passing']['int'] == 1
+
+
 def test_reject_mismatch_and_unsupported_boundaries(play):
     call, result, state = play
     changed = copy.deepcopy(result)
@@ -150,6 +181,66 @@ def test_scrimmage_profiles_send_only_ratings_supported_by_the_selected_executor
     assert {'IBL', 'BCV', 'TRK', 'CIT'} <= running_qb.keys()
 
 
+@pytest.mark.parametrize(('role', 'missing_rating'), [
+    ('WLB', 'PRC'), ('LEDGE', 'PMV'),
+])
+def test_defensive_player_roles_require_position_specific_ratings(role, missing_rating, monkeypatch):
+    offense_positions = {
+        'o-qb': 'QB', 'o-rb': 'RB', 'o-te': 'TE', 'o-wr1': 'WR',
+        'o-wr2': 'WR', 'o-wr3': 'WR', 'o-lt': 'LT', 'o-lg': 'LG',
+        'o-c': 'C', 'o-rg': 'RG', 'o-rt': 'RT',
+    }
+    offense_roster = [
+        {'gsis_id': player_id, 'pos_abb': position, 'pos_rank': 1}
+        for player_id, position in offense_positions.items()
+    ]
+    defense_ids = [f'd-{slot}' for slot in bridge.DEFENSE_SLOTS]
+    defense_lineup = dict(zip(defense_ids, bridge.DEFENSE_SLOTS))
+    selected = {
+        'qb1': 'o-qb',
+        'slots': {'o-rb': 'RB', 'o-te': 'TE', 'o-wr1': 'WR',
+                  'o-wr2': 'WR', 'o-wr3': 'WR'},
+    }
+    snapshot = {
+        'schedule': {'home_team': 'HOM', 'away_team': 'AWY', 'season': 2026,
+                     'week': 2, 'game_id': '2026_02_AWY_HOM'},
+        'as_of': '2026-09-10T12:00:00Z',
+        'rosters': {'home': {'players': offense_roster},
+                    'away': {'players': [{'gsis_id': pid} for pid in defense_ids]},
+                    },
+    }
+    all_ratings = {name: 70 for name in (
+        *bridge.COMMON_LIVE_RATINGS, 'THA', 'CTH', 'PBK', 'RBK', 'IBL',
+        'BSH', 'FMV', 'PMV', 'PRC', 'PUR', 'TAK', 'BTK', 'BCV', 'CAR', 'ELU',
+    )}
+    ratings = {
+        player_id: {'ratings': dict(all_ratings), 'physics': {'mass': 90}}
+        for player_id in [*offense_positions, *defense_ids]
+    }
+    ratings[f'd-{role}']['ratings'].pop(missing_rating)
+    monkeypatch.setattr(bridge.pregame_snapshot, 'load_frozen_snapshot', lambda _path: snapshot)
+    monkeypatch.setattr(bridge.roster_preflight, 'check', lambda _snapshot: ([], {'home': {}, 'away': {}}))
+    monkeypatch.setattr(bridge.roster_preflight, 'failed', lambda _checks: False)
+    monkeypatch.setattr(bridge.roster_preflight, 'exclusions_applied',
+                        lambda _snapshot, _resolved: ([], 'PASS'))
+    monkeypatch.setattr(bridge.v1_complete_roster, 'eligible_ids',
+                        lambda _resolved: set(offense_positions))
+    monkeypatch.setattr(bridge.participation_field.Field, 'load',
+                        lambda _path, _field_hash: object())
+    monkeypatch.setattr(bridge.live_participation, 'advance', lambda _field, **_kwargs: selected)
+    monkeypatch.setattr(bridge, '_defensive_lineup',
+                        lambda _resolved, _roster: defense_lineup)
+    monkeypatch.setattr(bridge, '_profile', lambda *_args: {})
+    monkeypatch.setattr(bridge, '_ratings', lambda _path: (ratings, {'schema': 'fixture'}))
+
+    state = {'quarter': 1, 'clock': 600, 'offense': 'A', 'defense': 'B',
+             'down': 1, 'togo': 10, 'yl': 50, 'offense_direction': 1}
+    with pytest.raises(ValueError, match=f'gridiron_bridge_player_rating_missing:d-{role}:{missing_rating}'):
+        bridge.build_call(
+            'snapshot.json', 'participation.json', 'field-hash', 'profile.json',
+            'manifest.json', seed=1, family='pass', state=state, ratings_path='ratings.json')
+
+
 def test_nickel_front_resolves_second_interior_role_from_an_eligible_three_four_end():
     roster = [
         {'gsis_id': 'EDGE1', 'pos_abb': 'LDE', 'pos_rank': 1},
@@ -208,6 +299,84 @@ def test_persistent_session_reuses_process_and_recovers_from_bad_request():
         assert len(run_assignments['offense']) == 11
         assert len(run_assignments['defense']) == 11
         assert run_assignments['offense']['RB']['aiming_gap'] == 'play_side_a'
+
+
+def _coverage_assignment_fixture(coverage):
+    defense = {slot: {'kind': 'rush'} for slot in ('LEDGE', 'LDT', 'RDT', 'REDGE')}
+    if coverage == 'man':
+        defense.update({slot: {'kind': 'man', 'target_slot': target} for slot, target in (
+            ('LCB', 'WR1'), ('RCB', 'WR2'), ('NB', 'WR3'), ('MLB', 'RB'),
+        )})
+        defense.update({slot: {'kind': 'zone', 'bounds': [1, 2, 1, 2]} for slot in ('WLB', 'SS', 'FS')})
+    else:
+        defense.update({slot: {'kind': 'zone', 'bounds': [1, 2, 1, 2]}
+                        for slot in ('MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS')})
+    return {'schema_version': 'gridiron.assignments.v1', 'offense': {}, 'defense': defense}
+
+
+@pytest.mark.parametrize(('coverage', 'assignment_coverage'), [
+    ('cover_1', 'man'), ('cover_3', 'zone'),
+])
+def test_assigned_pass_requests_assignments_matching_declared_coverage(
+        coverage, assignment_coverage, monkeypatch):
+    session = object.__new__(bridge.GridironSession)
+    session.commit = 'test-engine'
+    requests = []
+    assignments = _coverage_assignment_fixture(assignment_coverage)
+
+    def request(op, **kwargs):
+        requests.append((op, kwargs))
+        if op == 'example_assignments':
+            return {'value': assignments}
+        return {'value': {'status': 'complete'}, 'engine_ms': 1.0}
+
+    session.request = request
+    monkeypatch.setattr(bridge, '_validate_result', lambda _call, result: result)
+    call = {
+        'offense': {'call': {'family': 'pass', 'concept': 'assigned'}},
+        'defense': {'call': {'coverage': coverage}},
+    }
+
+    session.play(call)
+
+    assert requests[0] == ('example_assignments', {
+        'concept': 'slant_flat', 'coverage': assignment_coverage,
+    })
+    assert requests[1][0] == 'play'
+    assert call['assignments'] is assignments
+
+
+def test_assigned_pass_rejects_coverage_without_example_assignment_mapping():
+    session = object.__new__(bridge.GridironSession)
+    session.request = lambda *_args, **_kwargs: pytest.fail('unsupported coverage must fail before RPC')
+    call = {
+        'offense': {'call': {'family': 'pass', 'concept': 'assigned'}},
+        'defense': {'call': {'coverage': 'unsupported'}},
+    }
+
+    with pytest.raises(ValueError, match='gridiron_bridge_example_assignment_coverage_unsupported'):
+        session.play(call)
+
+
+@pytest.mark.parametrize(('coverage', 'wrong_kind', 'required_kind'), [
+    ('cover_1', 'zone', 'man'), ('cover_3', 'man', 'zone'),
+])
+def test_assigned_pass_rejects_explicit_assignments_that_contradict_coverage(
+        coverage, wrong_kind, required_kind):
+    session = object.__new__(bridge.GridironSession)
+    session.request = lambda *_args, **_kwargs: pytest.fail('mismatched assignments must fail before RPC')
+    call = {
+        'offense': {'call': {'family': 'pass', 'concept': 'assigned'}},
+        'defense': {'call': {'coverage': coverage}},
+        'assignments': {
+            'offense': {},
+            'defense': {slot: {'kind': wrong_kind} for slot in bridge.DEFENSE_SLOTS},
+        },
+    }
+
+    with pytest.raises(ValueError, match=(
+            f'gridiron_bridge_coverage_assignment_mismatch:{coverage}:{required_kind}_count_0')):
+        session.play(call)
 
 
 @pytest.mark.skipif(not (ENGINE / 'engine/autonomous/slc-server.js').exists(),

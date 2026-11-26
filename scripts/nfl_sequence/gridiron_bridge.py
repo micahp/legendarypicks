@@ -44,6 +44,8 @@ DEFENSE_POSITION_FALLBACKS = {
     'LDT': ('LDE', 'RDE', 'DE', 'EDGE'),
     'RDT': ('LDE', 'RDE', 'DE', 'EDGE'),
 }
+EXAMPLE_ASSIGNMENT_COVERAGE = {'cover_1': 'man', 'cover_3': 'zone'}
+MIN_COVERAGE_ASSIGNMENTS = {'cover_1': ('man', 1), 'cover_3': ('zone', 3)}
 COMMON_LIVE_RATINGS = ('SPD', 'ACC', 'AGI', 'STR', 'AWR')
 OFFENSE_LIVE_RATINGS = {
     'QB': ('THA',),
@@ -71,6 +73,49 @@ def _scrimmage_ratings(ratings, *, family, player_id, quarterback_id):
         for name in ('IBL', 'BCV', 'TRK', 'CIT'):
             supported.pop(name, None)
     return supported
+
+
+def _player_roles(offense_roles, defense_slots):
+    """Index all 22 selected players by their executor role."""
+    roles = {player_id: role for player_id, role in offense_roles.items()}
+    roles.update({player_id: role for role, player_id in defense_slots.items()})
+    return roles
+
+
+def _validate_player_ratings(player_id, role, ratings, family):
+    if role in OFFENSE_LIVE_RATINGS:
+        required = list(COMMON_LIVE_RATINGS)
+        required.extend(name for name in OFFENSE_LIVE_RATINGS[role]
+                        if name != 'THA' or family == 'pass')
+    elif role in ('LEDGE', 'LDT', 'RDT', 'REDGE'):
+        required = [*COMMON_LIVE_RATINGS, 'BSH', 'FMV', 'PMV']
+    elif role in ('MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS'):
+        required = [*COMMON_LIVE_RATINGS, 'PRC', 'PUR', 'TAK']
+    else:
+        raise ValueError(f'gridiron_bridge_player_role_missing:{player_id}:{role}')
+    for name in required:
+        if type(ratings.get(name)) is not int or not 1 <= ratings[name] <= 99:
+            raise ValueError(f'gridiron_bridge_player_rating_missing:{player_id}:{name}')
+
+
+def _validate_coverage_assignments(call):
+    """Reject explicit passing assignments that contradict the declared shell."""
+    offense_call = call.get('offense', {}).get('call', {})
+    if offense_call.get('family') != 'pass' or offense_call.get('concept') != 'assigned':
+        return
+    coverage = call.get('defense', {}).get('call', {}).get('coverage')
+    requirement = MIN_COVERAGE_ASSIGNMENTS.get(coverage)
+    if requirement is None:
+        raise ValueError('gridiron_bridge_coverage_assignment_unsupported:' + str(coverage))
+    assignments = call.get('assignments')
+    defense = assignments.get('defense') if isinstance(assignments, dict) else None
+    if not isinstance(defense, dict):
+        raise ValueError('gridiron_bridge_coverage_assignments_missing:' + str(coverage))
+    kind, minimum = requirement
+    actual = sum(1 for task in defense.values()
+                 if isinstance(task, dict) and task.get('kind') == kind)
+    if actual < minimum:
+        raise ValueError(f'gridiron_bridge_coverage_assignment_mismatch:{coverage}:{kind}_count_{actual}_min_{minimum}')
 
 
 def _defensive_lineup(resolved, roster):
@@ -218,6 +263,7 @@ def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_pat
     slots.update({f'WR{i + 1}': pid for i, pid in enumerate(receivers)})
     dslots = _defensive_lineup(resolved[defense_side], snapshot['rosters'][defense_side]['players'])
     dslots = {slot: next(pid for pid, value in dslots.items() if value == slot) for slot in DEFENSE_SLOTS}
+    player_roles = _player_roles(players, dslots)
     ids = list(slots.values()) + list(dslots.values())
     if len(ids) != 22 or len(set(ids)) != 22:
         raise ValueError('gridiron_lineup_not_unique')
@@ -241,18 +287,8 @@ def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_pat
         if not isinstance(record, dict):
             raise ValueError('gridiron_bridge_player_rating_profile_missing:' + pid)
         ratings = dict(record.get('ratings', {}))
-        role = players.get(pid)
-        required = list(COMMON_LIVE_RATINGS)
-        if role in OFFENSE_LIVE_RATINGS:
-            required.extend(name for name in OFFENSE_LIVE_RATINGS[role]
-                            if name != 'THA' or family == 'pass')
-        elif role in ('LEDGE', 'LDT', 'RDT', 'REDGE'):
-            required.extend(('BSH', 'FMV', 'PMV'))
-        elif role in ('MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS'):
-            required.extend(('PRC', 'PUR', 'TAK'))
-        for name in required:
-            if type(ratings.get(name)) is not int or not 1 <= ratings[name] <= 99:
-                raise ValueError(f'gridiron_bridge_player_rating_missing:{pid}:{name}')
+        role = player_roles.get(pid)
+        _validate_player_ratings(pid, role, ratings, family)
         mass = record.get('physics', {}).get('mass')
         if not isinstance(mass, (int, float)) or not math.isfinite(mass) or mass <= 0:
             raise ValueError('gridiron_bridge_player_physics_missing:' + pid)
@@ -368,8 +404,13 @@ class GridironSession:
             direction = call['offense']['call']['direction']
             call['assignments'] = self.request('example_run_assignments', direction=direction)['value']
         elif call.get('offense', {}).get('call', {}).get('concept') == 'assigned' and 'assignments' not in call:
+            coverage = call.get('defense', {}).get('call', {}).get('coverage')
+            assignment_coverage = EXAMPLE_ASSIGNMENT_COVERAGE.get(coverage)
+            if assignment_coverage is None:
+                raise ValueError('gridiron_bridge_example_assignment_coverage_unsupported:' + str(coverage))
             call['assignments'] = self.request(
-                'example_assignments', concept='slant_flat', coverage='zone')['value']
+                'example_assignments', concept='slant_flat', coverage=assignment_coverage)['value']
+        _validate_coverage_assignments(call)
         start = time.monotonic()
         response = self.request('play', call=call)
         return _validate_result(call, response['value']), {'engine_commit': self.commit,
@@ -403,7 +444,11 @@ def run(engine_root, call):
 
 def reduce_result(call, result, state):
     """Map supported live events to the SLC reducer and player stats at whistle."""
-    if call['situation']['offense_direction'] != 1 or call['situation']['yardline_100'] != 100 - state['yl']:
+    direction = call['situation'].get('offense_direction')
+    expected_direction = state.get('offense_direction', 1)
+    expected_los = state['yl'] if direction == -1 else 100 - state['yl']
+    if (direction not in (-1, 1) or direction != expected_direction
+            or call['situation']['yardline_100'] != expected_los):
         raise ValueError('gridiron_coordinate_contract_mismatch')
     if any(call['situation'][key] != state[other] for key, other in
            (('quarter', 'quarter'), ('clock_seconds', 'clock'), ('down', 'down'), ('yards_to_go', 'togo'))):
@@ -416,7 +461,8 @@ def reduce_result(call, result, state):
         raise ValueError('gridiron_nonfinite_or_invalid_result')
     if not outcome['turnover'] and outcome['possession_team'] != call['offense']['team']:
         raise ValueError('gridiron_possession_mismatch')
-    if abs(outcome['final_ball_spot']['x_yards'] - (call['situation']['yardline_100'] + outcome['yards_gained'])) > 0.003:
+    expected_final_x = call['situation']['yardline_100'] + direction * outcome['yards_gained']
+    if abs(outcome['final_ball_spot']['x_yards'] - expected_final_x) > 0.003:
         raise ValueError('gridiron_final_spot_mismatch')
     events = result['events']
     if any(e['type'] in ('fumble', 'safety') for e in events):
@@ -441,7 +487,7 @@ def reduce_result(call, result, state):
         event = 'pass_complete'
     else:
         raise ValueError('gridiron_result_classification_unsupported:' + str(reason))
-    if reason not in ('tackle', 'out_of_bounds', 'incomplete', 'sack', 'touchdown'):
+    if reason not in ('tackle', 'out_of_bounds', 'incomplete', 'sack', 'touchdown', 'interception'):
         raise ValueError('gridiron_terminal_unsupported:' + str(reason))
     if outcome['is_touchdown'] and outcome['turnover']:
         raise ValueError('gridiron_defensive_touchdown_unsupported')
