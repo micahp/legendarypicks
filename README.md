@@ -4,6 +4,10 @@ Legendary Picks is a sports data and prediction product for following live games
 
 This repository began as an FCL / NBA Top Shot experiment. NBA Top Shot moved into the core product space, so Legendary Picks pivoted away from that dependency and became an independent, data-first sports product. The old Flow setup is historical scaffolding, not the product architecture or a supported development path.
 
+## Research and modeling documentation
+
+**Start with the [Legendary Picks handbook](docs/README.md)** for model definitions (SLC, CEG, Gridiron, Liquid AI), versioned model cards, evaluation and research evidence. [Model registry](docs/model-cards/README.md) · [Glossary](docs/architecture/GLOSSARY.md).
+
 ## Architecture
 
 ```text
