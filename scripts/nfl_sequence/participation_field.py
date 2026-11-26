@@ -392,7 +392,7 @@ class Field:
             if all(augment(unit, set()) for unit in units if unit not in assigned):
                 final = set(assigned.values())
                 vetoed = sorted(removed & final)
-                kept = {pid: lineup.get(pid, 0) for pid in final}
+                kept = {pid: lineup.get(pid, 0) for pid in sorted(final)}
                 kept_slot = {pid: unit[0] for unit, pid in assigned.items()}
                 leavers = leavers - final
                 count_removed = [pid for pid in count_removed if pid not in final]
