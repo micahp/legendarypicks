@@ -805,7 +805,7 @@
             "status_description": "A01"
           }
         ],
-        "source": "nflverse-weekly-rosters-2026-week-12:b0e660133e659b24ba90f85a20f483e47990539f13f3953c58e6ca25ef988d00",
+        "source": "nflverse weekly roster capture sha256:b0e660133e659b24ba90f85a20f483e47990539f13f3953c58e6ca25ef988d00",
         "week": 12
       },
       "players": [
@@ -2351,7 +2351,7 @@
             "status_description": "R01"
           }
         ],
-        "source": "nflverse-weekly-rosters-2026-week-12:b0e660133e659b24ba90f85a20f483e47990539f13f3953c58e6ca25ef988d00",
+        "source": "nflverse weekly roster capture sha256:b0e660133e659b24ba90f85a20f483e47990539f13f3953c58e6ca25ef988d00",
         "week": 12
       },
       "players": [
@@ -3125,5 +3125,5 @@
     "week": 12
   },
   "schema": "lp-nfl-pregame-snapshot-1",
-  "snapshot_sha256": "d2e37544508ca96dfc9b2bac5782c6e6da1777b2738c27808bf4322dd460c232"
+  "snapshot_sha256": "1e7cccda2c82b6c2efbfdc302f2a230fb65c9e3a12283f1c0e13de0a72c45102"
 }
