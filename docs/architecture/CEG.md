@@ -8,6 +8,28 @@
 
 Game situation -> conditional intent/event distributions -> generated quantities (run yards, air yards, catch, YAC, returns, clock, foul, kick) -> typed play facts -> football rules and next state -> repeat. The model is not a physical all-22 simulator and does not generate an exact future game. Fitted conditional distributions regularize sparse cells; unlike V2 historical sampling, a matching historical row is not required at inference. Phase 5/7 reports a parameter-only runtime with data reads blocked.
 
+## Scrimmage factorization and evidence
+
+The Phase 2 generator implements this conditional chain:
+
+```text
+intent
+  designed run -> run yards
+  dropback -> sack / scramble / pass attempt
+      sack -> sack yards
+      scramble -> scramble yards
+      attempt -> throwaway / targeted
+          targeted -> air yards -> targeted outcome
+              completion -> yards after catch
+  kneel / spike / punt / field goal
+eligible run/scramble/sack/completion -> fumble -> lost or retained
+turnover -> return model
+```
+
+The Phase 2 fit uses 2022–2024, scores 2025 confirmation and examined 2026 weeks separately. Arm C's situation-conditioned estimates beat B on 6 of 11 components in 2025; no established improvement for YAC, scramble yards, sack yards, fumble or lost-fumble. C-FTN failed its adoption rule: observed charting is not necessarily useful when it must be generated at inference. Ten of eleven components selected the heaviest preregistered shrinkage (k=300); more conditioning is not automatically better. Later phases add clocks, kicks, fouls and a parameter-only runtime. Do not treat Phase 2's fit-time table reader as the Phase 5 inference boundary.
+
+Sources: [Generator source](https://github.com/micahp/legendarypicks/blob/8d86d430/scripts/nfl_sequence/ceg_generator.py) and [Phase 2 report](https://github.com/micahp/legendarypicks/blob/8d86d430/docs/research/slc-ceg-2026-11-24/PHASE2-SCRIMMAGE-REPORT.md).
+
 ## Contracts versus generator
 
 | Contract | Scope |

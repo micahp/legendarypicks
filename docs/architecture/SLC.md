@@ -1,8 +1,8 @@
-# SLC — NFL sequence simulation
+# SLC — Score-Clock Layered
 
 [Architecture](README.md) · [Version registry](../model-cards/nfl/README.md)
 
-SLC is the NFL full-game sequence modeling family. It simulates plays sequentially from a frozen matchup snapshot: down, distance, field position, clock, score, eligible personnel and prior data. Historical SLC variants draw a play event and historical source row using fitted probabilities and optional conditioning layers, then apply football rules. It generates a distribution of games, not an exact forecast of the next real game's play sequence.
+SLC stands for **Score-Clock Layered**, as explicitly named in the [Original October 28 integration ledger](https://github.com/micahp/legendarypicks/blob/5f5887bc/docs/research/SLC-INTEGRATION-LEDGER-2026-10-28.md). It is the NFL full-game sequence modeling family. It simulates plays sequentially from a frozen matchup snapshot: down, distance, field position, clock, score, eligible personnel and prior data. Historical SLC variants draw a play event and historical source row using fitted probabilities and optional conditioning layers, then apply football rules. It generates a distribution of games, not an exact forecast of the next real game's play sequence.
 
 ```text
 slc_engine.play -> game_state.play_game -> e1_drive.simulate

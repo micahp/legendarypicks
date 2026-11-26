@@ -6,7 +6,7 @@
 |---|---|
 | CEG | **Conditional Event Generation**. Fit distributions on historical events, generate a new coherent event at inference instead of sampling a historical row. [Definition](CEG.md). |
 | CEG contract | Typed play/event facts (ceg-play-1/2/3); distinct from the CEG model. |
-| SLC | NFL sequence simulation family (historical conditional play sampling and successor research). The original acronym expansion was not established in the inspected sources; do not invent one. [Definition](SLC.md). |
+| SLC | **Score-Clock Layered**. NFL sequence simulation family (historical conditional play sampling and successor research). Original name verified in the [Original October 28 integration ledger](https://github.com/micahp/legendarypicks/blob/5f5887bc/docs/research/SLC-INTEGRATION-LEDGER-2026-10-28.md). [Definition](SLC.md). |
 | HPV1 | Historical project/data contract for eligible observed NFL play classes and joint personnel records. |
 | PBV1 | Historical personnel-package sampling experiment using HPV1. Not executable route diagrams. [Card](../model-cards/nfl/pbv1.md). |
 | Playbook profile | Observed team-season tendencies from nflverse PBP and participation; not a recovered play call or Madden asset. |

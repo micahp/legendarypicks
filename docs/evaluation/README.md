@@ -1,6 +1,6 @@
 # Evaluation and benchmarks
 
-[Handbook](../README.md) · [Model comparison](MODEL-COMPARISON.md)
+[Handbook](../README.md) · [Model comparison](MODEL-COMPARISON.md) · [Benchmark ladder](BENCHMARKS.md) · [Methodology](METHODOLOGY.md)
 
 Three separate questions: (1) does the code generate legal, reproducible games, (2) do distributions resemble real NFL football, (3) do probabilities forecast held-out outcomes better? A passing fixture or a visually plausible game cannot answer (3).
 

@@ -11,7 +11,7 @@ Start here. This is the maintained navigation layer for current definitions, mod
 | How physics and player decisions work | [Gridiron](architecture/GRIDIRON.md), [Liquid AI](architecture/LIQUID-AI.md) |
 | What models exist, exact identities and status | [Model registry](model-cards/README.md) |
 | NFL versions and variants | [NFL card](model-cards/nfl.md), [SLC model registry](model-cards/nfl/README.md) |
-| How performance is measured | [Evaluation](evaluation/README.md), [Model comparison](evaluation/MODEL-COMPARISON.md) |
+| How performance is measured | [Evaluation](evaluation/README.md), [Model comparison](evaluation/MODEL-COMPARISON.md), [Benchmark ladder](evaluation/BENCHMARKS.md), [Methodology](evaluation/METHODOLOGY.md) |
 | Active specs and contracts | [Specifications](specifications/README.md) |
 | What has been investigated and why | [Research index](research/README.md), [Decisions](decisions/README.md) |
 | Old handoffs and superseded indexes | [Archive](archive/README.md) |

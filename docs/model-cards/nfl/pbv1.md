@@ -2,7 +2,7 @@
 
 [NFL sequence registry](README.md) · [Architecture](../../architecture/SLC.md)
 
-**Objective and definition:** Personnel-package sampler on HPV1 historical NFL scrimmage records 2022–25. Cell = run/pass, down, distance bucket, red zone; shrink cell counts to parent (play family, down), K=20. Observed support only. Label-only and off controls are distinct; not an executable playbook.
+**Objective and definition:** Personnel-package sampler on HPV1 historical NFL scrimmage records 2022–25. The cross-season primary target combines RB and FB; SLC integration retains the RB-only package representation. Cell = run/pass, down, distance bucket, red zone; shrink cell counts to parent (play family, down), K=20. Observed support only. Label-only and off controls are distinct; not an executable playbook.
 
 **Frozen identity:** `pbv1 / pbv1-off`, source `8a1d9842` in the inspected [executable registry](https://github.com/micahp/legendarypicks/blob/e0d3f603/scripts/nfl_sequence/slc_model_registry.py). The registry specifies exact commit, profile, layer flags, build args, input dependencies and cutoff. Consult the actual package manifest for a specific run; branch head is not package identity.
 
