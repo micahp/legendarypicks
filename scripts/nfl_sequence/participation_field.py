@@ -360,12 +360,52 @@ class Field:
                     entrants.append(player['gsis_id'])
                 if len(picked) < need:
                     short[cls] = need - len(picked)
+        # A sampled exit is a proposal, not an obligatory vacancy. Keep the
+        # ordinary weighted transition unchanged whenever it fills every slot.
+        # Otherwise augment its partial assignment using the eligible roster,
+        # including proposed leavers whose rotation must be vetoed. This also
+        # permits a hybrid to move to another eligible class when necessary.
+        vetoed = []
+        repaired = False
+        if short:
+            units = [(cls, i) for cls in LINEUP_CLASSES for i in range(target[cls])]
+            assigned = {}
+            for cls in LINEUP_CLASSES:
+                for i, pid in enumerate(sorted(p for p in kept if kept_slot[p] == cls)):
+                    assigned[(cls, i)] = pid
+            def augment(unit, seen):
+                cls = unit[0]
+                occupied = {pid: slot for slot, pid in assigned.items()}
+                candidates = sorted(
+                    (pid for pid, roles in eligible.items() if cls in roles and pid != starter),
+                    key=lambda pid: (pid in occupied, slot_of(pid) != cls,
+                                     pid not in removed, ranks[pid], pid))
+                for pid in candidates:
+                    if pid in seen:
+                        continue
+                    seen.add(pid)
+                    previous = occupied.get(pid)
+                    if previous is None or augment(previous, seen):
+                        assigned[unit] = pid
+                        return True
+                return False
+            if all(augment(unit, set()) for unit in units if unit not in assigned):
+                final = set(assigned.values())
+                vetoed = sorted(removed & final)
+                kept = {pid: lineup.get(pid, 0) for pid in final}
+                kept_slot = {pid: unit[0] for unit, pid in assigned.items()}
+                leavers = leavers - final
+                count_removed = [pid for pid in count_removed if pid not in final]
+                entrants = sorted(final - set(lineup))
+                short = {}
+                repaired = True
         nxt = {pid: (lineup[pid] + 1 if pid in lineup else 1) for pid in kept}
         status = 'short' if short else 'ok'
         self.status[status] += 1
         return nxt, {'status': status, 'group': group, 'leavers': sorted(leavers),
                      'count_removed': count_removed, 'entrants': sorted(entrants), 'short': short,
-                     'slots': dict(sorted(kept_slot.items()))}
+                     'slots': dict(sorted(kept_slot.items())),
+                     **({'feasibility_repair': True, 'rotation_vetoed': vetoed} if repaired else {})}
 
     def entry_weight(self, pid, team, group, pos):
         if getattr(self, 'entry_current', False) and (team, pid) in self.entry_share:
