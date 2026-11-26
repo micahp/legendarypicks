@@ -1,6 +1,6 @@
 ﻿# Madden 64 statistical simulation study
 
-Status: **in progress**, 2026-11-24. One CPU-controlled exhibition has reached the end of game; no verified event recorder or statistical pilot has been captured. All proposed Madden statistical effects remain hypotheses. This document is a research protocol and evidence ledger, not a statistical results report.
+Status: **in progress**, updated 2026-11-26. Earlier end-screen and counter cross-checks are now supplemented by 25 additional hook-captured CPU-controlled exhibitions. Their full merged data and descriptive summaries are archived below. Event completeness, game-end classification in every run, and full-game RNG independence remain unverified, so these results are still a pilot rather than population estimates. Proposed Madden statistical effects remain hypotheses.
 
 ## Evidence and setup
 
@@ -155,3 +155,21 @@ The NFL's 1996 special-teams tables add independently published kicking totals: 
 ### Clock observation in the three-minute game
 
 `clock_intervals.py` finds exactly 720 sequential one-second regulation decrements, with no clock jumps, in the three-minute game's state timeline. The median interval is 50 emulator frames; 558 of 720 intervals are 49–51 frames, while 41 exceed 100 frames and the maximum is 4,255. Longer gaps include periods when the game clock does not advance, but this log alone does not classify the cause of every gap. The committed `q3-clock.json` preserves the frame-interval histogram. These are emulator frames, not wall-clock duration, and one game cannot establish how cadence changes with quarter length. A complete period-length comparison must separate running-clock intervals from stoppages and overtime and validate the emulated frame rate.
+
+## Additional hook-captured batch: 25 games
+
+On 2026-11-26, 25 more CPU-controlled Seattle-at-Green-Bay exhibitions completed in five batches of 6, 6, 6, 6 and 1. The settings used 3-minute quarters for 8 games, 5-minute quarters for 9, and 10-minute quarters for 8. The 15-minute setting was not sampled. Unique candidate RNG words 8001–8025 were written after loading fixed quarter-select states; they are not established independent full-game seeds. The same one-controller-centered exhibition setup was used, at 6400% requested emulator speed. Event capture ran at `0x80025b10`; per-hook screenshots were off.
+
+These exploratory games were collected before every Gate 0 validation condition had passed. They document capture output and candidate counters; do not count them as a gate-passing Stage 0 or independent Stage 1 sample.
+
+The hook produced 3,086 hook hits, 14,154 event rows and 7,908 staged rows. The combined merged CSV contains 109,535 rows: 46,054 counter-change rows after duplicate checkpoint-boundary values were suppressed, and 41,419 state-transition rows. The run-results file's 61,361 counter-row total counts chunk CSV rows before that merge-time suppression. There are 2,389 provisional candidate-play frames and no ambiguous candidate frame; the extractor still excludes unclassified, no-play and special-teams events, so this is not a complete play count.
+
+Descriptive final-counter summaries, using team index 0 as Green Bay and index 1 as Seattle from the earlier single-game screen cross-check:
+
+- **3-minute quarters (n=8):** mean candidate scores 7.88–3.62 (11.50 combined points per game); mean candidate total yards 188.2–121.2; mean candidate turnovers 1.50–1.75. Candidate outcomes were 4–4–0 by team index (wins for team 0, wins for team 1, ties). One game entered candidate overtime.
+- **5-minute quarters (n=9):** mean candidate scores 5.00–7.89 (12.89 combined); mean candidate total yards 224.7–203.8; mean candidate turnovers 2.67–1.67. Candidate outcomes were 3–5–1 by team index. One game entered candidate overtime.
+- **10-minute quarters (n=8):** mean candidate scores 18.88–14.00 (32.88 combined); mean candidate total yards 449.2–402.6; mean candidate turnovers 4.88–4.62. Candidate outcomes were 6–2–0 by team index. One game entered candidate overtime.
+
+These are provisional observed counters from one matchup, not validated box scores or NFL-normalized rates. The larger 10-minute totals are consistent with more game-clock opportunity, but this batch does not isolate a duration effect: each length uses different candidate RNG words, sample sizes are small, and the end transition and counters were not screen-checked in every game. The `roster_stat_process` source returns a signed 16-bit value after reading the unsigned team-counter array. Accordingly, the aggregate CSV includes a signed 16-bit interpretation for yardage counters at indices 0, 1, 2 and 10 plus each raw unsigned value; this is a source-based decoding inference, not a per-game display validation.
+
+The archived data files are [the completed run plan](madden64-statistical-study/additional-25-run-plan.json), [the run ledgers and hook totals](madden64-statistical-study/additional-25-run-results.json), [the aggregate statistics and limitations](madden64-statistical-study/additional-25-statistics.json), [the combined full event/counter/state CSV](madden64-statistical-study/additional-25-data/additional-25-full-data.csv), [the per-game counter summary CSV](madden64-statistical-study/additional-25-data/additional-25-game-stats.csv), and [the SHA-256 manifest](madden64-statistical-study/additional-25-SHA256SUMS.txt). The per-game directory contains one merged CSV, candidate summary JSON and provisional candidate-play JSON for each game. Original chunk CSVs, manifests and save states remain outside the repository under `E:/emu/madden64-w7` through `w12`.

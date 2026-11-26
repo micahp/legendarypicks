@@ -1,0 +1,5264 @@
+{
+  "status": "provisional_incomplete",
+  "definitions": {
+    "3": "pass attempt candidate",
+    "8": "sack candidate",
+    "9": "rush attempt candidate"
+  },
+  "limitations": "Excludes unclassified, no-play and special-teams events; down, spot and team semantics remain under validation.",
+  "plays": [
+    {
+      "frame": 77789,
+      "quarter": 1,
+      "clock": 285,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 21,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "10:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 79163,
+      "quarter": 1,
+      "clock": 277,
+      "down": 2,
+      "distance": 10,
+      "yard_display": 21,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "10:18",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "7:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:5",
+          "value": 25
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:41",
+          "value": 25
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "5:13",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "5:14",
+          "value": 25
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "5:43",
+          "value": 25
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": 25
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "1",
+          "value": 25
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": 25
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "12",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 80314,
+      "quarter": 1,
+      "clock": 254,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 46,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:5",
+          "value": 0
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:41",
+          "value": 0
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:13",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:14",
+          "value": 0
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:43",
+          "value": 0
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 81659,
+      "quarter": 1,
+      "clock": 228,
+      "down": 2,
+      "distance": 10,
+      "yard_display": 46,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:39",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 83045,
+      "quarter": 1,
+      "clock": 220,
+      "down": 3,
+      "distance": -10,
+      "yard_display": 46,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:18",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "7:39",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "7:20",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:7",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "2:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 84764,
+      "quarter": 1,
+      "clock": 217,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 41,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "9:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "9:39",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 85910,
+      "quarter": 1,
+      "clock": 211,
+      "down": 2,
+      "distance": 10,
+      "yard_display": 41,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:5",
+          "value": 9
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:41",
+          "value": 9
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:13",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:14",
+          "value": 9
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:43",
+          "value": 9
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": 9
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "1",
+          "value": 9
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": 9
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "10:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "5:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 86883,
+      "quarter": 1,
+      "clock": 191,
+      "down": 3,
+      "distance": 2,
+      "yard_display": 33,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 3,
+          "player_row": 1,
+          "raw_type": 9,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:9",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:10",
+          "value": -3
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:42",
+          "value": -3
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": -3
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "2",
+          "value": -3
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": -3
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "21",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "2:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 89287,
+      "quarter": 1,
+      "clock": 166,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 43,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 90292,
+      "quarter": 1,
+      "clock": 163,
+      "down": 2,
+      "distance": 10,
+      "yard_display": 43,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 4,
+          "player_row": 2,
+          "raw_type": 9,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:9",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:10",
+          "value": 2
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:42",
+          "value": 2
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": 2
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "2",
+          "value": 2
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": 2
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "21",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 91661,
+      "quarter": 1,
+      "clock": 137,
+      "down": 3,
+      "distance": 8,
+      "yard_display": 45,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:18",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:39",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 94320,
+      "quarter": 1,
+      "clock": 120,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 20,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:5",
+          "value": 6
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:41",
+          "value": 6
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:13",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:14",
+          "value": 6
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:43",
+          "value": 6
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": 6
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "1",
+          "value": 6
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": 6
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "5:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 95322,
+      "quarter": 1,
+      "clock": 100,
+      "down": 2,
+      "distance": 5,
+      "yard_display": 26,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:5",
+          "value": 5
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:41",
+          "value": 5
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:13",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:14",
+          "value": 5
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:43",
+          "value": 5
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": 5
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "1",
+          "value": 5
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": 5
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "12",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "2:19",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 96232,
+      "quarter": 1,
+      "clock": 82,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 31,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:5",
+          "value": -3
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:41",
+          "value": -3
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:13",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:14",
+          "value": -3
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:43",
+          "value": -3
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": -3
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "1",
+          "value": -3
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": -3
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "2:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 97386,
+      "quarter": 1,
+      "clock": 58,
+      "down": 2,
+      "distance": 13,
+      "yard_display": 28,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 3,
+          "player_row": 1,
+          "raw_type": 9,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:9",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:10",
+          "value": -1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:42",
+          "value": -1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": -1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "2",
+          "value": -1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": -1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "21",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "2:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 98822,
+      "quarter": 1,
+      "clock": 30,
+      "down": 3,
+      "distance": -14,
+      "yard_display": 27,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:7",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "6:16",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "1:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:20",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 101005,
+      "quarter": 1,
+      "clock": 25,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 36,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "9:19",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 101974,
+      "quarter": 1,
+      "clock": 23,
+      "down": 2,
+      "distance": 10,
+      "yard_display": 36,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 3,
+          "player_row": 1,
+          "raw_type": 9,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:9",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:10",
+          "value": -2
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:42",
+          "value": -2
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": -2
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "2",
+          "value": -2
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": -2
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "21",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 103442,
+      "quarter": 1,
+      "clock": 0,
+      "down": 3,
+      "distance": 12,
+      "yard_display": 38,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "8:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:5",
+          "value": 38
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:41",
+          "value": 38
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "2:13",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "2:14",
+          "value": 38
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "2:43",
+          "value": 38
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "2:15",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:6",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": 38
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "1",
+          "value": 38
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "5",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": 38
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 109264,
+      "quarter": 2,
+      "clock": 282,
+      "down": 1,
+      "distance": -10,
+      "yard_display": 33,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:7",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "8:16",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:39",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:20",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 110516,
+      "quarter": 2,
+      "clock": 278,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 36,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:5",
+          "value": 0
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:41",
+          "value": 0
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:13",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:14",
+          "value": 0
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:43",
+          "value": 0
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 111655,
+      "quarter": 2,
+      "clock": 255,
+      "down": 2,
+      "distance": 10,
+      "yard_display": 36,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:18",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:5",
+          "value": 0
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:41",
+          "value": 0
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:13",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:14",
+          "value": 0
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:43",
+          "value": 0
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 112975,
+      "quarter": 2,
+      "clock": 229,
+      "down": 3,
+      "distance": 10,
+      "yard_display": 36,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "10:18",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:5",
+          "value": 6
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:41",
+          "value": 6
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "1:13",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "1:14",
+          "value": 6
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "1:43",
+          "value": 6
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": 6
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "1",
+          "value": 6
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": 6
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 114052,
+      "quarter": 2,
+      "clock": 208,
+      "down": 4,
+      "distance": 4,
+      "yard_display": 30,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "6",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 115543,
+      "quarter": 2,
+      "clock": 204,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 30,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 116882,
+      "quarter": 2,
+      "clock": 200,
+      "down": 2,
+      "distance": 10,
+      "yard_display": 30,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "6:39",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 117876,
+      "quarter": 2,
+      "clock": 196,
+      "down": 3,
+      "distance": 10,
+      "yard_display": 30,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:5",
+          "value": 2
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:41",
+          "value": 2
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:13",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:14",
+          "value": 2
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:43",
+          "value": 2
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": 2
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "1",
+          "value": 2
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": 2
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "2:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 120533,
+      "quarter": 2,
+      "clock": 160,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 27,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:5",
+          "value": 4
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:41",
+          "value": 4
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:13",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:14",
+          "value": 4
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:43",
+          "value": 4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": 4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "1",
+          "value": 4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": 4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 121836,
+      "quarter": 2,
+      "clock": 134,
+      "down": 2,
+      "distance": 6,
+      "yard_display": 32,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 3,
+          "player_row": 1,
+          "raw_type": 9,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:9",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:10",
+          "value": 0
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:42",
+          "value": 0
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "21",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 123998,
+      "quarter": 2,
+      "clock": 115,
+      "down": 3,
+      "distance": 6,
+      "yard_display": 31,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:39",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 126872,
+      "quarter": 2,
+      "clock": 100,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 21,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:5",
+          "value": 3
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:41",
+          "value": 3
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:13",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:14",
+          "value": 3
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:43",
+          "value": 3
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": 3
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "1",
+          "value": 3
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": 3
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "10:19",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "7:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 127781,
+      "quarter": 2,
+      "clock": 82,
+      "down": 2,
+      "distance": -7,
+      "yard_display": 24,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:7",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:16",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "7:39",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "7:20",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 128855,
+      "quarter": 2,
+      "clock": 78,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 49,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 3,
+          "player_row": 1,
+          "raw_type": 9,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:9",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:10",
+          "value": 3
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:42",
+          "value": 3
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": 3
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "2",
+          "value": 3
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": 3
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "21",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 129605,
+      "quarter": 2,
+      "clock": 63,
+      "down": 2,
+      "distance": 7,
+      "yard_display": 48,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 3,
+          "player_row": 1,
+          "raw_type": 9,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "1:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:9",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:10",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:42",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "2",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "21",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 130556,
+      "quarter": 2,
+      "clock": 45,
+      "down": 3,
+      "distance": 6,
+      "yard_display": 47,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:5",
+          "value": 5
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:41",
+          "value": 5
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "1:13",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "1:14",
+          "value": 5
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "1:43",
+          "value": 5
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": 5
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "1",
+          "value": 5
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": 5
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 136114,
+      "quarter": 3,
+      "clock": 281,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 26,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:5",
+          "value": 38
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:41",
+          "value": 38
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "1:13",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "1:14",
+          "value": 38
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "1:43",
+          "value": 38
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": 38
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "1",
+          "value": 38
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": 38
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "12",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "2:19",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 138473,
+      "quarter": 3,
+      "clock": 255,
+      "down": 1,
+      "distance": -10,
+      "yard_display": 35,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:7",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:16",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "7:39",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "7:20",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 139664,
+      "quarter": 3,
+      "clock": 251,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 10,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 3,
+          "player_row": 1,
+          "raw_type": 9,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "1:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:9",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:10",
+          "value": 4
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:42",
+          "value": 4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": 4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "2",
+          "value": 4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": 4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "21",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 140916,
+      "quarter": 3,
+      "clock": 227,
+      "down": 2,
+      "distance": 6,
+      "yard_display": 13,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:39",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 142273,
+      "quarter": 3,
+      "clock": 223,
+      "down": 3,
+      "distance": 6,
+      "yard_display": 13,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "10:19",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "7:39",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 145325,
+      "quarter": 3,
+      "clock": 207,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 50,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:5",
+          "value": 25
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:41",
+          "value": 25
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "1:13",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "1:14",
+          "value": 25
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "1:43",
+          "value": 25
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": 25
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "1",
+          "value": 25
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": 25
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "12",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "2:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 147302,
+      "quarter": 3,
+      "clock": 179,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 25,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:5",
+          "value": 10
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:41",
+          "value": 10
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:13",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:14",
+          "value": 10
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:43",
+          "value": 10
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": 10
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "1",
+          "value": 10
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": 10
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "7:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 148603,
+      "quarter": 3,
+      "clock": 158,
+      "down": 2,
+      "distance": 0,
+      "yard_display": 15,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:19",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "6:39",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 149880,
+      "quarter": 3,
+      "clock": 155,
+      "down": 3,
+      "distance": 0,
+      "yard_display": 15,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 8,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:8",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:5",
+          "value": -9
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": -9
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "1",
+          "value": -9
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": -9
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "9:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "9:17",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 154685,
+      "quarter": 3,
+      "clock": 118,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 31,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 3,
+          "player_row": 1,
+          "raw_type": 9,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:9",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:10",
+          "value": 7
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:42",
+          "value": 7
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": 7
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "2",
+          "value": 7
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": 7
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "21",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 156183,
+      "quarter": 3,
+      "clock": 89,
+      "down": 2,
+      "distance": 3,
+      "yard_display": 38,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:19",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "10:39",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 157272,
+      "quarter": 3,
+      "clock": 86,
+      "down": 3,
+      "distance": 3,
+      "yard_display": 38,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 4,
+          "player_row": 2,
+          "raw_type": 9,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:9",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:10",
+          "value": 2
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:42",
+          "value": 2
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": 2
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "2",
+          "value": 2
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": 2
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "21",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 160430,
+      "quarter": 3,
+      "clock": 54,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 37,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 3,
+          "player_row": 1,
+          "raw_type": 9,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:9",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:10",
+          "value": 2
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:42",
+          "value": 2
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": 2
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "2",
+          "value": 2
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": 2
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "21",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "1:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 161641,
+      "quarter": 3,
+      "clock": 31,
+      "down": 2,
+      "distance": 8,
+      "yard_display": 39,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "10:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "10:39",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 163056,
+      "quarter": 3,
+      "clock": 25,
+      "down": 3,
+      "distance": 8,
+      "yard_display": 39,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:5",
+          "value": 25
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:41",
+          "value": 25
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "1:13",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "1:14",
+          "value": 25
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "1:43",
+          "value": 25
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": 25
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "1",
+          "value": 25
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "5",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": 25
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "12",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "5:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 164276,
+      "quarter": 3,
+      "clock": 0,
+      "down": 1,
+      "distance": -10,
+      "yard_display": 36,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:7",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:16",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:20",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 165579,
+      "quarter": 4,
+      "clock": 298,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 33,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:18",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:39",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 166764,
+      "quarter": 4,
+      "clock": 295,
+      "down": 2,
+      "distance": 10,
+      "yard_display": 33,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:19",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:39",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 167907,
+      "quarter": 4,
+      "clock": 289,
+      "down": 3,
+      "distance": 10,
+      "yard_display": 33,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "6:39",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 170689,
+      "quarter": 4,
+      "clock": 271,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 12,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:5",
+          "value": 9
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:41",
+          "value": 9
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:13",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:14",
+          "value": 9
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:43",
+          "value": 9
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": 9
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "1",
+          "value": 9
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": 9
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "9:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "6:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 171793,
+      "quarter": 4,
+      "clock": 249,
+      "down": 2,
+      "distance": 1,
+      "yard_display": 21,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 173617,
+      "quarter": 4,
+      "clock": 247,
+      "down": 3,
+      "distance": 1,
+      "yard_display": 21,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 3,
+          "player_row": 1,
+          "raw_type": 9,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:9",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:10",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:42",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "2",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "21",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "2:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 176222,
+      "quarter": 4,
+      "clock": 219,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 47,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 3,
+          "player_row": 1,
+          "raw_type": 9,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "10:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:9",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:10",
+          "value": -4
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:42",
+          "value": -4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": -4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "2",
+          "value": -4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": -4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "21",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 177318,
+      "quarter": 4,
+      "clock": 198,
+      "down": 2,
+      "distance": 14,
+      "yard_display": 44,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 3,
+          "player_row": 1,
+          "raw_type": 9,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "9:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:9",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:10",
+          "value": 2
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:42",
+          "value": 2
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": 2
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "2",
+          "value": 2
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": 2
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "21",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 179466,
+      "quarter": 4,
+      "clock": 156,
+      "down": 3,
+      "distance": 12,
+      "yard_display": 45,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 182693,
+      "quarter": 4,
+      "clock": 135,
+      "down": 1,
+      "distance": -10,
+      "yard_display": 20,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:7",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "8:16",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "7:20",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 184622,
+      "quarter": 4,
+      "clock": 130,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 25,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:5",
+          "value": 5
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:41",
+          "value": 5
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:13",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:14",
+          "value": 5
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:43",
+          "value": 5
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": 5
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "1",
+          "value": 5
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": 5
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 186406,
+      "quarter": 4,
+      "clock": 116,
+      "down": 2,
+      "distance": 5,
+      "yard_display": 20,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "9:18",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "3:39",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 187966,
+      "quarter": 4,
+      "clock": 108,
+      "down": 3,
+      "distance": -5,
+      "yard_display": 20,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "9:18",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:20",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:7",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 189431,
+      "quarter": 4,
+      "clock": 104,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 17,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "1:18",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 190473,
+      "quarter": 4,
+      "clock": 99,
+      "down": 2,
+      "distance": 10,
+      "yard_display": 17,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:5",
+          "value": 18
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:41",
+          "value": 18
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:13",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:14",
+          "value": 18
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:43",
+          "value": 18
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": 18
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "1",
+          "value": 18
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": 18
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "12",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "2:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "6:39",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "7:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 191425,
+      "quarter": 4,
+      "clock": 81,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 35,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 192824,
+      "quarter": 4,
+      "clock": 77,
+      "down": 2,
+      "distance": 10,
+      "yard_display": 35,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "10:19",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "7:39",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 194348,
+      "quarter": 4,
+      "clock": 72,
+      "down": 3,
+      "distance": 10,
+      "yard_display": 35,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 24,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:5",
+          "value": 5
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:41",
+          "value": 5
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:13",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:14",
+          "value": 5
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "4:43",
+          "value": 5
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": 5
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "1",
+          "value": 5
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": 5
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "6:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 195226,
+      "quarter": 4,
+      "clock": 56,
+      "down": 4,
+      "distance": 5,
+      "yard_display": 40,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 24,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "6",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "2:19",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "7:39",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 196394,
+      "quarter": 4,
+      "clock": 51,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 40,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "10:18",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "6:39",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 197547,
+      "quarter": 4,
+      "clock": 49,
+      "down": 2,
+      "distance": 10,
+      "yard_display": 40,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 4,
+          "player_row": 2,
+          "raw_type": 9,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "2:16",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:9",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:10",
+          "value": 4
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "4:42",
+          "value": 4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": 4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "2",
+          "value": 4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": 4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "21",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 198679,
+      "quarter": 4,
+      "clock": 45,
+      "down": 3,
+      "distance": 6,
+      "yard_display": 35,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 8,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "10:16",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "10:17",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:8",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:5",
+          "value": -7
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": -7
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "1",
+          "value": -7
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "4",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": -7
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 201747,
+      "quarter": 4,
+      "clock": 35,
+      "down": 1,
+      "distance": 10,
+      "yard_display": 1,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 24,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:18",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 203239,
+      "quarter": 4,
+      "clock": 30,
+      "down": 2,
+      "distance": 10,
+      "yard_display": 1,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 24,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:4",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:5",
+          "value": 16
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:41",
+          "value": 16
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "5:13",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "5:14",
+          "value": 16
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "5:43",
+          "value": 16
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "0",
+          "value": 16
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "1",
+          "value": 16
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "10",
+          "value": 16
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "12",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "2:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:16",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 205306,
+      "quarter": 4,
+      "clock": 9,
+      "down": 1,
+      "distance": -10,
+      "yard_display": 16,
+      "drive_team_candidate": 0,
+      "triggers": [
+        {
+          "team": 0,
+          "slot": 0,
+          "player_row": 24,
+          "raw_type": 3,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "0:7",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "event",
+          "index": "9:16",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "3",
+          "value": 1
+        },
+        {
+          "team": 0,
+          "kind": "staged",
+          "index": "22",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "3:18",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "5:20",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "frame": 207178,
+      "quarter": 4,
+      "clock": 7,
+      "down": 1,
+      "distance": -960,
+      "yard_display": 8,
+      "drive_team_candidate": 1,
+      "triggers": [
+        {
+          "team": 1,
+          "slot": 0,
+          "player_row": 0,
+          "raw_type": 9,
+          "value": 1
+        }
+      ],
+      "ambiguous": false,
+      "raw_records": [
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:9",
+          "value": 1
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:10",
+          "value": -4
+        },
+        {
+          "team": 1,
+          "kind": "event",
+          "index": "0:42",
+          "value": -4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "0",
+          "value": -4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "2",
+          "value": -4
+        },
+        {
+          "team": 1,
+          "kind": "staged",
+          "index": "10",
+          "value": -4
+        }
+      ]
+    }
+  ]
+}

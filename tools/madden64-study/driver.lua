@@ -11,8 +11,13 @@
 --   game <path.csv> <maxframes>                stop on experimental end transition
 --   gamechunk <path.csv> <frames>              bounded chunk; reads armed.txt (0 or 1)
 --   dumpram <path>                             first 0x90000 bytes of N64 RDRAM
+-- capture-hooks.flag enables event/staged records; capture-hook-screenshots.flag
+-- additionally saves a screenshot for every execution-hook hit.
 local W = (os.getenv("MADDEN_WORK") or "E:/emu/madden64/"):gsub("\\", "/")
 if W:sub(-1) ~= "/" then W = W .. "/" end
+local speed_percent = tonumber(os.getenv("MADDEN_SPEED") or "6400")
+assert(speed_percent and speed_percent > 0, "invalid MADDEN_SPEED")
+client.speedmode(speed_percent)
 client.SetSoundOn(false)
 local f = io.open(W .. "buttons.txt", "w")
 for k, _ in pairs(joypad.get()) do f:write(k .. "\n") end
@@ -50,10 +55,11 @@ while true do
         out:write("frame,quarter,clock,down,distance,yard,team,kind,index,value,rng,player_row,drive_team_candidate\n")
         local hits = 0
         local capture_hooks = exists(W .. "capture-hooks.flag")
+        local capture_hook_screenshots = exists(W .. "capture-hook-screenshots.flag")
         local pending_screenshot = nil
         local hook = event.on_bus_exec(function()
           hits = hits + 1
-          if capture_hooks then pending_screenshot = emu.framecount() end
+          if capture_hooks and capture_hook_screenshots then pending_screenshot = emu.framecount() end
           local q = memory.read_u16_be(0x876dc, "RDRAM")
           local clock = memory.read_u16_be(0x87aac, "RDRAM")
           local down = memory.read_s32_be(0x89544, "RDRAM")
@@ -61,24 +67,26 @@ while true do
           local yard = memory.read_s32_be(0x8954c, "RDRAM")
           local rng = memory.read_u32_be(0x87998, "RDRAM")
           local drive_team = memory.read_u8(0x88af3, "RDRAM")
-          for team = 0, 1 do
-            local base = 0x82ca8 + team * 0x214c
-            local n = memory.read_s16_be(base, "RDRAM")
-            assert(n >= 0 and n <= 30, "invalid staged event count")
-            for i = 0, n - 1 do
-              local p = base + 2 + i * 4
-              local slot = memory.read_u8(p, "RDRAM")
-              local kind = memory.read_u8(p + 1, "RDRAM")
-              local value = memory.read_s16_be(p + 2, "RDRAM")
-              local player_row = slot < 11 and memory.read_u16_be(0x81860 + team * 0x214c + 2 * slot, "RDRAM") or -1
-              out:write(string.format("%d,%d,%d,%d,%d,%d,%d,event,%d:%d,%d,%u,%d,%d\n",
-                emu.framecount(), q, clock, down, distance, yard, team, slot, kind, value, rng, player_row, drive_team))
-            end
-            for i = 0, 22 do
-              local value = memory.read_s16_be(0x82d50 + team * 0x214c + i * 2, "RDRAM")
-              if value ~= 0 then
-                out:write(string.format("%d,%d,%d,%d,%d,%d,%d,staged,%d,%d,%u,,%d\n",
-                  emu.framecount(), q, clock, down, distance, yard, team, i, value, rng, drive_team))
+          if capture_hooks then
+            for team = 0, 1 do
+              local base = 0x82ca8 + team * 0x214c
+              local n = memory.read_s16_be(base, "RDRAM")
+              assert(n >= 0 and n <= 30, "invalid staged event count")
+              for i = 0, n - 1 do
+                local p = base + 2 + i * 4
+                local slot = memory.read_u8(p, "RDRAM")
+                local kind = memory.read_u8(p + 1, "RDRAM")
+                local value = memory.read_s16_be(p + 2, "RDRAM")
+                local player_row = slot < 11 and memory.read_u16_be(0x81860 + team * 0x214c + 2 * slot, "RDRAM") or -1
+                out:write(string.format("%d,%d,%d,%d,%d,%d,%d,event,%d:%d,%d,%u,%d,%d\n",
+                  emu.framecount(), q, clock, down, distance, yard, team, slot, kind, value, rng, player_row, drive_team))
+              end
+              for i = 0, 22 do
+                local value = memory.read_s16_be(0x82d50 + team * 0x214c + i * 2, "RDRAM")
+                if value ~= 0 then
+                  out:write(string.format("%d,%d,%d,%d,%d,%d,%d,staged,%d,%d,%u,,%d\n",
+                    emu.framecount(), q, clock, down, distance, yard, team, i, value, rng, drive_team))
+                end
               end
             end
           end

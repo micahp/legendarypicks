@@ -1,0 +1,627 @@
+{
+  "status": "complete_descriptive_pilot",
+  "completed_utc": "2026-11-26T07:45:17.458977+00:00",
+  "games": 25,
+  "games_by_quarter_minutes": {
+    "3": 8,
+    "5": 9,
+    "10": 8
+  },
+  "batch_sizes": [
+    6,
+    6,
+    6,
+    6,
+    1
+  ],
+  "capture": {
+    "hook_address": "0x80025b10",
+    "hook_time_screenshots": false,
+    "hook_hits": 3086,
+    "event_rows": 14154,
+    "staged_rows": 7908,
+    "team_counter_rows": 46054,
+    "state_transition_rows": 41419,
+    "candidate_play_frames": 2389,
+    "ambiguous_candidate_frames": 0,
+    "merged_raw_rows": 109535
+  },
+  "groups": {
+    "3": {
+      "games": 8,
+      "games_entering_overtime_candidate": 1,
+      "outcomes_by_team_index": {
+        "team0_wins": 4,
+        "team1_wins": 4
+      },
+      "combined_points_per_game": {
+        "mean": 11.5,
+        "median": 12.0,
+        "min": 3,
+        "max": 26
+      },
+      "candidate_counters": {
+        "team0_total_offense_candidate": {
+          "sum": 912,
+          "mean_per_game": 114,
+          "median_per_game": 107.0,
+          "min_per_game": 70,
+          "max_per_game": 177
+        },
+        "team0_passing_yards_candidate": {
+          "sum": 876,
+          "mean_per_game": 109.5,
+          "median_per_game": 96.5,
+          "min_per_game": 59,
+          "max_per_game": 176
+        },
+        "team0_rushing_yards_candidate": {
+          "sum": 36,
+          "mean_per_game": 4.5,
+          "median_per_game": 3.0,
+          "min_per_game": -3,
+          "max_per_game": 12
+        },
+        "team0_turnovers_candidate": {
+          "sum": 12,
+          "mean_per_game": 1.5,
+          "median_per_game": 1.0,
+          "min_per_game": 0,
+          "max_per_game": 4
+        },
+        "team0_third_down_attempts_candidate": {
+          "sum": 51,
+          "mean_per_game": 6.375,
+          "median_per_game": 6.0,
+          "min_per_game": 3,
+          "max_per_game": 10
+        },
+        "team0_third_down_conversions_candidate": {
+          "sum": 14,
+          "mean_per_game": 1.75,
+          "median_per_game": 2.0,
+          "min_per_game": 0,
+          "max_per_game": 4
+        },
+        "team0_fourth_down_attempts_candidate": {
+          "sum": 3,
+          "mean_per_game": 0.375,
+          "median_per_game": 0.0,
+          "min_per_game": 0,
+          "max_per_game": 2
+        },
+        "team0_fourth_down_conversions_candidate": {
+          "sum": 1,
+          "mean_per_game": 0.125,
+          "median_per_game": 0.0,
+          "min_per_game": 0,
+          "max_per_game": 1
+        },
+        "team0_total_yards_candidate": {
+          "sum": 1506,
+          "mean_per_game": 188.25,
+          "median_per_game": 200.0,
+          "min_per_game": 119,
+          "max_per_game": 236
+        },
+        "team0_possession_seconds_candidate": {
+          "sum": 3015,
+          "mean_per_game": 376.875,
+          "median_per_game": 374.0,
+          "min_per_game": 284,
+          "max_per_game": 500
+        },
+        "team0_first_downs_candidate": {
+          "sum": 33,
+          "mean_per_game": 4.125,
+          "median_per_game": 4.5,
+          "min_per_game": 2,
+          "max_per_game": 7
+        },
+        "team0_score_candidate": {
+          "sum": 63,
+          "mean_per_game": 7.875,
+          "median_per_game": 6.5,
+          "min_per_game": 0,
+          "max_per_game": 17
+        },
+        "team1_total_offense_candidate": {
+          "sum": 433,
+          "mean_per_game": 54.125,
+          "median_per_game": 58.0,
+          "min_per_game": -1,
+          "max_per_game": 130
+        },
+        "team1_passing_yards_candidate": {
+          "sum": 328,
+          "mean_per_game": 41,
+          "median_per_game": 39.0,
+          "min_per_game": -4,
+          "max_per_game": 111
+        },
+        "team1_rushing_yards_candidate": {
+          "sum": 105,
+          "mean_per_game": 13.125,
+          "median_per_game": 10.0,
+          "min_per_game": 3,
+          "max_per_game": 43
+        },
+        "team1_turnovers_candidate": {
+          "sum": 14,
+          "mean_per_game": 1.75,
+          "median_per_game": 1.5,
+          "min_per_game": 0,
+          "max_per_game": 6
+        },
+        "team1_third_down_attempts_candidate": {
+          "sum": 49,
+          "mean_per_game": 6.125,
+          "median_per_game": 6.0,
+          "min_per_game": 4,
+          "max_per_game": 8
+        },
+        "team1_third_down_conversions_candidate": {
+          "sum": 8,
+          "mean_per_game": 1,
+          "median_per_game": 1.0,
+          "min_per_game": 0,
+          "max_per_game": 3
+        },
+        "team1_fourth_down_attempts_candidate": {
+          "sum": 6,
+          "mean_per_game": 0.75,
+          "median_per_game": 0.5,
+          "min_per_game": 0,
+          "max_per_game": 2
+        },
+        "team1_fourth_down_conversions_candidate": {
+          "sum": 1,
+          "mean_per_game": 0.125,
+          "median_per_game": 0.0,
+          "min_per_game": 0,
+          "max_per_game": 1
+        },
+        "team1_total_yards_candidate": {
+          "sum": 970,
+          "mean_per_game": 121.25,
+          "median_per_game": 111.0,
+          "min_per_game": 27,
+          "max_per_game": 212
+        },
+        "team1_possession_seconds_candidate": {
+          "sum": 2822,
+          "mean_per_game": 352.75,
+          "median_per_game": 363.0,
+          "min_per_game": 220,
+          "max_per_game": 436
+        },
+        "team1_first_downs_candidate": {
+          "sum": 19,
+          "mean_per_game": 2.375,
+          "median_per_game": 2.5,
+          "min_per_game": 1,
+          "max_per_game": 4
+        },
+        "team1_score_candidate": {
+          "sum": 29,
+          "mean_per_game": 3.625,
+          "median_per_game": 1.5,
+          "min_per_game": 0,
+          "max_per_game": 16
+        }
+      },
+      "hook_rows": {
+        "hook_hits": 508,
+        "event_rows": 2313,
+        "staged_rows": 1330,
+        "candidate_play_frames": 397
+      }
+    },
+    "5": {
+      "games": 9,
+      "games_entering_overtime_candidate": 1,
+      "outcomes_by_team_index": {
+        "team0_wins": 3,
+        "team1_wins": 5,
+        "ties": 1
+      },
+      "combined_points_per_game": {
+        "mean": 12.889,
+        "median": 13,
+        "min": 3,
+        "max": 23
+      },
+      "candidate_counters": {
+        "team0_total_offense_candidate": {
+          "sum": 1096,
+          "mean_per_game": 121.778,
+          "median_per_game": 100,
+          "min_per_game": 32,
+          "max_per_game": 270
+        },
+        "team0_passing_yards_candidate": {
+          "sum": 1048,
+          "mean_per_game": 116.444,
+          "median_per_game": 95,
+          "min_per_game": 32,
+          "max_per_game": 265
+        },
+        "team0_rushing_yards_candidate": {
+          "sum": 48,
+          "mean_per_game": 5.333,
+          "median_per_game": 5,
+          "min_per_game": -9,
+          "max_per_game": 21
+        },
+        "team0_turnovers_candidate": {
+          "sum": 24,
+          "mean_per_game": 2.667,
+          "median_per_game": 2,
+          "min_per_game": 0,
+          "max_per_game": 7
+        },
+        "team0_third_down_attempts_candidate": {
+          "sum": 94,
+          "mean_per_game": 10.444,
+          "median_per_game": 10,
+          "min_per_game": 7,
+          "max_per_game": 15
+        },
+        "team0_third_down_conversions_candidate": {
+          "sum": 17,
+          "mean_per_game": 1.889,
+          "median_per_game": 2,
+          "min_per_game": 0,
+          "max_per_game": 3
+        },
+        "team0_fourth_down_attempts_candidate": {
+          "sum": 5,
+          "mean_per_game": 0.556,
+          "median_per_game": 0,
+          "min_per_game": 0,
+          "max_per_game": 2
+        },
+        "team0_fourth_down_conversions_candidate": {
+          "sum": 0,
+          "mean_per_game": 0,
+          "median_per_game": 0,
+          "min_per_game": 0,
+          "max_per_game": 0
+        },
+        "team0_total_yards_candidate": {
+          "sum": 2022,
+          "mean_per_game": 224.667,
+          "median_per_game": 249,
+          "min_per_game": 102,
+          "max_per_game": 344
+        },
+        "team0_possession_seconds_candidate": {
+          "sum": 5529,
+          "mean_per_game": 614.333,
+          "median_per_game": 587,
+          "min_per_game": 462,
+          "max_per_game": 762
+        },
+        "team0_first_downs_candidate": {
+          "sum": 47,
+          "mean_per_game": 5.222,
+          "median_per_game": 6,
+          "min_per_game": 1,
+          "max_per_game": 9
+        },
+        "team0_score_candidate": {
+          "sum": 45,
+          "mean_per_game": 5,
+          "median_per_game": 3,
+          "min_per_game": 0,
+          "max_per_game": 13
+        },
+        "team1_total_offense_candidate": {
+          "sum": 985,
+          "mean_per_game": 109.444,
+          "median_per_game": 91,
+          "min_per_game": 37,
+          "max_per_game": 178
+        },
+        "team1_passing_yards_candidate": {
+          "sum": 874,
+          "mean_per_game": 97.111,
+          "median_per_game": 81,
+          "min_per_game": 25,
+          "max_per_game": 167
+        },
+        "team1_rushing_yards_candidate": {
+          "sum": 111,
+          "mean_per_game": 12.333,
+          "median_per_game": 11,
+          "min_per_game": -1,
+          "max_per_game": 39
+        },
+        "team1_turnovers_candidate": {
+          "sum": 15,
+          "mean_per_game": 1.667,
+          "median_per_game": 2,
+          "min_per_game": 0,
+          "max_per_game": 5
+        },
+        "team1_third_down_attempts_candidate": {
+          "sum": 95,
+          "mean_per_game": 10.556,
+          "median_per_game": 10,
+          "min_per_game": 7,
+          "max_per_game": 15
+        },
+        "team1_third_down_conversions_candidate": {
+          "sum": 12,
+          "mean_per_game": 1.333,
+          "median_per_game": 2,
+          "min_per_game": 0,
+          "max_per_game": 3
+        },
+        "team1_fourth_down_attempts_candidate": {
+          "sum": 5,
+          "mean_per_game": 0.556,
+          "median_per_game": 1,
+          "min_per_game": 0,
+          "max_per_game": 1
+        },
+        "team1_fourth_down_conversions_candidate": {
+          "sum": 0,
+          "mean_per_game": 0,
+          "median_per_game": 0,
+          "min_per_game": 0,
+          "max_per_game": 0
+        },
+        "team1_total_yards_candidate": {
+          "sum": 1834,
+          "mean_per_game": 203.778,
+          "median_per_game": 201,
+          "min_per_game": 131,
+          "max_per_game": 281
+        },
+        "team1_possession_seconds_candidate": {
+          "sum": 5571,
+          "mean_per_game": 619,
+          "median_per_game": 623,
+          "min_per_game": 438,
+          "max_per_game": 776
+        },
+        "team1_first_downs_candidate": {
+          "sum": 33,
+          "mean_per_game": 3.667,
+          "median_per_game": 4,
+          "min_per_game": 1,
+          "max_per_game": 5
+        },
+        "team1_score_candidate": {
+          "sum": 71,
+          "mean_per_game": 7.889,
+          "median_per_game": 10,
+          "min_per_game": 0,
+          "max_per_game": 16
+        }
+      },
+      "hook_rows": {
+        "hook_hits": 925,
+        "event_rows": 4288,
+        "staged_rows": 2364,
+        "candidate_play_frames": 721
+      }
+    },
+    "10": {
+      "games": 8,
+      "games_entering_overtime_candidate": 1,
+      "outcomes_by_team_index": {
+        "team1_wins": 2,
+        "team0_wins": 6
+      },
+      "combined_points_per_game": {
+        "mean": 32.875,
+        "median": 35.0,
+        "min": 16,
+        "max": 44
+      },
+      "candidate_counters": {
+        "team0_total_offense_candidate": {
+          "sum": 2130,
+          "mean_per_game": 266.25,
+          "median_per_game": 254.5,
+          "min_per_game": 195,
+          "max_per_game": 377
+        },
+        "team0_passing_yards_candidate": {
+          "sum": 2051,
+          "mean_per_game": 256.375,
+          "median_per_game": 250.5,
+          "min_per_game": 195,
+          "max_per_game": 343
+        },
+        "team0_rushing_yards_candidate": {
+          "sum": 79,
+          "mean_per_game": 9.875,
+          "median_per_game": 9.0,
+          "min_per_game": -7,
+          "max_per_game": 34
+        },
+        "team0_turnovers_candidate": {
+          "sum": 39,
+          "mean_per_game": 4.875,
+          "median_per_game": 5.5,
+          "min_per_game": 1,
+          "max_per_game": 8
+        },
+        "team0_third_down_attempts_candidate": {
+          "sum": 158,
+          "mean_per_game": 19.75,
+          "median_per_game": 19.5,
+          "min_per_game": 16,
+          "max_per_game": 26
+        },
+        "team0_third_down_conversions_candidate": {
+          "sum": 29,
+          "mean_per_game": 3.625,
+          "median_per_game": 3.0,
+          "min_per_game": 1,
+          "max_per_game": 7
+        },
+        "team0_fourth_down_attempts_candidate": {
+          "sum": 4,
+          "mean_per_game": 0.5,
+          "median_per_game": 0.5,
+          "min_per_game": 0,
+          "max_per_game": 1
+        },
+        "team0_fourth_down_conversions_candidate": {
+          "sum": 1,
+          "mean_per_game": 0.125,
+          "median_per_game": 0.0,
+          "min_per_game": 0,
+          "max_per_game": 1
+        },
+        "team0_total_yards_candidate": {
+          "sum": 3594,
+          "mean_per_game": 449.25,
+          "median_per_game": 430.0,
+          "min_per_game": 365,
+          "max_per_game": 599
+        },
+        "team0_possession_seconds_candidate": {
+          "sum": 9444,
+          "mean_per_game": 1180.5,
+          "median_per_game": 1175.5,
+          "min_per_game": 973,
+          "max_per_game": 1391
+        },
+        "team0_first_downs_candidate": {
+          "sum": 84,
+          "mean_per_game": 10.5,
+          "median_per_game": 10.0,
+          "min_per_game": 6,
+          "max_per_game": 16
+        },
+        "team0_score_candidate": {
+          "sum": 151,
+          "mean_per_game": 18.875,
+          "median_per_game": 20.0,
+          "min_per_game": 6,
+          "max_per_game": 30
+        },
+        "team1_total_offense_candidate": {
+          "sum": 1683,
+          "mean_per_game": 210.375,
+          "median_per_game": 210.0,
+          "min_per_game": 131,
+          "max_per_game": 284
+        },
+        "team1_passing_yards_candidate": {
+          "sum": 1505,
+          "mean_per_game": 188.125,
+          "median_per_game": 193.5,
+          "min_per_game": 124,
+          "max_per_game": 264
+        },
+        "team1_rushing_yards_candidate": {
+          "sum": 178,
+          "mean_per_game": 22.25,
+          "median_per_game": 16.5,
+          "min_per_game": 1,
+          "max_per_game": 55
+        },
+        "team1_turnovers_candidate": {
+          "sum": 37,
+          "mean_per_game": 4.625,
+          "median_per_game": 4.5,
+          "min_per_game": 1,
+          "max_per_game": 8
+        },
+        "team1_third_down_attempts_candidate": {
+          "sum": 166,
+          "mean_per_game": 20.75,
+          "median_per_game": 21.5,
+          "min_per_game": 16,
+          "max_per_game": 24
+        },
+        "team1_third_down_conversions_candidate": {
+          "sum": 27,
+          "mean_per_game": 3.375,
+          "median_per_game": 3.5,
+          "min_per_game": 2,
+          "max_per_game": 5
+        },
+        "team1_fourth_down_attempts_candidate": {
+          "sum": 6,
+          "mean_per_game": 0.75,
+          "median_per_game": 1.0,
+          "min_per_game": 0,
+          "max_per_game": 2
+        },
+        "team1_fourth_down_conversions_candidate": {
+          "sum": 1,
+          "mean_per_game": 0.125,
+          "median_per_game": 0.0,
+          "min_per_game": 0,
+          "max_per_game": 1
+        },
+        "team1_total_yards_candidate": {
+          "sum": 3221,
+          "mean_per_game": 402.625,
+          "median_per_game": 398.0,
+          "min_per_game": 293,
+          "max_per_game": 522
+        },
+        "team1_possession_seconds_candidate": {
+          "sum": 10274,
+          "mean_per_game": 1284.25,
+          "median_per_game": 1287.5,
+          "min_per_game": 1009,
+          "max_per_game": 1682
+        },
+        "team1_first_downs_candidate": {
+          "sum": 73,
+          "mean_per_game": 9.125,
+          "median_per_game": 9.0,
+          "min_per_game": 6,
+          "max_per_game": 13
+        },
+        "team1_score_candidate": {
+          "sum": 112,
+          "mean_per_game": 14,
+          "median_per_game": 14.5,
+          "min_per_game": 10,
+          "max_per_game": 17
+        }
+      },
+      "hook_rows": {
+        "hook_hits": 1653,
+        "event_rows": 7553,
+        "staged_rows": 4214,
+        "candidate_play_frames": 1271
+      }
+    }
+  },
+  "provenance": {
+    "run_results": "additional-25-run-results.json",
+    "run_plan": "additional-25-run-plan.json",
+    "full_data_csv": "additional-25-data\\additional-25-full-data.csv",
+    "full_data_csv_sha256": "8c9a02d6fea02821014b0106ca80138483451abcb110f923a87c91e8f2047aec",
+    "game_stats_csv": "additional-25-data\\additional-25-game-stats.csv",
+    "game_stats_csv_sha256": "aacc09f5e0d20dffd4a1baa58ca838e5d89aa37f896509fbec8863b2b861d918",
+    "checksum_manifest": "additional-25-SHA256SUMS.txt"
+  },
+  "signed_counter_interpretation": {
+    "indices": [
+      0,
+      1,
+      2,
+      10
+    ],
+    "rule": "For selected yardage counters, convert raw u16 values >=32768 to signed s16 by subtracting 65536; both interpreted and raw values are written to game-stats CSV, while full-data CSV preserves raw capture rows.",
+    "basis": "The matched roster_stat_process accessor returns s16 after reading u16 team counters; applying the signed display interpretation to all runs is a source-based inference, not a per-game screen verification."
+  },
+  "limitations": [
+    "Summary counters and candidate play labels are provisional; candidate end transitions were not screen-checked game by game.",
+    "RNG words are unique candidate seeds, but independent full-game outcomes have not been established.",
+    "All games use the same Seattle-at-Green-Bay CPU-controlled exhibition and start states; results do not estimate general NFL or Madden realism.",
+    "The hook captures one routine's event staging and frame-sampled counters; unclassified, no-play, and some direct-update events may be absent."
+  ]
+}
