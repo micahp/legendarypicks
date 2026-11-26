@@ -452,7 +452,8 @@ class Field:
         self.status[status] += 1
         return nxt, {'status': status, 'group': group, 'leavers': sorted(leavers),
                      'count_removed': count_removed, 'entrants': sorted(entrants), 'short': short,
-                     'slots': dict(sorted(kept_slot.items())),\n                     **({'feasibility_repair': True, 'rotation_vetoed': vetoed} if repaired else {})}
+                     'slots': dict(sorted(kept_slot.items())),
+                     **({'feasibility_repair': True, 'rotation_vetoed': vetoed} if repaired else {})}
 
     def entry_weight(self, pid, team, group, pos):
         if getattr(self, 'entry_current', False) and (team, pid) in self.entry_share:
