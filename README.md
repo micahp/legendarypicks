@@ -61,6 +61,8 @@ venv/bin/python -m uvicorn sports_service:app --reload
 
 The frontend proxies `/api/*` through `API_PROXY_TARGET`; use the environment configuration for the active stack rather than hardcoding a backend host in browser code.
 
+For game lookup, API discovery and cutoff-valid NFL snapshot selection, see the [API agent guide](docs/API-AGENT-GUIDE.md).
+
 For managed development, the shared `dev` worktree normally serves the frontend on `:3096` and backend on `:8096`. Production is a separate Docker Compose stack, normally `:3100` and `:8100`. Do not restart, deploy, or migrate either environment as part of ordinary feature work.
 
 ## Data and release rules

@@ -4,6 +4,7 @@ Start here. This is the maintained navigation layer for current definitions, mod
 
 | I want to know | Go here |
 |---|---|
+| How to query LP data and select a snapshot game | [API agent guide](API-AGENT-GUIDE.md) |
 | How the models and engines fit together | [Architecture](architecture/README.md) |
 | What an acronym means | [Glossary](architecture/GLOSSARY.md) |
 | What CEG is | [Conditional Event Generation](architecture/CEG.md) |
