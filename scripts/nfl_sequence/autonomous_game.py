@@ -21,6 +21,7 @@ import gridiron_bridge
 import participation_field
 import pregame_snapshot
 import roster_preflight
+import snap_clock
 import v1_complete_roster
 
 
@@ -29,6 +30,16 @@ SPECIAL_TEAMS_RATING_KEYS = frozenset({
     'CTH', 'CAR', 'BCV', 'ELU', 'TRK', 'PRC', 'KPW', 'KAC',
 })
 GRIDIRON_FUMBLE_RETURN_RAW_TOLERANCE_YARDS = 0.001
+
+
+def _gridiron_yardline_round(value, label):
+    """Match JavaScript Math.round for nonnegative, continuous field spots."""
+    if (isinstance(value, bool) or not isinstance(value, (int, float))
+            or not math.isfinite(value) or not 0 <= value <= 100):
+        raise ValueError(f'gridiron_{label}_spot_invalid')
+    return math.floor(value + 0.5)
+
+
 GRIDIRON_SCRIMMAGE_DEAD_BALL_REASONS = frozenset({
     'tackle', 'out_of_bounds', 'incomplete', 'sack', 'touchdown', 'safety',
 })
@@ -169,7 +180,7 @@ class AutonomousTimeoutDecisions:
         self.execution = execution
         self.left = dict(remaining)
         self.points = dict(points)
-        self.clock = None
+        self.clock = execution.snap_clock
 
     def decide(self, _rng, before, after, terminal, event, row):
         if (after is None or after.get('down') is None or terminal in ('touchdown', 'safety', 'field_goal_attempt', 'punt')
@@ -234,11 +245,13 @@ class AutonomousGameExecution:
         self.engine_root = str(engine_root)
         self.ratings_path = ratings_path
         self.coaching_profiles = coaching_profiles or {}
+        self.snap_clock = snap_clock.SnapClock.load()
         self.contract_v3_commit = gridiron_bridge._check_ceg_contract_v3()
         self.session = gridiron_bridge.GridironSession(self.engine_root)
         self.event_switches = EventExpansionSwitches()
         self.event_manifest_sha256 = hashlib.sha256(
-            f'{self.session.commit}:{gridiron_bridge.PLAYBOOK_MANIFEST_SHA256}:{participation_sha256}'.encode()
+            (f'{self.session.commit}:{gridiron_bridge.PLAYBOOK_MANIFEST_SHA256}:{participation_sha256}:'
+             f'{self.snap_clock.sha256}').encode()
         ).hexdigest()
         self.play_index = 0
         self._play_prior_cache = {}
@@ -442,14 +455,16 @@ class AutonomousGameExecution:
         if event == 'interception':
             receiving_yl = final_x if direction == 1 else 100 - final_x
             spot = int(round(receiving_yl))
-        elapsed = max(1, math.ceil(outcome['elapsed_seconds']))
-        dead = 0 if reason in ('out_of_bounds', 'incomplete', 'touchdown', 'safety') else 27
+        elapsed = max(0.0, float(outcome['elapsed_seconds']))
+        live_clock_seconds = max(1, math.ceil(elapsed))
+        dead = 0
         yardage_for_slc = (0 if event == 'interception' and event_record.possession is not None
                            and event_record.possession.touchback else gain)
         row = {'game_id': self.snapshot['schedule']['game_id'], 'play_id': int(context['play_index']),
                'play_type': 'run' if event == 'run' else 'pass', 'yards_gained': yardage_for_slc,
                'live_elapsed_seconds': elapsed, 'dead_ball_seconds': dead,
-               'clock_stopped': dead == 0, 'out_of_bounds': reason == 'out_of_bounds',
+               'clock_stopped': reason in ('out_of_bounds', 'incomplete', 'touchdown', 'safety'),
+               'out_of_bounds': reason == 'out_of_bounds',
                'decision_note': decision_note or {'selection': family,
                    'team_playbook_prior': self._playbook_prior(call['offense']['team'])['use'],
                    'concept': call['offense']['call']['concept'],
@@ -608,6 +623,7 @@ class AutonomousGameExecution:
     def _ceg_play(self, call, result, event, yards, state, direction, los_x, final_x, reason,
                   interception, caught, thrown, pass_interference=None, penalty_decision=None):
         outcome = result['result']
+        live_clock_seconds = max(1, math.ceil(outcome['elapsed_seconds']))
         players = result.get('participants', {})
         offense_players = call['offense']['lineup']
         fumble_info = outcome.get('fumble')
@@ -644,9 +660,12 @@ class AutonomousGameExecution:
             fumble_x = fumble_info['fumble_spot']['x']
             recovery_x = fumble_info['recovery_spot']['x']
             dead_spot_x = fumble_info['dead_ball_spot']['x']
-            fumble_y = int(round(100 - fumble_x if direction == 1 else fumble_x))
-            recovery_y = int(round(100 - recovery_x if direction == 1 else recovery_x))
-            dead_y = int(round(100 - dead_spot_x if direction == 1 else dead_spot_x))
+            fumble_y = _gridiron_yardline_round(
+                100 - fumble_x if direction == 1 else fumble_x, 'fumble')
+            recovery_y = _gridiron_yardline_round(
+                100 - recovery_x if direction == 1 else recovery_x, 'recovery')
+            dead_y = _gridiron_yardline_round(
+                100 - dead_spot_x if direction == 1 else dead_spot_x, 'dead_ball')
             fumble_role = 'offense' if recovery_side == 'O' else 'defense'
             if recovery_side == 'O':
                 possession = ceg_contract.PossessionV2(
@@ -654,14 +673,19 @@ class AutonomousGameExecution:
                     dead_ball_yardline_100=dead_y, recovered_by=ceg_contract.PlayerRoleV2.named(recoverer_id),
                     fumble_spot_yardline_100=fumble_y)
             else:
-                return_yards = int(round(dead_y - recovery_y))
+                return_yards = dead_y - recovery_y
                 raw_return_yards = fumble_info.get('return_yards')
-                if (isinstance(raw_return_yards, bool)
-                        or not isinstance(raw_return_yards, (int, float))
-                        or not math.isfinite(raw_return_yards)):
-                    raise ValueError('gridiron_fumble_return_yards_missing_or_invalid')
+                if type(raw_return_yards) is not int:
+                    raise ValueError('gridiron_fumble_statistical_return_yards_missing_or_invalid')
+                if raw_return_yards != return_yards:
+                    raise ValueError('gridiron_fumble_statistical_return_yards_disagree_with_rounded_spots')
+                return_displacement = fumble_info.get('return_displacement_yards')
+                if (isinstance(return_displacement, bool)
+                        or not isinstance(return_displacement, (int, float))
+                        or not math.isfinite(return_displacement)):
+                    raise ValueError('gridiron_fumble_return_displacement_missing_or_invalid')
                 raw_endpoint_delta = (dead_spot_x - recovery_x) * -direction
-                if abs(raw_return_yards - raw_endpoint_delta) > GRIDIRON_FUMBLE_RETURN_RAW_TOLERANCE_YARDS:
+                if abs(return_displacement - raw_endpoint_delta) > GRIDIRON_FUMBLE_RETURN_RAW_TOLERANCE_YARDS:
                     raise ValueError('gridiron_fumble_return_yards_disagree_with_raw_endpoints')
                 possession = ceg_contract.PossessionV2(
                     team='defense', how='fumble_recovery', turnover_spot_yardline_100=fumble_y,
@@ -748,10 +772,9 @@ class AutonomousGameExecution:
             yards_after_catch=yac, possession=possession, scoring=scoring,
             fumble=fumble_info is not None, penalty=penalty, provenance=provenance,
             clock=ceg_contract.ClockV2(
-                runoff_seconds=max(1, math.ceil(outcome['elapsed_seconds'])) +
-                (0 if reason in ('out_of_bounds', 'incomplete', 'touchdown', 'safety') else 27),
-                live_seconds=max(1, math.ceil(outcome['elapsed_seconds'])),
-                dead_ball_seconds=(0 if reason in ('out_of_bounds', 'incomplete', 'touchdown', 'safety') else 27),
+                runoff_seconds=live_clock_seconds,
+                live_seconds=live_clock_seconds,
+                dead_ball_seconds=0,
                 stop_class=('stopped' if reason in ('out_of_bounds', 'incomplete', 'touchdown', 'safety')
                             else 'running')),
             out_of_bounds=reason == 'out_of_bounds', players=roles,

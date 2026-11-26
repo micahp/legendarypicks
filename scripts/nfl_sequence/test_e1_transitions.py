@@ -747,6 +747,47 @@ class AutonomousEventSource(unittest.TestCase):
         self.assertEqual(plays[0]['state_after']['clock_seconds'], 896.75)
         self.assertEqual(e1.check_drive(plays, terminal)['terminal'], terminal)
 
+    def test_autonomous_possession_change_uses_the_shared_next_snap_clock(self):
+        class Clock:
+            facts = None
+
+            def runoff_after_live(self, _rng, **facts):
+                self.facts = facts
+                return 23, {'live_seconds': facts['live_seconds'], 'dead_seconds': 22,
+                            'tempo': 'huddle', 'stop': 'possession_change_ready'}
+
+        class Timeouts:
+            def __init__(self):
+                self.clock = Clock()
+
+            def decide(self, _rng, *_args):
+                return None, {'caller_team': None}
+
+            def out_of_bounds(self, row):
+                return bool(row.get('out_of_bounds'))
+
+            def margin(self, _team):
+                return 0
+
+        timeouts = Timeouts()
+
+        def source(_state, context):
+            return {'event': 'run', 'clock_runoff_seconds': 1,
+                    'row': {'game_id': 'autonomous', 'play_id': context['play_index'],
+                            'play_type': 'run', 'yards_gained': 0,
+                            'live_elapsed_seconds': 1.25, 'dead_ball_seconds': 0,
+                            'clock_stopped': False, 'out_of_bounds': False}}
+
+        plays, terminal = e1.simulate(start(1, 900, yl=50, down=4, togo=10), 19, {},
+                                      'autonomous-turnover-clock', event_source=source,
+                                      timeouts=timeouts)
+        self.assertEqual(terminal, 'turnover_on_downs')
+        self.assertEqual(plays[0]['outcome']['clock_runoff_seconds'], 23)
+        self.assertEqual(plays[0]['state_after']['clock_seconds'], 877)
+        self.assertEqual(timeouts.clock.facts['event'], 'run')
+        self.assertTrue(timeouts.clock.facts['possession_change'])
+        self.assertEqual(timeouts.clock.facts['live_seconds'], 1.25)
+
 
 if __name__ == '__main__':
     unittest.main()

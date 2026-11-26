@@ -96,7 +96,8 @@ class AutonomousPossessionHistoryTests(unittest.TestCase):
             'fumble_spot': {'x': 32.298354409535946, 'y': 27.634532709169928},
             'recovery_spot': {'x': 32.528160532074864, 'y': 27.18059331740051},
             'dead_ball_spot': {'x': 35.25672075085281, 'y': 27.444130240879},
-            'return_yards': 2.728560218777943,
+            'return_yards': 2,
+            'return_displacement_yards': 2.728560218777943,
         }
         result = {
             'schema_version': 'gridiron.autonomous-result.v1',
@@ -119,11 +120,60 @@ class AutonomousPossessionHistoryTests(unittest.TestCase):
         self.assertEqual(applied.state_after['offense'], 'A')
         self.assertEqual(applied.flags['return_yards'], 2)
 
-        result['result']['fumble'] = {**fumble, 'return_yards': 2.4}
+        result['result']['fumble'] = {**fumble, 'return_displacement_yards': 2.4}
         with self.assertRaisesRegex(ValueError, 'gridiron_fumble_return_yards_disagree_with_raw_endpoints'):
             source._ceg_play(
                 call, result, 'run', -3, state, -1, 32, 35.25672075085281, 'tackle',
                 None, None, None)
+        result['result']['fumble'] = {**fumble, 'return_yards': 3}
+        with self.assertRaisesRegex(ValueError,
+                                    'gridiron_fumble_statistical_return_yards_disagree_with_rounded_spots'):
+            source._ceg_play(
+                call, result, 'run', -3, state, -1, 32, 35.25672075085281, 'tackle',
+                None, None, None)
+
+    def test_gridiron_field_spot_rounding_matches_javascript_at_half_yards(self):
+        for value, expected in ((32.499999, 32), (32.5, 33), (32.500001, 33), (0.5, 1), (99.5, 100)):
+            with self.subTest(value=value):
+                self.assertEqual(autonomous_game._gridiron_yardline_round(value, 'test'), expected)
+
+    def test_fumble_endpoint_stats_cover_both_directions_and_recovery_teams(self):
+        source = object.__new__(autonomous_game.AutonomousGameExecution)
+        source.event_manifest_sha256 = 'f' * 64
+        call = {'play_id': 'fumble-rounding-directions', 'seed': '300015',
+                'offense': {'team': 'GB', 'lineup': {'QB': 'qb1'},
+                            'call': {'family': 'run', 'concept': 'inside_zone'}}}
+        coords = {'fumbler_id': 'fumbler', 'recoverer_id': 'recoverer', 'recovery_team': 'GB',
+                  'return_yards': None, 'return_displacement_yards': None}
+        result = {'schema_version': 'gridiron.autonomous-result.v1',
+                  'result': {'event': 'tackle', 'possession_team': 'GB', 'carrier_id': 'recoverer',
+                             'yards_gained': 0, 'is_touchdown': False, 'turnover': False,
+                             'elapsed_seconds': 1, 'fumble': {}},
+                  'participants': {'sackers': []}, 'events': []}
+        for direction in (-1, 1):
+            for recovery_side in ('O', 'D'):
+                with self.subTest(direction=direction, recovery_side=recovery_side):
+                    dead_x = 39.5 if direction == 1 else 41.5
+                    row = {**coords, 'recovery_side': recovery_side,
+                           'recovery_team': 'GB' if recovery_side == 'O' else 'LAR',
+                           'fumble_spot': {'x': 40.5, 'y': 26.5},
+                           'recovery_spot': {'x': 40.5, 'y': 26.5},
+                           'dead_ball_spot': {'x': dead_x, 'y': 26.5}}
+                    if recovery_side == 'D':
+                        # The continuous displacement follows the defense against offense direction.
+                        row['return_yards'] = 1
+                        row['return_displacement_yards'] = (dead_x - 40.5) * -direction
+                    result['result']['fumble'] = row
+                    state = {'offense': 'A', 'defense': 'B', 'down': 2, 'togo': 7, 'yl': 40}
+                    generated = source._ceg_play(
+                        call, result, 'run', 0, state, direction, 40, dead_x, 'tackle',
+                        None, None, None)
+                    self.assertEqual(generated.possession.recovery_spot_yardline_100,
+                                     autonomous_game._gridiron_yardline_round(
+                                         100 - 40.5 if direction == 1 else 40.5, 'test'))
+                    self.assertEqual(generated.possession.dead_ball_yardline_100,
+                                     autonomous_game._gridiron_yardline_round(
+                                         100 - dead_x if direction == 1 else dead_x, 'test'))
 
     def test_interception_return_fumble_recovered_by_original_offense_maps_by_history(self):
         source = object.__new__(autonomous_game.AutonomousGameExecution)

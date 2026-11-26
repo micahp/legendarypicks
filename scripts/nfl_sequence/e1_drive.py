@@ -254,6 +254,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                 'source_row': paired_random_streams.key('e1_source_row', drive_index, play_index),
                 'playcall': paired_random_streams.key('e1_playcall', drive_index, play_index),
                 'special_teams': paired_random_streams.key('e1_special_teams', drive_index, play_index),
+                'snap_clock': paired_random_streams.key('e1_snap_clock', drive_index, play_index),
             }
             if clock is not None and getattr(clock, 'paired_random_streams', None) is not None:
                 stream_keys['clock_hazard'] = paired_random_streams.key(
@@ -419,13 +420,31 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             snap_clock = getattr(timeouts, 'clock', None)
             if event_source is not None and timeout_record is not None:
                 live_elapsed = row.get('live_elapsed_seconds')
-                dead_ball = row.get('dead_ball_seconds')
                 if not isinstance(live_elapsed, (int, float)) or not math.isfinite(live_elapsed) or live_elapsed < 0:
                     raise ValueError('autonomous clock data needs nonnegative live_elapsed_seconds')
-                if not isinstance(dead_ball, (int, float)) or not math.isfinite(dead_ball) or dead_ball < 0:
-                    raise ValueError('autonomous clock data needs nonnegative dead_ball_seconds')
-                runoff = live_elapsed + (0 if caller is not None or row.get('clock_stopped') else dead_ball)
-                timeout_record['runoff_source'] = 'simulated_live_and_dead_ball_time'
+                possession_change = after is not None and after.get('offense') != st['offense']
+                if play_terminal in ('touchdown', 'safety', 'field_goal_attempt'):
+                    runoff = max(1, math.ceil(live_elapsed))
+                    timeout_record['clock'] = {'live_seconds': live_elapsed, 'dead_seconds': 0,
+                                               'stop': 'scoring_or_kick_restart'}
+                    timeout_record['runoff_source'] = 'measured_live_time_only'
+                elif snap_clock is not None and (event in CLOCK_EVENTS or event in ('interception', 'fumble_lost')):
+                    clock_event = event if event in CLOCK_EVENTS else 'pass_complete'
+                    clock_rng = (rng if paired_random_streams is None
+                                 else paired_random_streams.rng('e1_snap_clock', drive_index, play_index))
+                    try:
+                        runoff, timeout_record['clock'] = snap_clock.runoff_after_live(
+                            clock_rng, quarter=st['quarter'], qsr=st['clock'], event=clock_event,
+                            live_seconds=live_elapsed, out_of_bounds=timeouts.out_of_bounds(row),
+                            timeout_called=caller is not None, margin=timeouts.margin(
+                                after['offense'] if possession_change else st['offense']),
+                            possession_change=possession_change)
+                    except ValueError as unsupported:
+                        return halt(f'autonomous_snap_clock_unavailable:{unsupported}')
+                    timeout_record['runoff_source'] = 'snap_clock_with_measured_live_time'
+                else:
+                    runoff = max(0, int(round(row.get('clock_runoff_seconds', runoff))))
+                    timeout_record['runoff_source'] = 'generated_event_clock_facts'
             elif (timeout_record is not None and snap_clock is not None and event in CLOCK_EVENTS
                     and play_terminal is None and after['offense'] == st['offense']):
                 # The offense keeps the ball in this quarter: live ball, clock rules and tempo set the runoff.

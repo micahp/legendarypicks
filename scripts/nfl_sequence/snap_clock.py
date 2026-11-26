@@ -47,7 +47,12 @@ class SnapClock:
         manifest = json.loads(Path(str(path) + '.manifest.json').read_text())
         if manifest['output_sha256'] != sha:
             raise ValueError(f'snap clock table {path} does not match its manifest')
-        return cls(json.loads(raw), sha)
+        data = json.loads(raw)
+        if data.get('schema') != 'lp-e2-snap-clock-2':
+            raise ValueError(f'snap clock table {path} has unsupported schema {data.get("schema")!r}')
+        if not data.get('possession_change_dead_seconds') or not data.get('possession_change_no_huddle'):
+            raise ValueError(f'snap clock table {path} lacks possession-change timing')
+        return cls(data, sha)
 
     def live(self, rng, kind):
         histogram = self.data['live_seconds'].get(kind, {})
@@ -64,6 +69,16 @@ class SnapClock:
                 return sum(cells[k]['no_huddle'] for k in keys if k in cells) / snaps
         raise ValueError(f'too few tempo observations for {win} {score}')
 
+    def possession_change_no_huddle_p(self, win, score):
+        cells = self.data.get('possession_change_no_huddle', {})
+        keys = ([f'{win}|{score}'], [k for k in cells if k.startswith(f'{win}|{_side(score)}')],
+                [k for k in cells if k.startswith(f'{win}|')])
+        for level, group in zip(('cell', 'score_side', 'window'), keys):
+            snaps = sum(cells[k]['snaps'] for k in group if k in cells)
+            if snaps >= MIN_TEMPO:
+                return sum(cells[k]['no_huddle'] for k in group if k in cells) / snaps, level
+        return self.no_huddle_p(win, score), 'same_possession_fallback'
+
     def dead(self, rng, win, score, tempo):
         cells = self.data['dead_seconds']
         for level, keys in (('cell', [f'{win}|{score}|{tempo}']),
@@ -75,29 +90,60 @@ class SnapClock:
                 return _draw(rng, histogram), level
         raise ValueError(f'too few dead-ball times for {win} {score} {tempo}')
 
-    def runoff(self, rng, *, quarter, qsr, event, out_of_bounds, timeout_called, margin):
-        """(runoff seconds, record) for one run or pass whose offense keeps the ball in the same quarter."""
-        if event not in CLOCK_EVENTS:
-            raise ValueError(f'the snap clock covers {CLOCK_EVENTS}, not {event}')
+    def possession_change_dead(self, rng, win, score, tempo):
+        cells = self.data.get('possession_change_dead_seconds', {})
+        for level, keys in (('cell', [f'{win}|{score}|{tempo}']),
+                            ('score_side', [k for k in cells if k.startswith(f'{win}|{_side(score)}')
+                                            and k.endswith(tempo)]),
+                            ('window', [k for k in cells if k.startswith(f'{win}|') and k.endswith(tempo)]),
+                            ('other_window', [f'other|{score}|{tempo}'])):
+            histogram = _merge(cells[k] for k in keys if k in cells)
+            if sum(histogram.values()) >= MIN_DEAD:
+                return _draw(rng, histogram), level
+        seconds, level = self.dead(rng, win, score, tempo)
+        return seconds, f'same_possession_fallback:{level}'
+
+    def runoff_after_live(self, rng, *, quarter, qsr, event, live_seconds, out_of_bounds,
+                          timeout_called, margin, possession_change=False):
+        """Apply clock rules and next-snap timing to an already measured live-ball duration."""
+        if not isinstance(live_seconds, (int, float)) or live_seconds < 0:
+            raise ValueError('live-ball duration must be nonnegative')
+        if event not in CLOCK_EVENTS and not possession_change:
+            raise ValueError(f'the snap clock does not cover {event}')
         win, score = table.window(quarter, qsr), table.score_bucket(margin)
-        live = self.live(rng, event)
-        record = {'live_seconds': live, 'window': win}
-        if event == 'pass_incomplete':
-            dead, record['stop'] = 0.0, 'incomplete_pass'
-        elif timeout_called:
+        record = {'live_seconds': live_seconds, 'window': win}
+        if timeout_called:
             dead, record['stop'] = 0.0, 'timeout'
+        elif possession_change:
+            p_no_huddle, record['tempo_level'] = self.possession_change_no_huddle_p(win, score)
+            tempo = 'no_huddle' if rng.random() < p_no_huddle else 'huddle'
+            dead, record['dead_level'] = self.possession_change_dead(rng, win, score, tempo)
+            record['tempo'] = tempo
+            record['stop'] = 'possession_change_ready'
+        elif event == 'pass_incomplete':
+            dead, record['stop'] = 0.0, 'incomplete_pass'
         elif out_of_bounds and win != 'other':
             dead, record['stop'] = 0.0, 'out_of_bounds_late'
         elif out_of_bounds:
             dead, record['stop'] = _draw(rng, self.data['oob_ready_dead_seconds']['other']), 'out_of_bounds_ready'
         else:
-            tempo = 'no_huddle' if rng.random() < self.no_huddle_p(win, score) else 'huddle'
+            p_no_huddle = self.no_huddle_p(win, score)
+            tempo = 'no_huddle' if rng.random() < p_no_huddle else 'huddle'
             dead, record['dead_level'] = self.dead(rng, win, score, tempo)
             record['tempo'] = tempo
         if quarter in (2, 4) and qsr > 120:
-            if qsr - live <= 120:
+            if qsr - live_seconds <= 120:
                 dead, record['two_minute_warning'] = 0.0, 'after_the_down'
-            elif qsr - live - dead < 120:
-                dead, record['two_minute_warning'] = qsr - live - 120, 'clock_stopped_at_2:00'
+            elif qsr - live_seconds - dead < 120:
+                dead, record['two_minute_warning'] = qsr - live_seconds - 120, 'clock_stopped_at_2:00'
         record['dead_seconds'] = dead
-        return int(round(live + dead)), record
+        return int(round(live_seconds + dead)), record
+
+    def runoff(self, rng, *, quarter, qsr, event, out_of_bounds, timeout_called, margin):
+        """(runoff seconds, record) for one run or pass whose offense keeps the ball in the same quarter."""
+        if event not in CLOCK_EVENTS:
+            raise ValueError(f'the snap clock covers {CLOCK_EVENTS}, not {event}')
+        live = self.live(rng, event)
+        return self.runoff_after_live(rng, quarter=quarter, qsr=qsr, event=event,
+            live_seconds=live, out_of_bounds=out_of_bounds, timeout_called=timeout_called,
+            margin=margin)

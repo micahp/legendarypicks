@@ -87,8 +87,10 @@ def sha256(path):
 def main():
     live = defaultdict(Counter)        # kind -> {half-second bin: n}
     dead = defaultdict(Counter)        # 'window|score|tempo' -> {second: n}
+    change_dead = defaultdict(Counter)  # after a possession change, relative to the next offense
     oob_ready = defaultdict(Counter)   # window -> {second: n}
     tempo = defaultdict(lambda: [0, 0])  # 'window|score' -> [snaps, no_huddle]
+    change_tempo = defaultdict(lambda: [0, 0])
     counts = Counter()
     for season in SEASONS:
         data = pq.read_table(SOURCE / f'play_by_play_{season}.parquet', columns=COLUMNS).to_pylist()
@@ -109,6 +111,34 @@ def main():
             if j >= len(rows) or rows[j]['game_id'] != row['game_id']:
                 continue
             nxt, between = rows[j], rows[i + 1:j]
+            possession_change = nxt['posteam'] is not None and nxt['posteam'] != row['posteam']
+            if (possession_change and nxt['play_type'] in SNAPS and nxt['qtr'] == row['qtr'] and row['touchdown'] != 1
+                    and row['score_differential'] is not None and nxt['score_differential'] is not None):
+                change_win = window(row['qtr'], row['quarter_seconds_remaining'])
+                change_score = score_bucket(nxt['score_differential'])
+                change_key = f'{change_win}|{change_score}'
+                change_tempo[change_key][0] += 1
+                change_tempo[change_key][1] += int(nxt['no_huddle'] == 1)
+                timeout_or_penalty = (any((r['timeout'] == 1 or r['penalty'] == 1 or r['play_type'] is None)
+                                          for r in between)
+                                      or any(row[c] is not None and nxt[c] is not None
+                                             and row[c] > nxt[c]
+                                             for c in ('home_timeouts_remaining', 'away_timeouts_remaining'))
+                                      or nxt['penalty'] == 1)
+                if not timeout_or_penalty and secs is not None:
+                    value = row['game_seconds_remaining'] - nxt['game_seconds_remaining'] - secs
+                    if value < -2:
+                        counts['change dead: game clock ran less than live ball (dropped)'] += 1
+                    else:
+                        change_dead[f'{change_key}|{"no_huddle" if nxt["no_huddle"] == 1 else "huddle"}'][
+                            max(0, round(value))] += 1
+                        counts['change dead: kept'] += 1
+                elif timeout_or_penalty:
+                    counts['change dead: timeout or penalty in gap'] += 1
+                elif secs is None:
+                    counts['change dead: no usable live time'] += 1
+                else:
+                    counts['change dead: clock stopped by rule'] += 1
             if (nxt['qtr'] != row['qtr'] or nxt['posteam'] != row['posteam'] or nxt['play_type'] not in SNAPS
                     or row['touchdown'] == 1 or row['interception'] == 1 or row['fumble_lost'] == 1):
                 counts['dead: next snap not the same offense in the same quarter'] += 1
@@ -141,11 +171,15 @@ def main():
                 dead[f'{key}|{"no_huddle" if nxt["no_huddle"] == 1 else "huddle"}'][second] += 1
             counts['dead: kept'] += 1
     table = {
-        'schema': 'lp-e2-snap-clock-1',
+        'schema': 'lp-e2-snap-clock-2',
         'live_seconds': {k: {str(b): n for b, n in sorted(v.items())} for k, v in sorted(live.items())},
         'dead_seconds': {k: {str(b): n for b, n in sorted(v.items())} for k, v in sorted(dead.items())},
+        'possession_change_dead_seconds': {k: {str(b): n for b, n in sorted(v.items())}
+                                           for k, v in sorted(change_dead.items())},
         'oob_ready_dead_seconds': {k: {str(b): n for b, n in sorted(v.items())} for k, v in sorted(oob_ready.items())},
         'no_huddle': {k: {'snaps': v[0], 'no_huddle': v[1]} for k, v in sorted(tempo.items())},
+        'possession_change_no_huddle': {k: {'snaps': v[0], 'no_huddle': v[1]}
+                                        for k, v in sorted(change_tempo.items())},
     }
     OUT.write_text(json.dumps(table, indent=1, sort_keys=True) + '\n')
     manifest = {'sources': {f'play_by_play_{s}.parquet': sha256(SOURCE / f'play_by_play_{s}.parquet') for s in SEASONS},

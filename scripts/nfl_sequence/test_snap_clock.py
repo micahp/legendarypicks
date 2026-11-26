@@ -16,7 +16,14 @@ def table(dead_huddle=30, dead_no_huddle=15, no_huddle=0):
                              for w in ('other', 'q2_last_2', 'q4_last_2', 'q4_last_5')
                              for tempo, dead in (('huddle', dead_huddle), ('no_huddle', dead_no_huddle))},
             'oob_ready_dead_seconds': {'other': {'8': many}},
-            'no_huddle': {f'{w}|tied': {'snaps': many, 'no_huddle': no_huddle} for w in ('other', 'q2_last_2', 'q4_last_2', 'q4_last_5')}}
+            'no_huddle': {f'{w}|tied': {'snaps': many, 'no_huddle': no_huddle} for w in ('other', 'q2_last_2', 'q4_last_2', 'q4_last_5')},
+            'possession_change_dead_seconds': {
+                f'{w}|tied|{tempo}': {str(dead): many}
+                for w in ('other', 'q2_last_2', 'q4_last_2', 'q4_last_5')
+                for tempo, dead in (('huddle', 22), ('no_huddle', 9))},
+            'possession_change_no_huddle': {
+                f'{w}|tied': {'snaps': many, 'no_huddle': 0 if no_huddle == 0 else many}
+                for w in ('other', 'q2_last_2', 'q4_last_2', 'q4_last_5')}}
 
 
 def runoff(clock, **kw):
@@ -51,6 +58,25 @@ class Rules(unittest.TestCase):
         seconds, record = runoff(fast)
         self.assertEqual((seconds, record['tempo']), (20, 'no_huddle'))
 
+    def test_live_execution_reuses_timing_with_measured_live_duration(self):
+        seconds, record = self.clock.runoff_after_live(
+            random.Random(1), quarter=1, qsr=600, event='run', live_seconds=3.2,
+            out_of_bounds=False, timeout_called=False, margin=0)
+        self.assertEqual((seconds, record['live_seconds'], record['dead_seconds']), (33, 3.2, 30))
+
+    def test_possession_change_uses_its_own_next_snap_timing(self):
+        seconds, record = self.clock.runoff_after_live(
+            random.Random(1), quarter=1, qsr=600, event='interception', live_seconds=4.2,
+            out_of_bounds=False, timeout_called=False, margin=0, possession_change=True)
+        self.assertEqual((seconds, record['dead_seconds'], record['stop']),
+                         (26, 22, 'possession_change_ready'))
+
+    def test_timeout_stops_post_whistle_clock_after_a_turnover(self):
+        seconds, record = self.clock.runoff_after_live(
+            random.Random(1), quarter=1, qsr=600, event='interception', live_seconds=4.2,
+            out_of_bounds=False, timeout_called=True, margin=0, possession_change=True)
+        self.assertEqual((seconds, record['dead_seconds'], record['stop']), (4, 0.0, 'timeout'))
+
     def test_kicks_and_turnovers_are_not_timed_here(self):
         with self.assertRaises(ValueError):
             runoff(self.clock, event='punt')
@@ -58,6 +84,12 @@ class Rules(unittest.TestCase):
     def test_the_real_table_loads_and_matches_its_manifest(self):
         clock = sc.SnapClock.load()
         self.assertGreater(runoff(clock)[0], 0)
+        seconds, record = clock.runoff_after_live(
+            random.Random(17), quarter=3, qsr=600, event='interception', live_seconds=4.4,
+            out_of_bounds=False, timeout_called=False, margin=0, possession_change=True)
+        self.assertGreater(seconds, 4)
+        self.assertEqual(record['stop'], 'possession_change_ready')
+        self.assertIn('dead_level', record)
 
 
 if __name__ == '__main__':
