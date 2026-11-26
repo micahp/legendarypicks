@@ -21,3 +21,22 @@ Sources: [Game entry](https://github.com/micahp/legendarypicks/blob/9a2e8624/scr
 ## Data and evaluation
 
 Pregame cutoff and provenance, player eligibility, independent seed streams and complete regulation/OT are required. Use original cohort-specific results; football realism alone cannot demonstrate forecasting skill. [Evaluation](../evaluation/README.md).
+
+## Historical-row execution (visual)
+
+```mermaid
+flowchart TD
+  A["Frozen matchup + pregame data"] --> B["Game state: score, clock, down, distance, spot"]
+  B --> C["Personnel + formation + eligible player selection"]
+  C --> D["Play intent / event probabilities"]
+  D --> E["Mandatory compatible historical row pool"]
+  E --> F["Optional row conditioning"]
+  F --> G["Weighted source-row draw"]
+  G --> H["Event, yards, runoff, possession facts"]
+  H --> I["Rules / reducer / statistics"]
+  I --> J{"Game complete?"}
+  J -->|No| B
+  J -->|Yes| K["Seeded game and player forecasts"]
+```
+
+The diagram is a conceptual personnel-first V2 research path, not the exact frozen V1/V1.5/V1.6/V1.7 order. See individual model cards and their pinned manifests for enabled layers. [Four conditioning methods](../model-cards/nfl/slc-v2-simplified.md#conditioning-methods-visual) shows the part of this flow that changes. CEG replaces the row draw, not the need for a rules engine.

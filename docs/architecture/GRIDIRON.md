@@ -17,3 +17,24 @@ Separate repository [micahp/gridiron-physics](https://github.com/micahp/gridiron
 - Current LP bridge uses fixed 11 personnel, inside zone right/assigned slant-flat fallback, nickel over and Cover 1; pre-snap richer policy not integrated. Coverage fallback corrected partially; no assertion of exact shell fidelity.
 
 Known live-play defects: receiver future landing access, defender exact-state prediction and generic break-on-ball, role-transition gaps, callback order effects, recovery draws and timestep sensitivity. See [Liquid AI](LIQUID-AI.md). Avoid a second engine or new physics layers unless evidence justifies them.
+
+## V1 Complete execution (visual)
+
+```mermaid
+flowchart TD
+  A["LP frozen roster, ratings and state"] --> B["Persistent skill-player participation"]
+  B --> C["Supported personnel and formation"]
+  C --> D["Coaching call and assignments"]
+  D --> E["Python bridge / pinned Node session"]
+  E --> F["22 role controllers: perceive, decide, execute"]
+  F --> G["Shared world: motion, ball, contacts"]
+  G --> F
+  G -->|Terminal event| H["Whistle + trajectory + attributed facts"]
+  H --> I["LP typed event adapter"]
+  I --> J["Rules, stats, clock, possession"]
+  J --> K{"Game complete?"}
+  K -->|No| A
+  K -->|Yes| L["Game distribution"]
+```
+
+This diagram describes the intended execution architecture with the November 26 [persistent-lineup candidate](https://github.com/micahp/legendarypicks/blob/847b3a22/docs/research/SLC-SHARED-PARTICIPATION-2026-11-26.md). Only offensive skill lineups persist; fixed 11 personnel, authored formation, defensive starters and restricted call library remain. No claim of all formations, defensive rotation or full-game validation. The physical world generates the outcome; no preassigned eventual receiver or historical outcome row.
