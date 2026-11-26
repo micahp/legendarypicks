@@ -538,6 +538,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                         'return_touchdown': flags.get('return_touchdown', False),
                         'fair_catch': flags.get('fair_catch', False),
                         'return_yards': flags.get('return_yards'),
+                        'blocked_kick': flags.get('blocked_kick'),
                         'field_goal_attempt': flags['field_goal_attempt'],
                         'field_goal_result': flags.get('field_goal_result'),
                         'safety': flags['safety'], 'scoring_team': flags.get('scoring_team'),
@@ -672,13 +673,20 @@ def check_drive(plays, terminal):
             raise AssertionError(f'play {i + 1}: possession change does not match the turnover or punt flag')
         if o['touchdown'] != (sa.get('end_of_drive') == 'touchdown'):
             raise AssertionError(f'play {i + 1}: touchdown flag and terminal disagree')
-        if p['event_type'] == 'field_goal_attempt' and o['field_goal_attempt'] != (sa.get('end_of_drive') == 'field_goal_attempt'):
-            raise AssertionError(f'play {i + 1}: field-goal flag and terminal disagree')
+        if p['event_type'] == 'field_goal_attempt':
+            if o.get('field_goal_result') == 'blocked':
+                if (not o['field_goal_attempt']
+                        or sa.get('end_of_drive') not in (
+                            None, 'turnover', 'turnover_on_downs', 'touchdown', 'safety')):
+                    raise AssertionError(f'play {i + 1}: blocked field-goal transition disagrees with its live result')
+            elif o['field_goal_attempt'] != (sa.get('end_of_drive') == 'field_goal_attempt'):
+                raise AssertionError(f'play {i + 1}: field-goal flag and terminal disagree')
         if p['event_type'] == 'blocked_field_goal' and not o['field_goal_attempt']:
             raise AssertionError(f'play {i + 1}: blocked field goal is missing its attempt flag')
         if (sa['yardline_100'] is None) != (p['field']['after']['dir'] is None):
             raise AssertionError(f'play {i + 1}: field endpoint and scrimmage state disagree about a position')
-        if o['field_goal_attempt'] and p['event_type'] == 'field_goal_attempt' and sa['yardline_100'] is not None:
+        if (o['field_goal_attempt'] and p['event_type'] == 'field_goal_attempt'
+                and o.get('field_goal_result') != 'blocked' and sa['yardline_100'] is not None):
             raise AssertionError(f'play {i + 1}: a field-goal attempt has no next field position')
         if o['punt'] and sa['yardline_100'] is None and not terminal_kick_score:
             raise AssertionError(f'play {i + 1}: a punt must give the receiving spot')

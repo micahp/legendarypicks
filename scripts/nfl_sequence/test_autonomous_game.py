@@ -78,6 +78,35 @@ class AutonomousPassInterferenceTests(unittest.TestCase):
                 self.assertTrue(applied.flags['penalty'])
 
 
+class AutonomousTryExecutionTests(unittest.TestCase):
+    def test_live_extra_point_uses_named_opponent_and_does_not_raise(self):
+        source = object.__new__(autonomous_game.AutonomousGameExecution)
+        source.current_team = 'A'
+        source.team_by_side = {'A': 'AAA', 'B': 'BBB'}
+        source.teams = ('AAA', 'BBB')
+        source.play_index = 1
+        source.coaching_profiles = {}
+        source._decision_seed = lambda *_args: 1
+        source._execute_live_special_teams = lambda *args: {
+            'participants': {'kicker_name': 'Named Kicker'},
+            'execution': {'call': {'lineups': {'kicking': {'kicker': 'AAA-K'}}},
+                          'result': {'result': {'result': 'made'}}},
+        }
+
+        class FixedRandom:
+            def __init__(self, *_args):
+                pass
+
+            def random(self):
+                return 0.99
+
+        with patch.object(autonomous_game.random, 'Random', FixedRandom):
+            points, record, blocker = source.try_after_touchdown(
+                {'margin': 7, 'quarter': 1, 'clock': 600, 'offense_direction': 1})
+
+        self.assertEqual((points, record['kind'], blocker), (1, 'extra_point', None))
+
+
 class AutonomousSpecialTeamsTests(unittest.TestCase):
     @contextmanager
     def _valid_preflight(self, source, ineligible=()):
@@ -304,6 +333,12 @@ class AutonomousSpecialTeamsTests(unittest.TestCase):
         self.assertEqual(execution['diagnostics']['assignments_executed'], 22)
         self.assertEqual(len(execution['trajectory']['roster']), 22)
         self.assertEqual(execution['diagnostics']['outcome_inputs'], [])
+        call = generated['execution']['call']
+        kicker_id = call['lineups']['kicking']['kicker']
+        kicker_ratings = call['player_profiles'][kicker_id]['ratings']
+        field_goal_evidence = generated['metadata']['special_teams_execution']['field_goal_execution']
+        self.assertEqual(field_goal_evidence['kick_power_rating'], kicker_ratings['KPW'])
+        self.assertEqual(field_goal_evidence['kick_accuracy_rating'], kicker_ratings['KAC'])
         applied = source.apply_event(
             {'offense': 'A', 'defense': 'B', 'down': 4, 'togo': 1, 'yl': 35}, generated['event_record'])
         if generated['event_record'].kick.result == 'blocked':

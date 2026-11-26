@@ -854,6 +854,16 @@ class AutonomousGameExecution:
         execution = {'schema_version': result['schema_version'], 'call': call, 'result': result,
                      'timing': timing, 'rating_provenance': rating_provenance,
                      'ceg_event': asdict(event_record), 'viewer': 'gridiron_result.trajectory.frames'}
+        field_goal_evidence = None
+        if kind == 'field_goal':
+            kicker_id = call['lineups']['kicking']['kicker']
+            kicker_ratings = call['player_profiles'][kicker_id]['ratings']
+            field_goal_evidence = {
+                'source': 'gridiron_live_ball_trajectory', 'result': result_name,
+                'kick_distance_yards': facts.get('distance_yards'),
+                'kick_power_rating': kicker_ratings['KPW'],
+                'kick_accuracy_rating': kicker_ratings['KAC'],
+            }
         if row is not None:
             row['participants'].update(participants)
             row['live_elapsed_seconds'] = elapsed
@@ -872,13 +882,7 @@ class AutonomousGameExecution:
                     'out_of_bounds_spot_yardline_100': facts.get('out_of_bounds_spot_yardline_100'),
                     'restart_options': facts.get('restart_options'),
                     'gridiron_engine_commit': timing['engine_commit'],
-                    **({'field_goal_execution': {
-                        'source': 'gridiron_live_ball_trajectory', 'result': result_name,
-                        'kick_distance_yards': facts.get('distance_yards'),
-                        'kick_power_rating': (result.get('diagnostics', {}).get('kick_model') or {}).get('power_rating'),
-                        'kick_accuracy_rating': (result.get('diagnostics', {}).get('kick_model') or {}).get('accuracy_rating'),
-                        'kick_model': result.get('diagnostics', {}).get('kick_model'),
-                    }} if kind == 'field_goal' else {})}}}
+                    **({'field_goal_execution': field_goal_evidence} if field_goal_evidence else {})}}}
 
     def special_teams(self, event, state, row, _runoff, _spot, rng):
         if event == 'punt':
@@ -965,8 +969,9 @@ class AutonomousGameExecution:
                 participants.get('passer_id')) if pid]
             record['try_player_details'] = participants
             return (2 if made else 0), record, None
+        opponent = next(team for team in self.teams if team != scorer)
         result = self._execute_live_special_teams(
-            'field_goal', scorer, other(scorer, self.teams), 15, try_index)
+            'field_goal', scorer, opponent, 15, try_index)
         if result.get('blocker'):
             return 0, game_state.try_record('extra_point', False), result['blocker']
         kicker_id = result['execution']['call']['lineups']['kicking']['kicker']

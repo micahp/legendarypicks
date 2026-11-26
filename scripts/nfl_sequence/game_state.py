@@ -2172,19 +2172,24 @@ def _validate_game_impl(record):
             if outcome.get('field_goal_attempt'):
                 before = play.get('state_before') or {}
                 if str(record.get('mode', '')).startswith('autonomous_'):
-                    generated = outcome.get('field_goal_execution')
+                    generated = (outcome.get('special_teams_execution') or {}).get('field_goal_execution')
                     execution = play.get('autonomous_execution') or {}
-                    result = (execution.get('result') or {}).get('result') or {}
-                    diagnostics = (execution.get('result') or {}).get('diagnostics') or {}
-                    kick_model = diagnostics.get('kick_model') or {}
+                    live_result = execution.get('result') or {}
+                    result = live_result.get('result') or {}
+                    diagnostics = live_result.get('diagnostics') or {}
+                    call = execution.get('call') or {}
+                    kicker_id = ((call.get('lineups') or {}).get('kicking') or {}).get('kicker')
+                    kicker_ratings = ((call.get('player_profiles') or {}).get(kicker_id) or {}).get('ratings') or {}
                     if (not isinstance(generated, dict)
                             or generated.get('source') != 'gridiron_live_ball_trajectory'
                             or generated.get('result') not in ('made', 'missed', 'blocked')
                             or generated.get('result') != result.get('result')
                             or generated.get('kick_distance_yards') != before.get('yardline_100', 0) + 17
                             or result.get('distance_yards') != generated.get('kick_distance_yards')
-                            or generated.get('kick_power_rating') != kick_model.get('power_rating')
-                            or generated.get('kick_accuracy_rating') != kick_model.get('accuracy_rating')
+                            or type(kicker_ratings.get('KPW')) is not int
+                            or type(kicker_ratings.get('KAC')) is not int
+                            or generated.get('kick_power_rating') != kicker_ratings.get('KPW')
+                            or generated.get('kick_accuracy_rating') != kicker_ratings.get('KAC')
                             or type(diagnostics.get('assignments_executed')) is not int
                             or diagnostics.get('assignments_executed') != 22
                             or diagnostics.get('expected_assignments') != 22

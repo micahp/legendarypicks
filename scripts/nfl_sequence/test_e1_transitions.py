@@ -659,6 +659,23 @@ class HistoricalPoolCutoff(unittest.TestCase):
 
 
 class AutonomousEventSource(unittest.TestCase):
+    def test_blocked_live_field_goal_may_end_in_a_turnover(self):
+        before = {'quarter': 1, 'clock_seconds': 800, 'offense_team': 'A', 'defense_team': 'B',
+                  'down': 4, 'yards_to_go': 8, 'yardline_100': 35}
+        after = {'quarter': 1, 'clock_seconds': 794, 'offense_team': 'B', 'defense_team': 'A',
+                 'down': 1, 'yards_to_go': 10, 'yardline_100': 55, 'end_of_drive': 'turnover_on_downs'}
+        outcome = {'touchdown': False, 'turnover': True, 'punt': False,
+                   'field_goal_attempt': True, 'field_goal_result': 'blocked',
+                   'turnover_on_downs': True, 'safety': False, 'scoring_team': None, 'first_down': False,
+                   'clock_runoff_seconds': 6, 'quarter_change': False,
+                   'clock_clamped_to_zero': False, 'yards_gained': None}
+        play = {'event_type': 'field_goal_attempt', 'state_before': before, 'state_after': after,
+                'outcome': outcome,
+                'field': {'before': {'dir': 1, 'los': 65}, 'after': {'dir': -1, 'los': 45}}}
+        summary = e1.check_drive([play], 'turnover_on_downs')
+        self.assertEqual(summary['field_goal_attempts'], 1)
+        self.assertEqual(summary['turnovers'], 1)
+
     def test_autonomous_kick_cannot_fall_through_to_zero_yard_placeholder(self):
         def source(_state, context):
             return {
