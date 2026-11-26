@@ -77,6 +77,13 @@ def spy_simulate(run):
 
 
 class Ledger(unittest.TestCase):
+    def test_unverified_snapshot_evidence_does_not_invalidate_a_complete_supported_game(self):
+        snapshot = {
+            'evaluation': {'verified': False},
+            'roster_finalization_timing': {'status': 'before_roster_finalization'},
+        }
+        self.assertTrue(gs._is_valid_full_game(snapshot, True, None, [], []))
+
     def test_normal_mode_refuses_kick_and_defend_goal(self):
         for choice in ('kick', 'defend_goal'):
             with self.assertRaises(ValueError, msg=choice):

@@ -1,0 +1,29 @@
+{
+  "model": "v1.6 source at code commit 1bb3bd50",
+  "seeds": "300001-300050",
+  "game_id": "2026_10_WAS_NYG",
+  "snapshot": "docs/research/walkforward-2026/snapshots/w10/2026_10_WAS_NYG.json",
+  "database": "local parity database (sha256 266db021...), not the walk-forward database",
+  "streaks": "wl-streaks-through-week9.json, team codes translated WAS->WSH, LA->LAR (values unchanged)",
+  "runs": {
+    "control": {
+      "games": 50,
+      "valid_full_games": 50,
+      "mean_total": 50.28,
+      "mean_home_margin": 1.64,
+      "home_win_share": 0.62,
+      "fallback_events": 18959,
+      "fallback_events_per_game": 379.2
+    },
+    "decision_row_filter_off": {
+      "games": 50,
+      "valid_full_games": 50,
+      "mean_total": 46.7,
+      "mean_home_margin": -3.18,
+      "home_win_share": 0.36,
+      "fallback_events": 1699,
+      "fallback_events_per_game": 34.0
+    }
+  },
+  "caveat": "Small sample. Seeds are not paired across arms in this summary. Not a pack run."
+}
