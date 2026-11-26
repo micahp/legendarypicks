@@ -60,6 +60,25 @@ class DiffDatabasesTests(unittest.TestCase):
         make_db(self.dev, {table: "id INTEGER" for table in research_tables})
         self.assertEqual(0, diff.main(["--prod", self.prod, "--dev", self.dev]))
 
+    def test_a_dev_only_table_no_code_creates_is_listed_but_does_not_block(self):
+        import io
+        from contextlib import redirect_stdout
+        make_db(self.dev, {"zz_unmerged_branch_scratch": "id INTEGER"})
+        out = io.StringIO()
+        with redirect_stdout(out):
+            self.assertEqual(0, diff.main(["--prod", self.prod, "--dev", self.dev]))
+        self.assertIn("RESEARCH table 'zz_unmerged_branch_scratch'", out.getvalue())
+
+    def test_the_same_table_blocks_when_the_checkout_cannot_be_read(self):
+        from unittest.mock import patch
+        make_db(self.dev, {"zz_unmerged_branch_scratch": "id INTEGER"})
+        with patch.object(diff, "_tables_created_by_code", return_value=None):
+            self.assertEqual(1, diff.main(["--prod", self.prod, "--dev", self.dev]))
+
+    def test_a_prod_only_table_still_blocks(self):
+        make_db(self.prod, {"zz_prod_only": "id INTEGER"})
+        self.assertEqual(1, diff.main(["--prod", self.prod, "--dev", self.dev]))
+
     def test_nba_teams_remains_a_blocking_runtime_table(self):
         make_db(self.dev, {"nba_teams": "season INTEGER, team TEXT"})
         self.assertEqual(1, diff.main(["--prod", self.prod, "--dev", self.dev]))

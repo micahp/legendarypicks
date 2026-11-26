@@ -182,7 +182,7 @@ class ScheduleAsOf(unittest.TestCase):
                 for index, position in enumerate(('QB', 'RB', 'WR')):
                     con.execute('INSERT INTO nfl_depth_chart VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
                                 (2026, team, offset + index + 1, f'{team}-{index}', f'{team} player {index}',
-                                 position, 1, '2026-10-12T12:00:00Z', 'nflverse'))
+                                 position, 1, '2026-10-18T07:00:00Z', 'nflverse'))
             con.commit()
             con.close()
 
@@ -198,6 +198,39 @@ class ScheduleAsOf(unittest.TestCase):
             loaded = snapshot_module.load_frozen_snapshot(
                 str(self._write_snapshot(Path(tmp), exploratory)))
             self.assertEqual(loaded['schedule']['ingested_at'], '2026-10-26 15:00:01')
+
+    def test_refuses_a_depth_chart_older_than_24_hours_before_the_cutoff(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / 'depth.db'
+            con = sqlite3.connect(db)
+            con.executescript('''
+                CREATE TABLE nfl_schedule (game_id TEXT, season INTEGER, game_type TEXT, week INTEGER,
+                    gameday TEXT, gametime TEXT, away_team TEXT, home_team TEXT, location TEXT,
+                    source TEXT, ingested_at TEXT);
+                CREATE TABLE nfl_depth_chart (season INTEGER, team TEXT, player_id INTEGER, gsis_id TEXT,
+                    player_name TEXT, pos_abb TEXT, pos_rank INTEGER, snapshot_at TEXT, source TEXT);
+            ''')
+            con.execute('INSERT INTO nfl_schedule VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                        ('2026_11_LV_DEN', 2026, 'REG', 11, '2026-11-22', '16:25', 'LV', 'DEN',
+                         'Home', 'nflverse', '2026-11-21 15:00:00'))
+            for team, offset, captured in (('LV', 0, '2026-10-22T12:59:29Z'), ('DEN', 10, '2026-11-22T07:01:24Z')):
+                for index, position in enumerate(('QB', 'RB', 'WR')):
+                    con.execute('INSERT INTO nfl_depth_chart VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                                (2026, team, offset + index + 1, f'{team}-{index}', f'{team} player {index}',
+                                 position, 1, captured, 'nflverse'))
+            con.commit()
+            con.close()
+            kwargs = {'db': str(db), 'game_id': '2026_11_LV_DEN', 'kickoff_utc': '2026-11-22T21:25:00Z',
+                      'kickoff_source_url': 'https://example.test/week-11', 'allow_unverified_current_schedule_exploratory': True}
+            with self.assertRaisesRegex(ValueError, 'STALE_DEPTH_CHART 2026_11_LV_DEN: LV newest depth chart is 2026-10-22'):
+                snapshot_module.build(as_of='2026-11-22T12:00:00Z', **kwargs)
+            con = sqlite3.connect(db)
+            con.execute("UPDATE nfl_depth_chart SET snapshot_at='2026-11-21T15:17:24Z' WHERE team='LV'")
+            con.commit()
+            con.close()
+            # 20.7 hours before the cutoff is inside the limit
+            built = snapshot_module.build(as_of='2026-11-22T12:00:00Z', **kwargs)
+            self.assertEqual(built['rosters']['away']['snapshot_at'], '2026-11-21T15:17:24Z')
 
     @staticmethod
     def _write_snapshot(root, value):

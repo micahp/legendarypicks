@@ -1,0 +1,13 @@
+{
+  "game_id": "2026_11_IND_HOU",
+  "actual": {"home_team": "HOU", "home_points": 26, "away_team": "IND", "away_points": 3, "margin_home": 23, "total": 29, "home_won": true, "source": "public NFL scoreboard feed, status Final, read 2026-11-20"},
+  "note": "One game. These grades cannot rank the arms.",
+  "arms": {
+    "v2-pbp": {"home_win_prob": 0.632, "brier": 0.135, "margin_error": 19.23, "total_error": 11.25},
+    "he-participation": {"home_win_prob": 0.556, "brier": 0.197, "margin_error": 21.66, "total_error": 15.76},
+    "pbv1-1000": {"home_win_prob": 0.550, "brier": 0.202, "margin_error": 21.67, "total_error": 16.24},
+    "pbv1-off": {"home_win_prob": 0.532, "brier": 0.219, "margin_error": 21.63, "total_error": 15.87},
+    "pbv1-on-869": {"home_win_prob": 0.532, "brier": 0.219, "margin_error": 21.57, "total_error": 15.86},
+    "v1-vfg": {"home_win_prob": 0.519, "brier": 0.231, "margin_error": 22.00, "total_error": 16.96}
+  }
+}

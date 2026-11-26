@@ -8,6 +8,32 @@ section numbers unchanged). Read the matching section there when a rule touches 
 verify against ground truth: the whole population, the real data, an independent source. Assume a
 gap remains until you have measured it.
 
+## LEGENDARY PICKS API FIRST — GAME LOOKUP AND SNAPSHOTS
+
+**For "the game starting now", today's slate, next game, kickoff, status, or a matchup snapshot, query Legendary Picks FIRST, not a web search.** Read [API and snapshot workflow](docs/API-AGENT-GUIDE.md). On the shared development host the backend normally listens at `http://127.0.0.1:8096`; respect the active stack configuration. Discover other routes from its OpenAPI schema (`/openapi.json`).
+
+- Use `GET /api/{league}/games?date=YYYY-MM-DD`. Example: `curl -fsS "http://127.0.0.1:8096/api/nfl/games?date=$(TZ=America/Chicago date +%F)"`. Resolve the user's date/time zone explicitly, inspect the returned game ID, UTC timestamp, state/status, away/home teams and source/age headers. Do not infer kickoff from a date-only row.
+- For a requested pregame forecast, select the exact requested matchup or closest upcoming eligible game; require an offset-aware kickoff strictly after the current time and a credible pregame status. If already live, past kickoff, delayed, postponed, ambiguous or stale, report it rather than silently selecting a different game or backdating a capture.
+- Scoreboard IDs and SLC IDs differ: resolve NFL scoreboard IDs against `nfl_schedule.espn` or the exact stored `game_id`, verify teams/date, and use the unique `nfl_schedule.game_id` in SLC. Use canonical team-code helpers.
+- A scoreboard response identifies a game; it is not a cutoff-valid modeling snapshot. Follow the selected model branch's existing snapshot builder, cutoff, input provenance and roster/news preflight. The current matchup builder enforces T−90 minutes; do not substitute kickoff or the wall clock for that cutoff. After kickoff, only a demonstrably frozen pre-kickoff artifact or honestly labeled replay/backtest is eligible; never call a newly captured post-kickoff input prospective.
+- If LP cannot resolve the requested fact, inspect the endpoint, source/age headers, configured DB and existing captures. Only then use a specific external source when necessary (e.g. missing official injury evidence); record the reason and provenance. Do not replace LP with broad search or bypass a failed cutoff/identity gate. No service restart, production write or ingest on implied authority.
+
+## CANONICAL MODEL DOCUMENTATION — 2026-11-26
+
+Read [docs/README.md](docs/README.md), [architecture](docs/architecture/README.md), [glossary](docs/architecture/GLOSSARY.md) and the relevant [model card](docs/model-cards/README.md) before modeling work. These are the maintained navigation/definition layer, with exact source and evidence pins. Dated research reports and handoffs are supporting evidence, not competing model definitions; older rules and explicit owner decisions remain binding unless explicitly superseded.
+
+- When a change affects a named model or architecture, update its canonical card/definition in the same changeset (or explicitly record why not applicable). Record purpose, execution flow, inputs/cutoff, exact code/config/artifact identity, limitations, evaluation cohort and status. Every new model/component must be discoverable from the handbook; never hide its only definition on a feature branch or in chat.
+- Preserve frozen results and historical artifacts. Link to exact source commits, distinguish design from implemented and integrated behavior, and separate legality, realism, prediction and adoption. Never infer deployment from a model card or rename an existing model silently.
+- Before new work, review research and decision indexes, existing code, failed experiments and blockers. Reuse existing mechanisms; prioritize objective and integration, set simple baselines and stopping conditions, and stop redundant investigations. Do not make extra research a delivery gate without evidence/owner approval.
+- Use specifications for contracts and intended behavior, research for experiments, decisions for rationale, evaluation for comparable cohorts, archive for historical handoffs. Preserve old paths or forwarding notices; check incoming links and machine dependencies before moves. Do not move locked input files or change reproducibility hashes.
+- Review actual end-to-end source and tests; disclose what was not run. A documentation-only change does not authorize a model/rules change, a production deployment, or a merge. Maintain no fast-host runs without owner approval.
+
+## REPOSITORY ROOT HYGIENE — 2026-11-26
+
+- The root is reserved for `README.md`, `AGENTS.md`, `CHANGELOG.md`, source directories and required build/test/configuration/operational entry points. Do not create one-off task briefs, results, reports, plans, handoffs, agent notes or scratch evidence at the root.
+- Put maintained specifications in `docs/specifications/` (or an existing canonical domain location), task briefs and plans in the relevant `docs/` domain, research/evaluation evidence alongside its experiment, and superseded handoffs in `docs/archive/`. Use the existing canonical location rather than duplicating a document. Keep transient agent output outside tracked source unless it is required evidence.
+- Former root documents are indexed in [docs/archive/root-history/README.md](docs/archive/root-history/README.md). Their original blobs are preserved; no root forwarding files. Archive placement does not establish task completion. For a move, check active references and machine consumers, update navigation, preserve evidence and reproducibility, and report remaining unverified dependencies. Review the root in documentation-cleanup changes and reject new ad hoc root documents.
+
 ## LATEST E1 VIEWER + OOB DECISION — 2026-10-24 (takes precedence)
 
 **Gridiron E1 repin DONE:** [`f2a00a09`](https://github.com/micahp/gridiron-physics/commit/f2a00a0973e901c7590220cd569dde80cdf6245c) is already pinned to LP `641e1b2ea7882389778a14e6c52b58583f7e9917`. Reports **25/25 Node tests**, E0a pass and ten Chromium DOM checks, plus `clock_clamped_plays` summary validation. The new LP SHA is **accepted as current read-only research pin**; earlier AGENTS text saying the viewer is still on `945754` is **stale historical status**. See [current LP integration decision](docs/research/E1-DRIVE-INTEGRATION-DECISION-2026-10-24.md).
@@ -96,6 +122,10 @@ The active cross-repository brief is [Gridiron Physics Football-first Agent Dire
 No LP live forecast/lock/grading updates, production writes, shared engine changes or unapproved merges. Coordinate through committed, hashed research manifests and one integrator, not unverified cross-agent status messages.
 
 ## Before you start
+- Before any NFL simulation run, find each game's snapshot in `docs/research/SNAPSHOT-INDEX-2026.md`.
+  Never run on a snapshot marked STALE (depth chart over 24 hours old at the cutoff). Build new
+  ones with `scripts/nfl_sequence/build_current_snapshots.py`; refresh the index with
+  `scripts/nfl_sequence/snapshot_index.py`.
 - Run `scripts/prior_art.py "<terms>"` before writing a new script or reporting a finding (0a).
 - Load the skills in `.claude/skills/` for your task: `published-first` (anything derived, incl.
   schedules and join keys), `fail-loudly` (ingests, joins, best-effort steps), `falsify-before-merge`
@@ -118,6 +148,24 @@ No LP live forecast/lock/grading updates, production writes, shared engine chang
 - Box: 5.8 GB RAM, shared. Check `uptime` AND `free -h` before batch jobs; under ~1.5 GB available,
   do not start. Smallest unit first, single process, no hidden library parallelism. Verify a kill
   landed with `ps`. Do not run parallel worktree dev-server stacks.
+- **Shared disk stewardship is mandatory.** Every agent's multi-gigabyte downloads, caches, worktrees,
+  build products and simulation outputs accumulate on the same finite server. Do not exhaust disk
+  space or leave it for another agent to clean up.
+  - Before downloads, extraction, builds, new worktrees or batches, check `df -h` and `df -i` on the
+    target filesystem; use `du -sh` on relevant directories and estimate peak temporary plus retained
+    storage (including simultaneous archive/extracted copies). Reuse existing verified artifacts and
+    shared caches instead of duplicating them. Check available space during large jobs and after.
+  - Budget and cap output growth, especially per-seed traces, logs, repeated snapshots and replay
+    files. Retain the smallest reproducible evidence and manifests needed; compress or stream where
+    appropriate. Do not create multi-GB copies or caches unnecessarily.
+  - Preserve headroom for other agents, databases, logs and normal service operation. If the expected
+    peak cannot fit safely, reduce scope, use an approved alternative location, or stop and report
+    the blocker before writing more data. Never fill a filesystem to test whether a job fits.
+  - Clean up only your own verified disposable temporary files and obsolete artifacts when safe.
+    Never delete another agent's work, source data, databases, shared caches, active worktrees or
+    required evidence without explicit authorization. Report large retained artifacts, their paths,
+    sizes, retention rationale, and free space before/after. Continue the primary task within the
+    available resource budget.
 - Prod is a docker stack with its own DB `backend/data/picks.db`. Read
   `docs/RUNBOOK-prod-promotion.md` before any promotion. Releases only via `scripts/release.sh`.
 
@@ -170,3 +218,9 @@ No LP live forecast/lock/grading updates, production writes, shared engine chang
 
 ## Commits
 - No AI attribution. Plain messages saying what and why. Do not commit `__pycache__` or `venv`.
+
+## Modeling architecture diagrams — 2026-11-26
+
+When a modeling change alters runtime data flow, ordering, conditioning, attribution or shared interfaces, update the canonical GitHub-rendered Mermaid diagram and model card in the handbook (see [NFL diagram index](docs/model-cards/nfl/README.md#visual-architecture-reference)). Label proposed versus implemented versus independently tested paths and cite exact source pins. Do not treat an agent's completed checklist as proof of integrated full-game correctness. Preserve frozen manifests and control pins; no silent model identity changes.
+
+Preserve meaningful diagram labels. Use explicit multiline Mermaid labels and vertical flows; split wide diagrams instead of relying on a fixed minimum width that can shrink on narrow screens. Use editable SVG when precise node sizing, spatial geometry or physical illustrations are needed. Include accessible descriptions, relative image links, and a light/dark-safe background; see [schematic guide](docs/architecture/diagrams/README.md). Inspect rendered desktop and narrow widths before claiming visual verification.

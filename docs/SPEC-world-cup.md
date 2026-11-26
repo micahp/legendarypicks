@@ -1,7 +1,7 @@
 # SPEC — World Cup (soccer) support for Legendary Picks
 
 Status: PROPOSED (not started). Author handoff for an implementing agent.
-Read first: `ORIENTATION.md` → `AGENTS.md` → this file. Do NOT re-grep the repo to "get the lay"; the
+Read first: [project README](../README.md) → [AGENTS.md](../AGENTS.md) → this file. Do NOT re-grep the repo to "get the lay"; the
 touch-points are enumerated here with file paths.
 
 ## 0. Why this is not "just another league"
@@ -223,7 +223,7 @@ Tabs are `lines · slate · performance · matchups · model`; league pills are 
    correctly (no false "ungraded").
 6. Props shows a World Cup pill across all five tabs; player search returns soccer players (once ingested).
 7. `next build` compiles; every changed page RENDERS DATA (not just HTTP 200) — AGENTS.md. No host hardcoded in
-   `services/sports.ts` (relative `/api`). Update `ORIENTATION.md` if structure changed.
+   `services/sports.ts` (relative `/api`). Update the [project README](../README.md) and handbook if structure changed.
 
 ---
 

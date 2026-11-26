@@ -290,6 +290,411 @@ def build_snap_counts(raw_dir, players_csv, season, through_week):
     return data
 
 
+def roster_parquet_from_archive(rds_path, out_path):
+    """Write one dated archive's weekly roster as parquet, the form the kicker builder reads. Reads the .rds with pyreadr.
+    Refuses to overwrite. Returns the parquet's sha256."""
+    import pyreadr
+    out = Path(out_path)
+    if out.exists():
+        raise FileExistsError(f'{out} exists; a walk-forward input is written once')
+    frames = pyreadr.read_r(str(rds_path))
+    if len(frames) != 1:
+        raise ValueError(f'{rds_path}: expected one object, found {len(frames)}')
+    frame = list(frames.values())[0]
+    frame.to_parquet(out, index=False)
+    return hashlib.sha256(out.read_bytes()).hexdigest()
+
+
+def archive_roster_for_week(archive_root, week):
+    """The earliest dated archive whose weekly roster holds `week`: (roster .rds path, archive folder date as YYYY-MM-DD).
+
+    The archives are saved at about 12:00 to 13:00 UTC on their folder date, so the caller uses that time as the roster's
+    published bound. Raises when no archive holds the week, so a missing week is never filled in."""
+    import re
+    import pyreadr
+    dated = sorted(p for p in Path(archive_root).glob('archive-*') if re.fullmatch(r'archive-\d{4}-\d{2}-\d{2}', p.name))
+    for folder in dated:
+        rds = folder / 'roster_weekly_2026.rds'
+        if not rds.exists():
+            continue
+        frame = list(pyreadr.read_r(str(rds)).values())[0]
+        if (frame['week'] == week).any():
+            return rds, folder.name.removeprefix('archive-')
+    raise ValueError(f'no dated archive under {archive_root} holds the 2026 roster for week {week}')
+
+
+def week_first_kickoff(db_path, season, week):
+    """The earliest regular-season kickoff of one week, in UTC, from the schedule's Eastern local times."""
+    conn = connect(db_path)
+    try:
+        rows = conn.execute("SELECT gameday, gametime FROM nfl_schedule WHERE season = ? AND week = ? AND game_type = 'REG' "
+                            "AND gameday IS NOT NULL AND gametime IS NOT NULL", (season, week)).fetchall()
+    finally:
+        conn.close()
+    if not rows:
+        raise ValueError(f'no scheduled games for {season} week {week}')
+    return min(_et_to_utc(r['gameday'], r['gametime']) for r in rows)
+
+
+def kicker_week_assignments(roster_path, season, week, continuity_from=None):
+    """Each team's kicker for one week, read from the weekly roster under the kicker table's assignment rule.
+
+    The one ACT kicker is the team's kicker. A team with no ACT kicker takes its one DEV (practice-squad) kicker. A team
+    with more than one ACT kicker keeps last week's kicker if he is one of them (`continuity_from`, a dict of team to
+    gsis_id); otherwise it is left unresolved, so the engine refuses that team's game. Returns (rows, unresolved,
+    continuity), rows as [season, week, team, gsis_id]."""
+    from collections import defaultdict
+    import pyarrow.parquet as pq
+    t = pq.read_table(str(roster_path), columns=['season', 'week', 'team', 'position', 'status', 'gsis_id']).to_pydict()
+    active, practice, teams = defaultdict(set), defaultdict(set), set()
+    for i in range(len(t['week'])):
+        if int(t['week'][i]) != week or int(t['season'][i]) != season:
+            continue
+        teams.add(t['team'][i])
+        if t['position'][i] != 'K':
+            continue
+        if t['status'][i] == 'ACT':
+            active[t['team'][i]].add(t['gsis_id'][i])
+        elif t['status'][i] == 'DEV':
+            practice[t['team'][i]].add(t['gsis_id'][i])
+    rows, unresolved, continuity = [], [], []
+    for team in sorted(teams):
+        prev = (continuity_from or {}).get(team)
+        if len(active[team]) > 1 and prev in active[team]:
+            active[team] = {prev}
+            continuity.append(team)
+        if len(active[team]) > 1:
+            unresolved.append(team)
+        elif active[team]:
+            rows.append([season, week, team, next(iter(active[team]))])
+        elif len(practice[team]) == 1:
+            rows.append([season, week, team, next(iter(practice[team]))])
+        else:
+            unresolved.append(team)
+    return rows, unresolved, continuity
+
+
+def week_injury_report(archive_root, capture_path, season, week):
+    """(injury report for the engine, copy label) for one week: the copy from injury_copy_for_week, read by
+    injury_report_for_week. The label names the archive or the capture, so the snapshot records where it came from."""
+    path, label = injury_copy_for_week(archive_root, capture_path, season, week)
+    return injury_report_for_week(path, season, week), label
+
+
+def build_week_kicker_table(base_path, roster_path, season, week, out_path, published_utc, kickoff_utc,
+                            earlier_roster_path=None):
+    """The kicker table for one week of a walk-forward test: the base table's assignments for weeks before `week`, plus
+    this week's rows from the weekly roster. Assignments for later weeks are dropped, so no future week reaches the engine.
+
+    A roster published after the week's first kickoff is allowed, and the record says so. Then the kicker rows must match
+    `earlier_roster_path`, a copy published before kickoff, when one exists: a difference refuses, because the kicker
+    would then depend on a change made after the games were set. With no earlier copy, the record says the rows are
+    unchecked against one. Refuses when `out_path` exists and when the base holds no assignments before `week`. Each team
+    with no row is listed as unresolved, so the engine refuses that team's game. Continuity for two ACT kickers reads
+    last week's assignment from the base table."""
+    out = Path(out_path)
+    if out.exists():
+        raise FileExistsError(f'{out} exists; a walk-forward input is written once')
+    base_text = Path(base_path).read_text()
+    base = json.loads(base_text)
+    before = [row for row in base['assignments'] if row[0] != season or row[1] < week]
+    this_season = [row for row in before if row[0] == season]
+    if not this_season and week != 1:
+        raise ValueError(f'base table {base_path} has no {season} assignments before week {week}')
+    prev_week = max((row[1] for row in this_season), default=0)
+    continuity_from = {row[2]: row[3] for row in this_season if row[1] == prev_week}
+    rows, unresolved, continuity = kicker_week_assignments(roster_path, season, week, continuity_from)
+    after_kickoff = published_utc > kickoff_utc
+    if not after_kickoff:
+        timing_check = 'published before kickoff'
+    elif earlier_roster_path is None:
+        timing_check = 'published after kickoff; no copy published before kickoff to compare'
+    else:
+        earlier = kicker_week_assignments(earlier_roster_path, season, week, continuity_from)[0]
+        changed = sorted(set(map(tuple, rows)) ^ set(map(tuple, earlier)))
+        if changed:
+            raise ValueError(f'week {week} kicker rows differ between the copy published before kickoff and the copy '
+                             f'published {published_utc:%Y-%m-%dT%H:%MZ}: {changed}')
+        timing_check = 'published after kickoff; kicker rows match the copy published before kickoff'
+    table = dict(base)
+    table['assignments'] = before + rows
+    table['walkforward_week'] = {
+        'season': season, 'week': week, 'rule': 'kicker_week_assignments on the weekly roster',
+        'roster_sha256': hashlib.sha256(Path(roster_path).read_bytes()).hexdigest(),
+        'roster_published_utc': f'{published_utc:%Y-%m-%dT%H:%M:%SZ}',
+        'kickoff_utc': f'{kickoff_utc:%Y-%m-%dT%H:%M:%SZ}', 'timing_check': timing_check,
+        'base_sha256': hashlib.sha256(base_text.encode()).hexdigest(),
+        'base_weeks_dropped': sorted({row[1] for row in base['assignments'] if row[0] == season and row[1] >= week}),
+        'rows': len(rows), 'unresolved_teams': unresolved, 'continuity_resolved': continuity,
+    }
+    out.write_text(json.dumps(table, indent=1, sort_keys=True) + '\n')
+    return table['walkforward_week']
+
+
+def archive_schedule_rows(archive_root, season=2026):
+    """{game_id: [(observed_at UTC, schedule row), ...]} from every dated archive that holds games.rds.
+
+    Each archive's observed time is its own latest depth-chart timestamp, measured from the file (the depth charts are
+    saved in the same run). A row is the game as that archive listed it, so a game's schedule is known from the archive's
+    time onward. Only regular-season games are kept, as strings where the snapshot builder reads dates and times."""
+    import re
+    from collections import defaultdict
+    import pyreadr
+    import pandas as pd
+    out = defaultdict(list)
+    dated = sorted(p for p in Path(archive_root).glob('archive-*') if re.fullmatch(r'archive-\d{4}-\d{2}-\d{2}', p.name))
+    for folder in dated:
+        games_rds, depth_rds = folder / 'games.rds', folder / 'depth_charts_2026.rds'
+        if not (games_rds.exists() and depth_rds.exists()):
+            continue
+        dt = pd.to_datetime(list(pyreadr.read_r(str(depth_rds)).values())[0]['dt'], utc=True)
+        observed = dt.max().to_pydatetime().replace(tzinfo=timezone.utc)
+        games = list(pyreadr.read_r(str(games_rds)).values())[0]
+        games = games[(games['season'] == season) & (games['game_type'] == 'REG')]
+        for row in games.to_dict('records'):
+            row = {k: (None if pd.isna(v) else v) for k, v in row.items()}
+            row['season'], row['week'] = int(row['season']), int(row['week'])
+            row['gameday'], row['gametime'] = str(row['gameday'])[:10], str(row['gametime'])[:5]
+            row['game_type'] = str(row['game_type'])
+            out[row['game_id']].append((observed, row))
+    return dict(out)
+
+
+def archive_depth_by_team(archive_root, since='2026-08-01T00:00:00Z', extra_parquet=()):
+    """{team: {observed UTC datetime: [row dict]}} of depth-chart rows from every dated archive, from `since` on.
+
+    Each archive repeats the full history, so a (team, timestamp) is taken from the first archive that holds it. Rows keep
+    the gsis_id, name, position and rank, and `captured_utc`: the capture time of the file they came from. For a dated
+    archive that is its latest depth timestamp, read from the file (a lower bound on when it was saved). For the extra
+    parquet files the caller gives the acquisition time as `extra_captured` in their place. Rows without a gsis_id or a
+    rank are dropped."""
+    import re
+    from collections import defaultdict
+    import pandas as pd
+    out = defaultdict(dict)
+    seen = set()
+    floor = pd.Timestamp(since)
+    alias = {'LA': 'LAR', 'WAS': 'WSH'}  # the archives use nflverse codes; the schedule sources use either spelling
+    dated = sorted(p for p in Path(archive_root).glob('archive-*') if re.fullmatch(r'archive-\d{4}-\d{2}-\d{2}', p.name))
+    extra = [(Path(x[0]), x[1]) if isinstance(x, tuple) else (Path(x), None) for x in extra_parquet]
+    sources = [(folder / 'depth_charts_2026.rds', None) for folder in dated] + extra
+    for path, captured in sources:
+        if not path.exists():
+            continue
+        if path.suffix == '.parquet':
+            d = pd.read_parquet(path)
+        else:
+            import pyreadr  # only the dated .rds archives need it
+            d = list(pyreadr.read_r(str(path)).values())[0]
+        d = d[d['gsis_id'].notna() & d['pos_rank'].notna()]
+        d = d.assign(_dt=pd.to_datetime(d['dt'], utc=True))
+        if captured is None:
+            captured = d['_dt'].max().to_pydatetime()
+        d = d[d['_dt'] >= floor]
+        for (team, dt), group in d.groupby(['team', '_dt']):
+            if (team, dt) in seen:
+                continue
+            seen.add((team, dt))
+            rows = [
+                {'gsis_id': str(r.gsis_id), 'player_name': str(r.player_name), 'pos_abb': str(r.pos_abb),
+                 'pos_rank': int(float(r.pos_rank)), 'captured_utc': captured} for r in group.itertuples()]
+            for name in {team, alias.get(team, team)}:
+                out[name][dt.to_pydatetime()] = rows
+    return {team: dict(times) for team, times in out.items()}
+
+
+def injury_report_from_db(db_path, season, week):
+    """The injury report from the database's injury_reports rows, in the engine's shape. The rows carry no publish time
+    for 2026, so the caller must decide the copy is usable. Refuses when no row has a status."""
+    conn = connect(db_path)
+    try:
+        rows = conn.execute('SELECT gsis_id, report_status FROM injury_reports WHERE league = ? AND season = ? AND week = ?',
+                            ('nfl', season, week)).fetchall()
+    finally:
+        conn.close()
+    listed = [r for r in rows if r['report_status'] is not None]
+    if not listed:
+        raise ValueError(f'injury_reports holds no status for {season} week {week}')
+    players = [{'gsis_id': str(r['gsis_id']), 'report_status': str(r['report_status'])} for r in listed]
+    return {'players': players, 'listed': len(players), 'rows': len(rows)}
+
+
+ROTOWIRE_TO_ENGINE = {'OUT': 'Out', 'DOUBTFUL': 'Doubtful', 'QUESTIONABLE': 'Questionable', 'IR': 'Out', 'IR-R': 'Out',
+                      'PUP-R': 'Out', 'RESERVE-DNR': 'Out', 'RESERVE-EX': 'Out', 'INACTIVE': 'Out'}
+
+
+def rotowire_injury_report(db_path, cutoff, window_days=10):
+    """The injury states known at a UTC cutoff, from RotoWire player news (nfl_player_news_updates), in the engine's shape.
+
+    Each player's state is the newest status published in the window before the cutoff. Publish times are exact. A player
+    is matched to a GSIS id only through the stored links: the news row's own player_id, or the player_source_ids row for
+    the RotoWire id. A status with no link is returned in `unmatched`, never matched by name. A status that RotoWire names
+    maps to the engine's words (IR, PUP, reserve and INACTIVE read as Out). Refuses when no status is in the window.
+
+    Each listed player keeps the status's published_utc, the RotoWire status and its team. A game designation (OUT,
+    DOUBTFUL, QUESTIONABLE, INACTIVE) published before that team's last kickoff before the cutoff was for an earlier game:
+    it is dropped and listed in `obsolete`, not carried into this one. Reserve statuses (IR, PUP, reserve lists) persist."""
+    start = cutoff - timedelta(days=window_days)
+    fmt = '%Y-%m-%dT%H:%M:%S+00:00'
+    import nfl_news
+    conn = connect(db_path)
+    try:
+        ids, counts = {}, {}
+        for pid, gsis in conn.execute('SELECT id, nfl_gsis_id FROM players WHERE nfl_gsis_id IS NOT NULL'):
+            ids[pid] = gsis
+            counts[gsis] = counts.get(gsis, 0) + 1
+        links = {}
+        for key, pid in conn.execute("SELECT source_player_key, player_id FROM player_source_ids "
+                                     "WHERE source = 'rotowire' AND league = 'nfl'"):
+            links.setdefault(key, set()).add(pid)
+        rows = conn.execute(
+            "SELECT n.rotowire_player_id, n.player_id, n.team, n.position, n.first_name, n.last_name, n.injury_status, n.published_utc "
+            "FROM nfl_player_news_updates n WHERE n.injury_status <> '' AND n.published_utc >= ? AND n.published_utc <= ? "
+            "ORDER BY n.published_utc", (start.strftime(fmt), cutoff.strftime(fmt))).fetchall()
+        if not rows:
+            raise ValueError(f'no RotoWire injury status published between {start:%Y-%m-%d} and {cutoff.isoformat()}')
+        latest, unmatched = {}, []
+        for r in rows:
+            player_ids = {r['player_id']} if r['player_id'] is not None else links.get(str(r['rotowire_player_id']), set())
+            if not player_ids:
+                # no stored link: the news resolver's own rule (name, team and position, unique candidate only)
+                item = {'first_name': r['first_name'], 'last_name': r['last_name'], 'team': r['team'], 'position': r['position']}
+                resolved = nfl_news.resolve_source_player(conn, item)
+                if resolved['player_id'] is not None:
+                    player_ids = {resolved['player_id']}
+            gsis_ids = {ids[pid] for pid in player_ids if pid in ids and counts.get(ids[pid]) == 1}
+            if len(gsis_ids) != 1:
+                unmatched.append({'team': r['team'], 'name': f"{r['first_name']} {r['last_name']}", 'status': r['injury_status'],
+                                  'rotowire_player_id': r['rotowire_player_id'], 'published_utc': r['published_utc']})
+                continue
+            latest[gsis_ids.pop()] = (r['injury_status'], r['published_utc'], r['team'])
+        last_kickoff = _last_kickoffs(conn, cutoff)
+    finally:
+        conn.close()
+    players, obsolete = split_obsolete(latest, last_kickoff)
+    return {'players': players, 'listed': len(players), 'rows': len(rows), 'window_days': window_days,
+            'source': 'rotowire nfl_player_news_updates', 'obsolete': obsolete}, unmatched
+
+
+GAME_DESIGNATIONS = ('OUT', 'DOUBTFUL', 'QUESTIONABLE', 'INACTIVE')  # one game's status; reserve lists persist
+
+
+def split_obsolete(latest, last_kickoff):
+    """(players, obsolete) from {gsis: (RotoWire status, published_utc, RotoWire team)} and {team: last kickoff before the
+    cutoff}. A game designation published before the team's last kickoff was for that earlier game: it goes to obsolete."""
+    fmt = '%Y-%m-%dT%H:%M:%S+00:00'
+    players, obsolete = [], []
+    for gsis, (raw, published, team) in sorted(latest.items()):
+        row = {'gsis_id': gsis, 'report_status': ROTOWIRE_TO_ENGINE[raw], 'rotowire_status': raw,
+               'published_utc': published, 'team': team}
+        previous = last_kickoff.get(_db_team(team))
+        if raw in GAME_DESIGNATIONS and previous is not None and published < previous.strftime(fmt):
+            obsolete.append(dict(row, previous_kickoff_utc=previous.strftime(fmt)))
+            continue
+        players.append(row)
+    return players, obsolete
+
+
+def _db_team(code):
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import team_codes
+    try:
+        return team_codes.normalize('nfl', code)
+    except Exception:
+        return None
+
+
+def _last_kickoffs(conn, cutoff):
+    """{team: the UTC kickoff of its last game before the cutoff}, from nfl_schedule (gametime is US Eastern)."""
+    import pytz
+    eastern = pytz.timezone('America/New_York')
+    out = {}
+    for row in conn.execute("SELECT gameday, gametime, home_team, away_team FROM nfl_schedule "
+                            "WHERE gameday IS NOT NULL AND gametime IS NOT NULL"):
+        kick = eastern.localize(datetime.strptime(f"{row['gameday']} {row['gametime']}", '%Y-%m-%d %H:%M')).astimezone(timezone.utc)
+        if kick >= cutoff:
+            continue
+        for team in (_db_team(row['home_team']), _db_team(row['away_team'])):
+            if team and (team not in out or kick > out[team]):
+                out[team] = kick
+    return out
+
+
+def injury_copies_for_week(archive_root, capture_path, db_path, season, week):
+    """The injury copies for one week: {'full': (report, label) or None, 'partial': (report, label) or None}.
+
+    'full' is the first copy that holds the week's statuses, in this order: the archive dated the next Thursday, the capture,
+    the database rows. 'partial' is the archive dated the week's own Thursday, which holds the statuses known at that time
+    (it is a partial list). A copy with no statuses is skipped, never read as an empty report."""
+    thursday = datetime(season, 9, 10) + timedelta(days=7 * (week - 1))
+    full = None
+    for label, path in ((f'archive-{(thursday + timedelta(days=7)):%Y-%m-%d}', Path(archive_root) / f'archive-{(thursday + timedelta(days=7)):%Y-%m-%d}' / 'injuries_2026.rds'),
+                        ('capture', Path(capture_path))):
+        if path.exists():
+            try:
+                full = (injury_report_for_week(path, season, week), label)
+                break
+            except ValueError:
+                continue
+    if full is None:
+        try:
+            full = (injury_report_from_db(db_path, season, week), 'database injury_reports (ingested 2026-11-17)')
+        except ValueError:
+            full = None
+    partial = None
+    own = Path(archive_root) / f'archive-{thursday:%Y-%m-%d}' / 'injuries_2026.rds'
+    if own.exists():
+        try:
+            partial = (injury_report_for_week(own, season, week), f'archive-{thursday:%Y-%m-%d}')
+        except ValueError:
+            partial = None
+    return {'full': full, 'partial': partial}
+
+
+def injury_copy_for_week(archive_root, capture_path, season, week, first_thursday=(9, 10)):
+    """The injury-report copy used for one week of a walk-forward test: (path, label).
+
+    The Thursday archive of week k holds only a partial report for week k (the archives show 2 of 138 players for week 4).
+    The full report is in the archive dated the next Thursday, which is after kickoff. This uses that archive, and records
+    its date. The publish time is the Friday before kickoff, which the caller must check. When no later archive exists,
+    the capture is used and labelled as such. Raises when neither holds the week."""
+    import re
+    y, m, d = season, *first_thursday
+    thursday = datetime(y, m, d) + timedelta(days=7 * (week - 1))
+    target = thursday + timedelta(days=7)
+    folder = Path(archive_root) / f'archive-{target:%Y-%m-%d}'
+    rds = folder / 'injuries_2026.rds'
+    if rds.exists():
+        return rds, f'archive-{target:%Y-%m-%d}'
+    if Path(capture_path).exists():
+        import pyarrow.parquet as pq
+        weeks = set(pq.read_table(str(capture_path), columns=['week']).column('week').to_pylist())
+        if week in weeks:
+            return Path(capture_path), 'capture'
+    raise ValueError(f'no injury copy holds week {week}: no archive {target:%Y-%m-%d} and the capture has no week {week}')
+
+
+def injury_report_for_week(path, season, week):
+    """The injury report the engine reads, for one week: {'players': [{'gsis_id', 'report_status'}], 'listed': n}.
+
+    Only players with a status on the report are listed. Refuses when the copy holds no rows for the week, because an
+    empty report would make every player eligible."""
+    if str(path).endswith('.rds'):
+        import pyreadr
+        frame = list(pyreadr.read_r(str(path)).values())[0]
+    else:
+        import pandas as pd
+        frame = pd.read_parquet(path)
+    frame = frame[(frame['season'] == season) & (frame['week'] == week)]
+    if frame.empty:
+        raise ValueError(f'{path} holds no {season} week {week} injury rows')
+    listed = frame[frame['report_status'].notna()]
+    if listed.empty:
+        raise ValueError(f'{path} holds {len(frame)} {season} week {week} rows and no status on any: a pre-report copy, not an empty report')
+    players = [{'gsis_id': str(r.gsis_id), 'report_status': str(r.report_status)} for r in listed.itertuples()]
+    return {'players': players, 'listed': len(players), 'rows': len(frame)}
+
+
 NFLVERSE_TEAM = {'LAR': 'LA', 'WSH': 'WAS'}  # the streak files use nflverse codes; the database uses these two
 
 
@@ -333,10 +738,104 @@ def build_streaks(db_path, cutoff, target_game_id, season=2026):
         for team, mine, theirs in ((row['home_team'], home, away), (row['away_team'], away, home)):
             results.setdefault(NFLVERSE_TEAM.get(team, team), []).append(
                 'W' if mine > theirs else 'L' if mine < theirs else 'T')
+    # the batch names teams by database code (LAR, WSH); the file is keyed by nflverse code. Write both spellings so the
+    # preflight finds the target team either way.
+    for db_code, nfl_code in NFLVERSE_TEAM.items():
+        if nfl_code in results and db_code not in results:
+            results[db_code] = results[nfl_code]
     payload = {'as_of_utc': cutoff.strftime('%Y-%m-%dT%H:%M:%SZ'),
                'source': 'nfl_schedule scores in the database, regular season, read-only build',
                'teams': {team: {'streak': _streak(r)} for team, r in sorted(results.items())}}
     return payload, used
+
+
+def player_prop_comparison(db_path, game_id):
+    """Forward Platt player projections next to the market, one row per player, market and line.
+
+    Each line is the sportsbook line nearest even odds; the market probability is the vig-free over probability, and
+    the model's is the Platt-calibrated one. Read-only. Returns [] when the game has no rows. Raises when the table is
+    missing, so an absent job is never read as an empty comparison."""
+    conn = connect(db_path)
+    try:
+        try:
+            rows = conn.execute(
+                """SELECT f.run_id, f.team, f.player_id, p.name AS player, f.market, f.line, f.source,
+                          f.over_odds, f.under_odds, f.p_over_fair, f.p_over_raw, f.p_over_platt, f.books_at_line,
+                          f.selection, f.model_version, f.as_of
+                     FROM player_forward_platt f LEFT JOIN players p ON p.id = f.player_id
+                    WHERE f.game_id = ? ORDER BY f.market, f.player_id, f.line""", (game_id,)).fetchall()
+        except sqlite3.OperationalError as exc:
+            raise ValueError(f'player_forward_platt is not readable: {exc}') from exc
+    finally:
+        conn.close()
+    out = []
+    for row in rows:
+        d = dict(row)
+        d['edge_platt'] = None if d['p_over_fair'] is None or d['p_over_platt'] is None else round(
+            d['p_over_platt'] - d['p_over_fair'], 4)
+        out.append(d)
+    return out
+
+
+def grade_games(db_path, season, week, batches):
+    """Grade simulated game results against the finals for one week.
+
+    batches maps a model name to a folder of boxscore JSONL files (one game record per seed). For each model and game:
+    the home win probability is the share of seeds the home side wins; the Brier score and log loss use the final
+    winner; the margin and total errors use the mean simulated values against the final. Games without a final score
+    are skipped and listed. Read-only. Raises when a batch folder holds no game records."""
+    import glob, math
+    conn = connect(db_path)
+    try:
+        finals = {r['game_id']: r for r in conn.execute(
+            'SELECT game_id, home_team, away_team, home_score, away_score FROM nfl_schedule '
+            'WHERE season = ? AND week = ? AND game_type = ?', (season, week, 'REG'))}
+    finally:
+        conn.close()
+    graded, skipped = {}, []
+    for model, folder in sorted(batches.items()):
+        games = {}
+        for path in sorted(glob.glob(os.path.join(folder, '*.boxscores.jsonl'))):
+            for line in open(path):
+                rec = json.loads(line)
+                if rec.get('type') != 'game':
+                    continue
+                games.setdefault(rec['game_id'], []).append(rec)
+        if not games:
+            raise ValueError(f'{model}: no game records under {folder}')
+        graded[model] = {}
+        for game_id, seeds in sorted(games.items()):
+            final = finals.get(game_id)
+            if final is None or final['home_score'] is None:
+                skipped.append(game_id)
+                continue
+            home_wins = margins = totals = 0
+            for rec in seeds:
+                pts = {t['home_away']: t['stats']['points'] for t in rec['teams']}
+                margins += pts['home'] - pts['away']
+                totals += pts['home'] + pts['away']
+                home_wins += pts['home'] > pts['away']
+            n = len(seeds)
+            p = home_wins / n
+            outcome = 1.0 if final['home_score'] > final['away_score'] else 0.0
+            p_clip = min(max(p, 1e-6), 1 - 1e-6)
+            graded[model][game_id] = {
+                'seeds': n, 'p_home_win': round(p, 4), 'brier': round((p - outcome) ** 2, 4),
+                'log_loss': round(-(outcome * math.log(p_clip) + (1 - outcome) * math.log(1 - p_clip)), 4),
+                'mean_margin': round(margins / n, 2), 'actual_margin': final['home_score'] - final['away_score'],
+                'margin_error': round(margins / n - (final['home_score'] - final['away_score']), 2),
+                'mean_total': round(totals / n, 2), 'actual_total': final['home_score'] + final['away_score'],
+            }
+    summary = {}
+    for model, rows in graded.items():
+        vals = list(rows.values())
+        if vals:
+            summary[model] = {'games': len(vals),
+                              'brier': round(sum(v['brier'] for v in vals) / len(vals), 4),
+                              'log_loss': round(sum(v['log_loss'] for v in vals) / len(vals), 4),
+                              'mean_abs_margin_error': round(sum(abs(v['margin_error']) for v in vals) / len(vals), 2),
+                              'mean_abs_total_error': round(sum(abs(v['mean_total'] - v['actual_total']) for v in vals) / len(vals), 2)}
+    return {'season': season, 'week': week, 'summary': summary, 'games': graded, 'skipped_without_final': sorted(set(skipped))}
 
 
 def render_slate_text(slate):
@@ -387,6 +886,59 @@ def render_text(answer):
     return '\n'.join(lines)
 
 
+def batch_report(arm_dirs):
+    """Summary of simulated games for each arm, and seed-by-seed comparisons between arms. Read-only.
+
+    arm_dirs maps an arm name to a folder of box-score files (one game record per seed, `*.boxscores.jsonl`). The arms are
+    compared on the seeds they share. Per arm: seed count, home win share, tie share, home margin mean and 10th and 90th
+    percentiles, and total mean. Per pair: common seeds, mean margin difference (first arm minus second), and the share of
+    common seeds where both arms pick the same winner. Refuses when an arm folder holds no game records."""
+    import glob
+    import statistics
+    games = {}
+    for name, folder in arm_dirs.items():
+        rows = {}
+        for path in sorted(glob.glob(os.path.join(folder, '*.boxscores.jsonl'))):
+            with open(path) as handle:
+                for line in handle:
+                    record = json.loads(line)
+                    if record.get('type') != 'game':
+                        continue
+                    points = {team['home_away']: float(team['stats'].get('points') or 0) for team in record['teams']}
+                    rows[int(record['seed'])] = {'home': points['home'], 'away': points['away'],
+                                                 'home_team': record['home_team'], 'away_team': record['away_team']}
+        if not rows:
+            raise ValueError(f'{name}: no game records under {folder}')
+        games[name] = rows
+    arms, paired = {}, {}
+    for name, rows in games.items():
+        margins = [r['home'] - r['away'] for r in rows.values()]
+        totals = [r['home'] + r['away'] for r in rows.values()]
+        deciles = statistics.quantiles(margins, n=10)
+        sample = next(iter(rows.values()))
+        arms[name] = {'seeds': len(margins), 'home_team': sample['home_team'], 'away_team': sample['away_team'],
+                      'home_win_share': round(sum(1 for m in margins if m > 0) / len(margins), 3),
+                      'tie_share': round(sum(1 for m in margins if m == 0) / len(margins), 3),
+                      'home_margin_mean': round(statistics.fmean(margins), 2),
+                      'home_margin_p10': round(deciles[0], 1), 'home_margin_p90': round(deciles[8], 1),
+                      'total_mean': round(statistics.fmean(totals), 2)}
+    names = list(games)
+    for i, first in enumerate(names):
+        for second in names[i + 1:]:
+            common = sorted(set(games[first]) & set(games[second]))
+            if not common:
+                continue
+            diffs = [(games[first][s]['home'] - games[first][s]['away'])
+                     - (games[second][s]['home'] - games[second][s]['away']) for s in common]
+            same = sum(1 for s in common
+                       if (games[first][s]['home'] > games[first][s]['away'])
+                       == (games[second][s]['home'] > games[second][s]['away'])) / len(common)
+            paired[f'{first} vs {second}'] = {'common_seeds': len(common),
+                                              'mean_margin_diff': round(statistics.fmean(diffs), 2),
+                                              'same_winner_share': round(same, 3)}
+    return {'arms': arms, 'paired': paired}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--db', default=str(DEFAULT_DB), help='picks database (opened read-only)')
@@ -412,6 +964,13 @@ def main(argv=None):
                              '--target, --out)')
     parser.add_argument('--cutoff', help='with --streaks: UTC cutoff, e.g. 2026-11-17T12:00:00Z')
     parser.add_argument('--target', metavar='GAME_ID', help='with --streaks: the game the file is built for')
+    parser.add_argument('--props', metavar='GAME_ID', help='forward Platt player projections next to the market')
+    parser.add_argument('--grade-week', type=int, metavar='WEEK', help='grade simulated games against the finals')
+    parser.add_argument('--batch-report', action='append', default=[], metavar='ARM=FOLDER',
+                        help='summarize simulated games for each arm and compare the arms seed by seed; repeat per arm')
+    parser.add_argument('--batch-out', metavar='PATH', help='with --batch-report: write the JSON here instead of printing it')
+    parser.add_argument('--batch', action='append', default=[], metavar='MODEL=FOLDER',
+                        help='with --grade-week: a model and its batch folder; repeat for each model')
     args = parser.parse_args(argv)
     if args.streaks:
         missing = [name for name, value in (('--cutoff', args.cutoff), ('--target', args.target),
@@ -437,6 +996,31 @@ def main(argv=None):
                           'weeks': sorted({row[1] for row in data['team_snaps']}),
                           'team_games': len(data['team_snaps']), 'player_rows': len(data['player_snaps']),
                           'coverage_all_weeks': data['coverage']}, sort_keys=True))
+        return 0
+    if args.grade_week is not None:
+        if not args.batch:
+            parser.error('--grade-week needs at least one --batch MODEL=FOLDER')
+        batches = dict(item.split('=', 1) for item in args.batch)
+        report = grade_games(args.db, args.season or 2026, args.grade_week, batches)
+        print(json.dumps(report, indent=2, sort_keys=True))
+        return 0
+    if args.batch_report:
+        arm_dirs = dict(item.split('=', 1) for item in args.batch_report)
+        report = json.dumps(batch_report(arm_dirs), indent=2, sort_keys=True)
+        if args.batch_out:
+            Path(args.batch_out).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.batch_out).write_text(report + '\n')
+        else:
+            print(report)
+        return 0
+    if args.props:
+        rows = player_prop_comparison(args.db, args.props)
+        if args.json:
+            print(json.dumps(rows, indent=2, sort_keys=True, default=str))
+        else:
+            for r in rows:
+                print(f"{r['player']}\t{r['market']}\t{r['line']}\tmarket {r['p_over_fair']}\tmodel {r['p_over_platt']}\tedge {r['edge_platt']}")
+            print(f'{len(rows)} lines')
         return 0
     if args.snapshot:
         if not args.as_of:

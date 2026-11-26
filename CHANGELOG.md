@@ -1,3 +1,29 @@
+## v10.3.0
+
+### NFL box score
+
+- One table per stat group, stacked. Columns line up and nothing runs out of the card.
+- Each name sits next to its numbers on desktop. On phones, the name column stays in place while wide tables scroll.
+- Group names come from ESPN. Interceptions no longer show under Passing. Kicking, punting, kick returns and punt returns each get their own table.
+- Each team gets its own total. Counts add, LONG is the longest, C/ATT and SACKS add both parts. Averages and ratings stay blank.
+
+### Oracle
+
+- The oracle is on dev: the next NFL slate, its projection status and the last simulation run.
+- Snapshot, snap-count and streak builders. Snapshots record their input checks.
+- Forward-Platt prop rows use the canonical sportsbook line.
+
+### NFL rosters
+
+- Roster resolution V2: one resolver for SLC rosters, plus the batch converter.
+- A retrospective tool reads official gamebook rosters. It treats them as postgame evidence only.
+
+### Research tools
+
+- A reusable SLC model-family runner, driven by a JSON config.
+- A read-only props-vs-simulation report. It refuses a run with no complete games.
+- The forward-Platt prop model stays a research candidate only.
+
 ## v10.2.0
 
 ### NBA player identities

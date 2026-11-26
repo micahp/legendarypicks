@@ -1,0 +1,2035 @@
+2026_11_IND_HOU  IND at HOU
+kickoff 2026-11-20T01:15:00Z  cutoff 2026-11-19T23:45:00Z  file 2026_11_IND_HOU.json
+
+  IND (away)  depth chart 2026-11-19T16:30:49Z  73 rows
+    QB     1  Daniel Jones                 00-0035710
+    QB     2  Anthony Richardson Sr.       00-0039164
+    QB     3  Riley Leonard                00-0040206  [Out]
+    RB     1  Jonathan Taylor              00-0036223
+    RB     2  Seth McGowan                 00-0041125
+    RB     3  DJ Giddens                   00-0040179
+    WR     1  Laquon Treadwell             00-0032951
+    WR     2  Deion Burks                  00-0041132
+    WR     3  Anthony Gould                00-0039816  [Questionable]
+    WR     4  Ashton Dulin                 00-0035021
+    WR     5  Nick Westbrook-Ikhine        00-0036182
+    WR     6  Quez Watkins                 00-0036271
+    WR     7  Alec Pierce                  00-0037664  [Out]
+    WR     8  D.J. Montgomery              00-0035045
+    TE     1  Tyler Warren                 00-0040128
+    TE     2  Will Mallory                 00-0038394  [Out]
+    TE     3  Drew Ogletree                00-0037292
+    TE     4  Pharaoh Brown                00-0033439
+    TE     5  Mo Alie-Cox                  00-0033217  [Out]
+    TE     6  Carson Towt                  00-0040853
+    LT     1  Bernhard Raimann             00-0037757  [Questionable]
+    LT     2  Luke Tenuta                  00-0037305
+    LT     3  Charlie Heck                 00-0036195
+    LG     1  Jalen Farmer                 00-0041517
+    LG     2  Dalton Tucker                00-0039578
+    C      1  Tanor Bortolini              00-0039744
+    C      2  Sedrick Van Pran-Granger     00-0039876
+    RG     1  Matt Goncalves               00-0039736
+    RG     2  Dalton Tucker                00-0039578
+    RG     3  Jalen Farmer                 00-0041517
+    RT     1  Jalen Travis                 00-0040163  [Out]
+    RT     2  Matt Goncalves               00-0039736
+    RT     3  Luke Tenuta                  00-0037305
+    LDE    1  Arden Key                    00-0034825  [Out]
+    LDE    2  Jaylahn Tuimoloau            00-0040744
+    LDE    3  George Gumbs Jr.             00-0041080
+    RDE    1  Laiatu Latu                  00-0039340
+    RDE    2  Caden Curry                  00-0041111
+    RDE    3  Micheal Clemons              00-0038107
+    SLB    1  Bryce Boettcher              00-0041518
+    SLB    2  Austin Ajiake                00-0039178
+    MLB    1  CJ Allen                     00-0041039
+    MLB    2  West Weeks                   00-0041236
+    MLB    3  Jaylon Carlies               00-0039377  [Out]
+    WLB    1  Tahj Chambers                00-0041227
+    WLB    2  Akeem Davis-Gaither          00-0036298  [Out]
+    LCB    1  Sauce Gardner                00-0037190  [Questionable]
+    LCB    2  Kenneth Harris               00-0026836
+    LCB    3  Cameron Mitchell             00-0038585
+    RCB    1  Charvarius Ward              00-0034573  [Out]
+    RCB    2  Johnathan Edwards            00-0040347
+    RCB    3  Cam Taylor-Britt             00-0037753
+    NB     1  Justin Walley                00-0040139
+    NB     2  Kapena Gushiken              00-0040928
+    SS     1  A.J. Haulcy                  00-0041043  [Questionable]
+    SS     2  Hunter Wohler                00-0040235
+    FS     1  Cam Bynum                    00-0036629
+    FS     2  Jonathan Owens               00-0034485
+    PK     1  Spencer Shrader              00-0039576
+    P      1  Rigoberto Sanchez            00-0033269
+    H      1  Rigoberto Sanchez            00-0033269
+    LS     1  Luke Rhodes                  00-0032753  [Out]
+    KR     1  Seth McGowan                 00-0041125
+    KR     2  Anthony Gould                00-0039816  [Questionable]
+    KR     3  Deion Burks                  00-0041132
+    KR     4  Ashton Dulin                 00-0035021
+    PR     1  Anthony Gould                00-0039816  [Questionable]
+    PR     2  Ashton Dulin                 00-0035021
+    LDT    1  Grover Stewart               00-0033952
+    LDT    2  Tim Smith                    00-0040207
+    RDT    1  Adetomiwa Adebawore          00-0039031
+    RDT    2  Jerry Tillery                00-0035674  [Out]
+    RDT    3  Kevin Givens                 00-0035026
+
+  HOU (home)  depth chart 2026-11-19T16:30:49Z  79 rows
+    QB     1  C.J. Stroud                  00-0039163
+    QB     2  Davis Mills                  00-0036898
+    QB     3  Graham Mertz                 00-0040211
+    RB     1  David Montgomery             00-0035685  [Out]
+    RB     2  Woody Marks                  00-0040583  [Out]
+    RB     3  Emari Demercado              00-0038705
+    RB     4  British Brooks               00-0039603
+    WR     1  Nico Collins                 00-0036554
+    WR     2  Xavier Hutchinson            00-0038618  [Questionable]
+    WR     3  Tank Dell                    00-0038977  [Questionable]
+    WR     4  Marvin Harrison Jr.          00-0039849
+    WR     5  Kayshon Boutte               00-0038608
+    WR     6  Nikko Remigio                00-0038519
+    WR     7  Jayden Higgins               00-0040130
+    WR     8  Jaylin Noel                  00-0040138
+    TE     1  Dalton Schultz               00-0034383
+    TE     2  Foster Moreau                00-0034981
+    TE     3  Brevin Jordan                00-0036556  [Out]
+    TE     4  Marlin Klein                 00-0041472
+    TE     5  Cade Stover                  00-0039359
+    LT     1  Aireontae Ersery             00-0040745
+    LT     2  Nate Thomas                  00-0039422
+    LG     1  Keylan Rutledge              00-0041532
+    LG     2  Febechi Nwaiwu               00-0041559
+    LG     3  Evan Brown                   00-0034495
+    LG     4  Wyatt Teller                 00-0034399  [Out]
+    C      1  Evan Brown                   00-0034495
+    C      2  Jake Andrews                 00-0039030
+    C      3  Keylan Rutledge              00-0041532
+    RG     1  Ed Ingram                    00-0038131
+    RG     2  Wyatt Teller                 00-0034399  [Out]
+    RG     3  Febechi Nwaiwu               00-0041559
+    RT     1  Trent Brown                  00-0032071
+    RT     2  Braden Smith                 00-0034836  [Questionable]
+    RT     3  Blake Fisher                 00-0039857
+    RT     4  Sam Hagen                    00-0041303
+    LDE    1  Will Anderson Jr.            00-0039108  [Questionable]
+    LDE    2  Dominique Robinson           00-0037082
+    LDE    3  Dylan Horton                 00-0039009
+    RDE    1  Danielle Hunter              00-0031565  [Out]
+    RDE    2  Jadeveon Clowney             00-0031364
+    RDE    3  Ali Gaye                     00-0038724
+    RDE    4  Solomon Byrd                 00-0039427
+    SLB    1  Wade Woodaz                  00-0041465
+    SLB    2  Jake Hummel                  00-0037633
+    MLB    1  Henry To'oTo'o               00-0038599
+    MLB    2  Azeez Al-Shaair              00-0035166  [Out]
+    MLB    3  K.C. Ossai                   00-0040413
+    WLB    1  Jake Hansen                  00-0037457
+    WLB    2  E.J. Speed                   00-0034987
+    LCB    1  Derek Stingley Jr.           00-0037237
+    LCB    2  Ja'Marcus Ingram             00-0037661
+    LCB    3  Jaylin Smith                 00-0040149  [Out]
+    RCB    1  Kamari Lassiter              00-0039343  [Questionable]
+    RCB    2  Tremon Smith                 00-0034278
+    NB     1  Jalen Pitre                  00-0037246
+    SS     1  Reed Blankenship             00-0037130  [Questionable]
+    SS     2  M.J. Stewart                 00-0034355
+    FS     1  Calen Bullock                00-0039838
+    FS     2  Kamari Ramsey                00-0041466
+    PK     1  Ka'imi Fairbairn             00-0032726
+    P      1  Kai Kroeger                  00-0040654
+    H      1  Kai Kroeger                  00-0040654
+    LS     1  Austin Brinkman              00-0040409
+    KR     1  Nikko Remigio                00-0038519
+    KR     2  Tremon Smith                 00-0034278
+    KR     3  Woody Marks                  00-0040583  [Out]
+    KR     4  Xavier Hutchinson            00-0038618  [Questionable]
+    KR     5  Jaylin Noel                  00-0040138
+    PR     1  Nikko Remigio                00-0038519
+    PR     2  Tank Dell                    00-0038977  [Questionable]
+    PR     3  Tremon Smith                 00-0034278
+    PR     4  Jaylin Noel                  00-0040138
+    LDT    1  Tommy Togiai                 00-0036883
+    LDT    2  Kayden McDonald              00-0041440
+    LDT    3  Naquan Jones                 00-0036695
+    RDT    1  Sheldon Rankins              00-0032759
+    RDT    2  Logan Hall                   00-0038127
+    RDT    3  Mario Edwards Jr.            00-0032265
+
+====================================================================================================
+
+2026_11_ARI_KC  ARI at KC
+kickoff 2026-11-22T18:00:00Z  cutoff 2026-11-22T16:30:00Z  file 2026_11_ARI_KC.json
+
+  ARI (away)  depth chart 2026-11-22T15:12:52Z  79 rows
+    QB     1  Carson Beck                  00-0041561  [Out]
+    QB     2  Josh Johnson                 00-0026300
+    QB     3  Joey Aguilar                 00-0041203  [Out]
+    QB     4  Gardner Minshew II           00-0035289  [Out]
+    RB     1  Tyler Allgeier               00-0037263
+    RB     2  Bam Knight                   00-0037157  [Questionable]
+    RB     3  Evan Hull                    00-0038397
+    RB     4  James Conner                 00-0033553  [Out]
+    RB     5  Jeremiyah Love               00-0041027
+    RB     6  Trey Benson                  00-0039921
+    WR     1  Simi Fehoko                  00-0036646
+    WR     2  Reggie Virgil                00-0041070
+    WR     3  Devin Duvernay               00-0036331
+    WR     4  Zay Jones                    00-0033891
+    WR     5  Harrison Wallace III         00-0041368
+    WR     6  Michael Wilson               00-0038559
+    WR     7  Kendrick Bourne              00-0033307
+    WR     8  Jalen Brooks                 00-0038640
+    TE     1  Trey McBride                 00-0037744
+    TE     2  Elijah Higgins               00-0039041
+    TE     3  Hunter Long                  00-0037004  [Questionable]
+    TE     4  Teagan Quitoriano            00-0037277
+    TE     5  Tip Reiman                   00-0039737
+    LT     1  Jayden Williams              00-0041113  [Out]
+    LT     2  Josh Fryar                   00-0040382
+    LT     3  Jedrick Wills Jr.            00-0036267
+    LT     4  Paris Johnson Jr.            00-0038540
+    LG     1  Isaac Seumalo                00-0032954
+    LG     2  Kingsley Eguakun             00-0039442
+    C      1  Hjalte Froholdt              00-0035258  [Questionable]
+    C      2  Jon Gaines II                00-0038571
+    C      3  Hayden Conner                00-0040219
+    RG     1  Isaiah Adams                 00-0039808
+    RG     2  Jon Gaines II                00-0038571
+    RG     3  Hayden Conner                00-0040219
+    RG     4  Chase Bisontis               00-0041468
+    RT     1  Elijah Wilkinson             00-0033676
+    RT     2  Jedrick Wills Jr.            00-0036267
+    LDE    1  Josh Sweat                   00-0034381
+    LDE    2  Eku Leota                    00-0038782
+    LDE    3  Jordan Burch                 00-0040137
+    RDE    1  Dante Stills                 00-0038623
+    RDE    2  Darius Robinson              00-0039854
+    SLB    1  Zaven Collins                00-0036933
+    SLB    2  Baron Browning               00-0036995
+    MLB    1  Mack Wilson Sr.              00-0035144
+    MLB    2  Cody Simon                   00-0040645
+    WLB    1  Jack Gibbens                 00-0037596
+    WLB    2  Karson Sharar                00-0041093
+    LCB    1  Kalen King                   00-0039239
+    LCB    2  Garrett Williams             00-0039007
+    LCB    3  Will Johnson                 00-0040751
+    RCB    1  Denzel Burke                 00-0040195
+    RCB    2  Starling Thomas V            00-0038663
+    NB     1  Max Melton                   00-0039807
+    NB     2  Kei'Trel Clark               00-0038984
+    SS     1  Budda Baker                  00-0033890
+    SS     2  Dadrion Taylor-Demerson      00-0039864
+    SS     3  Joey Blount                  00-0037141
+    FS     1  Kitan Crawford               00-0040230
+    FS     2  Wydett Williams Jr.          00-0041370
+    FS     3  Andrew Wingard               00-0035378  [Out]
+    PK     1  Chad Ryland                  00-0038567
+    P      1  Blake Gillikin               00-0035859
+    H      1  Blake Gillikin               00-0035859
+    LS     1  Casey Kreiter                00-0030957
+    KR     1  Devin Duvernay               00-0036331
+    KR     2  Max Melton                   00-0039807
+    KR     3  Jeremiyah Love               00-0041027
+    KR     4  Jalen Brooks                 00-0038640
+    PR     1  Devin Duvernay               00-0036331
+    PR     2  Michael Wilson               00-0038559
+    LDT    1  Roy Lopez                    00-0036568
+    LDT    2  Andrew Billings              00-0033066
+    LDT    3  Zachary Carter               00-0037804
+    RDT    1  Walter Nolen III             00-0040706  [Questionable]
+    RDT    2  L.J. Collier                 00-0035636
+    RDT    3  Jared Harrison-Hunte         00-0040283
+    RDT    4  Kaleb Proctor                00-0041555
+
+  KC (home)  depth chart 2026-11-22T15:12:52Z  77 rows
+    QB     1  Patrick Mahomes              00-0033873
+    QB     2  Justin Fields                00-0036945
+    QB     3  Garrett Nussmeier            00-0040906  [Out]
+    RB     1  Kenneth Walker III           00-0038134  [Out]
+    RB     2  Emmett Johnson               00-0041013
+    RB     3  Jaydn Ott                    00-0040959  [Out]
+    RB     4  Nathan Carter                00-0040547
+    RB     5  Brashard Smith               00-0040078
+    FB     1  Ben VanSumeren               00-0038489
+    WR     1  Rashee Rice                  00-0039067
+    WR     2  Josh Downs                   00-0038997
+    WR     3  Xavier Worthy                00-0039894
+    WR     4  Cyrus Allen                  00-0040890
+    WR     5  Jalen Royals                 00-0040646
+    WR     6  Andrew Armstrong             00-0040298
+    WR     7  Tyquan Thornton              00-0038104
+    WR     8  Jeff Caldwell                00-0040953
+    WR     9  Jimmy Holiday                00-0040120
+    TE     1  Travis Kelce                 00-0030506  [Questionable]
+    TE     2  Noah Gray                    00-0036637
+    TE     3  Jake Briningstool            00-0040081
+    TE     4  Jared Wiley                  00-0039824  [Out]
+    TE     5  John Michael Gyllenborg      00-0040955
+    LT     1  Kahlil Benson                00-0041019
+    LT     2  Jaylon Moore                 00-0036557  [Out]
+    LT     3  Josh Simmons                 00-0040116
+    LG     1  Kingsley Suamataia           00-0039844
+    LG     2  Mike Caliendo                00-0037207
+    LG     3  Joshua Ezeudu                00-0037807
+    C      1  Creed Humphrey               00-0036623
+    C      2  Hunter Nourzad               00-0039827
+    C      3  Pete Nygra                   00-0040958
+    RG     1  Trey Smith                   00-0036660
+    RG     2  Mike Caliendo                00-0037207
+    RG     3  Matt Waletzko                00-0037266
+    RT     1  Jaylon Moore                 00-0036557  [Out]
+    RT     2  Joshua Ezeudu                00-0037807
+    RT     3  Kahlil Benson                00-0041019
+    RT     4  Diego Pounds                 00-0040987
+    LDE    1  George Karlaftis             00-0037192
+    LDE    2  Ashton Gillotte              00-0040640
+    LDE    3  Ethan Downs                  00-0040328
+    RDE    1  Felix Anudike-Uzomah         00-0039006
+    RDE    2  R Mason Thomas               00-0041501
+    SLB    1  Jeffrey Bassa                00-0040072
+    SLB    2  Cooper McDonald              00-0040118
+    MLB    1  Nick Bolton                  00-0036621  [Questionable]
+    MLB    2  Jack Cochrane                00-0037208
+    WLB    1  Drue Tranquill               00-0035262
+    LCB    1  Nohl Williams                00-0040670
+    LCB    2  Chris Roland-Wallace         00-0039324
+    LCB    3  Melvin Smith Jr.             00-0040093
+    RCB    1  Mansoor Delane               00-0041543  [Questionable]
+    RCB    2  Kristian Fulton              00-0036416
+    NB     1  Jadon Canady                 00-0041497
+    NB     2  L'Jarius Sneed               00-0036374
+    SS     1  Chamarri Conner              00-0038982
+    SS     2  Jaden Hicks                  00-0039825
+    FS     1  Alohi Gilman                 00-0036380
+    FS     2  Xavier Nwankpa               00-0040957
+    PK     1  Harrison Butker              00-0033303
+    P      1  Matt Araiza                  00-0037284
+    H      1  Matt Araiza                  00-0037284
+    LS     1  James Winchester             00-0030615
+    KR     1  Emmett Johnson               00-0041013
+    KR     2  Brashard Smith               00-0040078
+    PR     1  Josh Downs                   00-0038997
+    PR     2  Cyrus Allen                  00-0040890
+    PR     3  Emmett Johnson               00-0041013
+    PR     4  Brashard Smith               00-0040078
+    PR     5  Tyquan Thornton              00-0038104
+    LDT    1  Chris Jones                  00-0032762
+    LDT    2  Peter Woods                  00-0041545  [Out]
+    LDT    3  Marcus Harris                00-0039433
+    RDT    1  Khyiris Tonga                00-0036909
+    RDT    2  Bryson Eason                 00-0041358
+    RDT    3  Omarr Norman-Lott            00-0040748  [Questionable]
+
+====================================================================================================
+
+2026_11_BAL_CAR  BAL at CAR
+kickoff 2026-11-22T18:00:00Z  cutoff 2026-11-22T16:30:00Z  file 2026_11_BAL_CAR.json
+
+  BAL (away)  depth chart 2026-11-22T15:12:52Z  77 rows
+    QB     1  Jacoby Brissett              00-0033119
+    QB     2  Joe Fagnano                  00-0040981
+    QB     3  Kedon Slovis                 00-0039577  [Out]
+    QB     4  Lamar Jackson                00-0034796  [Out]
+    QB     5  Tyler Huntley                00-0035993
+    QB     6  Skylar Thompson              00-0037327
+    RB     1  Derrick Henry                00-0032764
+    RB     2  Justice Hill                 00-0034975
+    RB     3  Adam Randall                 00-0040888  [Out]
+    RB     4  Rasheen Ali                  00-0039796
+    WR     1  Zay Flowers                  00-0039064
+    WR     2  Rashod Bateman               00-0036550  [Questionable]
+    WR     3  Ja'Kobi Lane                 00-0040870
+    WR     4  Devontez Walker              00-0039792
+    WR     5  LaJohntay Wester             00-0040075
+    WR     6  Elijah Sarratt               00-0040876
+    TE     1  Mark Andrews                 00-0034753
+    TE     2  Josh Cuevas                  00-0040887
+    TE     3  Matthew Hibner               00-0040879
+    TE     4  Nick Vannett                 00-0032394
+    TE     5  Durham Smythe                00-0034798
+    LT     1  Ronnie Stanley               00-0032965
+    LT     2  Carson Vinson                00-0040070
+    LG     1  John Simpson                 00-0036369
+    LG     2  Ryan Neuzil                  00-0036833
+    C      1  Cam Jurgens                  00-0038112
+    C      2  Ryan Neuzil                  00-0036833
+    C      3  Olaivavega Ioane             00-0040866
+    C      4  Ethan Pocic                  00-0033901
+    C      5  Jovaughn Gwyn                00-0038629
+    C      6  Danny Pinter                 00-0036215
+    RG     1  Olaivavega Ioane             00-0040866
+    RG     2  Ryan Neuzil                  00-0036833
+    RG     3  Emery Jones Jr.              00-0040068
+    RT     1  Roger Rosengarten            00-0039233
+    RT     2  Carson Vinson                00-0040070
+    RT     3  Chuma Edoga                  00-0035698
+    LDE    1  Nnamdi Madubuike             00-0036130  [Out]
+    LDE    2  Aeneas Peebles               00-0040076
+    NT     1  Travis Jones                 00-0037756
+    NT     2  John Jenkins                 00-0030070
+    RDE    1  Calais Campbell              00-0026190
+    RDE    2  Broderick Washington Jr.     00-0036081
+    RDE    3  David Olajiga                00-0039938
+    SLB    1  Trey Hendrickson             00-0033935
+    SLB    2  Ethan Burke                  00-0040978
+    LILB   1  Roquan Smith                 00-0034874
+    LILB   2  Jay Higgins IV               00-0040100
+    RILB   1  Trenton Simpson              00-0038504
+    RILB   2  Teddye Buchanan              00-0040069
+    WLB    1  Mike Green                   00-0040722
+    WLB    2  Zion Young                   00-0041494
+    WLB    3  Tavius Robinson              00-0038505
+    LCB    1  Nate Wiggins                 00-0039232
+    LCB    2  Chidobe Awuzie               00-0033548
+    LCB    3  Bilhal Kone                  00-0040073
+    RCB    1  Marlon Humphrey              00-0033281  [Out]
+    RCB    2  T.J. Tampa                   00-0039234
+    RCB    3  Chandler Rivers              00-0040885
+    NB     1  Kyle Hamilton                00-0038038
+    NB     2  Keyon Martin                 00-0040636
+    SS     1  Jaylinn Hawkins              00-0036302  [Out]
+    SS     2  Keondre Jackson              00-0040104
+    SS     3  Jahquez Robinson             00-0040988
+    FS     1  Malaki Starks                00-0040688
+    FS     2  K'Von Wallace                00-0036395
+    PK     1  Riley Patterson              00-0036816
+    PK     2  Tyler Loop                   00-0040074
+    P      1  Ryan Eckley                  00-0040898
+    H      1  Ryan Eckley                  00-0040898
+    LS     1  Nick Moore                   00-0035408
+    KR     1  LaJohntay Wester             00-0040075
+    KR     2  Rasheen Ali                  00-0039796
+    KR     3  Justice Hill                 00-0034975
+    KR     4  Adam Randall                 00-0040888  [Out]
+    PR     1  LaJohntay Wester             00-0040075
+    PR     2  Elijah Sarratt               00-0040876
+
+  CAR (home)  depth chart 2026-11-22T15:12:52Z  77 rows
+    QB     1  Bryce Young                  00-0039150
+    QB     2  Kenny Pickett                00-0038102
+    QB     3  Haynes King                  00-0041149  [Out]
+    RB     1  Chuba Hubbard                00-0036555
+    RB     2  Trevor Etienne               00-0040644
+    RB     3  Anthony Tyus III             00-0040394
+    RB     4  AJ Dillon                    00-0036265
+    RB     5  Jonathon Brooks              00-0039344  [Out]
+    WR     1  Tetairoa McMillan            00-0040124
+    WR     2  Jalen Coker                  00-0039491
+    WR     3  John Metchie III             00-0037614
+    WR     4  Brycen Tremayne              00-0038840
+    WR     5  Xavier Legette               00-0039342  [Questionable]
+    WR     6  Chris Brazzell II            00-0041047
+    TE     1  Tommy Tremble                00-0037005  [Questionable]
+    TE     2  Darren Waller                00-0031610  [Questionable]
+    TE     3  Mitchell Evans               00-0040187
+    TE     4  Feleipe Franks               00-0036825
+    TE     5  Ja'Tavion Sanders            00-0039356  [Out]
+    LT     1  Rasheed Walker               00-0037196
+    LT     2  Stone Forsythe               00-0036653
+    LT     3  Ikem Ekwonu                  00-0037229
+    LT     4  Brady Christensen            00-0036968
+    LG     1  Damien Lewis                 00-0036417
+    LG     2  Torricelli Simpkins III      00-0040541
+    LG     3  Corey Bullock                00-0039242
+    C      1  Luke Fortner                 00-0037814
+    C      2  Sam Hecht                    00-0041071
+    RG     1  Robert Hunt                  00-0036325
+    RG     2  Corey Bullock                00-0039242
+    RG     3  Brady Christensen            00-0036968
+    RT     1  Monroe Freeling              00-0041034
+    RT     2  Stone Forsythe               00-0036653
+    RT     3  Taylor Moton                 00-0033284
+    LDE    1  Derrick Brown                00-0036220
+    LDE    2  Aaron Hall                   00-0041148
+    NT     1  Lee Hunter                   00-0041478
+    NT     2  Bobby Brown III              00-0036903
+    NT     3  Cam Jackson                  00-0040174
+    RDE    1  Tershawn Wharton             00-0035890
+    RDE    2  TeRah Edwards                00-0040458
+    SLB    1  Jaelan Phillips              00-0036934  [Questionable]
+    SLB    2  Princely Umanmielen          00-0040136
+    SLB    3  Thomas Incoom                00-0038791
+    LILB   1  Devin Lloyd                  00-0037244
+    LILB   2  Jackson Kuwatch              00-0041119
+    LILB   3  Bam Martin-Scott             00-0040289
+    RILB   1  Bobby Okereke                00-0035687  [Out]
+    RILB   2  Tyrel Dodson                 00-0035352
+    WLB    1  Patrick Jones II             00-0037007
+    WLB    2  Trevis Gipson                00-0036305
+    WLB    3  Nick Hampton                 00-0039076
+    WLB    4  Ja'Markis Weston             00-0040408
+    WLB    5  Nic Scourton                 00-0040746
+    LCB    1  Marco Wilson                 00-0036884
+    LCB    2  Malcolm DeWalt IV            00-0041188
+    LCB    3  Akayleb Evans                00-0038101
+    RCB    1  Mike Jackson                 00-0035277  [Questionable]
+    RCB    2  Will Lee III                 00-0041063
+    NB     1  Chau Smith-Wade              00-0039380
+    NB     2  Jaycee Horn                  00-0036944
+    SS     1  Tre'von Moehrig              00-0036962
+    SS     2  Lathan Ransom                00-0040159
+    FS     1  Zakee Wheatley               00-0041076
+    FS     2  Nick Scott                   00-0035669
+    FS     3  Isaiah Simmons               00-0036356  [Out]
+    PK     1  Ryan Fitzgerald              00-0040279
+    P      1  Sam Martin                   00-0030092
+    H      1  Sam Martin                   00-0030092
+    LS     1  JJ Jansen                    00-0026027
+    KR     1  Anthony Tyus III             00-0040394
+    KR     2  Trevor Etienne               00-0040644
+    KR     3  John Metchie III             00-0037614
+    KR     4  Xavier Legette               00-0039342  [Questionable]
+    PR     1  Trevor Etienne               00-0040644
+    PR     2  Jalen Coker                  00-0039491
+    PR     3  Xavier Legette               00-0039342  [Questionable]
+
+====================================================================================================
+
+2026_11_MIA_BUF  MIA at BUF
+kickoff 2026-11-22T18:00:00Z  cutoff 2026-11-22T16:30:00Z  file 2026_11_MIA_BUF.json
+
+  MIA (away)  depth chart 2026-11-22T15:12:52Z  75 rows
+    QB     1  Kyle McCord                  00-0040014
+    QB     2  Brady Cook                   00-0040398
+    QB     3  Malik Willis                 00-0038128  [Out]
+    RB     1  Ollie Gordon II              00-0040198
+    RB     2  Jaylen Wright                00-0039874
+    RB     3  Kaytron Allen                00-0041096
+    RB     4  De'Von Achane                00-0039040
+    FB     1  DJ Herman                    00-0041436
+    WR     1  Malik Washington             00-0039880
+    WR     2  Caleb Douglas                00-0041523  [Questionable]
+    WR     3  Chris Bell                   00-0041525  [Questionable]
+    WR     4  Kevin Coleman Jr.            00-0041529
+    WR     5  Jalen Tolbert                00-0037666
+    WR     6  Jared Wayne                  00-0038728  [Out]
+    TE     1  Greg Dulcich                 00-0037252
+    TE     2  Will Kacmarek                00-0041524
+    TE     3  Seydou Traore                00-0041579
+    TE     4  Justin Joly                  00-0041077
+    TE     5  Cole Turner                  00-0037078
+    LT     1  Patrick Paul                 00-0039899
+    LT     2  Chukwuebuka Godrick          00-0039174
+    LG     1  Kadyn Proctor                00-0041521
+    LG     2  Jarrett Kingston             00-0039832
+    LG     3  Caedan Wallace               00-0039863
+    C      1  Aaron Brewer                 00-0036171  [Questionable]
+    C      2  Andrew Meyer                 00-0039485  [Questionable]
+    C      3  Jarrett Kingston             00-0039832
+    RG     1  Jonah Savaiinaea             00-0040742
+    RG     2  Christian Haynes             00-0039839
+    RG     3  Jarrett Kingston             00-0039832
+    RT     1  Austin Jackson               00-0036248
+    RT     2  Caedan Wallace               00-0039863
+    RT     3  Chukwuebuka Godrick          00-0039174
+    LDE    1  Chop Robinson                00-0039911
+    LDE    2  Malik Herring                00-0036682
+    LDE    3  Max Llewellyn                00-0041531
+    RDE    1  Josh Uche                    00-0036159
+    RDE    2  Rodney McGraw                00-0041159
+    RDE    3  Eric Watts                   00-0039291
+    SLB    1  Willie Gay Jr.               00-0036362
+    SLB    2  Jackson Woodard              00-0040066
+    SLB    3  Trey Moore                   00-0041526
+    MLB    1  Jacob Rodriguez              00-0041522
+    WLB    1  Jordyn Brooks                00-0036409
+    WLB    2  Shaka Heyward                00-0038890
+    WLB    3  Ronnie Harrison Jr.          00-0034779
+    LCB    1  Jason Marshall Jr.           00-0040178
+    LCB    2  Darrell Baker Jr.            00-0037549  [Questionable]
+    LCB    3  Jaylin Simpson               00-0039383
+    RCB    1  JuJu Brents                  00-0039156
+    RCB    2  Marcellas Dial Jr.           00-0039390
+    NB     1  Chris Johnson                00-0041533
+    SS     1  Dante Trader Jr.             00-0040182  [Doubtful]
+    SS     2  Kyle Louis                   00-0041527
+    FS     1  Michael Taaffe               00-0041528
+    FS     2  Zayne Anderson               00-0036677
+    FS     3  Julius Wood                  00-0039532
+    PK     1  Daniel Carlson               00-0034161
+    P      1  Bradley Pinion               00-0032065  [Out]
+    P      2  Jack Browning                00-0039477
+    H      1  Bradley Pinion               00-0032065  [Out]
+    H      2  Jack Browning                00-0039477
+    LS     1  Tucker Addington             00-0037686
+    KR     1  Jaylen Wright                00-0039874
+    KR     2  Malik Washington             00-0039880
+    KR     3  Kevin Coleman Jr.            00-0041529
+    PR     1  Malik Washington             00-0039880
+    PR     2  Kevin Coleman Jr.            00-0041529
+    LDT    1  Keith Cooper Jr.             00-0040655
+    LDT    2  Jordan Jefferson             00-0039743
+    LDT    3  Jordan Phillips              00-0040175  [Out]
+    LDT    4  Rene Konga                   00-0041136
+    RDT    1  Kenneth Grant                00-0040127
+    RDT    2  Zach Sieler                  00-0034285
+    RDT    3  Zeek Biggers                 00-0040248  [Out]
+
+  BUF (home)  depth chart 2026-11-22T15:12:52Z  69 rows
+    QB     1  Josh Allen                   00-0034857
+    QB     2  Kyle Allen                   00-0034577
+    RB     1  James Cook III               00-0037248
+    RB     2  Ty Johnson                   00-0035537
+    RB     3  Ray Davis                    00-0039875  [Questionable]
+    WR     1  DJ Moore                     00-0034827
+    WR     2  Khalil Shakir                00-0037261
+    WR     3  Keon Coleman                 00-0039901
+    WR     4  Tyrell Shavers               00-0038679  [Out]
+    WR     5  Skyler Bell                  00-0041443
+    WR     6  Greg Dortch                  00-0035500
+    WR     7  Joshua Palmer                00-0036988
+    TE     1  Dalton Kincaid               00-0038933  [Doubtful]
+    TE     2  Dawson Knox                  00-0035689
+    TE     3  Jackson Hawes                00-0040194  [Questionable]
+    TE     4  Keleki Latu                  00-0040363
+    LT     1  Dion Dawkins                 00-0033904
+    LT     2  Tylan Grable                 00-0039882
+    LT     3  Jude Bowry                   00-0041548
+    LG     1  Alec Anderson                00-0037428
+    LG     2  Austin Corbett               00-0034261
+    C      1  Connor McGovern              00-0035679
+    C      2  Lloyd Cushenberry III        00-0036391
+    RG     1  O'Cyrus Torrence             00-0038548
+    RG     2  Ar'maj Reed-Adams            00-0041128
+    RT     1  Spencer Brown                00-0036976  [Doubtful]
+    RT     2  Tylan Grable                 00-0039882
+    LDE    1  T.J. Sanders                 00-0040724
+    LDE    2  Landon Jackson               00-0040132
+    NT     1  Deone Walker                 00-0040710
+    NT     2  Greg Gaines                  00-0035667
+    RDE    1  Ed Oliver                    00-0035230  [Questionable]
+    RDE    2  DeWayne Carter               00-0039873
+    RDE    3  Zane Durant                  00-0041091
+    SLB    1  Bradley Chubb                00-0034832
+    SLB    2  TJ Parker                    00-0041036
+    SLB    3  Javon Solomon                00-0039879
+    LILB   1  Dorian Williams              00-0038557
+    LILB   2  Shaq Thompson                00-0031550
+    LILB   3  Kaleb Elarms-Orr             00-0041444
+    RILB   1  Terrel Bernard               00-0037254
+    RILB   2  Joe Andreessen               00-0039763
+    WLB    1  Greg Rousseau                00-0036914
+    WLB    2  Michael Hoecht               00-0035933
+    WLB    3  Mike Danna                   00-0036378
+    LCB    1  Christian Benford            00-0037288  [Out]
+    LCB    2  Tre'Davious White            00-0033884
+    LCB    3  Dorian Strong                00-0040197
+    RCB    1  Davison Igbinosun            00-0041391
+    RCB    2  Maxwell Hairston             00-0040709
+    NB     1  Dee Alford                   00-0037034  [Questionable]
+    NB     2  Jordan Hancock               00-0040192  [Questionable]
+    SS     1  Amani Hooker                 00-0035632  [Questionable]
+    SS     2  Jalon Kilgore                00-0041086
+    FS     1  Cole Bishop                  00-0039872  [Questionable]
+    FS     2  Damar Hamlin                 00-0036888  [Questionable]
+    FS     3  Sam Franklin Jr.             00-0036037
+    PK     1  Tyler Bass                   00-0036162
+    P      1  Tommy Doman Jr.              00-0041126
+    H      1  Tommy Doman Jr.              00-0041126
+    LS     1  Reid Ferguson                00-0032497
+    KR     1  Greg Dortch                  00-0035500
+    KR     2  Ray Davis                    00-0039875  [Questionable]
+    KR     3  Khalil Shakir                00-0037261
+    KR     4  Ty Johnson                   00-0035537
+    PR     1  Greg Dortch                  00-0035500
+    PR     2  Dee Alford                   00-0037034  [Questionable]
+    PR     3  Ray Davis                    00-0039875  [Questionable]
+    PR     4  Khalil Shakir                00-0037261
+
+====================================================================================================
+
+2026_11_NO_CHI  NO at CHI
+kickoff 2026-11-22T18:00:00Z  cutoff 2026-11-22T16:30:00Z  file 2026_11_NO_CHI.json
+
+  NO (away)  depth chart 2026-11-22T15:12:52Z  76 rows
+    QB     1  Tyler Shough                 00-0040743
+    QB     2  Spencer Rattler              00-0039376
+    QB     3  Zach Wilson                  00-0037013  [Out]
+    RB     1  Travis Etienne Jr.           00-0036973  [Questionable]
+    RB     2  Alvin Kamara                 00-0033906  [Questionable]
+    RB     3  Audric Estime                00-0039373
+    RB     4  CJ Donaldson                 00-0041326  [Out]
+    RB     5  Ty Chandler                  00-0037276
+    WR     1  Chris Olave                  00-0037239
+    WR     2  Jordyn Tyson                 00-0041029  [Questionable]
+    WR     3  Devaughn Vele                00-0039424
+    WR     4  Bryce Lance                  00-0041067
+    WR     5  Barion Brown                 00-0041099
+    WR     6  Mason Tipton                 00-0039623
+    TE     1  Juwan Johnson                00-0036040
+    TE     2  Noah Fant                    00-0035644
+    TE     3  Oscar Delp                   00-0041041
+    TE     4  Moliki Matavao               00-0040244
+    LT     1  Kelvin Banks Jr.             00-0040125  [Questionable]
+    LT     2  Asim Richards                00-0038601  [Out]
+    LT     3  Mason Murphy                 00-0041173
+    LG     1  David Edwards                00-0035668  [Questionable]
+    LG     2  Dillon Radunz                00-0036619
+    C      1  Erik McCoy                   00-0035242  [Out]
+    C      2  Cesar Ruiz                   00-0036408
+    C      3  William Sherman              00-0036535
+    RG     1  Cesar Ruiz                   00-0036408
+    RG     2  Jeremiah Wright              00-0041065
+    RG     3  Colby Sorsdal                00-0038592
+    RG     4  Nick Saldiveri               00-0038566
+    RT     1  Taliese Fuaga                00-0039339  [Out]
+    RT     2  Asim Richards                00-0038601  [Out]
+    RT     3  Mason Murphy                 00-0041173
+    RT     4  Easton Kilty                 00-0040539
+    LDE    1  Colby Wooden                 00-0038387
+    LDE    2  Cameron Jordan               00-0027962
+    LDE    3  John Ridgeway III            00-0037283
+    NT     1  Nathan Shepherd              00-0034760
+    NT     2  Khristian Boyd               00-0039401
+    NT     3  Christen Miller              00-0041390  [Out]
+    RDE    1  Vernon Broughton             00-0040642
+    RDE    2  Tyree Wilson                 00-0038541
+    RDE    3  Bryan Bresee                 00-0038995
+    SLB    1  Chase Young                  00-0036321
+    SLB    2  Myles Cole                   00-0039425
+    LILB   1  Kaden Elliss                 00-0035316
+    LILB   2  Isaiah Stalbird              00-0039622
+    RILB   1  Pete Werner                  00-0036927  [Questionable]
+    RILB   2  Danny Stutsman               00-0040155
+    RILB   3  Jaylan Ford                  00-0039388
+    WLB    1  Carl Granderson              00-0035402
+    WLB    2  Anfernee Jennings            00-0036193
+    WLB    3  Chris Rumph II               00-0036867
+    LCB    1  Kool-Aid McKinstry           00-0039860
+    LCB    2  Decamerion Richardson        00-0039357
+    LCB    3  Michael Reid                 00-0040293
+    LCB    4  TJ Hall                      00-0041114
+    RCB    1  Martin Emerson Jr.           00-0037250  [Out]
+    RCB    2  Quincy Riley                 00-0040166
+    RCB    3  Rejzohn Wright               00-0038781
+    NB     1  Jonas Sanker                 00-0040643
+    NB     2  Jordan Howden                00-0038588
+    SS     1  Jordan Howden                00-0038588
+    SS     2  Lorenzo Styles Jr.           00-0041089
+    FS     1  Julian Blackmon              00-0036253
+    FS     2  Jonas Sanker                 00-0040643
+    PK     1  Charlie Smyth                00-0039229
+    P      1  Ryan Wright                  00-0037500
+    H      1  Ryan Wright                  00-0037500
+    LS     1  Zach Wood                    00-0033063
+    KR     1  Barion Brown                 00-0041099
+    KR     2  Bryce Lance                  00-0041067
+    KR     3  Mason Tipton                 00-0039623
+    KR     4  Ty Chandler                  00-0037276
+    PR     1  Barion Brown                 00-0041099
+    PR     2  Mason Tipton                 00-0039623
+
+  CHI (home)  depth chart 2026-11-22T15:12:52Z  74 rows
+    QB     1  Caleb Williams               00-0039918
+    QB     2  Tyson Bagent                 00-0038416
+    QB     3  Case Keenum                  00-0028986
+    RB     1  D'Andre Swift                00-0036275
+    RB     2  Kyle Monangai                00-0040236  [Questionable]
+    RB     3  Roschon Johnson              00-0039021
+    RB     4  Salvon Ahmed                 00-0036020
+    RB     5  Zavier Scott                 00-0038440
+    RB     6  Brittain Brown               00-0037329
+    WR     1  Luther Burden III            00-0040735  [Questionable]
+    WR     2  Rome Odunze                  00-0039919
+    WR     3  Kalif Raymond                00-0032464
+    WR     4  Zavion Thomas                00-0041051  [Questionable]
+    WR     5  Jahdae Walker                00-0040277
+    TE     1  Colston Loveland             00-0040126
+    TE     2  Sam Roush                    00-0041558
+    TE     3  Stephen Carlson              00-0035039
+    TE     4  Hayden Large                 00-0041170
+    TE     5  Cole Kmet                    00-0036290
+    TE     6  Nikola Kalinic               00-0037031
+    LT     1  Theo Benedet                 00-0039459
+    LT     2  Ozzy Trapilo                 00-0040740
+    LT     3  Braxton Jones                00-0037081
+    LG     1  Joe Thuney                   00-0032391
+    LG     2  Jordan McFadden              00-0038595
+    C      1  Garrett Bradbury             00-0035588
+    C      2  Logan Jones                  00-0041539
+    RG     1  Jonah Jackson                00-0036258
+    RG     2  Luke Newman                  00-0040210
+    RT     1  Darnell Wright               00-0038932
+    RT     2  Theo Benedet                 00-0039459
+    LDE    1  Montez Sweat                 00-0035647
+    LDE    2  Austin Booker                00-0039840
+    LDE    3  Daniel Hardy                 00-0037843
+    RDE    1  James Lynch                  00-0036337
+    RDE    2  Dayo Odeyingbo               00-0036480
+    SLB    1  D'Marco Jackson              00-0037271
+    SLB    2  Jack Sanborn                 00-0037109
+    SLB    3  Ruben Hyppolite II           00-0040167
+    MLB    1  T.J. Edwards                 00-0035386
+    MLB    2  Noah Sewell                  00-0038390
+    MLB    3  Keyshaun Elliott             00-0041085
+    WLB    1  Devin Bush                   00-0035525
+    WLB    2  Tony Fields II               00-0036634
+    WLB    3  Nephi Sewell                 00-0037544
+    LCB    1  Jaylon Johnson               00-0036292
+    LCB    2  Josh Blackwell               00-0037129
+    LCB    3  Clark Phillips III           00-0038568
+    RCB    1  Tyrique Stevenson            00-0039071
+    RCB    2  Malik Muhammad               00-0041060
+    RCB    3  Dallis Flowers               00-0037395
+    NB     1  Kyler Gordon                 00-0038111  [Out]
+    SS     1  Dillon Thieneman             00-0041538
+    SS     2  Elijah Hicks                 00-0037096
+    FS     1  Cam Lewis                    00-0035357
+    FS     2  Skyler Thomas                00-0041175
+    FS     3  Coby Bryant                  00-0038136
+    PK     1  Cairo Santos                 00-0031203
+    P      1  Tory Taylor                  00-0039745
+    H      1  Tory Taylor                  00-0039745
+    LS     1  Scott Daly                   00-0034067
+    KR     1  Zavion Thomas                00-0041051  [Questionable]
+    KR     2  Josh Blackwell               00-0037129
+    KR     3  Kalif Raymond                00-0032464
+    PR     1  Kalif Raymond                00-0032464
+    PR     2  Zavion Thomas                00-0041051  [Questionable]
+    PR     3  Josh Blackwell               00-0037129
+    LDT    1  Grady Jarrett                00-0031583
+    LDT    2  Neville Gallimore            00-0036366
+    LDT    3  Jordan van den Berg          00-0041110
+    LDT    4  Jayden Loving                00-0041171
+    RDT    1  Jeffery Simmons              00-0035643  [Questionable]
+    RDT    2  Shemar Turner                00-0040741
+    RDT    3  Kentavius Street             00-0034320
+
+====================================================================================================
+
+2026_11_PIT_PHI  PIT at PHI
+kickoff 2026-11-22T18:00:00Z  cutoff 2026-11-22T16:30:00Z  file 2026_11_PIT_PHI.json
+
+  PIT (away)  depth chart 2026-11-22T15:12:52Z  73 rows
+    QB     1  Aaron Rodgers                00-0023459
+    QB     2  Mason Rudolph                00-0034771
+    QB     3  Will Howard                  00-0040203  [Out]
+    QB     4  Drew Allar                   00-0041565
+    RB     1  Jaylen Warren                00-0037228
+    RB     2  Rico Dowdle                  00-0036139
+    RB     3  Lew Nichols                  00-0038409
+    RB     4  Travis Homer                 00-0035594
+    RB     5  Eli Heidenreich              00-0041490
+    FB     1  Riley Nowakowski             00-0041398
+    WR     1  DK Metcalf                   00-0035640
+    WR     2  Germie Bernard               00-0041489
+    WR     3  Roman Wilson                 00-0039739  [Questionable]
+    WR     4  Ben Skowronek                00-0036862
+    WR     5  Kaden Wetjen                 00-0041397
+    WR     6  Max Hurleman                 00-0040618
+    WR     7  Michael Pittman Jr.          00-0036252  [Out]
+    WR     8  Cole Burgess                 00-0039626
+    TE     1  Darnell Washington           00-0038558
+    TE     2  Pat Freiermuth               00-0036894  [Questionable]
+    TE     3  Robert Tonyan                00-0033757
+    LT     1  Troy Fautanu                 00-0039871
+    LT     2  Dylan Cook                   00-0037480
+    LT     3  Jack Driscoll                00-0036396
+    LG     1  Brock Hoffman                00-0037336
+    LG     2  Spencer Anderson             00-0038645
+    LG     3  Gennings Dunker              00-0041396
+    LG     4  Mason McCormick              00-0039358
+    C      1  Zach Frazier                 00-0039896
+    C      2  Ryan McCollum                00-0036783
+    RG     1  Spencer Anderson             00-0038645
+    RG     2  Brock Hoffman                00-0037336
+    RT     1  Max Iheanachor               00-0041482
+    RT     2  Dylan Cook                   00-0037480
+    RT     3  Doug Nester                  00-0039716
+    LDE    1  Derrick Harmon               00-0040678  [Questionable]
+    LDE    2  Yahya Black                  00-0040188
+    NT     1  Keeanu Benton                00-0039110
+    NT     2  Sebastian Joseph-Day         00-0034810
+    RDE    1  Cameron Heyward              00-0027969
+    RDE    2  Kevin Jobity Jr.             00-0041261
+    RDE    3  Logan Lee                    00-0039389
+    SLB    1  Alex Highsmith               00-0036333
+    SLB    2  Jack Sawyer                  00-0040160
+    LILB   1  Payton Wilson                00-0039741
+    LILB   2  Cole Holcomb                 00-0035286
+    RILB   1  Patrick Queen                00-0036323  [Questionable]
+    RILB   2  Carson Bruener               00-0040231
+    WLB    1  T.J. Watt                    00-0033886
+    WLB    2  Nick Herbig                  00-0038577  [Out]
+    WLB    3  KJ Henry                     00-0038581
+    LCB    1  Asante Samuel Jr.            00-0036617
+    LCB    2  Sean Murphy-Bunting          00-0035239
+    LCB    3  Doneiko Slaughter            00-0040341
+    RCB    1  Jamel Dean                   00-0035699
+    RCB    2  Daylen Everette              00-0041393
+    RCB    3  Daequan Hardy                00-0039883
+    NB     1  Jalen Ramsey                 00-0033055
+    NB     2  Brandin Echols               00-0036504
+    NB     3  Donte Kent                   00-0040232
+    SS     1  DeShon Elliott               00-0034277  [Questionable]
+    SS     2  Robert Spears-Jennings       00-0041401
+    FS     1  Jaquan Brisker               00-0038135
+    PK     1  Chris Boswell                00-0031136
+    P      1  Cameron Johnston             00-0033729
+    H      1  Cameron Johnston             00-0033729
+    LS     1  Christian Kuntz              00-0034051
+    KR     1  Kaden Wetjen                 00-0041397
+    KR     2  Eli Heidenreich              00-0041490
+    KR     3  Donte Kent                   00-0040232
+    PR     1  Kaden Wetjen                 00-0041397
+    PR     2  Roman Wilson                 00-0039739  [Questionable]
+    PR     3  Donte Kent                   00-0040232
+
+  PHI (home)  depth chart 2026-11-22T15:12:52Z  71 rows
+    QB     1  Joe Milton III               00-0039398
+    QB     2  Tanner McKee                 00-0038400
+    QB     3  Cole Payton                  00-0040891
+    QB     4  Jalen Hurts                  00-0036389
+    RB     1  Saquon Barkley               00-0034844
+    RB     2  Will Shipley                 00-0039746  [Questionable]
+    RB     3  Jaydon Blue                  00-0040586
+    RB     4  Tank Bigsby                  00-0038555
+    WR     1  DeVonta Smith                00-0036912  [Questionable]
+    WR     2  Makai Lemon                  00-0040867
+    WR     3  Darius Cooper                00-0040024
+    WR     4  Elijah Moore                 00-0036980
+    WR     5  Britain Covey                00-0037132
+    WR     6  Dontayvion Wicks             00-0038393  [Out]
+    WR     7  Johnny Wilson                00-0039236
+    TE     1  Dallas Goedert               00-0034351
+    TE     2  Eli Stowers                  00-0041483
+    TE     3  Johnny Mundt                 00-0033246
+    TE     4  Zach Ertz                    00-0030061
+    TE     5  Grant Calcaterra             00-0037086
+    LT     1  Jordan Mailata               00-0034429
+    LG     1  Landon Dickerson             00-0037002
+    LG     2  Willie Lampkin               00-0040631
+    C      1  Drew Kendall                 00-0040587
+    C      2  Jake Majors                  00-0040422
+    RG     1  Tyler Steen                  00-0039001
+    RG     2  Micah Morris                 00-0040897
+    RG     3  Ajani Cornelius              00-0040017
+    RT     1  Markel Bell                  00-0041554
+    RT     2  John Ojukwu                  00-0038852
+    RT     3  Lane Johnson                 00-0030561
+    LDE    1  Byron Young                  00-0038978
+    NT     1  Jalen Carter                 00-0038386  [Questionable]
+    RDE    1  Moro Ojomo                   00-0038412
+    RDE    2  Ty Robinson                  00-0040662
+    RDE    3  Gabe Hall                    00-0039265
+    SLB    1  Jonathan Greenard            00-0036224
+    SLB    2  Jalyx Hunt                   00-0039740
+    LILB   1  Jeremiah Trotter Jr.         00-0039826
+    LILB   2  Smael Mondon Jr.             00-0040013
+    LILB   3  Anfernee Orji                00-0038908
+    LILB   4  Zack Baun                    00-0036418  [Out]
+    RILB   1  Jihaad Campbell              00-0040708
+    WLB    1  Nolan Smith Jr.              00-0039013  [Questionable]
+    WLB    2  Arnold Ebiketie              00-0038116
+    WLB    3  AJ Epenesa                   00-0036192
+    LCB    1  Riq Woolen                   00-0037079
+    LCB    2  Jonathan Jones               00-0032580
+    RCB    1  Quinyon Mitchell             00-0039888
+    RCB    2  Kelee Ringo                  00-0039140
+    NB     1  Cooper DeJean                00-0039841
+    NB     2  Kenny Moore II               00-0033393
+    NB     3  Mac McWilliams               00-0040071
+    SS     1  Marcus Epps                  00-0034993
+    SS     2  Michael Carter II            00-0036501
+    SS     3  Tucker Large                 00-0040929
+    FS     1  Andrew Mukuba                00-0040749
+    FS     2  Kenny Moore II               00-0033393
+    FS     3  Cooper DeJean                00-0039841
+    FS     4  Andre' Sam                   00-0039267
+    PK     1  Jake Elliott                 00-0033787
+    P      1  Braden Mann                  00-0036313
+    H      1  Braden Mann                  00-0036313
+    LS     1  Rocco Underwood              00-0040925
+    KR     1  Britain Covey                00-0037132
+    KR     2  Jaydon Blue                  00-0040586
+    KR     3  Darius Cooper                00-0040024
+    KR     4  Will Shipley                 00-0039746  [Questionable]
+    KR     5  Tank Bigsby                  00-0038555
+    PR     1  Britain Covey                00-0037132
+    PR     2  Makai Lemon                  00-0040867
+
+====================================================================================================
+
+2026_11_TB_DET  TB at DET
+kickoff 2026-11-22T18:00:00Z  cutoff 2026-11-22T16:30:00Z  file 2026_11_TB_DET.json
+
+  TB (away)  depth chart 2026-11-22T15:12:52Z  67 rows
+    QB     1  Baker Mayfield               00-0034855  [Questionable]
+    QB     2  Jalon Daniels                00-0041251
+    QB     3  Easton Stick                 00-0035282
+    RB     1  Bucky Irving                 00-0039361
+    RB     2  Kenny Gainwell               00-0036919
+    RB     3  Sean Tucker                  00-0038951
+    WR     1  Emeka Egbuka                 00-0040129
+    WR     2  Chris Godwin Jr.             00-0033921
+    WR     3  Tez Johnson                  00-0040237
+    WR     4  Ted Hurst III                00-0041048
+    WR     5  Kameron Johnson              00-0039589
+    WR     6  Jalen McMillan               00-0039855
+    TE     1  Cade Otton                   00-0038129
+    TE     2  Payne Durham                 00-0039050
+    TE     3  Bauer Sharp                  00-0041094
+    TE     4  Ko Kieft                     00-0037311
+    LT     1  Tristan Wirfs                00-0036406
+    LT     2  Benjamin Chukwuma            00-0040417
+    LG     1  Ben Bredeson                 00-0036132
+    LG     2  Billy Schrauth               00-0041082
+    C      1  Graham Barton                00-0039905
+    C      2  Dan Feeney                   00-0033910
+    RG     1  Cody Mauch                   00-0039157
+    RG     2  Dan Feeney                   00-0033910
+    RG     3  Trevor Keegan                00-0039310
+    RT     1  Luke Goedeke                 00-0037835
+    RT     2  Benjamin Chukwuma            00-0040417
+    RT     3  Justin Skule                 00-0034989
+    LDE    1  Calijah Kancey               00-0039063
+    LDE    2  Elijah Roberts               00-0040183
+    NT     1  Vita Vea                     00-0034773
+    NT     2  Elijah Simmons               00-0040384
+    NT     3  Rakeem Nunez-Roches          00-0031957
+    RDE    1  A'Shawn Robinson             00-0032889
+    RDE    2  DeMonte Capehart             00-0041079
+    SLB    1  Yaya Diaby                   00-0039068  [Questionable]
+    SLB    2  David Walker                 00-0040158
+    SLB    3  Anthony Nelson               00-0035254
+    LILB   1  Alex Anzalone                00-0033914
+    LILB   2  Christian Rozeboom           00-0035942
+    RILB   1  Josiah Trotter               00-0041502
+    RILB   2  SirVocea Dennis              00-0039049
+    WLB    1  Rueben Bain Jr.              00-0041031
+    WLB    2  Al-Quadin Muhammad           00-0033964
+    WLB    3  Mohamed Kamara               00-0039877
+    LCB    1  Zyon McCollum                00-0037268
+    LCB    2  Kevin Knowles                00-0040089
+    RCB    1  Benjamin Morrison            00-0040747
+    RCB    2  Ayden Garnes                 00-0041253
+    RCB    3  Josh Hayes                   00-0039051  [Out]
+    NB     1  Jacob Parrish                00-0040143
+    NB     2  Keionte Scott                00-0041057
+    SS     1  Tykee Smith                  00-0039846
+    SS     2  Miles Killebrew              00-0032399
+    SS     3  JJ Roberts                   00-0040425
+    FS     1  Antoine Winfield Jr.         00-0036411  [Out]
+    FS     2  Ifeatu Melifonwu             00-0036993
+    PK     1  Chase McLaughlin             00-0035358
+    P      1  Riley Dixon                  00-0032943
+    H      1  Riley Dixon                  00-0032943
+    LS     1  Evan Deckers                 00-0038817
+    KR     1  Sean Tucker                  00-0038951
+    KR     2  Kameron Johnson              00-0039589
+    KR     3  Kenny Gainwell               00-0036919
+    KR     4  Tez Johnson                  00-0040237
+    PR     1  Tez Johnson                  00-0040237
+    PR     2  Kameron Johnson              00-0039589
+
+  DET (home)  depth chart 2026-11-22T15:12:52Z  79 rows
+    QB     1  Jared Goff                   00-0033106
+    QB     2  Joshua Dobbs                 00-0033949
+    RB     1  Jahmyr Gibbs                 00-0039139
+    RB     2  Sione Vaki                   00-0039364  [Questionable]
+    RB     3  Jacob Saylors                00-0038896
+    RB     4  Isiah Pacheco                00-0037197
+    WR     1  Amon-Ra St. Brown            00-0036963  [Questionable]
+    WR     2  Jameson Williams             00-0037240
+    WR     3  Isaac TeSlaa                 00-0040669
+    WR     4  Tay Martin                   00-0037524
+    WR     5  DeAndre Carter               00-0031763
+    WR     6  Tom Kennedy                  00-0035544
+    WR     7  Kendrick Law                 00-0041446
+    TE     1  Sam LaPorta                  00-0039065
+    TE     2  Brock Wright                 00-0036754
+    TE     3  Tyler Conklin                00-0034270
+    LT     1  Penei Sewell                 00-0036880
+    LT     2  Larry Borom                  00-0036905
+    LT     3  Giovanni Manu                00-0039362
+    LG     1  Christian Mahogany           00-0039408
+    LG     2  Miles Frazier                00-0040193
+    LG     3  Ben Bartch                   00-0036272
+    C      1  Juice Scruggs                00-0038936
+    C      2  Seth McLaughlin              00-0040374
+    C      3  Cade Mays                    00-0037297  [Out]
+    RG     1  Tate Ratledge                00-0040728
+    RG     2  Miles Frazier                00-0040193
+    RT     1  Blake Miller                 00-0011237
+    RT     2  Larry Borom                  00-0036905
+    LDE    1  Derrick Moore                00-0041441
+    LDE    2  Eric O'Neill                 00-0041459
+    LDE    3  Ahmed Hassanein              00-0040761
+    LDE    4  Aidan Hutchinson             00-0037236  [Out]
+    RDE    1  DJ Wonnum                    00-0036335  [Questionable]
+    RDE    2  Tyler Lacy                   00-0038940
+    RDE    3  Tyrus Wheat                  00-0038742
+    RDE    4  Payton Turner                00-0036926
+    SLB    1  Trevor Nowaske               00-0038660
+    SLB    2  Amen Ogbongbemiga            00-0036716
+    SLB    3  Devin White                  00-0035707
+    SLB    4  Jimmy Rolder                 00-0041442
+    MLB    1  Malcolm Rodriguez            00-0037289
+    MLB    2  K.J. Britt                   00-0036643
+    MLB    3  Jack Campbell                00-0039018
+    WLB    1  Derrick Barnes               00-0036964
+    WLB    2  Joe Bachie                   00-0035895
+    WLB    3  Owen Pappoe                  00-0038600
+    WLB    4  Damone Clark                 00-0037281
+    LCB    1  D.J. Reed                    00-0034384  [Questionable]
+    LCB    2  Khalil Dorsey                00-0036124
+    RCB    1  Rock Ya-Sin                  00-0035637
+    RCB    2  Ennis Rakestraw Jr.          00-0039862
+    RCB    3  Nick Whiteside               00-0038841
+    NB     1  Roger McCreary               00-0038125
+    NB     2  Christian Izien              00-0038820
+    SS     1  Brian Branch                 00-0039141
+    SS     2  Keith Abney II               00-0041445
+    SS     3  Thomas Harper                00-0039660
+    FS     1  Kerby Joseph                 00-0037667  [Out]
+    FS     2  Chuck Clark                  00-0033294
+    FS     3  Andre Cisco                  00-0036941
+    FS     4  Avonte Maddox                00-0034377
+    PK     1  Jake Bates                   00-0039172
+    P      1  Jack Fox                     00-0035156
+    H      1  Jack Fox                     00-0035156
+    LS     1  Hogan Hatten                 00-0039445
+    KR     1  DeAndre Carter               00-0031763
+    KR     2  Jacob Saylors                00-0038896
+    KR     3  Sione Vaki                   00-0039364  [Questionable]
+    KR     4  Tom Kennedy                  00-0035544
+    PR     1  DeAndre Carter               00-0031763
+    PR     2  Amon-Ra St. Brown            00-0036963  [Questionable]
+    PR     3  Tay Martin                   00-0037524
+    PR     4  Tom Kennedy                  00-0035544
+    LDT    1  Alim McNeill                 00-0036624
+    LDT    2  Skyler Gill-Howard           00-0041447
+    LDT    3  Mekhi Wingo                  00-0039396
+    RDT    1  Tyleik Williams              00-0040672
+    RDT    2  Levi Onwuzurike              00-0036954
+
+====================================================================================================
+
+2026_11_TEN_DAL  TEN at DAL
+kickoff 2026-11-22T18:00:00Z  cutoff 2026-11-22T16:30:00Z  file 2026_11_TEN_DAL.json
+
+  TEN (away)  depth chart 2026-11-22T15:12:52Z  74 rows
+    QB     1  Cam Ward                     00-0040676
+    QB     2  Mitchell Trubisky            00-0033869
+    RB     1  Tony Pollard                 00-0035261  [Questionable]
+    RB     2  Nicholas Singleton           00-0040886  [Out]
+    RB     3  Michael Carter               00-0036924
+    RB     4  Julius Chestnut              00-0037594
+    RB     5  Tyjae Spears                 00-0039032  [Out]
+    WR     1  Carnell Tate                 00-0041438  [Questionable]
+    WR     2  Elic Ayomanor                00-0040170
+    WR     3  Chimere Dike                 00-0040705
+    WR     4  Xavier Restrepo              00-0040522
+    WR     5  Calvin Ridley                00-0034837
+    WR     6  Wan'Dale Robinson            00-0038117  [Out]
+    TE     1  Gunnar Helm                  00-0040584
+    TE     2  Daniel Bellinger             00-0038115
+    TE     3  David Martin-Robinson        00-0039648
+    TE     4  Kylen Granson                00-0036876
+    TE     5  Jaren Kanak                  00-0040901
+    LT     1  Dan Moore Jr.                00-0036869
+    LT     2  James Hudson III             00-0036866
+    LG     1  Chandler Zavala              00-0038536
+    LG     2  James Hudson III             00-0036866
+    LG     3  Garrett Dellinger            00-0040079
+    LG     4  Atonio Mafi                  00-0038586
+    LG     5  Peter Skoronski              00-0039034
+    C      1  Austin Schlottmann           00-0034112
+    C      2  Pat Coogan                   00-0040893
+    RG     1  Atonio Mafi                  00-0038586
+    RG     2  Garrett Dellinger            00-0040079
+    RG     3  Fernando Carmona             00-0040881
+    RG     4  Jackson Slater               00-0040190
+    RT     1  JC Latham                    00-0039731
+    RT     2  Brandon Crenshaw-Dickson     00-0040512
+    LDE    1  Jacob Martin                 00-0034163
+    LDE    2  Keldric Faulk                00-0041508
+    LDE    3  Tanoh Kpassagnon             00-0033902
+    RDE    1  Jermaine Johnson II          00-0037663
+    RDE    2  Oluwafemi Oladejo            00-0040752
+    RDE    3  Truman Jones                 00-0038514
+    RDE    4  Jaylen Harrell               00-0039436
+    SLB    1  Cody Barton                  00-0035672  [Questionable]
+    MLB    1  Anthony Hill Jr.             00-0041479
+    MLB    2  Dorian Mausi                 00-0040503
+    WLB    1  Cedric Gray                  00-0039858
+    WLB    2  Mohamoud Diabate             00-0038711
+    WLB    3  James Williams Sr.           00-0039430
+    WLB    4  Milo Eifler                  00-0036511
+    LCB    1  Joshua Williams              00-0038043
+    LCB    2  Jaylon Jones                 00-0038407
+    RCB    1  Cor'Dale Flott               00-0037758
+    RCB    2  Micah Robinson               00-0040020
+    NB     1  Alontae Taylor               00-0038121
+    NB     2  Marcus Harris                00-0040201
+    SS     1  Tony Adams                   00-0037155  [Questionable]
+    SS     2  Isaiah Oliver                00-0034357
+    FS     1  Kevin Winston Jr.            00-0040141
+    FS     2  Terrell Burgess              00-0036421
+    FS     3  Kendell Brooks               00-0038703
+    PK     1  Joey Slye                    00-0035192
+    P      1  Thomas Morstead              00-0027114
+    P      2  Tommy Townsend               00-0035889  [Out]
+    H      1  Thomas Morstead              00-0027114
+    H      2  Tommy Townsend               00-0035889  [Out]
+    LS     1  Morgan Cox                   00-0027557
+    KR     1  Chimere Dike                 00-0040705
+    KR     2  Julius Chestnut              00-0037594
+    PR     1  Chimere Dike                 00-0040705
+    PR     2  Micah Robinson               00-0040020
+    LDT    1  John Franklin-Myers          00-0034805  [Questionable]
+    LDT    2  Timmy Horne                  00-0037585
+    LDT    3  Jackie Marshall              00-0040892
+    RDT    1  Solomon Thomas               00-0033870
+    RDT    2  Nazir Stackhouse             00-0040041
+    RDT    3  Jonah Laulu                  00-0039423
+
+  DAL (home)  depth chart 2026-11-22T15:12:52Z  73 rows
+    QB     1  Dak Prescott                 00-0033077
+    QB     2  Sam Howell                   00-0037077
+    RB     1  Javonte Williams             00-0036997
+    RB     2  Jashaun Corbin               00-0037410
+    RB     3  Tyler Goodson                00-0037120  [Out]
+    RB     4  Malik Davis                  00-0037563
+    FB     1  Hunter Luepke                00-0038738
+    WR     1  CeeDee Lamb                  00-0036358
+    WR     2  George Pickens               00-0037247  [Questionable]
+    WR     3  Ryan Flournoy                00-0039410
+    WR     4  KaVontae Turpin              00-0037801  [Questionable]
+    WR     5  Jonathan Mingo               00-0039062  [Out]
+    WR     6  Camden Brown                 00-0040930
+    TE     1  Jake Ferguson                00-0038041  [Out]
+    TE     2  Brevyn Spann-Ford            00-0039530
+    TE     3  Luke Schoonmaker             00-0038547  [Questionable]
+    TE     4  James Mitchell               00-0037282
+    TE     5  Princeton Fant               00-0038735
+    LT     1  Tyler Guyton                 00-0039341
+    LT     2  Drew Shelton                 00-0040874
+    LG     1  Tyler Smith                  00-0037243
+    LG     2  T.J. Bass                    00-0038731
+    C      1  Cooper Beebe                 00-0039348
+    C      2  Nick Leverett                00-0036105
+    C      3  Matt Hennessy                00-0036295
+    RG     1  Tyler Booker                 00-0040007
+    RG     2  T.J. Bass                    00-0038731
+    RG     3  Nick Leverett                00-0036105
+    RT     1  Terence Steele               00-0036036
+    RT     2  Broderick Jones              00-0039109
+    LDE    1  Quinnen Williams             00-0035718
+    LDE    2  LT Overton                   00-0040880
+    NT     1  Otito Ogbonnia               00-0037270  [Questionable]
+    NT     2  Jonathan Bullard             00-0033093  [Questionable]
+    RDE    1  Kenny Clark                  00-0033120
+    RDE    2  Elijah Garcia                00-0037051
+    RDE    3  Kelvin Gilliam Jr.           00-0040933
+    SLB    1  Donovan Ezeiruaku            00-0040725  [Questionable]
+    SLB    2  James Houston                00-0037310
+    SLB    3  Malachi Lawrence             00-0041537
+    LILB   1  Shemar James                 00-0040011
+    LILB   2  DeMarvion Overshown          00-0038556
+    LILB   3  Justin Barron                00-0040043
+    RILB   1  Dee Winters                  00-0038625
+    RILB   2  Marist Liufau                00-0039352
+    WLB    1  Rashan Gary                  00-0034967
+    WLB    2  Von Miller                   00-0027940
+    WLB    3  Jaishawn Barham              00-0040872
+    LCB    1  Joey Porter Jr.              00-0039167  [Questionable]
+    LCB    2  Cobie Durant                 00-0037839
+    LCB    3  Devin Moore                  00-0040875
+    RCB    1  Ameer Speed                  00-0038624
+    RCB    2  Shavon Revel Jr.             00-0040008
+    RCB    3  DaRon Bland                  00-0037275  [Out]
+    NB     1  Caleb Downs                  00-0040865
+    NB     2  Derion Kendrick              00-0037842
+    SS     1  P.J. Locke                   00-0035227  [Out]
+    SS     2  Markquese Bell               00-0037561
+    SS     3  Jalen Thompson               00-0035705  [Out]
+    FS     1  Malik Hooker                 00-0033877
+    FS     2  Alijah Clark                 00-0040045
+    FS     3  Juanyeh Thomas               00-0037578
+    PK     1  Brandon Aubrey               00-0037692
+    P      1  Bryan Anger                  00-0029692
+    H      1  Bryan Anger                  00-0029692
+    LS     1  Trent Sieg                   00-0034198
+    KR     1  KaVontae Turpin              00-0037801  [Questionable]
+    KR     2  Camden Brown                 00-0040930
+    KR     3  Tyler Goodson                00-0037120  [Out]
+    KR     4  Malik Davis                  00-0037563
+    PR     1  KaVontae Turpin              00-0037801  [Questionable]
+    PR     2  Jonathan Mingo               00-0039062  [Out]
+    PR     3  Caleb Downs                  00-0040865
+
+====================================================================================================
+
+2026_11_NYJ_LAC  NYJ at LAC
+kickoff 2026-11-22T21:05:00Z  cutoff 2026-11-22T19:35:00Z  file 2026_11_NYJ_LAC.json
+
+  NYJ (away)  depth chart 2026-11-22T15:12:52Z  72 rows
+    QB     1  Geno Smith                   00-0030565  [Questionable]
+    QB     2  Cade Klubnik                 00-0041056
+    RB     1  Breece Hall                  00-0038120
+    RB     2  Braelon Allen                00-0039794
+    RB     3  Isaiah Davis                 00-0039798
+    RB     4  Kene Nwangwu                 00-0036842
+    RB     5  Chip Trayanum                00-0041239
+    WR     1  Garrett Wilson               00-0037740  [Questionable]
+    WR     2  Adonai Mitchell              00-0039890  [Questionable]
+    WR     3  Omar Cooper Jr.              00-0041511
+    WR     4  Isaiah Williams              00-0039451  [Out]
+    WR     5  Malik McClain                00-0041267
+    WR     6  Tim Patrick                  00-0033375  [Out]
+    WR     7  Sterling Shepard             00-0032385
+    WR     8  Arian Smith                  00-0040582
+    TE     1  Mason Taylor                 00-0040736
+    TE     2  Kenyon Sadiq                 00-0041032
+    TE     3  Jeremy Ruckert               00-0037805
+    TE     4  Jelani Woods                 00-0037755
+    TE     5  Andrew Beck                  00-0034959
+    LT     1  Olu Fashanu                  00-0039790
+    LT     2  Blake Freeland               00-0039158
+    LT     3  Max Mitchell                 00-0038114
+    LG     1  Dylan Parham                 00-0037255
+    LG     2  Jordan Meredith              00-0036604
+    LG     3  Anez Cooper                  00-0041097
+    C      1  Josh Myers                   00-0036622
+    C      2  Jordan Meredith              00-0036604
+    RG     1  Joe Tippmann                 00-0039145
+    RG     2  Jordan Meredith              00-0036604
+    RT     1  Armand Membou                00-0040123
+    RT     2  Chukwuma Okorafor            00-0034768
+    LDE    1  David Bailey                 00-0041026
+    LDE    2  Joseph Ossai                 00-0036902  [Questionable]
+    LDE    3  Nate Lynn                    00-0039447
+    LDE    4  Tyler Baron                  00-0040196
+    RDE    1  Kingsley Enagbare            00-0037083
+    RDE    2  Will McDonald IV             00-0039142
+    RDE    3  Braiden McGregor             00-0039284
+    RDE    4  Kingsley Jonathan            00-0037431
+    SLB    1  Trevin Wallace               00-0039347  [Questionable]
+    SLB    2  Kiko Mauigoa                 00-0040186
+    MLB    1  Jamien Sherwood              00-0036500
+    MLB    2  Jaden Keller                 00-0041410
+    WLB    1  Demario Davis                00-0029607
+    WLB    2  Troy Reeder                  00-0035617
+    WLB    3  Marcelino McCrary-Ball       00-0037526
+    LCB    1  Azareye'h Thomas             00-0040133
+    LCB    2  Nahshon Wright               00-0036986  [Questionable]
+    RCB    1  Brandon Stephens             00-0036987
+    RCB    2  Qwan'tez Stiggers            00-0039789
+    NB     1  D'Angelo Ponds               00-0041038
+    NB     2  Jarvis Brownlee Jr.          00-0039372  [Out]
+    SS     1  Dane Belton                  00-0038123
+    SS     2  Malachi Moore                00-0040165
+    FS     1  Minkah Fitzpatrick           00-0034789
+    FS     2  VJ Payne                     00-0041120  [Questionable]
+    PK     1  Jason Sanders                00-0034794
+    P      1  Austin McNamara              00-0039634
+    H      1  Austin McNamara              00-0039634
+    LS     1  Thomas Hennessy              00-0033260
+    KR     1  Kene Nwangwu                 00-0036842
+    KR     2  Isaiah Williams              00-0039451  [Out]
+    KR     3  Arian Smith                  00-0040582
+    PR     1  Isaiah Williams              00-0039451  [Out]
+    LDT    1  Darrell Jackson Jr.          00-0041549
+    LDT    2  Jack Heflin                  00-0036788
+    LDT    3  Payton Page                  00-0040404
+    LDT    4  T'Vondre Sweat               00-0039886
+    RDT    1  Jowon Briggs                 00-0039431
+    RDT    2  Harrison Phillips            00-0034782  [Questionable]
+    RDT    3  David Onyemata               00-0033051  [Out]
+
+  LAC (home)  depth chart 2026-11-22T15:12:52Z  73 rows
+    QB     1  Justin Herbert               00-0036355
+    QB     2  DJ Uiagalelei                00-0040464
+    QB     3  Trey Lance                   00-0037012
+    RB     1  Omarion Hampton              00-0040666
+    RB     2  Keaton Mitchell              00-0038454  [Questionable]
+    RB     3  Kimani Vidal                 00-0039391
+    FB     1  Scott Matlock                00-0038614
+    FB     2  Alec Ingold                  00-0035125
+    WR     1  Ladd McConkey                00-0039915  [Questionable]
+    WR     2  Quentin Johnston             00-0038544
+    WR     3  Tre' Harris                  00-0040727  [Questionable]
+    WR     4  Derius Davis                 00-0038573
+    WR     5  KeAndre Lambert-Smith        00-0040184
+    WR     6  Brenen Thompson              00-0041550  [Doubtful]
+    WR     7  Theo Wease Jr.               00-0040311
+    TE     1  Charlie Kolar                00-0038046  [Questionable]
+    TE     2  Oronde Gadsden               00-0040189
+    TE     3  David Njoku                  00-0033885  [Out]
+    LT     1  Joe Alt                      00-0039897
+    LT     2  Rashawn Slater               00-0037009
+    LT     3  Isaiah World                 00-0041387
+    LG     1  Trey Pipkins III             00-0035688  [Questionable]
+    LG     2  Logan Taylor                 00-0041105
+    LG     3  Kayode Awosika               00-0036736
+    LG     4  Branson Taylor               00-0040212
+    LG     5  Trevor Penning               00-0037241
+    C      1  Jake Slaughter               00-0041392
+    C      2  Jacob Spomer                 00-0041383
+    C      3  Tyler Biadasz                00-0036376
+    RG     1  Cole Strange                 00-0038103
+    RG     2  Alex Harkey                  00-0041107
+    RG     3  Trevor Penning               00-0037241
+    RT     1  Travis Burke                 00-0041058
+    RT     2  Alex Harkey                  00-0041107
+    LDE    1  Teair Tart                   00-0036181
+    LDE    2  Nick Barrett                 00-0041072
+    NT     1  Jamaree Caldwell             00-0040144
+    NT     2  Dalvin Tomlinson             00-0033546
+    RDE    1  Justin Eboigbe               00-0039835  [Out]
+    SLB    1  Khalil Mack                  00-0031040
+    SLB    2  Akheem Mesidor               00-0041544
+    LILB   1  Daiyan Henley                00-0038553  [Out]
+    LILB   2  Marlowe Wax                  00-0040460
+    RILB   1  Del'Shawn Phillips           00-0035202
+    RILB   2  Denzel Perryman              00-0032103  [Questionable]
+    RILB   3  Troy Dye                     00-0036338
+    WLB    1  Tuli Tuipulotu               00-0039111
+    WLB    3  Bud Dupree                   00-0032146
+    LCB    1  Cam Hart                     00-0039369
+    LCB    2  Jalyn Armour-Davis           00-0038119
+    LCB    3  Rodney Shelley               00-0041381  [Out]
+    RCB    1  Donte Jackson                00-0034356
+    RCB    2  Deane Leonard                00-0037320  [Questionable]
+    RCB    3  Isas Waxter                  00-0040065  [Questionable]
+    NB     1  Tarheeb Still                00-0039366  [Questionable]
+    SS     1  Tony Jefferson               00-0030294
+    SS     2  Kendall Williamson           00-0038414  [Out]
+    SS     3  Derwin James Jr.             00-0034790
+    FS     1  Elijah Molden                00-0036992
+    FS     2  Genesis Smith                00-0041064
+    FS     3  RJ Mickens                   00-0040221
+    PK     1  Cameron Dicker               00-0037224
+    P      1  JK Scott                     00-0034162
+    H      1  JK Scott                     00-0034162
+    LS     1  Josh Harris                  00-0028845
+    KR     1  Keaton Mitchell              00-0038454  [Questionable]
+    KR     2  KeAndre Lambert-Smith        00-0040184
+    KR     3  Kimani Vidal                 00-0039391
+    KR     4  Derius Davis                 00-0038573
+    PR     1  Derius Davis                 00-0038573
+    PR     2  Brenen Thompson              00-0041550  [Doubtful]
+    PR     3  KeAndre Lambert-Smith        00-0040184
+    PR     4  Ladd McConkey                00-0039915  [Questionable]
+
+====================================================================================================
+
+2026_11_JAX_NYG  JAX at NYG
+kickoff 2026-11-22T21:25:00Z  cutoff 2026-11-22T19:55:00Z  file 2026_11_JAX_NYG.json
+
+  JAX (away)  depth chart 2026-11-22T15:12:52Z  71 rows
+    QB     1  Trevor Lawrence              00-0036971
+    QB     2  Quinn Ewers                  00-0040234
+    RB     1  Bhayshul Tuten               00-0040719  [Questionable]
+    RB     2  Chris Rodriguez Jr.          00-0038611  [Questionable]
+    RB     3  Ameer Abdullah               00-0032104
+    RB     4  LeQuint Allen Jr.            00-0040238  [Questionable]
+    WR     1  Parker Washington            00-0038606
+    WR     2  Jakobi Meyers                00-0034960  [Questionable]
+    WR     3  Brian Thomas Jr.             00-0039893
+    WR     4  Josh Cameron                 00-0041100
+    WR     5  Travis Hunter                00-0040718
+    WR     6  CJ Williams                  00-0041106
+    TE     1  Brenton Strange              00-0038935
+    TE     2  Nate Boerkircher             00-0041503
+    TE     3  Tanner Koziol                00-0041084
+    TE     4  Quintin Morris               00-0036590
+    LT     1  Walker Little                00-0036975
+    LT     2  Anton Harrison               00-0038934
+    LG     1  Emmanuel Pregnon             00-0041050
+    LG     2  Daniel Faalele               00-0038118
+    LG     3  Garrett DiGiorgio            00-0041208
+    C      1  Robert Hainsey               00-0036985  [Out]
+    C      2  Jonah Monheim                00-0040227
+    C      3  Eli Cox                      00-0040410
+    C      4  Sam Mustipher                00-0035062
+    RG     1  Ezra Cleveland               00-0036327
+    RG     2  Wyatt Milum                  00-0040146
+    RG     3  Patrick Mekari               00-0035112
+    RT     1  Cole Van Lanen               00-0036655
+    RT     2  Walker Little                00-0036975
+    LDE    1  Travon Walker                00-0037235  [Questionable]
+    LDE    2  Danny Striggow               00-0040342  [Out]
+    LDE    3  Wesley Williams              00-0041059
+    RDE    1  Josh Hines-Allen             00-0035642
+    RDE    2  Bryan Thomas Jr.             00-0041218
+    RDE    3  B.J. Green II                00-0040329
+    RDE    4  Zach Durfee                  00-0041122
+    SLB    1  Dennis Gardeck               00-0034473
+    SLB    2  Jalen McLeod                 00-0040209
+    SLB    3  Jared Bartlett               00-0040395
+    MLB    1  Ventrell Miller              00-0038570
+    MLB    2  Branson Combs                00-0040326
+    MLB    3  Parker Hughes                00-0041127
+    WLB    1  Foyesade Oluokun             00-0034413
+    WLB    2  Jahlani Tavai                00-0035240
+    LCB    1  Travis Hunter                00-0040718
+    RCB    1  Montaric Brown               00-0037313
+    RCB    2  Jarrian Jones                00-0039353
+    NB     1  Jarrian Jones                00-0039353
+    NB     2  Jourdan Lewis                00-0033928
+    SS     1  Jessie Bates III             00-0034675  [Out]
+    SS     2  Kaevon Merriweather          00-0038823
+    SS     3  Eric Murray                  00-0033038
+    FS     1  Antonio Johnson              00-0038596  [Questionable]
+    FS     2  Rayuan Lane III              00-0040213
+    FS     3  Jalen Huskey                 00-0041055
+    PK     1  Cam Little                   00-0039409
+    P      1  Logan Cooke                  00-0034437
+    H      1  Logan Cooke                  00-0034437
+    LS     1  Ross Matiscik                00-0035827
+    KR     1  Ameer Abdullah               00-0032104
+    KR     2  Josh Cameron                 00-0041100
+    PR     1  Parker Washington            00-0038606
+    PR     2  CJ Williams                  00-0041106
+    LDT    1  Arik Armstead                00-0032164
+    LDT    2  Ruke Orhorhoro               00-0039733
+    LDT    3  Matt Dickerson               00-0034657
+    RDT    1  Jordan Davis                 00-0037073  [Out]
+    RDT    2  Davon Godchaux               00-0033860
+    RDT    3  Albert Regis                 00-0041045
+    RDT    4  DaVon Hamilton               00-0036262
+
+  NYG (home)  depth chart 2026-11-22T15:12:52Z  77 rows
+    QB     1  J.J. McCarthy                00-0039923
+    QB     2  Jameis Winston               00-0031503
+    QB     3  Jaxson Dart                  00-0040691
+    RB     1  Cam Skattebo                 00-0040715
+    RB     2  Devin Singletary             00-0035250
+    RB     4  Phil Mafah                   00-0040021
+    RB     5  Tyrone Tracy Jr.             00-0039384  [Out]
+    FB     1  Patrick Ricard               00-0033376
+    WR     1  Malik Nabers                 00-0039337
+    WR     2  Malachi Fields               00-0041042
+    WR     3  Darnell Mooney               00-0036309
+    WR     4  Jalin Hyatt                  00-0038938
+    WR     5  Xavier Gipson                00-0038496
+    WR     6  Calvin Austin III            00-0037837
+    WR     7  Braxton Berrios              00-0034419
+    WR     8  Gunner Olszewski             00-0035645
+    TE     1  Isaiah Likely                00-0037838  [Questionable]
+    TE     2  Theo Johnson                 00-0039847
+    TE     4  Thomas Fidone II             00-0040225
+    LT     1  Andrew Thomas                00-0036386
+    LT     2  J.C. Davis                   00-0041101
+    LG     1  Jon Runyan                   00-0036246
+    LG     2  Aaron Stinnie                00-0034668
+    LG     3  Josh Sills                   00-0037138
+    C      1  Bryan Hudson                 00-0039446
+    C      2  John Michael Schmitz Jr.     00-0039019
+    RG     1  Francis Mauigoa              00-0041505
+    RG     2  Aaron Stinnie                00-0034668
+    RT     1  Jermaine Eluemunor           00-0033290
+    RT     2  Marcus Mbow                  00-0040181
+    LDE    1  Shelby Harris                00-0031270
+    LDE    2  Bobby Jamison-Travis         00-0041095
+    LDE    3  Roy Robertson-Harris         00-0032667
+    NT     1  DJ Reader                    00-0032424
+    NT     2  CJ Okoye                     00-0039176
+    RDE    1  Darius Alexander             00-0040694
+    RDE    2  Chauncey Golston             00-0036982
+    SLB    1  Abdul Carter                 00-0040677
+    SLB    2  Trace Ford                   00-0040434
+    LILB   1  Arvell Reese                 00-0041509
+    LILB   2  Jack Kelly                   00-0041102
+    LILB   3  Malik Harrison               00-0036280  [Out]
+    RILB   1  Micah McFadden               00-0037259
+    RILB   2  Zaire Barnes                 00-0038399
+    RILB   3  Tremaine Edmunds             00-0034673
+    WLB    1  Kayvon Thibodeaux            00-0037611
+    WLB    2  Dawuane Smoot                00-0033907
+    WLB    3  Brian Burns                  00-0035713
+    LCB    1  Deonte Banks                 00-0039000
+    LCB    2  Paulson Adebo                00-0036937
+    LCB    3  Thaddeus Dixon               00-0041142
+    LCB    4  Rico Payton                  00-0039620
+    RCB    1  Greg Newsome II              00-0036996
+    RCB    2  Colton Hood                  00-0041462
+    RCB    3  Korie Black                  00-0040243
+    RCB    4  Jarrick Bernard-Converse     00-0038401
+    NB     1  Dru Phillips                 00-0039821
+    NB     2  Nic Jones                    00-0038986
+    NB     3  Tavierre Thomas              00-0034488
+    SS     1  Ar'Darius Washington         00-0036587
+    SS     2  Jason Pinnock                00-0036502  [Questionable]
+    FS     1  Jevon Holland                00-0036998
+    FS     2  Tyler Nubin                  00-0039861
+    FS     3  Elijah Campbell              00-0034248
+    PK     1  Dominic Zvada                00-0041145
+    P      1  Jordan Stout                 00-0038094
+    H      1  Jordan Stout                 00-0038094
+    LS     1  Ben Mann                     00-0041143
+    KR     1  Xavier Gipson                00-0038496
+    KR     3  Deonte Banks                 00-0039000
+    KR     4  Tyrone Tracy Jr.             00-0039384  [Out]
+    KR     5  Braxton Berrios              00-0034419
+    PR     1  Xavier Gipson                00-0038496
+    PR     2  Jevon Holland                00-0036998
+    PR     3  Calvin Austin III            00-0037837
+    PR     4  Braxton Berrios              00-0034419
+    PR     5  Gunner Olszewski             00-0035645
+
+====================================================================================================
+
+2026_11_LV_DEN  LV at DEN
+kickoff 2026-11-22T21:25:00Z  cutoff 2026-11-22T19:55:00Z  file 2026_11_LV_DEN.json
+
+  LV (away)  depth chart 2026-11-22T15:12:52Z  70 rows
+    QB     1  Fernando Mendoza             00-0041562
+    QB     2  Aidan O'Connell              00-0038579
+    RB     1  Ashton Jeanty                00-0040122
+    RB     2  Mike Washington Jr.          00-0040878
+    RB     3  Dylan Laube                  00-0039407
+    FB     1  Connor Heyward               00-0037304
+    WR     1  Tre Tucker                   00-0038563
+    WR     2  Jalen Nailor                 00-0037291
+    WR     3  Jack Bech                    00-0040729
+    WR     4  Dont'e Thornton Jr.          00-0040581  [Out]
+    WR     5  Dareke Young                 00-0037093
+    WR     6  Cody White                   00-0035891
+    WR     7  Malik Benson                 00-0040894  [Out]
+    TE     1  Brock Bowers                 00-0039338  [Questionable]
+    TE     2  Michael Mayer                00-0039066
+    TE     3  Ian Thomas                   00-0034365
+    TE     4  Carter Runyon                00-0040488
+    LT     1  Kolton Miller                00-0034759
+    LT     2  Charles Grant                00-0040151
+    LG     1  Spencer Burford              00-0037829
+    LG     2  Bryce Cabeldue               00-0040650
+    LG     3  Caleb Rogers                 00-0040150
+    C      1  Tyler Linderbaum             00-0037825
+    C      2  Jackson Powers-Johnson       00-0039735
+    C      3  Trey Zuhn III                00-0040871
+    RG     1  Trey Zuhn III                00-0040871
+    RG     2  Caleb Rogers                 00-0040150
+    RG     3  Jackson Powers-Johnson       00-0039735
+    RG     4  Justin Pickett               00-0041003
+    RT     1  DJ Glaze                     00-0039349
+    RT     2  Trey Zuhn III                00-0040871
+    RT     3  Dalton Wagner                00-0038923
+    LDE    1  Folorunso Fatukasi           00-0034275  [Questionable]
+    NT     1  Adam Butler                  00-0033381
+    NT     2  Tim Keenan III               00-0041534
+    NT     3  JJ Pegues                    00-0040199
+    RDE    1  Tonka Hemingway              00-0040169  [Out]
+    RDE    2  Thomas Booker IV             00-0037262  [Out]
+    RDE    3  Chris Williams               00-0035857
+    SLB    1  Kwity Paye                   00-0036479  [Questionable]
+    SLB    2  Patrick Johnson              00-0036922
+    LILB   1  Nakobe Dean                  00-0037615
+    LILB   2  Tommy Eichenberg             00-0039374
+    LILB   3  Segun Olubi                  00-0037527
+    RILB   1  Quay Walker                  00-0037074
+    RILB   2  Cody Lindenberg              00-0040228
+    WLB    1  Maxx Crosby                  00-0034973
+    WLB    2  Malcolm Koonce               00-0036989
+    WLB    3  Keyron Crawford              00-0041553
+    WLB    4  Brennan Jackson              00-0039836
+    LCB    1  Eric Stokes                  00-0036901
+    LCB    2  Darien Porter                00-0040641
+    LCB    3  Darrell Luter Jr.            00-0038594
+    RCB    1  Hezekiah Masses              00-0040889
+    RCB    2  Jermod McCoy                 00-0041563
+    RCB    3  Chigozie Anusiem             00-0039676
+    NB     1  Taron Johnson                00-0034376
+    SS     1  Jeremy Chinn                 00-0036293
+    SS     2  Dalton Johnson               00-0040883
+    FS     1  Treydan Stukes               00-0040868
+    FS     2  Isaiah Pola-Mao              00-0037512
+    FS     3  Tristin McCollum             00-0037461
+    PK     1  Matt Gay                     00-0035269  [Questionable]
+    P      1  AJ Cole                      00-0035190
+    H      1  AJ Cole                      00-0035190
+    LS     1  Alex Ward                    00-0038360
+    KR     1  Dylan Laube                  00-0039407
+    KR     2  Dareke Young                 00-0037093
+    PR     1  Malik Benson                 00-0040894  [Out]
+    PR     2  Dylan Laube                  00-0039407
+
+  DEN (home)  depth chart 2026-11-22T15:12:52Z  73 rows
+    QB     1  Bo Nix                       00-0039732
+    QB     2  Jarrett Stidham              00-0035264
+    QB     3  Sam Ehlinger                 00-0036879
+    RB     1  Jonah Coleman                00-0041496
+    RB     2  J.K. Dobbins                 00-0036158
+    RB     3  Cody Schrader                00-0039703
+    RB     4  RJ Harvey                    00-0040730
+    RB     5  Tyler Badie                  00-0037085
+    FB     1  Adam Prentice                00-0036727
+    WR     1  Jaylen Waddle                00-0036613  [Questionable]
+    WR     2  Courtland Sutton             00-0034348
+    WR     3  Pat Bryant                   00-0040134
+    WR     4  Troy Franklin                00-0039868
+    WR     5  Marvin Mims Jr.              00-0038976
+    WR     6  Lil'Jordan Humphrey          00-0035406
+    TE     1  Evan Engram                  00-0033881
+    TE     2  Adam Trautman                00-0036422
+    TE     3  Nate Adkins                  00-0038783
+    TE     4  Dallen Bentley               00-0041133
+    TE     5  Caleb Lohner                 00-0040240  [Out]
+    LT     1  Garett Bolles                00-0033538
+    LT     2  Matt Peart                   00-0036392
+    LT     3  Gavin Ortega                 00-0041297
+    LT     4  Frank Crum                   00-0039568
+    LG     1  Ben Powers                   00-0034978
+    LG     2  Kage Casey                   00-0041498
+    LG     3  Nick Gargiulo                00-0039438
+    C      1  Luke Wattenberg              00-0037278
+    C      2  Alex Forsyth                 00-0038649
+    C      3  Michael Deiter               00-0035686
+    RG     1  Quinn Meinerz                00-0037001
+    RT     1  Mike McGlinchey              00-0034847
+    RT     2  Alex Palczewski              00-0038796
+    LDE    1  Zach Allen                   00-0035248
+    LDE    2  Sai'vion Jones               00-0040153
+    LDE    3  Matt Henningsen              00-0037303
+    NT     1  D.J. Jones                   00-0033297
+    NT     2  Jordan Jackson               00-0037294
+    RDE    1  Malcolm Roach                00-0035763
+    RDE    2  Tyler Onyedim                00-0041552
+    RDE    3  Eyioma Uwazurike             00-0038106
+    SLB    1  Nik Bonitto                  00-0037249
+    SLB    2  Que Robinson                 00-0040168
+    LILB   1  Alex Singleton               00-0031898
+    LILB   2  Karene Reid                  00-0040449
+    RILB   1  Justin Strnad                00-0036428
+    RILB   2  Jordan Turner                00-0040634
+    RILB   3  Levelle Bailey               00-0039565
+    WLB    1  Jonathon Cooper              00-0036952
+    WLB    2  Dondrea Tillman              00-0037799
+    WLB    3  Jonah Elliss                 00-0039809
+    LCB    1  Pat Surtain II               00-0036874
+    LCB    2  Jahdae Barron                00-0040720
+    RCB    1  Riley Moss                   00-0038552  [Questionable]
+    RCB    2  Kris Abrams-Draine           00-0039371  [Questionable]
+    NB     1  Ja'Quan McMillian            00-0037384
+    NB     2  Jahdae Barron                00-0040720
+    SS     1  Talanoa Hufanga              00-0036564  [Questionable]
+    SS     2  Devon Key                    00-0036683
+    SS     3  Tycen Anderson               00-0037752
+    FS     1  Brandon Jones                00-0036221  [Questionable]
+    FS     2  JL Skinner                   00-0038605
+    FS     3  Taylor Rapp                  00-0035663
+    PK     1  Wil Lutz                     00-0032569
+    P      1  Jeremy Crawshaw              00-0040223
+    H      1  Jeremy Crawshaw              00-0040223
+    LS     1  Mitchell Fraboni             00-0036943
+    KR     1  Cody Schrader                00-0039703
+    KR     2  Marvin Mims Jr.              00-0038976
+    KR     3  RJ Harvey                    00-0040730
+    KR     4  Tyler Badie                  00-0037085
+    PR     1  Marvin Mims Jr.              00-0038976
+    PR     2  Kris Abrams-Draine           00-0039371  [Questionable]
+
+====================================================================================================
+
+2026_11_MIN_SF  MIN at SF
+kickoff 2026-11-23T01:20:00Z  cutoff 2026-11-22T22:54:43Z  file 2026_11_MIN_SF.json
+
+  MIN (away)  depth chart 2026-11-22T15:12:52Z  68 rows
+    QB     1  Kirk Cousins                 00-0029604
+    QB     2  Kyler Murray                 00-0035228  [Out]
+    QB     3  Carson Wentz                 00-0032950  [Questionable]
+    QB     4  Max Brosmer                  00-0040494  [Out]
+    RB     1  Jordan Mason                 00-0037525
+    RB     2  Aaron Jones Sr.              00-0033293
+    RB     3  DeeJay Dallas                00-0036425
+    RB     4  Demond Claiborne             00-0041104
+    FB     1  Max Bredeson                 00-0041081
+    WR     1  Justin Jefferson             00-0036322
+    WR     2  Jordan Addison               00-0038994  [Out]
+    WR     3  Jauan Jennings               00-0036259  [Out]
+    WR     4  Myles Price                  00-0040506
+    WR     5  Tai Felton                   00-0040154
+    WR     6  Jeshaun Jones                00-0039710  [Questionable]
+    TE     1  T.J. Hockenson               00-0035229  [Questionable]
+    TE     2  Gavin Bartholomew            00-0040215
+    TE     3  Ben Yurosek                  00-0040509
+    TE     4  Josh Oliver                  00-0035249
+    LT     1  Christian Darrisaw           00-0036616
+    LT     2  Ryan Van Demark              00-0037404
+    LG     1  Joe Huber                    00-0040500
+    LG     2  Caleb Tiernan                00-0041053
+    LG     3  Donovan Jackson              00-0040661
+    C      1  Blake Brandel                00-0036347
+    C      2  Joe Huber                    00-0040500
+    C      3  Michael Jurgens              00-0039419
+    C      4  Nick Samac                   00-0039237
+    RG     1  Will Fries                   00-0036483
+    RG     2  Caleb Tiernan                00-0041053
+    RT     1  Brian O'Neill                00-0034158
+    RT     2  Caleb Tiernan                00-0041053
+    LDE    1  Levi Drake Rodriguez         00-0039421
+    LDE    2  Elijah Williams              00-0040624
+    NT     1  Caleb Banks                  00-0041033
+    NT     2  Domonique Orange             00-0041046
+    RDE    1  Jalen Redmond                00-0038778
+    RDE    2  Tyrion Ingram-Dawkins        00-0040173  [Out]
+    SLB    1  Dallas Turner                00-0039924
+    SLB    2  Chaz Chambliss               00-0040496
+    SLB    3  Tyler Batty                  00-0040492
+    LILB   1  Eric Wilson                  00-0033336
+    LILB   2  Jake Golday                  00-0041495
+    RILB   1  Blake Cashman                00-0035276  [Questionable]
+    RILB   2  Ivan Pace Jr.                00-0038807
+    RILB   3  Jamal Adams                  00-0033872
+    WLB    1  Andrew Van Ginkel            00-0035272  [Questionable]
+    WLB    2  Kyle Van Noy                 00-0031360
+    WLB    3  Bo Richter                   00-0039718  [Out]
+    LCB    1  Isaiah Rodgers               00-0036222  [Questionable]
+    LCB    2  Charles Demmings             00-0041083
+    RCB    1  James Pierre                 00-0035795
+    RCB    2  Zemaiah Vaughn               00-0040507
+    NB     1  Byron Murphy Jr.             00-0035236
+    SS     1  Joshua Metellus              00-0036348  [Questionable]
+    SS     2  Jay Ward                     00-0038578
+    SS     3  Jakobe Thomas                00-0041054
+    FS     1  Harrison Smith               00-0029606
+    FS     2  Theo Jackson                 00-0037301
+    FS     3  Jacob Thomas                 00-0041354
+    PK     1  Will Reichard                00-0039404
+    P      1  Brett Thorson                00-0041581
+    H      1  Brett Thorson                00-0041581
+    LS     1  Andrew DePaola               00-0029714
+    KR     1  Myles Price                  00-0040506
+    KR     2  Demond Claiborne             00-0041104
+    PR     1  Myles Price                  00-0040506
+    PR     2  Tai Felton                   00-0040154
+
+  SF (home)  depth chart 2026-11-22T15:12:52Z  81 rows
+    QB     1  Brock Purdy                  00-0037834
+    QB     2  Mac Jones                    00-0036972  [Questionable]
+    QB     3  Kurtis Rourke                00-0040589
+    RB     1  Christian McCaffrey          00-0033280
+    RB     2  Kaelon Black                 00-0041052
+    RB     3  Jordan James                 00-0040177  [Questionable]
+    RB     4  Isaac Guerendo               00-0039363  [Out]
+    FB     1  Kyle Juszczyk                00-0029892
+    WR     1  Mike Evans                   00-0031408  [Questionable]
+    WR     2  Deebo Samuel                 00-0035719  [Questionable]
+    WR     3  Keenan Allen                 00-0030279
+    WR     4  Jordan Watkins               00-0040172
+    WR     5  Demarcus Robinson            00-0032775
+    WR     6  Jacob Cowing                 00-0039365
+    WR     7  Brandon Aiyuk                00-0036261  [Out]
+    WR     8  De'Zhaun Stribling           00-0041035  [Out]
+    WR     9  Christian Kirk               00-0034775  [Out]
+    WR    10  Ricky Pearsall               00-0039916
+    TE     1  George Kittle                00-0033288
+    TE     2  Luke Farrell                 00-0036887
+    TE     3  Brayden Willis               00-0038643
+    TE     4  Jake Tonges                  00-0037112
+    LT     1  Trent Williams               00-0027857  [Questionable]
+    LT     2  Vederian Lowe                00-0037287
+    LT     3  Enrique Cruz Jr.             00-0041090
+    LT     4  Austen Pleasants             00-0035829
+    LG     1  Connor Colby                 00-0040245
+    LG     2  Carver Willis                00-0041061
+    LG     3  Nick Zakelj                  00-0037831
+    C      1  Jake Brendel                 00-0032701
+    C      2  Jarrett Patterson            00-0038615
+    RG     1  Dominick Puni                00-0039351
+    RG     2  Carver Willis                00-0041061
+    RT     1  Colton McKivitz              00-0036256
+    RT     2  Enrique Cruz Jr.             00-0041090
+    LDE    1  Keion White                  00-0039148
+    LDE    2  Romello Height               00-0041556
+    LDE    3  Khalid Kareem                00-0036341
+    LDE    4  Sam Okuayinonu               00-0037602
+    RDE    1  Nick Bosa                    00-0035717
+    RDE    2  Mykel Williams               00-0040660
+    RDE    3  Andrew Farmer II             00-0038865
+    RDE    4  Mikail Kamara                00-0041360
+    SLB    1  Jaden Dugger                 00-0041078
+    SLB    2  Luke Gifford                 00-0035413
+    MLB    1  Fred Warner                  00-0034815
+    MLB    2  Tatum Bethune                00-0039435
+    MLB    3  Nick Martin                  00-0040135
+    WLB    1  Dre Greenlaw                 00-0034982  [Questionable]
+    WLB    2  Garret Wallow                00-0036844
+    LCB    1  Renardo Green                00-0039345  [Questionable]
+    LCB    2  Ephesians Prysock            00-0041068
+    RCB    1  Deommodore Lenoir            00-0036563  [Questionable]
+    RCB    2  Nate Hobbs                   00-0036871  [Out]
+    NB     1  Upton Stout                  00-0040152
+    NB     2  Ashtyn Davis                 00-0036329
+    SS     1  Malik Mustapha               00-0039360
+    SS     2  Marques Sigle                00-0040185
+    SS     3  Siran Neal                   00-0034391
+    FS     1  Ji'Ayir Brown                00-0038554  [Questionable]
+    FS     2  Ashtyn Davis                 00-0036329
+    FS     3  Darrick Forrest              00-0036638
+    PK     1  Eddy Pineiro                 00-0034173
+    P      1  Corliss Waitman              00-0035821
+    H      1  Corliss Waitman              00-0035821
+    LS     1  Jon Weeks                    00-0027224
+    KR     1  Deebo Samuel                 00-0035719  [Questionable]
+    KR     2  Jordan James                 00-0040177  [Questionable]
+    KR     3  Jacob Cowing                 00-0039365
+    KR     4  Isaac Guerendo               00-0039363  [Out]
+    PR     1  Jacob Cowing                 00-0039365
+    PR     2  Jordan Watkins               00-0040172
+    PR     3  Christian Kirk               00-0034775  [Out]
+    PR     4  Ricky Pearsall               00-0039916
+    LDT    1  Osa Odighizuwa               00-0036942
+    LDT    2  Sebastian Valdez             00-0040560
+    LDT    3  C.J. West                    00-0040711
+    RDT    1  DeForest Buckner             00-0032378
+    RDT    2  James Thompson Jr.           THO581952
+    RDT    3  Alfred Collins               00-0040721
+    RDT    4  Gracen Halton                00-0041557  [Out]
+
+====================================================================================================
+
+2026_11_CIN_WAS  CIN at WSH
+kickoff 2026-11-24T01:15:00Z  cutoff 2026-11-22T22:54:43Z  file 2026_11_CIN_WAS.json
+
+  CIN (away)  depth chart 2026-11-22T15:12:52Z  67 rows
+    QB     1  Joe Burrow                   00-0036442
+    QB     2  Joe Flacco                   00-0026158
+    RB     1  Chase Brown                  00-0038597
+    RB     2  Samaje Perine                00-0033526
+    RB     3  Tahj Brooks                  00-0040208
+    WR     1  Ja'Marr Chase                00-0036900
+    WR     2  Tee Higgins                  00-0036410
+    WR     3  Dohnte Meyers                00-0040785
+    WR     4  Colbie Young                 00-0041069
+    WR     5  Mitchell Tinsley             00-0038839
+    WR     6  Andrei Iosivas               00-0038619  [Out]
+    TE     1  Mike Gesicki                 00-0034829
+    TE     2  Drew Sample                  00-0035631
+    TE     3  Cam Grandy                   00-0039631
+    TE     4  Jack Endries                 00-0041116
+    TE     5  Erick All Jr.                00-0039814
+    TE     6  Tanner Hudson                00-0034613
+    LT     1  Orlando Brown Jr.            00-0034752
+    LT     2  Javon Foster                 00-0039742
+    LG     1  Dylan Fairchild              00-0040140
+    LG     2  Jacob Bayer                  00-0040359
+    LG     3  Jalen Rivers                 00-0040180
+    LG     4  Brian Parker II              00-0041098
+    C      1  Ted Karras                   00-0032445
+    C      2  Jacob Bayer                  00-0040359
+    C      3  Connor Lew                   00-0041062
+    RG     1  Dalton Risner                00-0035702  [Out]
+    RG     2  Jacob Bayer                  00-0040359
+    RT     1  Amarius Mims                 00-0039925
+    RT     2  Myles Hinton                 00-0040015  [Out]
+    LDE    1  Boye Mafe                    00-0038133
+    LDE    2  Cedric Johnson               00-0039752
+    LDE    3  Cashius Howell               00-0041546
+    RDE    1  Myles Murphy                 00-0038546
+    RDE    2  Shemar Stewart               00-0040756
+    SLB    1  Jack Kiser                   00-0040723
+    SLB    2  Oren Burks                   00-0034754  [Out]
+    MLB    1  Barrett Carter               00-0040157
+    MLB    2  Joe Giles-Harris             00-0035363
+    WLB    1  Demetrius Knight Jr.         00-0040738
+    WLB    2  Swayze Bozeman               00-0039313  [Out]
+    LCB    1  Tacario Davis                00-0041464
+    LCB    2  DJ Ivey                      00-0038642
+    RCB    1  DJ Turner II                 00-0038549
+    NB     1  Dax Hill                     00-0037743
+    NB     2  Josh Newton                  00-0039375
+    NB     3  Jalen Davis                  00-0034446
+    NB     4  Ja'Sir Taylor                00-0037307
+    SS     1  Jordan Battle                00-0038560
+    SS     2  Kyle Dugger                  00-0036231  [Questionable]
+    FS     1  Bryan Cook                   00-0037193
+    FS     2  PJ Jules                     00-0039632
+    FS     3  Russ Yeast                   00-0037844
+    PK     1  Evan McPherson               00-0036854
+    P      1  Ryan Rehkow                  00-0039323
+    H      1  Ryan Rehkow                  00-0039323
+    LS     1  William Wagner               00-0040379
+    KR     1  Dohnte Meyers                00-0040785
+    KR     2  Tahj Brooks                  00-0040208
+    KR     3  Samaje Perine                00-0033526
+    PR     1  Dohnte Meyers                00-0040785
+    LDT    1  Dexter Lawrence II           00-0035683
+    LDT    2  T.J. Slaton Jr.              00-0036642
+    LDT    3  Landon Robinson              00-0041118
+    RDT    1  Jonathan Allen               00-0033523
+    RDT    2  B.J. Hill                    00-0034800
+    RDT    3  Kris Jenkins Jr.             00-0039908
+
+  WSH (home)  depth chart 2026-11-22T15:12:52Z  76 rows
+    QB     1  Jayden Daniels               00-0039910
+    QB     2  Marcus Mariota               00-0032268
+    QB     3  Athan Kaliakmanis            00-0041117  [Out]
+    RB     1  Rachaad White                00-0037256  [Questionable]
+    RB     2  Austin Ekeler                00-0033699
+    RB     3  Robert Henry Jr.             00-0041178
+    RB     4  Jacory Croskey-Merritt       00-0040242  [Out]
+    RB     5  Jeremy McNichols             00-0033955
+    WR     1  Stefon Diggs                 00-0031588
+    WR     2  Antonio Williams             00-0041040
+    WR     3  Treylon Burks                00-0037742  [Questionable]
+    WR     4  Van Jefferson                00-0036415
+    WR     5  Luke McCaffrey               00-0039355
+    WR     6  Dyami Brown                  00-0036626
+    WR     7  Terry McLaurin               00-0035659
+    WR     8  Jaylin Lane                  00-0040164
+    TE     1  Chig Okonkwo                 00-0037809  [Questionable]
+    TE     2  Ben Sinnott                  00-0039912
+    TE     3  John Bates                   00-0036628
+    TE     4  Colson Yankoff               00-0039686
+    LT     1  Brandon Coleman              00-0039913
+    LT     2  Andrew Wylie                 00-0033831
+    LT     3  Laremy Tunsil                00-0032380  [Out]
+    LG     1  Chris Paul                   00-0037092
+    LG     2  Lucas Patrick                00-0033082  [Questionable]
+    LG     3  Tanoa Togiai                 00-0041183
+    C      1  Lucas Patrick                00-0033082  [Questionable]
+    C      2  Nick Allegretti              00-0035149
+    C      3  Matt Gulbin                  00-0041108
+    RG     1  Sam Cosmi                    00-0036618
+    RG     2  Matt Gulbin                  00-0041108
+    RG     3  Nick Allegretti              00-0035149
+    RG     4  Andrew Wylie                 00-0033831
+    RG     5  Tanoa Togiai                 00-0041183
+    RT     1  Josh Conerly Jr.             00-0040686
+    RT     2  Andrew Wylie                 00-0033831
+    LDE    1  Charles Omenihu              00-0035279
+    LDE    2  Jer'Zhan Newton              00-0039906
+    LDE    3  Deatrich Wise Jr.            00-0033947
+    NT     1  Tim Settle                   00-0034397
+    NT     2  Ricky Barber                 00-0040314
+    NT     3  Daron Payne                  00-0034333
+    RDE    1  Shy Tuttle                   00-0035409
+    RDE    2  Javon Kinlaw                 00-0036260
+    SLB    1  Dorance Armstrong            00-0034373
+    SLB    2  K'Lavon Chaisson             00-0036286
+    SLB    3  Javontae Jean-Baptiste       00-0039412
+    LILB   1  Frankie Luvu                 00-0034302
+    LILB   2  Jordan Magee                 00-0039368
+    RILB   1  Sonny Styles                 00-0041028
+    RILB   2  Kain Medrano                 00-0040216
+    RILB   3  Ale Kaho                     00-0040318
+    RILB   4  Leo Chenal                   00-0037819
+    WLB    1  Odafe Oweh                   00-0036940
+    WLB    2  Joshua Josephs               00-0041074
+    LCB    1  Rasul Douglas                00-0033551
+    LCB    2  Fabian Moreau                00-0033918
+    RCB    1  Trey Amos                    00-0040731
+    NB     1  Amik Robertson               00-0036375  [Questionable]
+    NB     2  Mike Sainristil              00-0039898
+    SS     1  Nick Cross                   00-0037616
+    SS     2  Tyler Owens                  00-0039681
+    FS     1  Jeremy Reaves                00-0034465
+    FS     2  Quan Martin                  00-0039149  [Questionable]
+    FS     3  Percy Butler                 00-0038100
+    PK     1  Drew Stevens                 00-0041182
+    P      1  Tress Way                    00-0030140
+    H      1  Tress Way                    00-0030140
+    LS     1  Tyler Ott                    00-0031156
+    KR     1  Luke McCaffrey               00-0039355
+    KR     2  Rachaad White                00-0037256  [Questionable]
+    KR     3  Dyami Brown                  00-0036626
+    KR     4  Jaylin Lane                  00-0040164
+    PR     1  Luke McCaffrey               00-0039355
+    PR     2  Antonio Williams             00-0041040
+    PR     3  Jaylin Lane                  00-0040164

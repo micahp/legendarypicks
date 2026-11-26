@@ -1,0 +1,24 @@
+name: Oracle forward-Platt comparison tests
+on:
+  push:
+    paths:
+      - 'backend/oracle.py'
+      - 'backend/test_oracle.py'
+      - '.github/workflows/oracle-forward-platt-tests.yml'
+  pull_request:
+    paths:
+      - 'backend/oracle.py'
+      - 'backend/test_oracle.py'
+      - '.github/workflows/oracle-forward-platt-tests.yml'
+jobs:
+  oracle-prop-comparison:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install test dependency
+        run: python -m pip install pytest pytz
+      - name: Run Oracle SQLite contract suite
+        run: python -m pytest backend/test_oracle.py -q --noconftest

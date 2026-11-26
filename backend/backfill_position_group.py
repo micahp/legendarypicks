@@ -85,6 +85,36 @@ def group_for(vocab, league, position):
     return (entry or {}).get("name")
 
 
+def fill_blank_groups(con, league):
+    """Fill blank `position_group` for one league from the published vocabulary, on an open connection, and commit.
+
+    For roster_sync: a player it inserts has a position and no group, and the stats audit fails any active player with a
+    blank group (v10.3.0 stopped on 4 players the 2026-11-21 sync added). Only blanks are written; a stored group that
+    disagrees with the publisher is left for `--repair`. Returns {'filled': n, 'unpublished': {position: rows}} so the
+    caller can print it; a league outside the verified convention returns {'skipped': reason}.
+    """
+    if league not in VERIFIED_ROOT_CONVENTION:
+        return {"skipped": "group rule not verified for this league"}
+    vocab = load_vocabulary()
+    if league not in vocab:
+        return {"skipped": "no published vocabulary on disk"}
+    if "position_group" not in {r[1] for r in con.execute("PRAGMA table_info(players)")}:
+        return {"skipped": "players has no position_group column"}
+    rows = con.execute(
+        "SELECT id, position FROM players WHERE league=? AND COALESCE(position,'') != '' "
+        "AND COALESCE(position_group,'') = ''", (league,)).fetchall()
+    filled, unpublished = 0, {}
+    for row in rows:
+        group = group_for(vocab, league, row[1])
+        if group is None:
+            unpublished[row[1]] = unpublished.get(row[1], 0) + 1
+            continue
+        con.execute("UPDATE players SET position_group=? WHERE id=?", (group, row[0]))
+        filled += 1
+    con.commit()
+    return {"filled": filled, "unpublished": unpublished}
+
+
 def run(db_path, leagues, apply_changes, repair):
     vocab = load_vocabulary()
     con = sqlite3.connect(db_path)

@@ -287,15 +287,30 @@ class Reference:
         for key in ('posteam', 'defteam', 'air_yards', 'yards_after_catch', 'timeout_team', 'out_of_bounds'):
             out[key] = None
 
+        # The depth chart is not the game-day roster: a player Out or inactive never takes part. With a frozen roster
+        # resolution (roster_preflight) the passer is its resolved QB1; without one, Out players are removed and the
+        # highest-ranked remaining QB passes.
+        resolution = (snapshot.get('roster_resolution') or {}).get(side)
+        if resolution is not None:
+            excluded_ids = {p['gsis_id'] for p in resolution['players'] if not p['official_eligible']}
+            resolved_qb1 = next(r['gsis_id'] for r in resolution['roles'] if r['role'] == 'QB1')
+        else:
+            report = team_roster.get('injury_report') or {}
+            excluded_ids = {p['gsis_id'] for p in report.get('players', []) if p.get('report_status') == 'Out'}
+            resolved_qb1 = None
+
         def choose(groups, role):
-            eligible = [p for p in players if p['pos_abb'] in groups]
+            eligible = [p for p in players if p['pos_abb'] in groups and p['gsis_id'] not in excluded_ids]
             if not eligible:
-                raise ValueError(f"pregame snapshot has no {role} for {team_roster['team']}")
+                raise ValueError(f"pregame snapshot has no eligible {role} for {team_roster['team']}")
             eligible.sort(key=lambda p: (p['pos_rank'], p['gsis_id']))
             if role == 'passer':
-                starters = [p for p in eligible if p['pos_rank'] == 1]
+                if resolved_qb1 is not None:
+                    starters = [p for p in eligible if p['gsis_id'] == resolved_qb1]
+                else:
+                    starters = [p for p in eligible if p['pos_rank'] == eligible[0]['pos_rank']]
                 if len(starters) != 1:
-                    raise ValueError(f"pregame snapshot must have exactly one QB1 for {team_roster['team']}")
+                    raise ValueError(f"pregame snapshot must have exactly one eligible QB1 for {team_roster['team']}")
                 return starters[0]
             role_seed = f"{snapshot['snapshot_sha256']}:{seed}:{play['sequence']}:{role}".encode()
             draw = random.Random(int.from_bytes(hashlib.sha256(role_seed).digest()[:8], 'big'))
@@ -305,7 +320,7 @@ class Reference:
             usage = snapshot['model_reference']['observed_reference'][usage_key]
             shares = usage['shares']
             groups = [position for position, share in shares.items()
-                      if share > 0 and any(p['pos_abb'] == position for p in players)]
+                      if share > 0 and any(p['pos_abb'] == position and p['gsis_id'] not in excluded_ids for p in players)]
             if not groups:
                 raise ValueError(f"pregame snapshot has no eligible {role} positions for {team_roster['team']}")
             weights = [shares[position] for position in groups]

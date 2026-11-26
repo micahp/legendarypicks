@@ -1,0 +1,108 @@
+{
+ "as_of_utc": "2026-10-25T15:00:00Z",
+ "source": "nfl_schedule scores in the database, regular season, read-only build",
+ "teams": {
+  "ARI": {
+   "streak": "W1"
+  },
+  "ATL": {
+   "streak": "L2"
+  },
+  "BAL": {
+   "streak": "L1"
+  },
+  "BUF": {
+   "streak": "W2"
+  },
+  "CAR": {
+   "streak": "W2"
+  },
+  "CHI": {
+   "streak": "W2"
+  },
+  "CIN": {
+   "streak": "W1"
+  },
+  "CLE": {
+   "streak": "W1"
+  },
+  "DAL": {
+   "streak": "L2"
+  },
+  "DEN": {
+   "streak": "W2"
+  },
+  "DET": {
+   "streak": "W1"
+  },
+  "GB": {
+   "streak": "W3"
+  },
+  "HOU": {
+   "streak": "W2"
+  },
+  "IND": {
+   "streak": "L2"
+  },
+  "JAX": {
+   "streak": "L1"
+  },
+  "KC": {
+   "streak": "W5"
+  },
+  "LA": {
+   "streak": "L2"
+  },
+  "LAC": {
+   "streak": "L6"
+  },
+  "LAR": {
+   "streak": "L2"
+  },
+  "LV": {
+   "streak": "L3"
+  },
+  "MIA": {
+   "streak": "L5"
+  },
+  "MIN": {
+   "streak": "W5"
+  },
+  "NE": {
+   "streak": "L1"
+  },
+  "NO": {
+   "streak": "W1"
+  },
+  "NYG": {
+   "streak": "L1"
+  },
+  "NYJ": {
+   "streak": "L1"
+  },
+  "PHI": {
+   "streak": "L4"
+  },
+  "PIT": {
+   "streak": "W2"
+  },
+  "SEA": {
+   "streak": "L2"
+  },
+  "SF": {
+   "streak": "W6"
+  },
+  "TB": {
+   "streak": "L1"
+  },
+  "TEN": {
+   "streak": "W1"
+  },
+  "WAS": {
+   "streak": "L2"
+  },
+  "WSH": {
+   "streak": "L2"
+  }
+ }
+}

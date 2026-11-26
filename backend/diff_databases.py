@@ -114,7 +114,28 @@ FEATURE_SEASONS_BEFORE = {
 }
 
 BLOCKING_PREFIXES = ("SCHEMA", "SEASONS")
-ADVISORY_PREFIXES = ("VOLUME", "FEATURE")
+ADVISORY_PREFIXES = ("VOLUME", "FEATURE", "RESEARCH")
+
+
+def _tables_created_by_code():
+    """Every table name a tracked .py file in this checkout creates (CREATE TABLE [IF NOT EXISTS] name), or None when
+    the checkout cannot be read. None means "cannot tell", so the caller keeps the difference blocking."""
+    import re
+    import subprocess
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        files = subprocess.run(["git", "-C", root, "ls-files", "*.py"], capture_output=True, text=True,
+                               check=True).stdout.split()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    pattern = re.compile(r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[\"'`]?(\w+)", re.IGNORECASE)
+    names = set()
+    for rel in files:
+        try:
+            names.update(pattern.findall(open(os.path.join(root, rel), encoding="utf-8", errors="replace").read()))
+        except OSError:
+            continue
+    return names
 
 
 def _feature_season_reason(table, league, season):
@@ -219,11 +240,18 @@ def main(argv=None) -> int:
 
     # 1. SCHEMA ---------------------------------------------------------------
     pt, dt = _tables(prod), _tables(dev)
+    created = _tables_created_by_code() if dt - pt else set()
     for name in sorted(dt - pt):
         if name in FEATURE_TABLES:
             findings.append(
                 f"FEATURE  table {name!r} exists in DEV, missing from PROD "
                 f"({FEATURE_TABLES[name]})")
+            continue
+        # A dev-only table that no code in this checkout creates is research data (an unmerged branch or a one-off run),
+        # not a promotion that did not happen: nothing the release ships could create it on prod. It is listed, never
+        # hidden. If the checkout cannot be read, it stays blocking (Micah, 2026-11-21).
+        if created is not None and name not in created:
+            findings.append(f"RESEARCH table {name!r} exists in DEV only; no code in this checkout creates it")
             continue
         findings.append(f"SCHEMA   table {name!r} exists in DEV, missing from PROD")
     for name in sorted(pt - dt):

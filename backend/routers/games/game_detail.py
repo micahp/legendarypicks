@@ -347,6 +347,14 @@ def _summary_not_started(sm):
         return False
 
 
+# ESPN's football box-score group names, as the page labels them.
+BOX_GROUP_LABELS = {
+    "passing": "Passing", "rushing": "Rushing", "receiving": "Receiving", "fumbles": "Fumbles",
+    "defensive": "Defense", "interceptions": "Interceptions", "kickReturns": "Kick Returns",
+    "puntReturns": "Punt Returns", "kicking": "Kicking", "punting": "Punting",
+}
+
+
 @router.get("/api/{league}/game/{game_id}/boxscore")
 def get_game_boxscore(league: str, game_id: str):
     """Live per-tab box score: team stats + player stat tables (US sports) or
@@ -420,7 +428,10 @@ def get_game_boxscore(league: str, game_id: str):
         team_info = pgrp.get("team", {})
         team_abbr = team_info.get("abbreviation", "")
         for sg in pgrp.get("statistics", []):
-            group_name = (sg.get("type") or "").capitalize()
+            # MLB names a group in `type` (batting, pitching); NFL and NCAAF in `name` (passing, kickReturns, ...).
+            # Without `name`, every NFL group arrived unnamed and the page had to guess it from its columns.
+            raw = sg.get("type") or sg.get("name") or ""
+            group_name = BOX_GROUP_LABELS.get(raw, raw[:1].upper() + raw[1:])
             labels = sg.get("labels", [])
             rows = []
             for ath in sg.get("athletes", []):
