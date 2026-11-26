@@ -8,6 +8,8 @@
 
 Game situation -> conditional intent/event distributions -> generated quantities (run yards, air yards, catch, YAC, returns, clock, foul, kick) -> typed play facts -> football rules and next state -> repeat. The model is not a physical all-22 simulator and does not generate an exact future game. Fitted conditional distributions regularize sparse cells; unlike V2 historical sampling, a matching historical row is not required at inference. Phase 5/7 reports a parameter-only runtime with data reads blocked.
 
+See the [cross-model diagnosis and pace-versus-efficiency evaluation standard](../evaluation/MODEL-COMPARISON.md#cross-model-diagnosis-pace-efficiency-and-mechanism). Removing runtime row selection does not prove correct fitted joint outcomes or clock cadence. Validate both pace and efficiency against NFL evidence.
+
 ## Scrimmage factorization and evidence
 
 The Phase 2 generator implements this conditional chain:

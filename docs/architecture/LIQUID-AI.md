@@ -29,6 +29,8 @@ In the sequential saved 220-call replay, fixing mismatched defensive assignments
 
 Correct assignment and reaction logic, remove privileged observations, integrate consistent action arbitration and distinct contact opportunities, then complete state transitions using existing code. Prefer shared controller families over one class per position. Test actual assigned 11-on-11 runtime, legal state/clock/stats and replay; tune only after logic is sound. Madden is a behavioral reference, NFL data is statistical ground truth.
 
+See the [cross-model diagnosis and pace-versus-efficiency evaluation standard](../evaluation/MODEL-COMPARISON.md#cross-model-diagnosis-pace-efficiency-and-mechanism). Correct player logic before tuning; separately measure live-ball duration, dead-ball runoff, pace and per-play efficiency rather than adopting Madden's aggregate rates.
+
 ## Reactive controller architecture (visual)
 
 ```mermaid

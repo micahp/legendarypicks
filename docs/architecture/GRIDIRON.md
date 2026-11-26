@@ -18,6 +18,8 @@ Separate repository [micahp/gridiron-physics](https://github.com/micahp/gridiron
 
 Known live-play defects: receiver future landing access, defender exact-state prediction and generic break-on-ball, role-transition gaps, callback order effects, recovery draws and timestep sensitivity. See [Liquid AI](LIQUID-AI.md). Avoid a second engine or new physics layers unless evidence justifies them.
 
+See the [cross-model diagnosis and pace-versus-efficiency evaluation standard](../evaluation/MODEL-COMPARISON.md#cross-model-diagnosis-pace-efficiency-and-mechanism). Autonomous player behavior, physics, shared game integration and clock cadence are separate diagnostic axes; do not offset defects with artificial scoring suppression.
+
 ## V1 Complete execution (visual)
 
 ```mermaid

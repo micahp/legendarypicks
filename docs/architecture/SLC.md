@@ -18,6 +18,8 @@ Sources: [Game entry](https://github.com/micahp/legendarypicks/blob/9a2e8624/scr
 
 [CEG](CEG.md) eliminates historical-row selection via fitted conditional distributions. [V1 Complete](../model-cards/nfl/slc-v1-complete.md) delegates live plays to [Gridiron](GRIDIRON.md); uses CEG typed contracts, not CEG's statistical generator.
 
+See the [cross-model diagnosis and pace-versus-efficiency evaluation standard](../evaluation/MODEL-COMPARISON.md#cross-model-diagnosis-pace-efficiency-and-mechanism). Historical-row selection defects and game-clock pace must be diagnosed separately; do not use scoring compensation to conceal biased sampling.
+
 ## Data and evaluation
 
 Pregame cutoff and provenance, player eligibility, independent seed streams and complete regulation/OT are required. Use original cohort-specific results; football realism alone cannot demonstrate forecasting skill. [Evaluation](../evaluation/README.md).
