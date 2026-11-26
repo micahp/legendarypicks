@@ -65,8 +65,9 @@ class Provider:
     generates_events = True
     allow_sparse_cells = True
 
-    def __init__(self, gen, punts, oob_model):
+    def __init__(self, gen, punts, oob_model, players=None):
         self.gen, self.punts, self.oob = gen, punts, oob_model
+        self.players = players
         self.n, self.last = 0, None
         self.counts = collections.Counter()
 
@@ -75,7 +76,17 @@ class Provider:
         st = {'down': state['down'], 'ydstogo': state['togo'], 'yardline_100': state['yl'],
               'score_differential': state.get('score_diff') or 0,
               'half_seconds_remaining': half_seconds(state['quarter'], state['clock'])}
-        play = self.gen.play(st, rng.random())
+        seed = rng.random()
+        lineup = None
+        if self.players is None:
+            play = self.gen.play(st, seed)
+        else:
+            lineup, choose = self.players.prepare(offense, state, f'{seed}:{self.n}')
+            play = self.gen.play(st, seed, quarterback=lineup['qb1'], opportunity=choose)
+            if play.event not in ('punt', 'field_goal_attempt'):
+                self.players.commit(lineup)
+            else:
+                lineup = None
         cc.validate({'down': st['down'], 'togo': st['ydstogo'], 'yl': st['yardline_100']}, play, require_clock=False)
         yl = st['yardline_100']
         event, spot, yards, td = play.event, None, play.yards_gained, play.touchdown_team == 'offense'
@@ -108,6 +119,11 @@ class Provider:
                   'ceg_event': play.event, 'score_diff': st['score_differential'], 'penalty': 0,
                   'play_type': {'run': 'run', 'scramble': 'run', 'kneel': 'qb_kneel', 'spike': 'qb_spike',
                                 'punt': 'punt', 'field_goal_attempt': 'field_goal'}.get(play.event, 'pass')}
+        if lineup is not None:
+            record['ceg_player_facts'] = {'event': play.event, 'passer': play.passer,
+                'rusher': play.rusher, 'receiver': play.receiver, 'fumble': play.fumble,
+                'qb1': lineup['qb1'], 'slots': lineup['slots'], 'group': lineup['group'],
+                'stints': lineup['lineup'], 'selection': lineup['selection']}
         self.last = record
         return event, record, 0, spot
 

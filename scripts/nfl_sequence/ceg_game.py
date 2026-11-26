@@ -253,14 +253,20 @@ class PenaltyProvider:
 
 
 class Game:
-    def __init__(self, art, seed, home=None, away=None):
+    def __init__(self, art, seed, home=None, away=None, player_inputs=None):
         import ceg_harness as hz
         self.art, self.rng, self.seed = art, random.Random(seed), seed
         self.codes = {'A': home, 'B': away}
         self.sp = art['special']
         c = art['clock']
         punts = PuntModel(self.sp['K4'])
-        self.prov = PenaltyProvider(hz.Provider(art['gen'], punts, c['oob']), self.sp)
+        self.players = None
+        self.player_box = collections.defaultdict(collections.Counter)
+        if player_inputs is not None:
+            from ceg_player_policy import GamePlayers
+            self.players = GamePlayers(player_inputs)
+            self.codes = dict(self.players.teams)
+        self.prov = PenaltyProvider(hz.Provider(art['gen'], punts, c['oob'], self.players), self.sp)
         self.punts = punts
         self.score = {'A': 0, 'B': 0}
         self.stats = {t: collections.Counter() for t in 'AB'}
@@ -331,6 +337,9 @@ class Game:
         e1.check_drive(plays, terminal)
         self.timeouts[offense], self.timeouts[defense] = clk.timeouts['offense'], clk.timeouts['defense']
         for p in plays:
+            if self.players is not None:
+                from ceg_player_policy import tally
+                tally(self.player_box, p['outcome'])
             st = self.stats[offense]
             st['plays'] += 1
             ev = p['event_type']
@@ -448,10 +457,14 @@ class Game:
         return poss['A'] >= 1 and poss['B'] >= 1 and a != b
 
     def result(self):
-        return {'seed': self.seed, 'blocked': self.blocked, 'home': self.score['A'], 'away': self.score['B'],
+        out = {'seed': self.seed, 'blocked': self.blocked, 'home': self.score['A'], 'away': self.score['B'],
                 'drives': self.drives, 'stats': {t: dict(v) for t, v in self.stats.items()},
                 'scoring': self.events, 'overtime': any(e[0] == 5 for e in self.events),
                 'penalties': dict(self.prov.counts), 'provider': dict(self.prov.inner.counts)}
+        if self.players is not None:
+            out['player_boxscores'] = {pid: dict(stats) for pid, stats in self.player_box.items()}
+            out['player_provenance'] = self.players.provenance
+        return out
 
 
 class PuntModel:
@@ -476,15 +489,21 @@ class PuntModel:
 def run(args):
     art = pickle.loads(args.artifact.read_bytes())
     matchups = json.loads(args.matchups.read_text()) if args.matchups else None
+    player_inputs = None
+    if args.player_snapshot:
+        if matchups:
+            raise ValueError('player-aware CEG uses one frozen matchup per run')
+        from ceg_player_policy import load_inputs
+        player_inputs = load_inputs(args, art)
     block_data_reads()
     if matchups:
         return run_matchups(args, art, matchups)
     out = []
     for i in range(args.games):
-        g = Game(art, args.seed + i)
         try:
+            g = Game(art, args.seed + i, player_inputs=player_inputs)
             out.append(g.play())
-        except AssertionError as exc:
+        except (AssertionError, ValueError) as exc:
             out.append({'seed': args.seed + i, 'blocked': f'check failed: {exc}'})
     ok = [r for r in out if not r.get('blocked')]
     summary = {'games': len(out), 'completed': len(ok), 'blocked': [r['blocked'] for r in out if r.get('blocked')][:10],
@@ -546,7 +565,22 @@ def main(argv=None):
     r.add_argument('--seed', type=int, default=1)
     r.add_argument('--out', required=True, type=Path)
     r.add_argument('--matchups', type=Path, help='JSON list of {game_id, home, away, spread_line, total_line}')
+    r.add_argument('--player-snapshot', type=Path)
+    r.add_argument('--player-field', type=Path)
+    r.add_argument('--player-field-sha256')
+    r.add_argument('--player-snap-counts', type=Path)
+    r.add_argument('--player-snap-counts-sha256')
+    r.add_argument('--opportunity-artifact', type=Path)
+    r.add_argument('--opportunity-sha256')
+    r.add_argument('--entry-current', action='store_true')
     args = ap.parse_args(argv)
+    if args.cmd == 'run':
+        companions = (args.player_field, args.player_field_sha256, args.player_snap_counts,
+                      args.player_snap_counts_sha256, args.opportunity_artifact, args.opportunity_sha256)
+        if args.player_snapshot and not all(companions):
+            ap.error('player-aware CEG requires every pinned player input')
+        if not args.player_snapshot and (any(companions) or args.entry_current):
+            ap.error('player inputs require --player-snapshot')
     return build(args) if args.cmd == 'build' else run(args)
 
 

@@ -119,8 +119,9 @@ class Generator:
         y = int(np.searchsorted(np.cumsum(p), u, side='right')) + p2.GMIN
         return max(y, int(L) - 100), False  # a loss past the own goal line ends there (safety by the rules core)
 
-    def play(self, state, seed):
+    def play(self, state, seed, *, quarterback=None, opportunity=None):
         rng = random.Random(seed)
+        qb = quarterback if quarterback is not None else 'slot:passer'
         row = state_frame([state])
         L = int(state['yardline_100'])
         prov = cc.Provenance(f'ceg-arm-{self.arm.lower()}', 'phase2', 'tune_2024', (), (str(seed),))
@@ -134,44 +135,46 @@ class Generator:
         if intent in ('punt', 'field_goal'):
             return cc.GeneratedPlay(event='punt' if intent == 'punt' else 'field_goal_attempt', yards_gained=None, **common)
         if intent == 'spike':
-            return cc.GeneratedPlay(event='spike', yards_gained=0, passer='slot:passer', **common)
+            return cc.GeneratedPlay(event='spike', yards_gained=0, passer=qb, **common)
         if intent == 'kneel':
             y, _ = self._gain('kneel_yards', row, L, rng)
-            return cc.GeneratedPlay(event='kneel', yards_gained=y, rusher='slot:passer', **common)
+            return cc.GeneratedPlay(event='kneel', yards_gained=y, rusher=qb, **common)
         if intent == 'designed_run':
+            rusher = opportunity('carry') if opportunity is not None else 'slot:rusher'
             y, td = self._gain('run_yards', row, L, rng)
-            return self._finish('run', y, td, row, L, rng, common, rusher='slot:rusher')
+            return self._finish('run', y, td, row, L, rng, common, rusher=rusher)
         outcome, _ = pick('dropback_outcome')
         if outcome == 'sack':
             y, _ = self._gain('sack_yards', row, L, rng)
-            return self._finish('sack', min(y, 0), False, row, L, rng, common, passer='slot:passer')
+            return self._finish('sack', min(y, 0), False, row, L, rng, common, passer=qb)
         if outcome == 'scramble':
             y, td = self._gain('scramble_yards', row, L, rng)
-            return self._finish('scramble', y, td, row, L, rng, common, rusher='slot:passer', passer='slot:passer')
+            return self._finish('scramble', y, td, row, L, rng, common, rusher=qb, passer=qb)
         kind, _ = pick('throwaway')
         if kind == 'throwaway':
-            return cc.GeneratedPlay(event='pass_incomplete', yards_gained=0, passer='slot:passer', **common)
+            return cc.GeneratedPlay(event='pass_incomplete', yards_gained=0, passer=qb, **common)
+        receiver = opportunity('receive') if opportunity is not None else 'slot:receiver'
         air, _ = pick('air_yards')
         air = int(air)
         abucket = p2.buckets(row.assign(air_yards=air))['air_b'].iloc[0]
         res, _ = pick('targeted_outcome', {'air_b': abucket})
         if res == 'incomplete':
-            return cc.GeneratedPlay(event='pass_incomplete', yards_gained=0, air_yards=air, passer='slot:passer',
-                                    receiver='slot:receiver', **common)
+            return cc.GeneratedPlay(event='pass_incomplete', yards_gained=0, air_yards=air, passer=qb,
+                                    receiver=receiver, **common)
         if res == 'interception':
             spot = L - air  # the catch point, from the offense's direction
             r, td = self._gain('return_yards', row, max(1, min(99, 100 - max(1, min(99, spot)))), rng)
             dead = None if td else max(1, min(99, spot + r))
             poss = cc.Possession('defense', 'interception', dead, return_yards=r)
-            return cc.GeneratedPlay(event='interception', yards_gained=0, air_yards=air, passer='slot:passer',
-                                    receiver='slot:receiver', possession=poss,
+            return cc.GeneratedPlay(event='interception', yards_gained=0, air_yards=air, passer=qb,
+                                    receiver=receiver, possession=poss,
                                     touchdown_team='defense' if td else None, **common)
         if air >= L:  # a catch in the end zone
             return cc.GeneratedPlay(event='pass_complete', yards_gained=L, air_yards=air, yards_after_catch=L - air,
-                                    passer='slot:passer', receiver='slot:receiver', touchdown_team='offense', **common)
+                                    passer=qb, receiver=receiver, touchdown_team='offense', **common)
         yac, td = self._gain('yac', row.assign(air_b=abucket), L - air, rng)
         return self._finish('pass_complete', air + yac, td, row, L, rng, common, air_yards=air, yards_after_catch=yac,
-                            passer='slot:passer', receiver='slot:receiver')
+                            passer=qb, receiver=receiver)
 
     def _finish(self, event, y, td, row, L, rng, common, **kw):
         ev = {'run': 'designed_run', 'scramble': 'scramble', 'sack': 'sack', 'pass_complete': 'complete'}[event]
