@@ -43,7 +43,7 @@ def attach_membership(snapshot, weekly_rows, source):
     week = int(snap['schedule']['week'])
     from scripts import nfl_team_codes
     for side in ('away', 'home'):
-        team = nfl_team_codes.to_nflverse(snap['rosters'][side]['team'])
+        team = nfl_team_codes.to_nflverse_team_code(snap['rosters'][side]['team'])
         rows = [{'gsis_id': r['gsis_id'], 'name': r['full_name'], 'position': r['position'], 'status': r['status'],
                  'status_description': r['status_description_abbr'] if isinstance(r.get('status_description_abbr'), str) else None}
                 for r in weekly_rows if r['team'] == team and int(r['week']) == week and isinstance(r.get('gsis_id'), str)]
@@ -59,6 +59,27 @@ def _utc(text):
 
 def _z(text):
     return _utc(text).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+
+def _injury_report_applies(report, cutoff):
+    """Accept row publish times or a hash-pinned source capture available by the cutoff.
+
+    Some public injury datasets do not include per-row publication timestamps.
+    A timestamped, hash-pinned source capture establishes when those exact rows
+    were available to the simulation without inventing individual publish times.
+    """
+    rows = [p for p in report.get('players', []) if p.get('source') != EXCLUSION_SOURCE]
+    published = [p.get('published_utc') for p in rows]
+    late = [t for t in published if t and _utc(t) > cutoff]
+    capture_time = report.get('source_available_utc')
+    capture_valid = bool(
+        report.get('source_timestamp_semantics') == 'hash_pinned_source_capture'
+        and report.get('source_sha256')
+        and capture_time
+        and _utc(capture_time) <= cutoff)
+    complete_row_timestamps = bool(rows) and all(published)
+    return (bool(rows) and not late and (complete_row_timestamps or capture_valid), len(published),
+            sum(1 for t in published if not t), len(late), capture_time if capture_valid else None)
 
 
 def _digest(value):
@@ -172,12 +193,11 @@ def check(snapshot, market_qbs=None):
         rows.append((f'{team} depth chart current', 'PASS' if age <= MAX_DEPTH_AGE else 'FAIL',
                      f"{roster['snapshot_at']}, {age.total_seconds() / 3600:.1f}h before the cutoff"))
         report = roster.get('injury_report') or {}
-        published = [p.get('published_utc') for p in report.get('players', []) if p.get('source') != EXCLUSION_SOURCE]
-        late = [t for t in published if t and _utc(t) > cutoff]
-        ok = bool(report.get('players')) and all(published) and not late
+        ok, report_count, missing_times, late_count, capture_time = _injury_report_applies(report, cutoff)
         rows.append((f'{team} injury report applies to this game', 'PASS' if ok else 'FAIL',
-                     f"{len(published)} statuses, {sum(1 for t in published if not t)} without a publish time, "
-                     f"{len(late)} after the cutoff, {len(report.get('obsolete', []))} dropped as from a previous game"))
+                     f"{report_count} statuses, {missing_times} without a publish time, "
+                     f"{late_count} after the cutoff, {len(report.get('obsolete', []))} dropped as from a previous game"
+                     + (f", source capture available {capture_time}" if capture_time else '')))
         qb = resolved_qb1(res)
         role = next(r for r in res['roles'] if r['role'] == 'QB1')
         names = {p['gsis_id']: p['name'] for p in res['players']}

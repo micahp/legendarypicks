@@ -335,6 +335,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         kick_metadata = None
         penalty_detail = None
         typed_event_record = generated.get('event_record') if generated is not None else None
+        if event_source is not None and selected_event in KICK_EVENTS and special_teams is None:
+            return halt('autonomous_special_teams_execution_missing')
         if special_teams and selected_event in ('punt', 'field_goal_attempt'):
             resolution = special_teams(selected_event, st, row, runoff, spot, special_rng)
             if resolution and resolution.get('blocker'):

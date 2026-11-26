@@ -165,3 +165,9 @@ No LP live forecast/lock/grading updates, production writes, shared engine chang
 
 ## Commits
 - No AI attribution. Plain messages saying what and why. Do not commit `__pycache__` or `venv`.
+
+## V1 Complete disk and runtime stewardship
+- Keep generated game outputs outside the repository and write them only after validation passes.
+- Do not persist full-resolution trajectories for batch runs; retain compact summaries and the minimum replay needed to reproduce a defect.
+- Reuse pinned input datasets and caches instead of copying them into each worktree. Check free disk and memory before seeded batches; run one bounded batch at a time.
+- Run Python with `/root/envs/lp-standard/bin/python` (`lp-python`) and never install packages.

@@ -64,19 +64,30 @@ def team_stats(drives, points, kickoff_events=()):
                     if ev == 'pass_complete':
                         t['pass_comp'] += 1
                         t['pass_yds'] += _credited(play, _player_yards(play, 'passing_yards', yards))
-                        if 'receiving_yards' in (part.get('sampled_play_context') or {}):
+                        if (_player_yards(play, 'receiving_yards', None) is not None):
                             t['receiving_yds'] += _credited(play, _player_yards(play, 'receiving_yards', yards))
-            if out['turnover'] and ev in ('interception', 'fumble_lost'):
+            if out['turnover'] and (ev in ('interception', 'fumble_lost') or out.get('fumble')):
                 t['turnovers'] += 1
             if ev == 'interception':
                 t['interceptions'] += 1
-            if ev == 'fumble_lost':
+            if ev == 'fumble_lost' or (out.get('fumble') and out.get('turnover')):
                 t['fumbles_lost'] += 1
+            if out.get('fumble'):
+                t['fumbles'] += 1
+                recovery_team = play['state_before']['defense_team'] if out.get('turnover') else play['state_before']['offense_team']
+                recovered = team(recovery_team)
+                recovered['fumble_recoveries'] += 1
+                if out.get('turnover') and out.get('return_yards') is not None:
+                    recovered['fumble_return_yards'] += int(out['return_yards'])
             # Regular punts set `punt`; `punt_attempt` is only present on some
             # special-team outcomes (notably blocked kicks). Count either flag
             # once so ordinary punts are not omitted from the team boxscore.
             if out.get('punt') or out.get('punt_attempt'):
                 t['punts'] += 1
+                execution = out.get('special_teams_execution') or {}
+                punt_distance = execution.get('distance_yards', execution.get('generated_punt_distance_yards'))
+                if punt_distance is not None:
+                    t['punt_yds'] += int(punt_distance)
             if out.get('punt_return'):
                 return_team = play['state_before']['defense_team']
                 returned = team(return_team)
@@ -122,6 +133,16 @@ def team_stats(drives, points, kickoff_events=()):
             if unassigned_overtime_offensive_td:
                 # No player row exists for this observed OT score, so exclude it from player reconciliation.
                 scored['observed_overtime_touchdowns'] += 1
+        scoring = d.get('points_scored_on_drive') or {}
+        try_result = scoring.get('try')
+        if isinstance(try_result, dict):
+            scoring_team = team(scoring.get('team', d['offense_team']))
+            if try_result.get('kind') == 'extra_point':
+                scoring_team['extra_point_att'] += 1
+                scoring_team['extra_point_made'] += int(bool(try_result.get('made')))
+            elif try_result.get('kind') == 'two_point':
+                scoring_team['two_point_att'] += 1
+                scoring_team['two_point_made'] += int(bool(try_result.get('made')))
     for event in kickoff_events:
         team(event['kicking_team'])['kickoffs'] += 1
         if event.get('result') == 'return' and event.get('returner_id') and not event.get('fair_catch'):
@@ -152,6 +173,8 @@ def _player_yards(play, field, fallback):
     """Use the source's role-specific box-score field when supplied; otherwise retain transition yardage."""
     context = play.get('participants', {}).get('sampled_play_context') or {}
     value = context.get(field)
+    if value is None:
+        value = play.get('participants', {}).get(field)
     return fallback if value is None else int(value)
 
 
@@ -192,12 +215,30 @@ def player_lines(drives, kickoff_events=()):
                 r = line(part['rusher_id'], part, 'rusher')['rushing']
                 r['att'] += 1
                 r['yds'] += _credited(play, _player_yards(play, 'rushing_yards', yards))
-                r['td'] += int(ev == 'run' and td)
+                r['td'] += int(ev == 'run' and td and not out.get('return_touchdown'))
             if ev == 'fumble_lost':
                 role = 'rusher' if part.get('rusher_id') else 'passer'
                 fumbler = part.get(f'{role}_id')
                 if fumbler:
                     line(fumbler, part, role)['miscellaneous']['fumbles_lost'] += 1
+            if out.get('fumble'):
+                fumbler = part.get('fumbler_id') or part.get('rusher_id') or part.get('receiver_id') or part.get('passer_id')
+                if fumbler:
+                    fumble_stats = line(fumbler, part, 'fumbler')['miscellaneous']
+                    fumble_stats['fumbles'] += 1
+                    if out.get('turnover') and ev != 'fumble_lost':
+                        fumble_stats['fumbles_lost'] += 1
+                recoverer = part.get('recoverer_id') or out.get('recoverer_id')
+                if recoverer:
+                    recovery_role = 'returner' if out.get('turnover') else 'recoverer'
+                    recovery_stats = line(recoverer, part, recovery_role)['miscellaneous']
+                    recovery_stats['fumble_recoveries'] += 1
+                    if out.get('turnover'):
+                        recovery_stats['fumble_return_yards'] += int(out.get('return_yards') or 0)
+                        recovery = line(recoverer, part, recovery_role)['returning']
+                        recovery['fumble_returns'] += 1
+                        recovery['fumble_return_yds'] += int(out.get('return_yards') or 0)
+                        recovery['td'] += int(bool(out.get('return_touchdown')))
             if ev in ('pass_complete', 'pass_incomplete', 'interception', 'sack') and part['passer_id']:
                 p = line(part['passer_id'], part, 'passer')['passing']
                 if ev == 'sack':
@@ -210,23 +251,31 @@ def player_lines(drives, kickoff_events=()):
                 if ev == 'pass_complete':
                     p['comp'] += 1
                     p['yds'] += _credited(play, _player_yards(play, 'passing_yards', yards))
-                    p['td'] += int(td)
+                    p['td'] += int(td and not out.get('return_touchdown'))
             if ev in ('pass_complete', 'pass_incomplete', 'interception') and part['receiver_id']:
                 c = line(part['receiver_id'], part, 'receiver')['receiving']
                 c['tgt'] += 1
                 if ev == 'pass_complete':
                     c['rec'] += 1
                     c['yds'] += _credited(play, _player_yards(play, 'receiving_yards', yards))
-                    c['td'] += int(td)
+                    c['td'] += int(td and not out.get('return_touchdown'))
             if ev == 'punt' and part.get('punter_id'):
                 k = line(part['punter_id'], part, 'punter')['kicking']
                 k['punt_att'] += 1
-                k['punt_yds'] += int((out.get('special_teams_execution') or {}).get(
-                    'generated_punt_distance_yards') or 0)
+                execution = out.get('special_teams_execution') or {}
+                punt_distance = execution.get('distance_yards', execution.get('generated_punt_distance_yards'))
+                if punt_distance is not None:
+                    k['punt_yds'] += int(punt_distance)
             if ev == 'field_goal_attempt' and part.get('kicker_id'):
                 k = line(part['kicker_id'], part, 'kicker')['kicking']
                 k['fg_att'] += 1
                 k['fg_made'] += int(out.get('field_goal_result') == 'made')
+            blocked = out.get('blocked_kick')
+            if blocked and blocked.get('returner_id'):
+                r = line(blocked['returner_id'], part, 'returner')['returning']
+                r['blocked_kick_returns'] += 1
+                r['blocked_kick_return_yds'] += int(blocked.get('return_yards') or 0)
+                r['td'] += int(bool(out.get('return_touchdown')))
             if ev == 'punt' and out.get('punt_return') and part.get('returner_id'):
                 r = line(part['returner_id'], part, 'returner')['returning']
                 r['punt_returns'] += 1
@@ -248,6 +297,32 @@ def player_lines(drives, kickoff_events=()):
             r['kickoff_returns'] += 1
             r['kickoff_return_yds'] += int(event.get('return_yards') or 0)
             r['td'] += int(event.get('terminal') == 'touchdown')
+    for drive in drives:
+        scoring = drive.get('points_scored_on_drive') or {}
+        try_result = scoring.get('try')
+        if not isinstance(try_result, dict):
+            continue
+        part = {'attribution': 'autonomous_execution'}
+        if try_result.get('kind') == 'extra_point' and try_result.get('kicker_id'):
+            details = try_result.get('kicker_details') or {}
+            part.update({f'try_kicker_{field}': details.get(field)
+                         for field in ('name', 'position', 'team', 'side')})
+            k = line(try_result['kicker_id'], part, 'try_kicker')['kicking']
+            k['extra_point_att'] += 1
+            k['extra_point_made'] += int(bool(try_result.get('made')))
+        elif try_result.get('kind') == 'two_point':
+            for pid in try_result.get('try_actor_ids', ()):
+                if pid:
+                    details = try_result.get('try_player_details') or {}
+                    prefix = next((name for name in ('rusher', 'receiver', 'passer')
+                                   if details.get(name + '_id') == pid), None)
+                    actor_part = dict(part)
+                    if prefix:
+                        actor_part.update({f'try_actor_{field}': details.get(prefix + '_' + field)
+                                           for field in ('name', 'position', 'team', 'side')})
+                    misc = line(pid, actor_part, 'try_actor')['miscellaneous']
+                    misc['two_point_att'] += 1
+                    misc['two_point_made'] += int(bool(try_result.get('made')))
     out = []
     for pid in sorted(lines):
         entry = {'player_id': pid, 'attribution': lines[pid]['attribution']}

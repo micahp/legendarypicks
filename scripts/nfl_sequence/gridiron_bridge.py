@@ -1,7 +1,7 @@
-"""One-play bridge to a pinned Gridiron autonomous executor.
+"""Translate frozen SLC football states into pinned live Gridiron executions.
 
-This is a research boundary, not full-game execution. Historical playbook
-outcomes are not passed to the executor. Clock output stops at the whistle.
+Historical playbook outcomes are reduced to team-season tendencies only;
+player assignments and play results come from the live executor.
 """
 import argparse
 import hashlib
@@ -19,9 +19,10 @@ import pregame_snapshot
 import reducer
 import roster_preflight
 import v1_complete_roster
+from scripts import nfl_team_codes
 
-ENGINE_COMMIT = '5a88c51951969ca6408a3fd33ee99cad34dddebe'
-PLAYBOOK_MANIFEST_SHA256 = '9d4749f817e97f4e3da0b6c5170eae0fa922d8b1b59d608ab4ce9dd990c2e929'
+ENGINE_COMMIT = '92bfb77d0ec7efcbba40d1adfc5c0cab0db120f3'
+PLAYBOOK_MANIFEST_SHA256 = '220af2a590b2e7ddf5c28a32977aadd4d5a5e6e128ca8392da8bac37ef0917ac'
 DEFENSE_SLOTS = ('LEDGE', 'LDT', 'RDT', 'REDGE', 'MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS')
 DEFENSE_POSITION_CANDIDATES = {
     'LEDGE': ('LDE', 'RDE', 'DE', 'EDGE', 'LOLB', 'ROLB', 'OLB'),
@@ -36,6 +37,38 @@ DEFENSE_POSITION_CANDIDATES = {
     'SS': ('SS', 'S', 'FS'),
     'FS': ('FS', 'S', 'SS'),
 }
+DEFENSE_POSITION_FALLBACKS = {
+    # Some current rosters identify a 3-4 end as LDE/RDE instead of DT. If a
+    # team has only one eligible interior label, its next interior assignment
+    # can use a distinct eligible end in the authored nickel front.
+    'LDT': ('LDE', 'RDE', 'DE', 'EDGE'),
+    'RDT': ('LDE', 'RDE', 'DE', 'EDGE'),
+}
+COMMON_LIVE_RATINGS = ('SPD', 'ACC', 'AGI', 'STR', 'AWR')
+OFFENSE_LIVE_RATINGS = {
+    'QB': ('THA',),
+    'RB': ('BCV', 'BTK', 'CAR', 'ELU'),
+    'WR': ('CTH',),
+    'TE': ('CTH',),
+    'LT': ('PBK', 'RBK', 'IBL'), 'LG': ('PBK', 'RBK', 'IBL'),
+    'C': ('PBK', 'RBK', 'IBL'), 'RG': ('PBK', 'RBK', 'IBL'),
+    'RT': ('PBK', 'RBK', 'IBL'),
+}
+SCRIMMAGE_RATING_KEYS = frozenset({
+    'SPD', 'ACC', 'AGI', 'STR', 'AWR', 'RBK', 'IBL', 'PBK', 'BSH', 'PMV', 'FMV',
+    'TAK', 'BTK', 'ELU', 'BCV', 'TRK', 'PUR', 'CAR', 'PRC', 'CTH', 'CIT', 'THA',
+})
+
+
+def _scrimmage_ratings(ratings, *, family, player_id, quarterback_id):
+    """Pass only ratings accepted by the pinned scrimmage schema and concept."""
+    supported = {name: value for name, value in ratings.items() if name in SCRIMMAGE_RATING_KEYS}
+    if family == 'run' or player_id != quarterback_id:
+        supported.pop('THA', None)
+    if family == 'pass':
+        for name in ('IBL', 'BCV', 'TRK', 'CIT'):
+            supported.pop(name, None)
+    return supported
 
 
 def _defensive_lineup(resolved, roster):
@@ -43,9 +76,19 @@ def _defensive_lineup(resolved, roster):
     allowed = v1_complete_roster.eligible_ids(resolved)
     selected = {}
     for slot in DEFENSE_SLOTS:
-        choices = [p for p in roster if p.get('gsis_id') in allowed and p.get('gsis_id') not in selected
-                   and p.get('pos_abb') in DEFENSE_POSITION_CANDIDATES[slot]
-                   and type(p.get('pos_rank')) is int and p['pos_rank'] > 0]
+        position_groups = [DEFENSE_POSITION_CANDIDATES[slot]]
+        if slot in DEFENSE_POSITION_FALLBACKS:
+            position_groups.append(DEFENSE_POSITION_FALLBACKS[slot])
+        choices = []
+        for group in position_groups:
+            for position in group:
+                choices = [p for p in roster if p.get('gsis_id') in allowed and p.get('gsis_id') not in selected
+                           and p.get('pos_abb') == position
+                           and type(p.get('pos_rank')) is int and p['pos_rank'] > 0]
+                if choices:
+                    break
+            if choices:
+                break
         if not choices:
             raise ValueError('gridiron_live_defense_role_unresolved:' + slot)
         choices.sort(key=lambda p: (p['pos_rank'], p['gsis_id']))
@@ -71,18 +114,20 @@ def _profile(path, manifest_path, season, team):
     if _sha(manifest_path) != PLAYBOOK_MANIFEST_SHA256:
         raise ValueError('gridiron_playbook_manifest_hash_mismatch')
     manifest = json.loads(Path(manifest_path).read_text())
-    matches = [row for row in manifest.get('team_seasons', []) if row.get('team') == team
+    playbook_team = nfl_team_codes.to_nflverse_team_code(team)
+    matches = [row for row in manifest.get('team_seasons', []) if row.get('team') == playbook_team
                and int(row.get('season', -1)) == season - 1 and row.get('output') == Path(path).name]
     if len(matches) != 1 or _sha(path) != matches[0].get('output_sha256'):
         raise ValueError('gridiron_playbook_hash_or_identity_mismatch')
     profile = json.loads(Path(path).read_text())
-    if profile.get('team_id') != team or int(profile.get('season', -1)) != season - 1:
+    if profile.get('team_id') != playbook_team or int(profile.get('season', -1)) != season - 1:
         raise ValueError('gridiron_playbook_cutoff_invalid')
     # Only the pregame aggregate is read; never pass observed plays or outcomes.
     rate = profile['offense']['profile']['run_pass']['categories']['pass']['rate']
     if not isinstance(rate, (float, int)) or not 0 <= rate <= 1:
         raise ValueError('gridiron_playbook_prior_invalid')
-    return {'season': season - 1, 'pass_rate': rate, 'sha256': _sha(path),
+    return {'team': team, 'playbook_team_code': playbook_team,
+            'season': season - 1, 'pass_rate': rate, 'sha256': _sha(path),
             'manifest_sha256': _sha(manifest_path), 'use': 'prior_season_aggregate_only'}
 
 
@@ -98,10 +143,17 @@ def _ratings(path):
         payload = json.loads(path.read_text())
         rows = payload.get('players', {})
         _RATING_CACHE.clear()
+        meta = payload.get('meta', {})
         _RATING_CACHE[key] = ({row['gsis']: row for row in rows.values() if row.get('gsis')},
-                              {'dataset': path.name, 'season': payload.get('meta', {}).get('season'),
-                               'through_week': payload.get('meta', {}).get('through_week'),
-                               'source': 'estimated_player_ratings_and_measurables'})
+                              {'dataset': path.name, 'season': meta.get('season'),
+                               'through_week': meta.get('through_week'),
+                               'game_id': meta.get('game_id'),
+                               'as_of': meta.get('cutoff_utc'),
+                               'schema': meta.get('schema'),
+                               'source_class': meta.get('rating_source_class', 'estimated'),
+                               'evidence_source_class': meta.get('evidence_source_class', 'nfl_derived'),
+                               'roster_snapshot_sha256': meta.get('roster_snapshot_sha256'),
+                               'source': 'provenance_aware_player_ratings'})
     return _RATING_CACHE[key]
 
 
@@ -111,8 +163,6 @@ def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_pat
     checks, resolved = roster_preflight.check(snapshot)
     if roster_preflight.failed(checks) or roster_preflight.exclusions_applied(snapshot, resolved)[1] != 'PASS':
         raise ValueError('gridiron_roster_preflight_failed')
-    if snapshot['schedule']['game_id'] != '2026_11_MIN_SF':
-        raise ValueError('gridiron_bridge_game_not_supported')
     team_by_side = {'home': snapshot['schedule']['home_team'], 'away': snapshot['schedule']['away_team']}
     if state['offense'] in ('A', 'B'):
         offense_team = team_by_side['home' if state['offense'] == 'A' else 'away']
@@ -169,21 +219,40 @@ def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_pat
         raise ValueError('gridiron_bridge_offense_direction_invalid')
     x = 100 - int(state['yl']) if direction == 1 else int(state['yl'])
     rating_rows, rating_source = _ratings(ratings_path)
+    if rating_source.get('schema') == 'gridiron-player-ratings-provenance-v1':
+        if (rating_source.get('game_id') != snapshot['schedule']['game_id']
+                or rating_source.get('as_of') != snapshot.get('as_of')
+                or rating_source.get('roster_snapshot_sha256') != _sha(snapshot_path)
+                or rating_source.get('through_week') != int(snapshot['schedule']['week']) - 1):
+            raise ValueError('gridiron_bridge_player_rating_provenance_mismatch')
     rating_ids = {}
     player_profiles = {}
     for pid in ids:
-        record = rating_rows.get(pid, {})
+        record = rating_rows.get(pid)
+        if not isinstance(record, dict):
+            raise ValueError('gridiron_bridge_player_rating_profile_missing:' + pid)
         ratings = dict(record.get('ratings', {}))
-        if family == 'pass':
-            for name in ('IBL', 'BCV', 'TRK', 'CIT'):
-                ratings.pop(name, None)
-            if pid != slots['QB']:
-                ratings.pop('THA', None)
+        role = players.get(pid)
+        required = list(COMMON_LIVE_RATINGS)
+        if role in OFFENSE_LIVE_RATINGS:
+            required.extend(name for name in OFFENSE_LIVE_RATINGS[role]
+                            if name != 'THA' or family == 'pass')
+        elif role in ('LEDGE', 'LDT', 'RDT', 'REDGE'):
+            required.extend(('BSH', 'FMV', 'PMV'))
+        elif role in ('MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS'):
+            required.extend(('PRC', 'PUR', 'TAK'))
+        for name in required:
+            if type(ratings.get(name)) is not int or not 1 <= ratings[name] <= 99:
+                raise ValueError(f'gridiron_bridge_player_rating_missing:{pid}:{name}')
+        mass = record.get('physics', {}).get('mass')
+        if not isinstance(mass, (int, float)) or not math.isfinite(mass) or mass <= 0:
+            raise ValueError('gridiron_bridge_player_physics_missing:' + pid)
+        ratings = _scrimmage_ratings(ratings, family=family, player_id=pid,
+                                     quarterback_id=slots['QB'])
         player_profiles[pid] = {'ratings': ratings,
                                  'physics': ({'mass': record['physics']['mass']}
                                              if record.get('physics', {}).get('mass') else {})}
-        if ratings:
-            rating_ids[pid] = rating_source
+        rating_ids[pid] = rating_source
     call = {'schema_version': 'gridiron.autonomous-play.v1', 'mode': 'autonomous_from_snap',
             'play_id': f"{snapshot['schedule']['game_id']}:{offense_team}:{family}:{seed}", 'seed': str(seed),
             'situation': {'quarter': state['quarter'], 'clock_seconds': state['clock'], 'down': state['down'],
@@ -198,7 +267,7 @@ def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_pat
             'player_profiles': player_profiles}
     return call, {'snapshot_sha256': snapshot['snapshot_sha256'], 'snapshot_verified': snapshot['evaluation']['verified'],
                   'participation_sha256': field_hash, 'playbook_prior': prior,
-                  'lineup_selection': selected, 'attribute_source': 'gridiron_authored_archetype_defaults',
+                  'lineup_selection': selected, 'attribute_source': 'named_player_specific_estimated_ratings',
                   'concept_selection': selection, 'formation_selection': 'explicit_11_personnel',
                   'player_rating_sources': rating_ids,
                   'player_rating_coverage': len(rating_ids) / len(ids)}
@@ -251,7 +320,9 @@ def _validate_special_teams_result(call, result):
                    or any(not isinstance(value, (int, float)) or not math.isfinite(value) for value in frame)
                    for frame in frames)):
         raise ValueError('gridiron_special_teams_trajectory_invalid')
-    if result.get('result', {}).get('result') not in ('return', 'touchback', 'muff'):
+    expected_results = (('made', 'missed', 'blocked') if call.get('kind') == 'field_goal'
+                        else ('return', 'touchback', 'muff', 'downed', 'fair_catch', 'out_of_bounds'))
+    if result.get('result', {}).get('result') not in expected_results:
         raise ValueError('gridiron_special_teams_result_classification_invalid')
     return result
 

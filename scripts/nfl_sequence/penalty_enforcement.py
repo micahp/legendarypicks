@@ -205,9 +205,14 @@ def enforce(*, before: DownState, after_play: DownState, phase: str,
         actual = base - new_y
         spot_type = "foul_or_goal_line"
     elif foul == "intentional_grounding":
-        foul_y = _spot(foul_yardline_100, "intentional grounding")
+        foul_y = _spot(foul_yardline_100, "intentional grounding", allow_endzone=True)
         if foul_y < base:
             raise ValueError("intentional grounding pass spot must be behind line of scrimmage")
+        if foul_y >= 100:
+            return Enforcement(before, True, 0, "NFL 2026 Rule 8-2-1; 8-6-1(a)",
+                               play_counts=False, replay_down=False, loss_of_down=True,
+                               clock_action="safety_restart", enforcement_spot="own_end_zone",
+                               safety=True)
         # Rule 8-6-1(a): loss of down, and the lesser benefit to offense of
         # ten yards from previous or passer's release spot; special own-goal
         # line exception caps it at release spot.
@@ -224,8 +229,11 @@ def enforce(*, before: DownState, after_play: DownState, phase: str,
             # itself bounded by ordinary half-distance enforcement.
             ten_y, _ = _half_distance(base, "offense", 10)
             new_y = max(ten_y, foul_y)
-        if not 0 < new_y < 100:
-            raise ValueError("intentional grounding safety needs scoring transition")
+        if new_y >= 100:
+            return Enforcement(before, True, 0, f"NFL 2026 Rule {rule.rule_basis}",
+                               play_counts=False, replay_down=False, loss_of_down=True,
+                               clock_action="safety_restart", enforcement_spot=spot_type,
+                               safety=True)
         actual = new_y - base
         spot_type = "grounding_spot_or_ten_yards"
         loss_down = True
@@ -243,14 +251,24 @@ def enforce(*, before: DownState, after_play: DownState, phase: str,
         if block_subtype not in BLOCK_SUBTYPES:
             raise ValueError("illegal_block requires verified in_back/above_waist subtype")
         awarded, rule_id = BLOCK_SUBTYPES[block_subtype]
-        base = _spot(foul_yardline_100, "illegal block")
+        base = _spot(foul_yardline_100, "illegal block", allow_endzone=True)
+        if offender == "offense" and base >= 100:
+            return Enforcement(before, True, 0, f"NFL 2026 Rule {rule.rule_basis}",
+                               play_counts=False, replay_down=False,
+                               clock_action="safety_restart", enforcement_spot="own_end_zone",
+                               safety=True)
         spot_type = "foul"
         new_y, actual = _half_distance(base, offender, awarded)
         rule = PenaltyRule(rule.phase, awarded, auto_first, rule_id, rule.play_classes)
     elif foul == "offensive_holding" and play_class == "run":
         # Run-foul all-but-one mechanics require the spot, not a fake
         # automatic previous-spot penalty.
-        base = _spot(foul_yardline_100, "run holding")
+        base = _spot(foul_yardline_100, "run holding", allow_endzone=True)
+        if base >= 100:
+            return Enforcement(before, True, 0, f"NFL 2026 Rule {rule.rule_basis}",
+                               play_counts=False, replay_down=False,
+                               clock_action="safety_restart", enforcement_spot="own_end_zone",
+                               safety=True)
         spot_type = "foul"
         new_y, actual = _half_distance(base, offender, awarded)
     else:

@@ -759,6 +759,9 @@ def _autonomous_execution_complete(drives, kickoff_events):
     for event in kickoff_events:
         if not _has_22_player_execution(event.get('execution')):
             return False
+        if (event.get('terminal') == 'touchdown'
+                and not _has_22_player_execution((event.get('try') or {}).get('execution'))):
+            return False
     for drive in drives:
         for play in drive.get('plays', ()):
             if not _has_22_player_execution(play.get('autonomous_execution')):
@@ -982,13 +985,22 @@ class _Game:
             else:
                 self.execution_source.current_team = scorer
             situation = self._try_situation(scorer)
+            situation['offense_direction'] = self.ledger.attacks_x100(scorer, self.quarter)
             self.points[scorer] += TD_POINTS
             try_points, try_result, why = self.execution_source.try_after_touchdown(situation)
             if why:
                 self.block('autonomous_kick_return_try_unavailable:' + str(why))
                 return
             self.points[scorer] += try_points
+            opponent_points = int(try_result.get('opponent_points', 0))
+            if opponent_points not in (0, 2):
+                self.block('autonomous_try_opponent_points_invalid')
+                return
+            if opponent_points:
+                self.points[other(scorer, self.ledger.teams)] += opponent_points
             event['points_scored'] = TD_POINTS + try_points
+            if opponent_points:
+                event['opponent_points'] = opponent_points
             event['try'] = try_result
             event['try_situation'] = situation
         self.events.append(event)
@@ -1812,6 +1824,7 @@ class _Game:
             situation = p_two = None
             if self.execution_source is not None:
                 situation = self._try_situation(scorer)
+                situation['offense_direction'] = self.ledger.attacks_x100(scorer, self.quarter)
                 try_points, try_record, why = self.execution_source.try_after_touchdown(situation)
             else:
                 if self.ref.try_policy is not None:
@@ -1825,7 +1838,16 @@ class _Game:
             if situation is not None:
                 drive['try_policy'] = {**situation, 'p_two': p_two, 'kind': try_record['kind']}
             self.points[scorer] += TD_POINTS + try_points
-            drive['points_scored_on_drive'] = {'team': scorer, 'points': TD_POINTS + try_points, 'try': try_record}
+            opponent_points = int(try_record.get('opponent_points', 0))
+            if opponent_points not in (0, 2):
+                self.block('autonomous_try_opponent_points_invalid')
+                return
+            if opponent_points:
+                self.points[other(scorer, self.ledger.teams)] += opponent_points
+            drive['points_scored_on_drive'] = {
+                'team': scorer, 'points': TD_POINTS + try_points,
+                **({'opponent_points': opponent_points} if opponent_points else {}),
+                'try': try_record}
             self._continue(('kick', 'post_score', scorer, other(scorer, self.ledger.teams)))
         elif terminal == 'safety':
             scorer = plays[-1]['outcome'].get('scoring_team') or self.defense
@@ -2151,10 +2173,22 @@ def _validate_game_impl(record):
                 before = play.get('state_before') or {}
                 if str(record.get('mode', '')).startswith('autonomous_'):
                     generated = outcome.get('field_goal_execution')
-                    if (not isinstance(generated, dict) or generated.get('result') not in ('made', 'missed')
+                    execution = play.get('autonomous_execution') or {}
+                    result = (execution.get('result') or {}).get('result') or {}
+                    diagnostics = (execution.get('result') or {}).get('diagnostics') or {}
+                    kick_model = diagnostics.get('kick_model') or {}
+                    if (not isinstance(generated, dict)
+                            or generated.get('source') != 'gridiron_live_ball_trajectory'
+                            or generated.get('result') not in ('made', 'missed', 'blocked')
+                            or generated.get('result') != result.get('result')
                             or generated.get('kick_distance_yards') != before.get('yardline_100', 0) + 17
-                            or not isinstance(generated.get('make_probability'), (int, float))
-                            or not 0 <= generated['make_probability'] <= 1):
+                            or result.get('distance_yards') != generated.get('kick_distance_yards')
+                            or generated.get('kick_power_rating') != kick_model.get('power_rating')
+                            or generated.get('kick_accuracy_rating') != kick_model.get('accuracy_rating')
+                            or type(diagnostics.get('assignments_executed')) is not int
+                            or diagnostics.get('assignments_executed') != 22
+                            or diagnostics.get('expected_assignments') != 22
+                            or 'make_probability' in generated):
                         raise AssertionError(
                             f"drive {drive['index']} play {play['sequence']} lacks generated field-goal evidence")
                 else:
@@ -2175,6 +2209,27 @@ def _validate_game_impl(record):
                         raise AssertionError(
                             f"drive {drive['index']} play {play['sequence']} field-goal result uses stale distance or source data")
             blocked = outcome.get('blocked_kick')
+            if (event == 'field_goal_attempt' and outcome.get('field_goal_result') == 'blocked'
+                    and str(record.get('mode', '')).startswith('autonomous_')):
+                if (not isinstance(blocked, dict)
+                        or blocked.get('kick_type') != 'field_goal'
+                        or blocked.get('execution_source') != 'gridiron_live_player_execution'
+                        or blocked.get('recovery_role') not in ('kicking_team', 'receiving_team')
+                        or not isinstance(blocked.get('recovery_yardline_100'), int)
+                        or not isinstance(blocked.get('dead_ball_yardline_100'), int)
+                        or not blocked.get('recoverer_id')):
+                    raise AssertionError(
+                        f"drive {drive['index']} play {play['sequence']} has incomplete live blocked-field-goal facts")
+                execution = play.get('autonomous_execution') or {}
+                result = (execution.get('result') or {}).get('result') or {}
+                if (result.get('result') != 'blocked'
+                        or not any(item.get('type') == 'kick_blocked'
+                                   for item in (execution.get('result') or {}).get('events', []))
+                        or not any(item.get('type') == 'kick_recovery'
+                                   for item in (execution.get('result') or {}).get('events', []))):
+                    raise AssertionError(
+                        f"drive {drive['index']} play {play['sequence']} lacks live block and recovery events")
+                continue
             if event not in ('blocked_punt', 'blocked_field_goal'):
                 if blocked or outcome.get('field_goal_result') == 'blocked':
                     raise AssertionError(f"drive {drive['index']} play {play['sequence']} has a blocked result without a blocked event")
@@ -2276,11 +2331,29 @@ def _validate_game_impl(record):
                     if field not in t or t[field] != TRY_PUBLISHER_VALUE[t['kind']][t['made']] or 'success' in t:
                         raise AssertionError(f'try lacks its publisher result field {field}, or carries an EPA-style success '
                                              f'flag: {d["index"]}')
+                    if record.get('valid_full_game'):
+                        execution = t.get('execution')
+                        if not _has_22_player_execution(execution):
+                            raise AssertionError(f"drive {d['index']} try lacks 22-player live execution")
+                        if t['kind'] == 'extra_point':
+                            if (execution.get('kind') != 'extra_point_field_goal'
+                                    or ((execution.get('result') or {}).get('result') or {}).get('result')
+                                    not in ('made', 'missed', 'blocked')):
+                                raise AssertionError(f"drive {d['index']} extra point lacks live kick evidence")
+                        elif (execution.get('kind') != 'two_point_scrimmage'
+                              or execution.get('family') not in ('run', 'pass')
+                              or not isinstance(execution.get('ceg_event'), dict)):
+                            raise AssertionError(f"drive {d['index']} two-point attempt lacks live scrimmage evidence")
         if d['terminal'] == 'field_goal_attempt' and d['field_goal_made'] is not None:
             if d['field_goal_made'] != bool(p):
                 raise AssertionError(f'field goal result disagrees with its points: {d["index"]}')
         if p is not None:
             by_team[p['team']] += p['points']
+            opponent_points = p.get('opponent_points', 0)
+            if type(opponent_points) is not int or opponent_points not in (0, 2):
+                raise AssertionError(f"drive {d['index']} has invalid opponent points")
+            if opponent_points:
+                by_team['B' if p['team'] == 'A' else 'A'] += opponent_points
     for kick in record.get('kickoffs', []):
         if kick.get('terminal') != 'touchdown':
             continue
@@ -2299,6 +2372,11 @@ def _validate_game_impl(record):
                 or 'success' in result):
             raise AssertionError('kickoff return touchdown points disagree with its try')
         by_team[scorer] += points
+        opponent_points = kick.get('opponent_points', 0)
+        if type(opponent_points) is not int or opponent_points not in (0, 2):
+            raise AssertionError('kickoff try opponent points are invalid')
+        if opponent_points:
+            by_team['B' if scorer == 'A' else 'A'] += opponent_points
     if by_team['A'] != record['points']['A'] or by_team['B'] != record['points']['B']:
         raise AssertionError('points ledger disagrees with drive and free-kick scoring records')
     checks.append('game points equal drive and free-kick scoring records, touchdown tries included')

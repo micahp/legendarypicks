@@ -659,6 +659,19 @@ class HistoricalPoolCutoff(unittest.TestCase):
 
 
 class AutonomousEventSource(unittest.TestCase):
+    def test_autonomous_kick_cannot_fall_through_to_zero_yard_placeholder(self):
+        def source(_state, context):
+            return {
+                'event': 'punt', 'clock_runoff_seconds': 0,
+                'row': {'game_id': 'autonomous', 'play_id': context['play_index'],
+                        'play_type': 'punt', 'dead_ball_seconds': 0, 'clock_stopped': True},
+            }
+
+        plays, terminal = e1.simulate(start(1, 900, yl=50), 91, {}, 'autonomous-kick',
+                                      event_source=source)
+        self.assertIsNone(plays)
+        self.assertEqual(terminal, 'autonomous_special_teams_execution_missing')
+
     def test_live_result_drives_shared_down_and_clock_transitions_without_pool_samples(self):
         observed = []
 

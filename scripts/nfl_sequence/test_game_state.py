@@ -399,7 +399,7 @@ class GameStatsReconciliation(unittest.TestCase):
                              'returner_position': 'WR', 'returner_team': 'B', 'returner_side': 'B'},
             'outcome': {'yards_gained': None, 'touchdown': False, 'turnover': False, 'punt': True,
                         'punt_attempt': True, 'punt_return': True, 'return_yards': 4,
-                        'special_teams_execution': {'generated_punt_distance_yards': 42}},
+                        'special_teams_execution': {'distance_yards': 42}},
         }
         field_goal = {
             'event_type': 'field_goal_attempt',
@@ -421,6 +421,7 @@ class GameStatsReconciliation(unittest.TestCase):
                                     'returner_position': 'RB', 'returner_team': 'A', 'returner_side': 'A'}}
         stats = game_stats.compute([drive], {'A': 10, 'B': 0}, [kickoff])
         self.assertEqual(stats['team']['A']['punts'], 1)
+        self.assertEqual(stats['team']['A']['punt_yds'], 42)
         self.assertEqual(stats['team']['A']['fg_att'], 1)
         self.assertEqual(stats['team']['A']['fg_made'], 1)
         self.assertEqual(stats['team']['B']['punt_returns'], 1)
@@ -432,6 +433,26 @@ class GameStatsReconciliation(unittest.TestCase):
         self.assertEqual(players['K1']['kicking']['fg_made'], 1)
         self.assertEqual(players['PR1']['returning']['punt_return_yds'], 4)
         self.assertEqual(players['KR1']['returning']['td'], 1)
+
+    def test_live_punt_downed_or_out_of_bounds_is_not_a_zero_yard_return(self):
+        punt = {
+            'event_type': 'punt',
+            'state_before': {'offense_team': 'A', 'defense_team': 'B'},
+            'participants': {'attribution': 'autonomous_execution',
+                             'punter_id': 'P1', 'punter_name': 'Punter',
+                             'punter_position': 'P', 'punter_team': 'A', 'punter_side': 'A'},
+            'outcome': {'yards_gained': None, 'touchdown': False, 'turnover': False,
+                        'punt': True, 'punt_attempt': True, 'punt_return': False,
+                        'special_teams_execution': {'distance_yards': 53}},
+        }
+        drive = {'offense_team': 'A', 'quarter_start': 1, 'clock_start': 900,
+                 'end_quarter': 1, 'end_clock': 898, 'terminal': 'punt',
+                 'field_goal_made': None, 'plays': [punt]}
+        stats = game_stats.compute([drive], {'A': 0, 'B': 0})
+        self.assertEqual(stats['team']['A']['punt_yds'], 53)
+        self.assertNotIn('punt_returns', stats['team']['B'])
+        self.assertNotIn('return', {row.get('player_id') for row in stats['player']})
+        self.assertEqual([row['player_id'] for row in stats['player']], ['P1'])
 
     def test_player_yardage_is_clamped_at_the_goal_line_for_scores_and_safeties(self):
         def run(yards, yardline, *, touchdown=False, safety=False):
@@ -2452,7 +2473,7 @@ class AutonomousGameLifecycle(unittest.TestCase):
         self.assertEqual(player['returning']['td'], 1)
         gs.validate_game(record)
 
-    def test_punt_return_safety_restarts_with_the_non_scoring_team_and_correct_free_kick_spot(self):
+    def test_punt_return_safety_fails_closed_until_shared_contract_adds_restart_facts(self):
         class PuntSafetySource(self.Source):
             def event_source(_source, state, context):
                 provenance = ceg_contract.ProvenanceV2(
@@ -2500,15 +2521,12 @@ class AutonomousGameLifecycle(unittest.TestCase):
         source = PuntSafetySource()
         record = gs.play_game(81, ref({}, []), winner_choice='receive', winner='A',
                               execution_source=source, max_drives=1)
-        safety = next(event for event in record['drives'][0]['plays']
-                      if event['outcome'].get('safety'))
-        self.assertEqual(safety['outcome']['scoring_team'], 'A')
-        self.assertEqual(record['points'], {'A': 2, 'B': 0})
+        self.assertEqual(record['status'], 'blocked')
+        self.assertIn('kick_safety_unsupported', record['blocker'])
+        self.assertEqual(record['points'], {'A': 0, 'B': 0})
         self.assertEqual(source.kick_calls[0], ('half_start', 'B', 'A'))
-        self.assertEqual(source.kick_calls[1], ('safety_free_kick', 'B', 'A'))
-        free_kick = next(event for event in record['kickoffs'] if event['kind'] == 'safety_free_kick')
-        self.assertEqual(free_kick['spot_yardline_100'], 80)
-        self.assertEqual(free_kick['runoff_seconds'], 0)
+        self.assertEqual(source.kick_calls, [('half_start', 'B', 'A')])
+        self.assertFalse(any(event['kind'] == 'safety_free_kick' for event in record['kickoffs']))
 
     def test_punt_return_touchdown_credits_team_and_returner_in_game_stats(self):
         class PuntTouchdownSource(self.Source):

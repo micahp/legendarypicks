@@ -19,6 +19,20 @@ import game_state
 import gridiron_bridge
 import participation_field
 import pregame_snapshot
+import roster_preflight
+import v1_complete_roster
+
+
+SPECIAL_TEAMS_RATING_KEYS = frozenset({
+    'SPD', 'ACC', 'AGI', 'STR', 'AWR', 'PUR', 'TAK', 'BSH', 'RBK', 'IBL',
+    'CTH', 'CAR', 'BCV', 'ELU', 'TRK', 'PRC', 'KPW', 'KAC',
+})
+
+
+def playbook_profile_path(playbook_dir, team, season=2025):
+    """Resolve schedule/PBP team codes to the nflverse playbook filename vocabulary."""
+    profile_team = gridiron_bridge.nfl_team_codes.to_nflverse_team_code(team)
+    return str(Path(playbook_dir) / f'{profile_team}-{season}.json')
 
 
 def _clamp(value, low, high):
@@ -94,7 +108,7 @@ class AutonomousGameExecution:
         self.snapshot = pregame_snapshot.load_frozen_snapshot(self.snapshot_path)
         self.teams = (self.snapshot['schedule']['home_team'], self.snapshot['schedule']['away_team'])
         self.team_by_side = {'A': self.teams[0], 'B': self.teams[1]}
-        self.profile_paths = {team: str(Path(playbook_dir) / f'{team}-2025.json') for team in self.teams}
+        self.profile_paths = {team: playbook_profile_path(playbook_dir, team) for team in self.teams}
         self.playbook_manifest = str(playbook_manifest)
         self.participation_sha256 = participation_sha256
         self.field = participation_field.Field.load(participation_path, participation_sha256)
@@ -112,6 +126,16 @@ class AutonomousGameExecution:
 
     def close(self):
         self.session.close()
+
+    def _rating_profile_path(self):
+        if self.ratings_path:
+            return str(self.ratings_path)
+        game_id = self.snapshot.get('schedule', {}).get('game_id')
+        if game_id:
+            game_profile = Path(self.engine_root) / 'data' / f'ratings-{game_id}.json'
+            if game_profile.is_file():
+                return str(game_profile)
+        return str(Path(self.engine_root) / 'data' / 'ratings.json')
 
     def coaching_quality(self, team, decision):
         profile = getattr(self, 'coaching_profiles', {}).get(self.team_by_side.get(team, team), {})
@@ -213,18 +237,20 @@ class AutonomousGameExecution:
                 self.snapshot_path, self.field, self.participation_sha256,
                 self.profile_paths, self.playbook_manifest,
                 seed=self._decision_seed(self.play_index, 'gridiron'), family=family, state=call_state,
-                ratings_path=self.ratings_path)
+                ratings_path=self._rating_profile_path())
             result, timing = self.session.play(call)
             return self._map_scrimmage_result(call, result, timing, provenance, state, context,
                                               decision_note, family)
         play_id = int(context['play_index'])
         row = {'game_id': self.snapshot['schedule']['game_id'], 'play_id': play_id,
-               'play_type': play_type, 'yards_gained': 0, 'live_elapsed_seconds': 4.0,
+               'play_type': play_type,
                'dead_ball_seconds': 0.0, 'clock_stopped': True, 'out_of_bounds': False,
                'decision_note': decision_note,
                'participants': {'attribution': 'autonomous_execution', 'timeout': False,
                                 'out_of_bounds': False}}
-        return {'event': event, 'row': row, 'clock_runoff_seconds': 4.0, 'spot': None}
+        # E1 requires a row shell before invoking the live kick executor. This
+        # zero-runoff placeholder is never a punt or field-goal outcome.
+        return {'event': event, 'row': row, 'clock_runoff_seconds': 0.0, 'spot': None}
 
     def _map_scrimmage_result(self, call, result, timing, provenance, state, context,
                               decision_note, family):
@@ -239,6 +265,7 @@ class AutonomousGameExecution:
         los_x = call['situation']['yardline_100']
         final_x = outcome['final_ball_spot']['x_yards']
         events = result['events']
+        fumble = outcome.get('fumble')
         pass_interference = next((item for item in events if item['type'] == 'pass_interference'), None)
         if (pass_interference is None
                 and abs(final_x - (los_x + direction * outcome['yards_gained'])) > 0.003):
@@ -247,14 +274,20 @@ class AutonomousGameExecution:
         caught = next((item for item in events if item['type'] == 'catch'), None)
         interception = next((item for item in events if item['type'] == 'interception'), None)
         reason = outcome['event']
+        if interception is not None and fumble is not None:
+            raise ValueError('gridiron_interception_return_fumble_sequence_unsupported')
         if pass_interference is not None:
             if (family != 'pass' or thrown is None
                     or not isinstance(pass_interference.get('spot'), dict)):
                 raise ValueError('gridiron_pass_interference_terminal_facts_invalid')
         if outcome['turnover']:
-            if not interception:
-                raise ValueError('gridiron_turnover_without_interception_event')
-            event = 'interception'
+            if interception and fumble is None:
+                event = 'interception'
+            elif fumble is not None and fumble.get('recovery_side') == 'D':
+                event = ('sack' if reason == 'sack' or result.get('participants', {}).get('sackers') else
+                         'run' if family == 'run' or not thrown else 'pass_complete')
+            else:
+                raise ValueError('gridiron_turnover_without_interception_or_defensive_fumble_recovery')
         elif reason == 'incomplete':
             event = 'pass_incomplete'
         elif reason == 'sack' or result.get('participants', {}).get('sackers'):
@@ -267,7 +300,12 @@ class AutonomousGameExecution:
             raise ValueError('gridiron_result_classification_unsupported:' + str(reason))
         if reason not in ('tackle', 'out_of_bounds', 'incomplete', 'sack', 'touchdown', 'interception', 'safety'):
             raise ValueError('gridiron_terminal_unsupported:' + str(reason))
-        if event == 'interception':
+        if fumble is not None:
+            fumble_x = fumble.get('fumble_spot', {}).get('x')
+            if not isinstance(fumble_x, (int, float)) or not math.isfinite(fumble_x):
+                raise ValueError('gridiron_fumble_spot_missing')
+            gain = math.floor((fumble_x - los_x) * direction)
+        elif event == 'interception':
             interception_at = interception.get('at')
             if not isinstance(interception_at, dict) or not isinstance(interception_at.get('x'), (int, float)):
                 raise ValueError('gridiron_interception_location_missing')
@@ -302,6 +340,20 @@ class AutonomousGameExecution:
                    'concept': call['offense']['call']['concept'],
                    'assignments': 'authored_executable_gridiron_diagram'},
                'participants': self._participants(call, result, event, state)}
+        if fumble is not None:
+            row['participants'].update({
+                'fumbler_id': fumble['fumbler_id'],
+                'recoverer_id': fumble['recoverer_id'],
+                'returner_id': fumble['recoverer_id'] if fumble['recovery_side'] == 'D' else None,
+                'fumble_spot_yards_gained': gain,
+                'fumble_recovery_team': state['defense'] if fumble['recovery_side'] == 'D' else state['offense'],
+                'fumble_return_yards': fumble.get('return_yards') if fumble['recovery_side'] == 'D' else None,
+            })
+            if event == 'run':
+                row['participants']['rushing_yards'] = gain
+            elif event == 'pass_complete':
+                row['participants']['passing_yards'] = gain
+                row['participants']['receiving_yards'] = gain
         if pass_interference is not None:
             defender_id = pass_interference.get('defender_id')
             roster_rows = {p['gsis_id']: p for side in ('home', 'away')
@@ -335,12 +387,20 @@ class AutonomousGameExecution:
         foul_spot = int(round(100 - spot_x if direction == 1 else spot_x))
         accepted_y = 1 if foul_spot == 0 else foul_spot
         def expected_points(yards_to_goal):
-            return 5.5 - 0.072 * _clamp(yards_to_goal, 0, 100)
+            return max(0.0, 5.5 - 0.072 * _clamp(yards_to_goal, 0, 100))
 
         accepted_ev = expected_points(accepted_y) + 0.35  # spot foul plus automatic first down
         outcome = result['result']
-        if outcome['is_touchdown']:
+        if outcome.get('turnover'):
+            dead_x = _clamp(outcome['final_ball_spot']['x_yards'], 0, 100)
+            dead_spot = int(round(100 - dead_x if direction == 1 else dead_x))
+            declined_ev = -6.5 if outcome.get('is_touchdown') else (
+                -2.0 if outcome.get('event') == 'safety' else
+                -expected_points(100 - dead_spot))
+        elif outcome.get('is_touchdown'):
             declined_ev = 6.5
+        elif outcome.get('event') == 'safety':
+            declined_ev = -2.0
         elif outcome['event'] == 'incomplete':
             if state['down'] == 4:
                 declined_ev = -expected_points(100 - state['yl'])
@@ -362,10 +422,12 @@ class AutonomousGameExecution:
             disposition = best
         else:
             disposition = 'declined' if best == 'accepted' else 'accepted'
-        return {'disposition': disposition, 'accepted_expected_value': round(accepted_ev, 3),
+        return {'disposition': disposition, 'foul_spot_yardline_100': foul_spot,
+                'accepted_expected_value': round(accepted_ev, 3),
                 'declined_expected_value': round(declined_ev, 3), 'quality_rating': quality,
                 'optimal_disposition': best, 'probability_of_optimal_choice': quality / 100,
-                'information_available': ['foul_spot', 'pass_terminal_state', 'down', 'yards_to_go',
+                'information_available': ['foul_spot', 'pass_terminal_state', 'resulting_possession',
+                                          'return_endpoint', 'down', 'yards_to_go',
                                           'yardline_100', 'penalty_rule']}
 
     def _ceg_play(self, call, result, event, yards, state, direction, los_x, final_x, reason,
@@ -373,8 +435,11 @@ class AutonomousGameExecution:
         outcome = result['result']
         players = result.get('participants', {})
         offense_players = call['offense']['lineup']
-        passer_id = None if event == 'run' and outcome.get('carrier_id') != offense_players['QB'] else offense_players['QB']
-        rusher_id = outcome.get('carrier_id') if event == 'run' else None
+        fumble_info = outcome.get('fumble')
+        original_carrier = fumble_info.get('fumbler_id') if fumble_info else outcome.get('carrier_id')
+        passer_id = None if event == 'run' and original_carrier != offense_players['QB'] else offense_players['QB']
+        rusher_id = (fumble_info.get('fumbler_id') if fumble_info and event == 'run'
+                     else outcome.get('carrier_id') if event == 'run' else None)
         receiver_id = (caught.get('player_id') if caught else
                        thrown.get('target_id') if thrown else None)
         interceptor_id = players.get('interceptor')
@@ -384,14 +449,51 @@ class AutonomousGameExecution:
         touchdown = bool(outcome.get('is_touchdown'))
         scoring = None
         possession = None
+        fumbler_id = fumble_info.get('fumbler_id') if fumble_info else None
+        recoverer_id = fumble_info.get('recoverer_id') if fumble_info else None
+        returner_id = recoverer_id if fumble_info and fumble_info.get('recovery_side') == 'D' else None
         roles = ceg_contract.PlayerRolesV2(
             passer=(ceg_contract.PlayerRoleV2.named(passer_id) if passer_id else ceg_contract.PlayerRoleV2.none()),
             rusher=(ceg_contract.PlayerRoleV2.named(rusher_id) if rusher_id else ceg_contract.PlayerRoleV2.none()),
             receiver=(ceg_contract.PlayerRoleV2.named(receiver_id) if receiver_id else ceg_contract.PlayerRoleV2.none()),
             interceptor=(ceg_contract.PlayerRoleV2.named(interceptor_id) if interceptor_id else ceg_contract.PlayerRoleV2.none()),
-            sacker=(ceg_contract.PlayerRoleV2.named(sacker_ids[0]) if sacker_ids else ceg_contract.PlayerRoleV2.none()))
+            sacker=(ceg_contract.PlayerRoleV2.named(sacker_ids[0]) if sacker_ids else ceg_contract.PlayerRoleV2.none()),
+            fumbler=(ceg_contract.PlayerRoleV2.named(fumbler_id) if fumbler_id else ceg_contract.PlayerRoleV2.none()),
+            recoverer=(ceg_contract.PlayerRoleV2.named(recoverer_id) if recoverer_id else ceg_contract.PlayerRoleV2.none()),
+            returner=(ceg_contract.PlayerRoleV2.named(returner_id) if returner_id else ceg_contract.PlayerRoleV2.none()))
 
-        if ceg_event == 'interception':
+        if fumble_info is not None:
+            recovery_side = fumble_info.get('recovery_side')
+            if recovery_side not in ('O', 'D'):
+                raise ValueError('gridiron_fumble_recovery_team_invalid')
+            fumble_x = fumble_info['fumble_spot']['x']
+            recovery_x = fumble_info['recovery_spot']['x']
+            dead_spot_x = fumble_info['dead_ball_spot']['x']
+            fumble_y = int(round(100 - fumble_x if direction == 1 else fumble_x))
+            recovery_y = int(round(100 - recovery_x if direction == 1 else recovery_x))
+            dead_y = int(round(100 - dead_spot_x if direction == 1 else dead_spot_x))
+            fumble_role = 'offense' if recovery_side == 'O' else 'defense'
+            if recovery_side == 'O':
+                possession = ceg_contract.PossessionV2(
+                    team='offense', how='kept', recovery_spot_yardline_100=recovery_y,
+                    dead_ball_yardline_100=dead_y, recovered_by=ceg_contract.PlayerRoleV2.named(recoverer_id),
+                    fumble_spot_yardline_100=fumble_y)
+            else:
+                return_yards = int(round(dead_y - recovery_y))
+                if fumble_info.get('return_yards') is not None and int(round(fumble_info['return_yards'])) != return_yards:
+                    raise ValueError('gridiron_fumble_return_yards_disagree_with_endpoint')
+                possession = ceg_contract.PossessionV2(
+                    team='defense', how='fumble_recovery', turnover_spot_yardline_100=fumble_y,
+                    recovery_spot_yardline_100=recovery_y, dead_ball_yardline_100=dead_y,
+                    return_yards=return_yards,
+                    recovered_by=ceg_contract.PlayerRoleV2.named(recoverer_id),
+                    returner=ceg_contract.PlayerRoleV2.named(recoverer_id),
+                    fumble_spot_yardline_100=fumble_y)
+            if touchdown:
+                scoring = ceg_contract.ScoringV2('touchdown', fumble_role)
+            elif reason == 'safety':
+                scoring = ceg_contract.ScoringV2('safety', 'defense' if recovery_side == 'O' else 'offense')
+        elif ceg_event == 'interception':
             caught_spot = _clamp(interception['at']['x'], 0, 100)
             turnover_spot = int(round(100 - caught_spot if direction == 1 else caught_spot))
             dead_x = _clamp(final_x, 0, 100)
@@ -414,7 +516,7 @@ class AutonomousGameExecution:
                 dead_ball_yardline_100=dead_spot, return_yards=return_yards,
                 returner=ceg_contract.PlayerRoleV2.named(interceptor_id),
                 touchback=touchback,
-                next_possession_yardline_100=20 if touchback else None)
+                next_yardline_100=20 if touchback else None)
             if touchdown:
                 scoring = ceg_contract.ScoringV2('touchdown', 'defense')
             elif return_safety or reason == 'safety':
@@ -461,7 +563,7 @@ class AutonomousGameExecution:
             call=ceg_contract.PlayCallV2(call_intent, provenance=call_provenance),
             event=ceg_event, yards_gained=yards, air_yards=air_yards,
             yards_after_catch=yac, possession=possession, scoring=scoring,
-            penalty=penalty, provenance=provenance,
+            fumble=fumble_info is not None, penalty=penalty, provenance=provenance,
             clock=ceg_contract.ClockV2(
                 runoff_seconds=max(1, math.ceil(outcome['elapsed_seconds'])) +
                 (0 if reason in ('out_of_bounds', 'incomplete', 'touchdown', 'safety') else 27),
@@ -483,7 +585,8 @@ class AutonomousGameExecution:
         receiver_event = next((e for e in result['events'] if e['type'] == 'catch'), None)
         throw_event = next((e for e in result['events'] if e['type'] == 'throw'), None)
         receiver = receiver_event['player_id'] if receiver_event else throw_event.get('target_id') if throw_event else None
-        carrier = outcome.get('carrier_id')
+        fumble = outcome.get('fumble')
+        carrier = (fumble.get('fumbler_id') if fumble else None) or outcome.get('carrier_id')
         passer = None if event == 'run' else qb
         rusher = carrier if event == 'run' else None
         participants = {'passer_id': passer, 'rusher_id': rusher, 'receiver_id': receiver,
@@ -497,6 +600,27 @@ class AutonomousGameExecution:
                                  f'{role}_position': data.get('pos_abb'),
                                  f'{role}_team': data.get('team'),
                                  f'{role}_side': side if data.get('team') == team else defense})
+        if fumble:
+            fumbler = roster_rows.get(fumble.get('fumbler_id'), {})
+            recoverer = roster_rows.get(fumble.get('recoverer_id'), {})
+            returner = recoverer if fumble.get('recovery_side') == 'D' else {}
+            participants.update({
+                'fumbler_id': fumble.get('fumbler_id'),
+                'recoverer_id': fumble.get('recoverer_id'),
+                'returner_id': fumble.get('recoverer_id') if returner else None,
+                'fumbler_name': fumbler.get('player_name'),
+                'fumbler_position': fumbler.get('pos_abb'),
+                'fumbler_team': fumbler.get('team'),
+                'fumbler_side': side if fumbler.get('team') == team else defense,
+                'recoverer_name': recoverer.get('player_name'),
+                'recoverer_position': recoverer.get('pos_abb'),
+                'recoverer_team': recoverer.get('team'),
+                'recoverer_side': side if recoverer.get('team') == team else defense,
+                'returner_name': returner.get('player_name'),
+                'returner_position': returner.get('pos_abb'),
+                'returner_team': returner.get('team'),
+                'returner_side': defense if returner else None,
+            })
         return participants
 
     def _special_teams_call(self, kind, kicking_team, receiving_team, yardline_100, play_index):
@@ -504,13 +628,26 @@ class AutonomousGameExecution:
         receiving_roster_side = 'home' if receiving_team == self.snapshot['schedule']['home_team'] else 'away'
         kicking_roster = self.snapshot['rosters'][roster_side]['players']
         receiving_roster = self.snapshot['rosters'][receiving_roster_side]['players']
-        def ordered(rows):
-            return sorted((p for p in rows if isinstance(p.get('gsis_id'), str) and p['gsis_id']),
-                          key=lambda p: (p.get('pos_rank') if type(p.get('pos_rank')) is int
-                                         and p['pos_rank'] > 0 else 999, p['gsis_id']))
+        checks, resolved = roster_preflight.check(self.snapshot)
+        if (roster_preflight.failed(checks)
+                or roster_preflight.exclusions_applied(self.snapshot, resolved)[1] != 'PASS'):
+            raise ValueError('gridiron_roster_preflight_failed')
+        allowed_kicking = v1_complete_roster.eligible_ids(resolved[roster_side])
+        allowed_receiving = v1_complete_roster.eligible_ids(resolved[receiving_roster_side])
 
-        kick_order = ordered(kicking_roster)
-        receive_order = ordered(receiving_roster)
+        def ordered(rows, allowed):
+            ranked = sorted((p for p in rows if p.get('gsis_id') in allowed),
+                            key=lambda p: (p.get('pos_rank') if type(p.get('pos_rank')) is int
+                                           and p['pos_rank'] > 0 else 999, p['gsis_id']))
+            unique, seen = [], set()
+            for player in ranked:
+                if player['gsis_id'] not in seen:
+                    unique.append(player)
+                    seen.add(player['gsis_id'])
+            return unique
+
+        kick_order = ordered(kicking_roster, allowed_kicking)
+        receive_order = ordered(receiving_roster, allowed_receiving)
         spec_positions = ('P',) if kind == 'punt' else ('PK', 'K')
         specialists = [p for p in kick_order if p.get('pos_abb') in spec_positions]
         if not specialists:
@@ -528,7 +665,7 @@ class AutonomousGameExecution:
         if len(blockers) != 10:
             raise ValueError(f'autonomous_special_teams_return_unit_short:{receiving_team}:{len(blockers)}')
 
-        ratings_path = self.ratings_path or str(Path(self.engine_root) / 'data' / 'ratings.json')
+        ratings_path = self._rating_profile_path()
         if not Path(ratings_path).is_file():
             raise ValueError('autonomous_special_teams_ratings_dataset_missing')
         ratings, rating_source = gridiron_bridge._ratings(ratings_path)
@@ -542,7 +679,8 @@ class AutonomousGameExecution:
             profile = ratings.get(pid)
             if not profile or not isinstance(profile.get('ratings'), dict):
                 raise ValueError('autonomous_special_teams_rating_profile_missing:' + pid)
-            profiles[pid] = {'ratings': profile['ratings'],
+            profiles[pid] = {'ratings': {key: value for key, value in profile['ratings'].items()
+                                         if key in SPECIAL_TEAMS_RATING_KEYS},
                               'physics': profile.get('physics') or {}}
         call = {
             'schema_version': 'gridiron.autonomous-special-teams.v1',
@@ -563,7 +701,7 @@ class AutonomousGameExecution:
         return call, player_rows, provenance
 
     def _execute_live_special_teams(self, kind, kicking_team, receiving_team, yardline_100,
-                                    play_index, row=None):
+                                    play_index, row=None, free_kick_kind=None):
         kicking_side = (kicking_team if kicking_team in self.team_by_side else
                         next((side for side, team in self.team_by_side.items() if team == kicking_team), None))
         receiving_side = (receiving_team if receiving_team in self.team_by_side else
@@ -579,16 +717,43 @@ class AutonomousGameExecution:
         except (OSError, TypeError, ValueError) as exc:
             return {'blocker': str(exc)}
         facts = result['result']
-        if kind == 'kickoff' and facts.get('out_of_bounds'):
-            return {'blocker': 'autonomous_kickoff_out_of_bounds_penalty_enforcement_not_integrated',
-                    'execution': {'call': call, 'result': result, 'timing': timing,
-                                  'rating_provenance': rating_provenance,
-                                  'viewer': 'gridiron_result.trajectory.frames'}}
         if kind == 'kickoff' and facts.get('returner_id') is None and facts['result'] not in ('touchback', 'muff'):
-            return {'blocker': 'autonomous_kickoff_downed_ball_recovery_not_integrated',
-                    'execution': {'call': call, 'result': result, 'timing': timing,
-                                  'rating_provenance': rating_provenance,
-                                  'viewer': 'gridiron_result.trajectory.frames'}}
+            if facts['result'] == 'out_of_bounds':
+                out_spot = int(facts['dead_ball_yardline_100'])
+                distance = 30 if free_kick_kind == 'safety_free_kick' else 25
+                legal_options = [('inbounds_spot', out_spot),
+                                 ('30_yards_from_safety_kick' if distance == 30 else '25_yards_from_kick',
+                                  int(yardline_100) - distance)]
+                legal_options = [(name, spot) for name, spot in legal_options if 0 < spot < 100]
+                if not legal_options:
+                    return {'blocker': 'autonomous_kickoff_out_of_bounds_has_no_legal_restart_spot'}
+
+                def expected_points(dead_spot):
+                    yards_to_goal = 100 - dead_spot
+                    return max(0.0, 5.5 - 0.072 * yards_to_goal)
+
+                quality = self.coaching_quality(receiving_side, 'kickoff')
+                best = max(legal_options, key=lambda item: (expected_points(item[1]), item[0]))
+                worst = min(legal_options, key=lambda item: (expected_points(item[1]), item[0]))
+                choose_best = random.Random(self._decision_seed(
+                    play_index, 'kickoff_out_of_bounds_option')).random() < quality / 100
+                restart_option, enforced_spot = best if choose_best else worst
+                facts = {**facts, 'out_of_bounds_spot_yardline_100': out_spot,
+                         'dead_ball_yardline_100': enforced_spot,
+                         'restart_option': restart_option,
+                         'restart_options': [{'option': name, 'dead_ball_yardline_100': spot,
+                                              'expected_points': round(expected_points(spot), 3)}
+                                             for name, spot in legal_options],
+                         'decision': {'coaching_quality': quality,
+                                      'selected_best_option': choose_best,
+                                      'information_available': ['kick_spot', 'out_of_bounds_spot',
+                                                                'safety_kick_status', 'rule_options']}}
+                result = {**result, 'result': facts}
+            else:
+                return {'blocker': 'autonomous_kickoff_downed_ball_recovery_not_integrated',
+                        'execution': {'call': call, 'result': result, 'timing': timing,
+                                      'rating_provenance': rating_provenance,
+                                      'viewer': 'gridiron_result.trajectory.frames'}}
         named = lambda pid: (ceg_contract.PlayerRoleV2.named(pid) if pid
                              else ceg_contract.PlayerRoleV2.none())
         returner = named(facts.get('returner_id'))
@@ -596,8 +761,40 @@ class AutonomousGameExecution:
         result_name = facts['result']
         recovery_team = facts.get('recovery_team')
         possession_after = facts.get('possession_after')
+        unsupported_result = {
+            'downed': 'punt_result_requires_ceg_play_2_extension:downed',
+            'fair_catch': 'punt_result_requires_ceg_play_2_extension:fair_catch',
+            'out_of_bounds': f'{kind}_out_of_bounds_requires_ceg_play_2_extension',
+        }.get(result_name)
+        if unsupported_result:
+            return {'blocker': unsupported_result,
+                    'execution': {'call': call, 'result': result, 'timing': timing,
+                                  'rating_provenance': rating_provenance,
+                                  'viewer': 'gridiron_result.trajectory.frames'}}
+        if facts.get('scoring') == 'safety':
+            return {'blocker': 'kick_safety_unsupported',
+                    'execution': {'call': call, 'result': result, 'timing': timing,
+                                  'rating_provenance': rating_provenance,
+                                  'viewer': 'gridiron_result.trajectory.frames'}}
+        if result_name == 'muff' and facts.get('return_yards') not in (None, 0):
+            return {'blocker': 'muff_return_yardage_attribution_unsupported',
+                    'execution': {'call': call, 'result': result, 'timing': timing,
+                                  'rating_provenance': rating_provenance,
+                                  'viewer': 'gridiron_result.trajectory.frames'}}
+        if result_name == 'muff' and facts.get('scoring') == 'touchdown':
+            return {'blocker': 'muff_return_touchdown_attribution_unsupported',
+                    'execution': {'call': call, 'result': result, 'timing': timing,
+                                  'rating_provenance': rating_provenance,
+                                  'viewer': 'gridiron_result.trajectory.frames'}}
+        if result_name == 'blocked' and facts.get('scoring') == 'touchdown':
+            return {'blocker': 'blocked_return_touchdown_attribution_unsupported',
+                    'execution': {'call': call, 'result': result, 'timing': timing,
+                                  'rating_provenance': rating_provenance,
+                                  'viewer': 'gridiron_result.trajectory.frames'}}
+        kick_kind = 'field_goal' if kind == 'field_goal' else kind
+        event_name = 'field_goal_attempt' if kind == 'field_goal' else kind
         kick = ceg_contract.KickV2(
-            kind, kicking_side, receiving_side, int(yardline_100), facts.get('distance_yards'),
+            kick_kind, kicking_side, receiving_side, int(yardline_100), facts.get('distance_yards'),
             result_name, possession_after=possession_after,
             recovery_team=recovery_team,
             recovery_yardline_100=facts.get('recovery_yardline_100'),
@@ -608,17 +805,17 @@ class AutonomousGameExecution:
             returner=returner, recoverer=recoverer,
             out_of_bounds=bool(facts.get('out_of_bounds')),
             fumble_spot_yardline_100=facts.get('fumble_spot_yardline_100'))
-        elapsed = max(0, int(math.ceil(facts.get('elapsed_seconds') or 0)))
+        elapsed = max(0, int(math.ceil(facts.get('live_elapsed_seconds', facts.get('elapsed_seconds')) or 0)))
         runoff = max(0, int(facts.get('clock_runoff_seconds') or 0))
-        if kind == 'kickoff':
-            live_seconds = max(0, runoff - (27 if runoff > 0 else 0))
-            dead_seconds = runoff - live_seconds
-        else:
-            dead_seconds = 27 if runoff > elapsed else 0
-            live_seconds = runoff - dead_seconds
-        stop_class = 'stopped' if dead_seconds == 0 else 'running'
-        clock = ceg_contract.ClockV2(runoff, live_seconds, dead_seconds, stop_class)
-        score = (ceg_contract.ScoringV2('touchdown', 'receiving_team')
+        live_seconds, dead_seconds = runoff, 0
+        clock = ceg_contract.ClockV2(runoff, live_seconds, dead_seconds, 'stopped')
+        score_role = facts.get('scoring_team')
+        score = (ceg_contract.ScoringV2('field_goal', 'kicking_team')
+                 if kind == 'field_goal' and facts.get('scoring') == 'field_goal' else
+                 ceg_contract.ScoringV2(facts['scoring'], score_role)
+                 if facts.get('scoring') in ('touchdown', 'safety')
+                 and score_role in ('kicking_team', 'receiving_team') else
+                 ceg_contract.ScoringV2('touchdown', 'receiving_team')
                  if facts.get('scoring') == 'touchdown' else None)
         roles = (ceg_contract.PlayerRolesV2(punter=named(call['lineups']['kicking'].get('punter')),
                                             returner=returner, recoverer=recoverer)
@@ -632,8 +829,8 @@ class AutonomousGameExecution:
             draw_ids=(f"{self.seed}:{play_index}:{kind}",))
         event_record = ceg_contract.GeneratedPlayV2(
             contract=ceg_contract.CONTRACT_V2_VERSION,
-            call=ceg_contract.PlayCallV2(kind, provenance=provenance),
-            event=kind, yards_gained=None, provenance=provenance, clock=clock,
+            call=ceg_contract.PlayCallV2(kick_kind, provenance=provenance),
+            event=event_name, yards_gained=None, provenance=provenance, clock=clock,
             fumble=(result_name == 'muff'), scoring=score, kick=kick, players=roles,
             probabilities=({'fair_catch': True} if facts.get('fair_catch') else {}))
         participants = {'attribution': 'autonomous_execution',
@@ -641,7 +838,8 @@ class AutonomousGameExecution:
                         'recoverer_id': facts.get('recoverer_id'),
                         'return_touchdown': facts.get('scoring') == 'touchdown',
                         'fair_catch': bool(facts.get('fair_catch')),
-                        'out_of_bounds': bool(facts.get('out_of_bounds'))}
+                        'out_of_bounds': bool(facts.get('out_of_bounds')),
+                        'kickoff_out_of_bounds_restart_option': facts.get('restart_option')}
         for role, pid in (('punter' if kind == 'punt' else 'kicker',
                            call['lineups']['kicking'].get('punter' if kind == 'punt' else 'kicker')),
                           ('returner', facts.get('returner_id')),
@@ -660,136 +858,38 @@ class AutonomousGameExecution:
             row['participants'].update(participants)
             row['live_elapsed_seconds'] = elapsed
             row['dead_ball_seconds'] = dead_seconds
-            row['clock_stopped'] = stop_class == 'stopped'
+            row['clock_stopped'] = True
             row['out_of_bounds'] = bool(facts.get('out_of_bounds'))
             row.setdefault('decision_note', {})['special_teams_result'] = result_name
             row['decision_note']['fair_catch'] = bool(facts.get('fair_catch'))
-        return {'event': kind, 'clock_runoff_seconds': runoff, 'event_record': event_record,
+        return {'event': event_name, 'clock_runoff_seconds': runoff, 'event_record': event_record,
                 'execution': execution, 'participants': participants,
                 'metadata': {'special_teams_execution': {
                     'kind': kind, 'distance_yards': facts.get('distance_yards'),
                     'return_yards': facts.get('return_yards'), 'fair_catch': bool(facts.get('fair_catch')),
                     'out_of_bounds': bool(facts.get('out_of_bounds')),
-                    'gridiron_engine_commit': timing['engine_commit']}}}
+                    'restart_option': facts.get('restart_option'),
+                    'out_of_bounds_spot_yardline_100': facts.get('out_of_bounds_spot_yardline_100'),
+                    'restart_options': facts.get('restart_options'),
+                    'gridiron_engine_commit': timing['engine_commit'],
+                    **({'field_goal_execution': {
+                        'source': 'gridiron_live_ball_trajectory', 'result': result_name,
+                        'kick_distance_yards': facts.get('distance_yards'),
+                        'kick_power_rating': (result.get('diagnostics', {}).get('kick_model') or {}).get('power_rating'),
+                        'kick_accuracy_rating': (result.get('diagnostics', {}).get('kick_model') or {}).get('accuracy_rating'),
+                        'kick_model': result.get('diagnostics', {}).get('kick_model'),
+                    }} if kind == 'field_goal' else {})}}}
 
     def special_teams(self, event, state, row, _runoff, _spot, rng):
         if event == 'punt':
             return self._execute_live_special_teams('punt', state['offense'], state['defense'], state['yl'],
                                                     row['play_id'], row)
-        team = self.team_by_side[state['offense']]
-        receiving_side = 'B' if state['offense'] == 'A' else 'A'
-        receiving_team = self.team_by_side[receiving_side]
-        roster_side = 'home' if team == self.snapshot['schedule']['home_team'] else 'away'
-        receiving_roster_side = 'home' if receiving_team == self.snapshot['schedule']['home_team'] else 'away'
-        players = self.snapshot['rosters'][roster_side]['players']
-        receiving_players = self.snapshot['rosters'][receiving_roster_side]['players']
-        row.setdefault('participants', {'attribution': 'autonomous_execution', 'timeout': False})
-        provenance = ceg_contract.ProvenanceV2(
-            generator='slc.autonomous_special_teams', version='v1',
-            manifest_sha256=self.event_manifest_sha256,
-            components=('player_rating', 'authored_kick_model', 'field_geometry'),
-            draw_ids=(f"{self.seed}:{row['play_id']}:{event}",))
-
-        def role_record(role, player, side):
-            if player is None:
-                row['participants'][f'{role}_id'] = None
-                return ceg_contract.PlayerRoleV2.unmodelled(role)
-            row['participants'].update({
-                f'{role}_id': player['gsis_id'], f'{role}_name': player.get('player_name'),
-                f'{role}_position': player.get('pos_abb'), f'{role}_team': player.get('team'),
-                f'{role}_side': side,
-            })
-            return ceg_contract.PlayerRoleV2.named(player['gsis_id'])
-
-        def returner_for_team():
-            eligible = [p for p in receiving_players
-                        if p.get('pos_abb') in ('PR', 'RB', 'WR', 'CB', 'DB', 'FS', 'SS')]
-            return max(eligible, key=lambda p: (
-                self._player_rating(p['gsis_id'], 'SPD')
-                + self._player_rating(p['gsis_id'], 'BCV')
-                + self._player_rating(p['gsis_id'], 'CAR'),
-                -p.get('pos_rank', 999), p['gsis_id'])) if eligible else None
-
-        if event == 'punt':
-            punter = min((p for p in players if p.get('pos_abb') == 'P'),
-                         key=lambda p: (p.get('pos_rank', 999), p['gsis_id']), default=None)
-            distance = max(25, min(65, round(42 + rng.uniform(-5, 5))))
-            projected_spot = 100 - state['yl'] + distance
-            returner = returner_for_team()
-            runoff = float(row.get('live_elapsed_seconds', 4))
-            if projected_spot >= 100:
-                result, return_start, dead_spot, return_yards = 'touchback', None, 20, None
-                returner_role = ceg_contract.PlayerRoleV2.none()
-            else:
-                result, dead_spot, return_yards = 'return', 100 - projected_spot, 0
-                return_start = dead_spot
-                returner_role = role_record('returner', returner, receiving_side)
-            punter_role = role_record('punter', punter, state['offense'])
-            kick = ceg_contract.KickV2(
-                'punt', state['offense'], state['defense'], state['yl'], distance, result,
-                possession_after='receiving_team', return_start_yardline_100=return_start,
-                dead_ball_yardline_100=dead_spot, return_yards=return_yards,
-                returner=returner_role)
-            event_record = ceg_contract.GeneratedPlayV2(
-                contract=ceg_contract.CONTRACT_V2_VERSION,
-                call=ceg_contract.PlayCallV2('punt', provenance=provenance), event='punt',
-                yards_gained=None, provenance=provenance,
-                clock=ceg_contract.ClockV2(runoff), kick=kick,
-                players=ceg_contract.PlayerRolesV2(punter=punter_role, returner=returner_role))
-            return {'event': 'punt', 'clock_runoff_seconds': runoff, 'event_record': event_record,
-                    'execution': {'schema_version': ceg_contract.CONTRACT_V2_VERSION,
-                                  'execution_kind': 'typed_kick_event_without_player_trajectory',
-                                  'ceg_event': asdict(event_record),
-                                  'viewer': None},
-                    'metadata': {'special_teams_execution': {
-                        'kind': 'punt', 'punter_id': punter['gsis_id'] if punter else None,
-                        'returner_id': returner['gsis_id'] if returner else None,
-                        'generated_punt_distance_yards': distance,
-                        'return_model': 'zero_yard_return_until_live_special_teams_motion_is_integrated',
-                        'assignments': 'authored_unit_roles'}}}
-        kick_distance = state['yl'] + 17
-        kickers = [p for p in players if p.get('pos_abb') in ('PK', 'K')]
-        if not kickers:
-            return {'blocker': 'autonomous_eligible_kicker_missing:' + team}
-        kicker = min(kickers,
-                     key=lambda p: (p.get('pos_rank', 999), p['gsis_id']), default=None)
-        try:
-            rating = self._player_rating(kicker['gsis_id'], 'KAC')
-        except ValueError as exc:
-            return {'blocker': str(exc)}
-        p_make = _sigmoid((62 - kick_distance) * 0.16 + (rating - 70) * 0.035)
-        made = rng.random() < p_make
-        runoff = float(row.get('live_elapsed_seconds', 4))
-        kicker_role = role_record('kicker', kicker, state['offense'])
-        kick_result = 'made' if made else 'missed'
-        kick = ceg_contract.KickV2(
-            'field_goal', state['offense'], state['defense'],
-            game_state.kick_spot_yardline_100(state['yl']), kick_distance, kick_result,
-            possession_after=None if made else 'receiving_team')
-        event_record = ceg_contract.GeneratedPlayV2(
-            contract=ceg_contract.CONTRACT_V2_VERSION,
-            call=ceg_contract.PlayCallV2('field_goal', provenance=provenance),
-            event='field_goal_attempt', yards_gained=None, provenance=provenance,
-            clock=ceg_contract.ClockV2(runoff), kick=kick,
-            scoring=(ceg_contract.ScoringV2('field_goal', 'kicking_team') if made else None),
-            players=ceg_contract.PlayerRolesV2(kicker=kicker_role))
-        return {'event': 'field_goal_attempt', 'clock_runoff_seconds': runoff,
-                'event_record': event_record,
-                'execution': {'schema_version': ceg_contract.CONTRACT_V2_VERSION,
-                              'execution_kind': 'typed_kick_event_without_player_trajectory',
-                              'ceg_event': asdict(event_record),
-                              'viewer': None},
-                'metadata': {'field_goal_result': 'made' if made else 'missed',
-                             'field_goal_execution': {'kicker_id': kicker['gsis_id'] if kicker else None,
-                                 'kick_distance_yards': kick_distance, 'kicker_accuracy_rating': rating,
-                                 'make_probability': p_make, 'result': 'made' if made else 'missed',
-                                 'assignments': 'authored_unit_roles'},
-                             'field_goal_result_source': {'kind': 'generated_player_execution',
-                                 'distance_yards': kick_distance, 'kicker_accuracy_rating': rating,
-                                 'probability_made': p_make}}}
-
+        if event == 'field_goal_attempt':
+            return self._execute_live_special_teams('field_goal', state['offense'], state['defense'], state['yl'],
+                                                    row['play_id'], row)
+        return {'blocker': 'autonomous_special_teams_event_unsupported:' + str(event)}
     def _player_rating(self, player_id, name):
-        path = getattr(self, 'ratings_path', None) or str(Path(self.engine_root) / 'data' / 'ratings.json')
+        path = self._rating_profile_path()
         rows, _ = gridiron_bridge._ratings(path) if Path(path).is_file() else ({}, {})
         player = rows.get(player_id)
         rating = (player.get('ratings', {}).get(name) if player else None)
@@ -803,7 +903,7 @@ class AutonomousGameExecution:
         self.kickoff_index = sequence + 1
         result = self._execute_live_special_teams(
             'kickoff', kicker, receiver, kick_spot,
-            self._decision_seed(sequence, 'gridiron_' + kind))
+            self._decision_seed(sequence, 'gridiron_' + kind), free_kick_kind=kind)
         if result.get('blocker'):
             return result
         result.update({'clock_starts_on': 'legal_touch',
@@ -813,36 +913,79 @@ class AutonomousGameExecution:
     def try_after_touchdown(self, situation):
         scorer = self.team_by_side.get(self.current_team, self.current_team)
         quality = self.coaching_quality(self.current_team, 'two_point')
-        margin = situation['margin']
-        choose_two = margin == -2 and random.Random(
-            self._decision_seed(self.play_index, 'two_point_choice')).random() < quality / 100
-        if margin not in (-2, -1) and quality < 85:
-            choose_two = random.Random(self._decision_seed(self.play_index, 'two_point')).random() < (85 - quality) / 400
+        profile = getattr(self, 'coaching_profiles', {}).get(scorer, {})
+        tendency = _clamp(float(profile.get('two_point_tendency', 0.08)), 0.0, 1.0)
+        expected_two, expected_extra = 2 * 0.46, 0.94
+        urgent_two = (situation['margin'] == -2
+                      or situation['margin'] == -1 and situation['quarter'] == 4
+                      and situation['clock'] <= 120)
+        two_is_optimal = urgent_two or expected_two > expected_extra
+        two_probability = (tendency + quality / 100 * (1 - tendency) if two_is_optimal
+                           else tendency * (1 - quality / 100))
+        choose_two = random.Random(
+            self._decision_seed(self.play_index, 'two_point_choice')).random() < two_probability
+        direction = situation.get('offense_direction', 1)
+        try_index = self.play_index + 1
         if choose_two:
-            probability = 0.46
-            made = random.Random(self._decision_seed(self.play_index, 'two_point_execution')).random() < probability
-            return (2 if made else 0), {**game_state.try_record('two_point', made),
-                    'decision': {'expected_points_two': 2 * probability, 'expected_points_extra_point': 0.94,
-                                 'coaching_quality': quality}}, None
-        kicker_id = self._special_player(scorer, 'PK')
-        if kicker_id is None:
-            return 0, game_state.try_record('extra_point', False), f'autonomous_eligible_kicker_missing:{scorer}'
-        try:
-            rating = self._player_rating(kicker_id, 'KAC')
-        except ValueError as exc:
-            return 0, game_state.try_record('extra_point', False), str(exc)
-        probability = _clamp(0.94 + (rating - 70) * 0.0015, 0.8, 0.995)
-        made = random.Random(self._decision_seed(self.play_index, 'extra_point')).random() < probability
-        return int(made), {**game_state.try_record('extra_point', made),
-                'decision': {'expected_points_extra_point': probability,
-                             'coaching_quality': quality}}, None
-
-    def _special_player(self, team, position):
-        roster_side = 'home' if team == self.snapshot['schedule']['home_team'] else 'away'
-        positions = ('PK', 'K') if position in ('PK', 'K') else (position,)
-        choices = [p for p in self.snapshot['rosters'][roster_side]['players']
-                   if p.get('pos_abb') in positions]
-        return min(choices, key=lambda p: (p.get('pos_rank', 999), p['gsis_id']))['gsis_id'] if choices else None
+            side = self.current_team
+            opponent = 'B' if side == 'A' else 'A'
+            play_state = {'offense': side, 'defense': opponent, 'down': 1, 'togo': 2, 'yl': 98,
+                          'offense_direction': direction}
+            family = self._choose_family(play_state, side, try_index)
+            call, _, provenance = gridiron_bridge.build_call(
+                self.snapshot_path, self.field, self.participation_sha256,
+                self.profile_paths, self.playbook_manifest,
+                seed=self._decision_seed(try_index, 'two_point_gridiron'), family=family,
+                state=play_state, ratings_path=self._rating_profile_path())
+            try:
+                result, timing = self.session.play(call)
+                generated = self._map_scrimmage_result(
+                    call, result, timing, provenance, play_state,
+                    {'play_index': try_index, 'direction': direction},
+                    {'selection': 'two_point_try', 'family': family}, family)
+                applied = self.apply_event(play_state, generated['event_record'])
+            except (AssertionError, OSError, TypeError, ValueError) as exc:
+                return 0, game_state.try_record('two_point', False), 'autonomous_two_point_execution:' + str(exc)
+            made = applied.terminal == 'touchdown' and applied.scoring_team == side
+            opponent_points = (2 if applied.terminal == 'touchdown'
+                               and applied.scoring_team == opponent else 0)
+            record = {**game_state.try_record('two_point', made),
+                      'opponent_points': opponent_points,
+                      'decision': {'expected_points_two': expected_two,
+                                   'expected_points_extra_point': expected_extra,
+                                   'two_point_probability': round(two_probability, 4),
+                                   'coaching_quality': quality, 'tendency': tendency,
+                                   'information_available': ['score', 'quarter', 'clock',
+                                                             'expected_points_of_available_tries']},
+                      'execution': {**generated['execution'], 'kind': 'two_point_scrimmage',
+                                    'family': family, 'player_ids': generated['participants']}}
+            participants = generated.get('participants') or {}
+            record['try_actor_ids'] = [pid for pid in (
+                participants.get('rusher_id'), participants.get('receiver_id'),
+                participants.get('passer_id')) if pid]
+            record['try_player_details'] = participants
+            return (2 if made else 0), record, None
+        result = self._execute_live_special_teams(
+            'field_goal', scorer, other(scorer, self.teams), 15, try_index)
+        if result.get('blocker'):
+            return 0, game_state.try_record('extra_point', False), result['blocker']
+        kicker_id = result['execution']['call']['lineups']['kicking']['kicker']
+        execution_result = result['execution']['result']['result']
+        made = execution_result['result'] == 'made'
+        opponent_points = (2 if execution_result.get('scoring') == 'touchdown'
+                           and execution_result.get('scoring_team') == 'receiving_team' else 0)
+        record = {**game_state.try_record('extra_point', made),
+                  'opponent_points': opponent_points, 'kicker_id': kicker_id,
+                  'kicker_details': {field: result['participants'].get('kicker_' + field)
+                                     for field in ('name', 'position', 'team', 'side')},
+                  'decision': {'expected_points_extra_point': expected_extra,
+                               'expected_points_two': expected_two,
+                               'two_point_probability': round(two_probability, 4),
+                               'coaching_quality': quality, 'tendency': tendency,
+                               'information_available': ['score', 'quarter', 'clock',
+                                                         'expected_points_of_available_tries']},
+                  'execution': {**result['execution'], 'kind': 'extra_point_field_goal'}}
+        return int(made), record, None
 
     def overtime_first_choice(self, winner, _loser, _score):
         # Receiving has the higher authored V1 value; the toss decision is a
