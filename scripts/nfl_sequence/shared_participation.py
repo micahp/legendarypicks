@@ -9,7 +9,44 @@ import roster_preflight
 import v1_complete_roster
 import snap_update
 
-VERSION = 'shared-participation-v1'
+VERSION = 'shared-participation-v2-roster-feasible'
+
+
+def roster_feasible_groups(roster, groups):
+    """Return groupings that can be filled by distinct eligible players on this roster.
+
+    Historical transition tables can contain personnel groups a particular pregame
+    roster cannot field (for example, 14 personnel with only three eligible TEs).
+    Condition the existing group distribution on roster feasibility before drawing.
+    A player with multiple eligible roles can fill only one slot.
+    """
+    identities = pf.offense_identities(roster)
+    starter = pf.starter_of(identities)
+    eligible = {
+        pid: set(ident['roles']) - ({'QB'} if pid == starter else set())
+        for pid, ident in identities.items()
+    }
+    result = set()
+    for group in groups:
+        counts = pf.group_counts(group)
+        slots = [cls for cls in pf.LINEUP_CLASSES for _ in range(counts[cls])]
+        assigned = {}
+
+        def place(slot, seen):
+            cls = slots[slot]
+            for pid in sorted(pid for pid, roles in eligible.items() if cls in roles):
+                if pid in seen:
+                    continue
+                seen.add(pid)
+                previous = assigned.get(pid)
+                if previous is None or place(previous, seen):
+                    assigned[pid] = slot
+                    return True
+            return False
+
+        if all(place(i, set()) for i in range(len(slots))):
+            result.add(group)
+    return result
 
 
 def configure(field, snapshot, snaps=None, entry_current=False):
@@ -62,13 +99,31 @@ class Policy:
     def prepare(self, team, state, seed, group=None):
         previous = self.previous.get(team, {})
         draw = random.Random(str(seed) + ':lineup')
+        feasibility = None
         if group is None:
             cell = self.field.supported_cell(pf.cell_of(state['down'], state['togo'], state['yl']))
             if cell is None:
                 raise ValueError('shared_participation_no_cell')
-            group = self.field.draw_group(team, previous.get('group', pf.START), cell, draw)
+            probabilities = self.field.group_probs(team, cell, previous.get('group', pf.START))
+            if not probabilities:
+                raise ValueError('shared_participation_no_group_probabilities')
+            feasible = roster_feasible_groups(self.rosters[team], probabilities)
+            eligible_probabilities = {g: p for g, p in probabilities.items() if g in feasible}
+            if not eligible_probabilities:
+                raise ValueError('shared_participation_no_roster_feasible_group:' + team)
+            excluded = sorted(set(probabilities) - feasible)
+            groups = sorted(eligible_probabilities)
+            group = draw.choices(groups, weights=[eligible_probabilities[g] for g in groups], k=1)[0]
+            feasibility = {
+                'method': 'pregame_roster_role_matching',
+                'eligible_groups': groups,
+                'excluded_groups': excluded,
+                'excluded_probability_mass': sum(probabilities[g] for g in excluded),
+            }
         else:
             cell = None
+            if group not in roster_feasible_groups(self.rosters[team], (group,)):
+                raise ValueError('shared_participation_roster_group_infeasible:' + team + ':' + str(group))
         if group is None or not any(g == group for _pos, g in self.field.position_prior):
             raise ValueError('shared_participation_group_not_in_fitted_table:' + str(group))
         lineup, record = self.field.advance(team, previous.get('lineup', {}), group,
@@ -79,8 +134,11 @@ class Policy:
         allowed = {p['gsis_id'] for p in self.rosters[team]}
         if not set(lineup).issubset(allowed) or self.qbs[team] in lineup:
             raise ValueError('shared_participation_invalid_selection')
+        selection = dict(record)
+        if feasibility is not None:
+            selection['group_feasibility'] = feasibility
         return {'team': team, 'group': group, 'lineup': lineup, 'slots': record['slots'],
-                'qb1': self.qbs[team], 'selection': record, 'cell': cell,
+                'qb1': self.qbs[team], 'selection': selection, 'cell': cell,
                 'source_sha256': self.field.sha256, 'policy_version': VERSION,
                 'entry_current': self.provenance['entry_current'], 'snap_update': self.update,
                 'scope': 'offensive_skill_players_only'}
