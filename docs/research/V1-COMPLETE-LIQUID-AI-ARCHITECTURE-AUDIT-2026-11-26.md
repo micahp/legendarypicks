@@ -324,6 +324,8 @@ Each JSON includes the frozen input hashes, per-call hashes, base GridIron commi
 
 ## Thanksgiving retrospective full-game batch — 2026-11-26 slate
 
+Replay with LP `85b11c12` and Gridiron `f1fbfab` used the same 30 seeds and frozen inputs. CHI–DET seed 300025 completed the legal lifecycle; the other 29 attempts blocked. This is an improvement from zero legal completions in the original ledger, not evidence of realistic game distributions: that game had 289 scrimmage plays. The old autonomous validity check incorrectly required snapshot verification. Replaying the same seed with LP `bb409b01`, which separates snapshot verification from game validity, produced `legal_game_complete=true` and `valid_full_game=true` with no blocker. The other failures include roster attribution, blocked-field-goal recovery timeouts, live-play timeouts and a drive limit. Compact per-seed results, manifests and tracebacks are at `/root/runs/week-12/games/v1-kick-boundary-replay-85b11c12/` on the fast host; the corrected-validity replay is at `/root/runs/week-12/games/v1-validity-replay-bb409b01/`. Loose kicks out of bounds after a muff and recoveries in the kicking team's end zone still fail closed with named reasons.
+
 The three Thanksgiving matchups were run with seeds `300021`–`300030` for V1 Complete and player-aware CEG with HE. These executions finished on 2026-11-27 UTC, after the games, so all results are retrospective and exploratory.
 
 | Game | CEG player-aware + HE | V1 Complete |
