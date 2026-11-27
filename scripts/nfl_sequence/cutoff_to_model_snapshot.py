@@ -117,7 +117,10 @@ def validate_existing(out, capture, provenance, game_id):
         raise ValueError('EXISTING_SNAPSHOT_PROVENANCE_MISMATCH')
     if not snap.get('roster_resolution'):
         raise ValueError('EXISTING_SNAPSHOT_ROSTER_RESOLUTION_MISSING')
-    rows, resolved = roster_preflight.check(snap, priced_qbs(snap['market_qb_evidence']))
+    evidence = snap['market_qb_evidence']
+    if evidence.get('game_id') != game_id or utc(evidence['as_of']) != utc(snap['as_of']):
+        raise ValueError('EXISTING_SNAPSHOT_MARKET_EVIDENCE_MISMATCH')
+    rows, resolved = roster_preflight.check(snap, priced_qbs(evidence))
     if roster_preflight.failed(rows + [roster_preflight.exclusions_applied(snap, resolved)]):
         raise ValueError('EXISTING_SNAPSHOT_ROSTER_PREFLIGHT_FAILED')
     expected = slc_pregame_context.freeze_current_streak_model_inputs(

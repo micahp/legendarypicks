@@ -213,6 +213,13 @@ class Membership(unittest.TestCase):
 
 
 class Postflight(unittest.TestCase):
+    def test_score_only_requires_explicit_capability_and_output(self):
+        snap = snapshot({BECK: 'Out'})
+        run = {'player_lines_available': False}
+        self.assertEqual(rp.postflight(snap, run)[0][1], 'FAIL')
+        self.assertEqual(rp.postflight(snap, run, score_only=True)[0][1], 'NOT_APPLICABLE')
+        self.assertEqual(rp.postflight(snap, {}, score_only=True)[0][1], 'FAIL')
+
     def test_an_out_receiver_with_simulated_targets_fails(self):
         snap = snapshot({BECK: 'Out', 'ARI-WR1': 'Out'})
         run = {'player_boxscores_by_seed': [{'seed': 1, 'players': [
