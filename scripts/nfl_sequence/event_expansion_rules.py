@@ -203,6 +203,11 @@ def _defensive_recovery(before, play):
              'return_team': before['defense'],
              'returner_id': possession.returner.stat_player_id,
              'recoverer_id': possession.recovered_by.stat_player_id}
+    if possession.how == 'fumble_recovery':
+        flags['fumble_recovery_team'] = before['defense']
+        flags['fumble_lost_team'] = before['offense']
+        flags['fumble_return_yards'] = return_yards
+        flags['fumbler_id'] = play.players.fumbler.stat_player_id
     if play.event == 'sack':
         flags['sack'] = True
     if dead_spot == 100:
@@ -325,6 +330,10 @@ def apply_scrimmage_play(state, play, switches=EXPANDED_DEFAULT):
         flags['recovered_by'] = 'offense'
         flags['fumble_recovery_team'] = state['offense']
         flags['recoverer_id'] = play.possession.recovered_by.stat_player_id
+        flags['fumbler_id'] = play.players.fumbler.stat_player_id
+        flags['returner_id'] = play.players.returner.stat_player_id
+        recovery_spot = _int_spot(play.possession.recovery_spot_yardline_100, 'fumble_recovery_spot')
+        flags['fumble_return_yards'] = recovery_spot - dead_spot
         result = AppliedEvent(after, terminal, flags,
                               state['offense'] if terminal == 'touchdown' else
                               state['defense'] if terminal == 'safety' else None)

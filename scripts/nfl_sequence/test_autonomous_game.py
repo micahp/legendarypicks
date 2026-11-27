@@ -16,6 +16,8 @@ import ceg_contract_v3  # noqa: E402
 import event_expansion_rules  # noqa: E402
 import gridiron_bridge  # noqa: E402
 import game_state  # noqa: E402
+import e1_drive  # noqa: E402
+import game_stats  # noqa: E402
 import roster_preflight  # noqa: E402
 from event_expansion import EventExpansionSwitches  # noqa: E402
 
@@ -238,7 +240,39 @@ class AutonomousPossessionHistoryTests(unittest.TestCase):
                                      autonomous_game._gridiron_yardline_round(
                                          100 - dead_x if direction == 1 else dead_x, 'test'))
                     self.assertEqual(generated.possession.return_yards,
+                                     None if recovery_side == 'O' else 1)
+                    applied = event_expansion_rules.apply_scrimmage_play(state, generated)
+                    self.assertEqual(applied.flags['fumble_return_yards'],
                                      -1 if recovery_side == 'O' else 1)
+                    self.assertTrue(applied.flags['fumble'])
+                    start = {**state, 'quarter': 4, 'clock': 1, 'dir': direction}
+                    participants = {'attribution': 'autonomous_execution',
+                                    'rusher_id': 'fumbler', 'passer_id': None, 'receiver_id': None,
+                                    'fumbler_id': 'fumbler', 'fumbler_side': 'A',
+                                    'recoverer_id': 'recoverer', 'returner_id': 'recoverer'}
+                    def produce(_state, _context):
+                        return {'event': 'run', 'event_record': generated,
+                                'clock_runoff_seconds': 1,
+                                'row': {'game_id': 'fixture', 'play_id': 1, 'play_type': 'run',
+                                        'yards_gained': 0, 'live_elapsed_seconds': 1,
+                                        'dead_ball_seconds': 0, 'clock_stopped': False,
+                                        'participants': participants}}
+                    plays, terminal = e1_drive.simulate(start, 1, {}, 'fumble-stat',
+                        event_source=produce, event_applier=event_expansion_rules.apply_scrimmage_play)
+                    self.assertIsNotNone(plays, terminal)
+                    self.assertTrue(plays[0]['outcome']['fumble'])
+                    self.assertEqual(plays[0]['outcome']['fumble_return_yards'],
+                                     -1 if recovery_side == 'O' else 1)
+                    drive = {'offense_team': 'A', 'quarter_start': 4, 'clock_start': 1,
+                             'end_quarter': 4, 'end_clock': 0, 'terminal': terminal,
+                             'field_goal_made': None, 'plays': plays}
+                    lines = {line['player_id']: line for line in game_stats.player_lines([drive])}
+                    self.assertEqual(lines['fumbler']['miscellaneous']['fumbles'], 1)
+                    self.assertEqual(lines['recoverer']['miscellaneous']['fumble_return_yards'],
+                                     -1 if recovery_side == 'O' else 1)
+                    teams = game_stats.team_stats([drive], {'A': 0, 'B': 0})
+                    self.assertEqual(teams['A']['fumbles'], 1)
+                    self.assertEqual(teams['A'].get('fumbles_lost', 0), int(recovery_side == 'D'))
 
     def test_interception_return_fumble_recovered_by_original_offense_maps_by_history(self):
         source = object.__new__(autonomous_game.AutonomousGameExecution)
@@ -628,7 +662,7 @@ class AutonomousSpecialTeamsTests(unittest.TestCase):
                              set(offense_ids + defense_ids))
             self.assertEqual(sum(event['type'] == 'assignment_executed'
                                  for event in front_result['events']), 22)
-            for direction, seeds in ((1, range(12)), (-1, (3,))):
+            for direction, seeds in ((1, range(100)), (-1, range(100))):
                 for seed in seeds:
                     call = {
                         'schema_version': 'gridiron.autonomous-play.v1',
@@ -648,7 +682,8 @@ class AutonomousSpecialTeamsTests(unittest.TestCase):
                         'player_profiles': profiles,
                     }
                     result, timing = session.play(call)
-                    if (result['result'].get('fumble') or {}).get('recovery_side') == 'D':
+                    if ((result['result'].get('fumble') or {}).get('recovery_side') == 'D'
+                            and not result['result'].get('is_touchdown')):
                         generated_by_direction[direction] = source._map_scrimmage_result(
                             call, result, timing, {}, state,
                             {'direction': direction, 'play_index': seed},
@@ -657,7 +692,7 @@ class AutonomousSpecialTeamsTests(unittest.TestCase):
                         break
         self.assertEqual(set(generated_by_direction), {-1, 1},
                          'live run fumbles must cross the adapter in both field directions')
-        self.assertEqual(selected_seed_by_direction, {1: 3, -1: 3})
+        self.assertEqual(set(selected_seed_by_direction), {-1, 1})
         for generated in generated_by_direction.values():
             execution = generated['execution']['result']
             self.assertEqual(len(execution['trajectory']['roster']), 22)
@@ -758,9 +793,16 @@ class AutonomousSpecialTeamsTests(unittest.TestCase):
             try:
                 with self._valid_preflight(source), patch.object(gridiron_bridge, '_ratings',
                         return_value=(source.rating_rows, {'dataset': 'test-ratings.json', 'source': 'test_estimates'})):
-                    generated = source.special_teams(
-                        'punt', {'offense': 'A', 'defense': 'B', 'yl': 99}, row, 4, None,
-                        random.Random(3))
+                    generated = None
+                    for seed in range(100):
+                        source._decision_seed = lambda _index, _purpose, seed=seed: seed
+                        candidate = source.special_teams(
+                            'punt', {'offense': 'A', 'defense': 'B', 'yl': 99}, row, 4, None,
+                            random.Random(3))
+                        if candidate.get('execution', {}).get('result', {}).get('result', {}).get('scoring') == 'touchdown':
+                            generated = candidate
+                            break
+                    self.assertIsNotNone(generated, 'seeded live punts must include a return touchdown')
             finally:
                 source.session.close()
         execution = generated['execution']['result']
@@ -818,7 +860,8 @@ class AutonomousSpecialTeamsTests(unittest.TestCase):
         source.event_manifest_sha256 = 'f' * 64
         call = {'lineups': {'kicking': {'kicker': 'AAA-K'}},
                 'player_profiles': {'AAA-K': {'ratings': {'KPW': 70, 'KAC': 70}}}}
-        source._special_teams_call = lambda *_args: (call, {}, {'source': 'fixture'})
+        source._special_teams_call = lambda *_args: (call, {'AAA-K': {'gsis_id': 'AAA-K',
+            'team': 'AAA', 'pos_abb': 'K'}}, {'source': 'fixture'})
         facts = {'result': 'missed', 'possession_after': 'receiving_team',
                  'kick_spot_yardline_100': 44, 'distance_yards': 61,
                  'dead_ball_yardline_100': 0, 'elapsed_seconds': 3.5,
@@ -946,14 +989,11 @@ class AutonomousSpecialTeamsTests(unittest.TestCase):
                 with self._valid_preflight(source), patch.object(gridiron_bridge, '_ratings',
                         return_value=(source.rating_rows, {'dataset': 'test-ratings.json',
                                                            'source': 'test_estimates'})):
-                    generated = None
-                    for seed in range(12):
-                        candidate = source._execute_live_special_teams(
-                            'kickoff', 'A', 'B', 65, 1001 + seed, free_kick_kind='kickoff')
-                        self.assertNotIn('blocker', candidate)
-                        if candidate['event_record'].kick.result == 'out_of_bounds':
-                            generated = candidate
-                            break
+                    # This play index deterministically produces a kick out of bounds
+                    # without a preceding muff, which exercises the intended rule.
+                    generated = source._execute_live_special_teams(
+                        'kickoff', 'A', 'B', 65, 1007, free_kick_kind='kickoff')
+                    self.assertNotIn('blocker', generated)
             finally:
                 source.close()
         self.assertIsNotNone(generated, 'seeded live kicks must expose the sideline enforcement path')

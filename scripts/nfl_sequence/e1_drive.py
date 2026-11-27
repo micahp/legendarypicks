@@ -563,6 +563,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                         'fair_catch': flags.get('fair_catch', False),
                         'return_yards': flags.get('return_yards'),
                         'returner_id': flags.get('returner_id'),
+                        'fumble': flags.get('fumble', False),
                         'fumbler_id': flags.get('fumbler_id'),
                         'recoverer_id': flags.get('recoverer_id'),
                         'fumble_recovery_team': flags.get('fumble_recovery_team'),
