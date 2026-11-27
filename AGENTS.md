@@ -18,6 +18,10 @@ gap remains until you have measured it.
 - A scoreboard response identifies a game; it is not a cutoff-valid modeling snapshot. Follow the selected model branch's existing snapshot builder, cutoff, input provenance and roster/news preflight. The current matchup builder enforces T−90 minutes; do not substitute kickoff or the wall clock for that cutoff. After kickoff, only a demonstrably frozen pre-kickoff artifact or honestly labeled replay/backtest is eligible; never call a newly captured post-kickoff input prospective.
 - If LP cannot resolve the requested fact, inspect the endpoint, source/age headers, configured DB and existing captures. Only then use a specific external source when necessary (e.g. missing official injury evidence); record the reason and provenance. Do not replace LP with broad search or bypass a failed cutoff/identity gate. No service restart, production write or ingest on implied authority.
 
+## DOCUMENTATION FRAMEWORK — Diátaxis (Diataxis)
+
+Legendary Picks uses [Diátaxis](https://diataxis.fr/) as its documentation framework, adapted for software engineering and research. Before creating, reorganizing, or consolidating documentation, read [docs/DOCUMENTATION-PHILOSOPHY.md](docs/DOCUMENTATION-PHILOSOPHY.md). Preserve canonical definitions, decision rationale, experimental evidence and historical provenance; do not reorganize merely to match a folder taxonomy.
+
 ## CANONICAL MODEL DOCUMENTATION — 2026-11-26
 
 Read [docs/README.md](docs/README.md), [architecture](docs/architecture/README.md), [glossary](docs/architecture/GLOSSARY.md) and the relevant [model card](docs/model-cards/README.md) before modeling work. These are the maintained navigation/definition layer, with exact source and evidence pins. Dated research reports and handoffs are supporting evidence, not competing model definitions; older rules and explicit owner decisions remain binding unless explicitly superseded.
