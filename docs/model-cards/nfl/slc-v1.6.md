@@ -12,3 +12,4 @@
 
 **Evidence:** [Bounded V1.6 comparison](https://github.com/micahp/legendarypicks/blob/8d2284b8/docs/research/slc-v1.6-release-comparison-2026-11-12/README.md).
 
+**Development integration (2026-11-27):** [`14e26d0b`](https://github.com/micahp/legendarypicks/commit/14e26d0b509b6cd9254d523bdeb0c6e0b6582648) integrates the V1.6 geometry candidate (off by default), strict observed overtime preflight, verified snapshot validity gate, and preserves default box-score export. The geometry flag is recorded in replay commands, run ledger and resealed model snapshot. A completed game on an unverified snapshot is not certified as a valid forecast by this branch. Frozen source and packages above are unchanged. Three focused source-extracted Python checks passed; repository suites, original stopped-seed full-game replays, portable-pack integration and matched distributions remain unverified.
