@@ -773,6 +773,11 @@ class AutonomousGameExecution:
             dead_y = _gridiron_yardline_round(
                 100 - dead_spot_x if direction == 1 else dead_spot_x, 'dead_ball')
             fumble_role = 'offense' if recovery_side == 'O' else 'defense'
+            # The live executor can report the carrier being tackled at the
+            # goal line without setting is_touchdown. A defensive recovery
+            # dead at the offense's own goal line is nevertheless a defensive
+            # touchdown; carry that rules fact into the reducer explicitly.
+            touchdown = touchdown or (recovery_side == 'D' and dead_y == 100)
             if recovery_side == 'O':
                 possession = ceg_contract.PossessionV2(
                     team='offense', how='kept', recovery_spot_yardline_100=recovery_y,
@@ -799,6 +804,10 @@ class AutonomousGameExecution:
             dead_x = _clamp(final_x, 0, 100)
             dead_spot = int(round(100 - dead_x if direction == 1 else dead_x))
             return_yards = dead_spot - turnover_spot
+            # Resolve a defensive return that ends in the opponent end zone
+            # from its possession and dead-ball geometry even if the executor
+            # omitted its redundant is_touchdown flag.
+            touchdown = touchdown or dead_spot == 100
             if touchdown and dead_spot != 100:
                 raise ValueError(
                     f'gridiron_defensive_touchdown_spot_mismatch:direction={direction},'
