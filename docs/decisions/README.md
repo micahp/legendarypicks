@@ -8,4 +8,4 @@ Record durable decisions, evidence, rejected alternatives, scope and reversal cr
 - [CEG findings](https://github.com/micahp/legendarypicks/blob/8d86d430/docs/research/slc-ceg-2026-11-24/FINDINGS-FOR-V2-AND-V1-COMPLETE.md): drive-level signal, Monte Carlo noise and role of cutoff-safe strength.
 - [V1 Complete design](https://github.com/micahp/legendarypicks/blob/50c15508/docs/research/V1-COMPLETE-DESIGN.md): simple autonomous assignments, no future information, no sampled clock; no advanced physics requirement.
 - [Reuse decisions](https://github.com/micahp/legendarypicks/blob/50c15508/docs/research/GRIDIRON-SLC-PLAYBOOK-REUSE-AUDIT-2026-11-23.md): preserve existing profile/route/assignment assets, avoid duplicate play engines.
-- [Documentation organization](../README.md): current definitions, model cards, evidence and archive serve different roles. Keep all execution identities and production approvals unchanged.
+- [Documentation organization and Diátaxis (Diataxis) framework](../DOCUMENTATION-PHILOSOPHY.md): current definitions, model cards, evidence and archive serve different roles. Keep all execution identities and production approvals unchanged.
