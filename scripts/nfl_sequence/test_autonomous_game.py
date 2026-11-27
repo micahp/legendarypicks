@@ -153,31 +153,36 @@ class AutonomousPossessionHistoryTests(unittest.TestCase):
             'offense': {'team': 'AAA', 'lineup': {'QB': 'qb1', 'RB': 'fumbler'},
                         'call': {'family': 'run', 'concept': 'inside_zone'}},
         }
-        fumble = {
-            'fumbler_id': 'fumbler', 'recoverer_id': 'defender',
-            'recovery_side': 'D', 'recovery_team': 'BBB',
-            'fumble_spot': {'x': 3}, 'recovery_spot': {'x': 3},
-            'dead_ball_spot': {'x': 0}, 'return_yards': 3,
-            'return_displacement_yards': 3,
-        }
         result = {
             'schema_version': 'gridiron.autonomous-result.v1',
             'result': {'event': 'tackle', 'possession_team': 'BBB',
                        'carrier_id': 'defender', 'yards_gained': -2,
                        'is_touchdown': False, 'turnover': True,
-                       'elapsed_seconds': 2, 'fumble': fumble},
+                       'elapsed_seconds': 2, 'fumble': None},
             'participants': {'sackers': []}, 'events': [],
         }
         state = {'offense': 'A', 'defense': 'B', 'down': 1, 'togo': 5, 'yl': 95}
 
-        generated = source._ceg_play(
-            call, result, 'run', -2, state, 1, 5, 0, 'tackle', None, None, None)
+        for direction, recovery_x, dead_x in ((1, 3, 0), (-1, 97, 100)):
+            with self.subTest(direction=direction):
+                result['result']['fumble'] = {
+                    'fumbler_id': 'fumbler', 'recoverer_id': 'defender',
+                    'recovery_side': 'D', 'recovery_team': 'BBB',
+                    'fumble_spot': {'x': recovery_x},
+                    'recovery_spot': {'x': recovery_x},
+                    'dead_ball_spot': {'x': dead_x}, 'return_yards': 3,
+                    'return_displacement_yards': 3,
+                }
+                generated = source._ceg_play(
+                    call, result, 'run', -2, state, direction, 5, dead_x,
+                    'tackle', None, None, None)
 
-        self.assertEqual(generated.scoring, ceg_contract.ScoringV2('touchdown', 'defense'))
-        applied = event_expansion_rules.apply_scrimmage_play(state, generated)
-        self.assertEqual(applied.terminal, 'touchdown')
-        self.assertEqual(applied.scoring_team, 'B')
-        self.assertTrue(applied.flags['return_touchdown'])
+                self.assertEqual(generated.scoring,
+                                 ceg_contract.ScoringV2('touchdown', 'defense'))
+                applied = event_expansion_rules.apply_scrimmage_play(state, generated)
+                self.assertEqual(applied.terminal, 'touchdown')
+                self.assertEqual(applied.scoring_team, 'B')
+                self.assertTrue(applied.flags['return_touchdown'])
 
     def test_defensive_fumble_return_uses_endpoint_yards_after_raw_coordinate_check(self):
         source = object.__new__(autonomous_game.AutonomousGameExecution)
