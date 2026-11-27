@@ -830,6 +830,20 @@ class AutonomousGameExecution:
         club = self.team_by_side[side]
         rows = [row for row in self.snapshot['rosters'][roster_side]['players']
                 if row['gsis_id'] == pid and row.get('team') == club]
+        if not rows and any(row.get('gsis_id') == pid for row in
+                            (self.snapshot['rosters'][roster_side].get('membership') or {}).get('players', [])):
+            # Participation includes eligible weekly-roster players who do not
+            # appear on the published depth chart. Resolve those actors using
+            # the same eligibility policy that selected them.
+            resolved = getattr(self, '_actor_resolved_rosters', None)
+            if resolved is None:
+                resolved = roster_preflight.resolve(self.snapshot)
+                self._actor_resolved_rosters = resolved
+            team_roster = resolved[roster_side]
+            if pid in v1_complete_roster.eligible_ids(team_roster):
+                player = next(row for row in team_roster['players'] if row['gsis_id'] == pid)
+                return {'gsis_id': pid, 'player_name': player['name'],
+                        'pos_abb': player['pos'], 'team': club}
         if not rows:
             raise ValueError(f'gridiron_actor_not_on_expected_roster:{pid}:{side}')
         return rows[0]

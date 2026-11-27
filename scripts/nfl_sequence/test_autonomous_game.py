@@ -470,6 +470,30 @@ class TryDirectionTests(unittest.TestCase):
 
 
 class AutonomousSpecialTeamsTests(unittest.TestCase):
+    def test_attribution_uses_eligible_membership_only_players(self):
+        source = self._source()
+        source.snapshot['rosters']['away']['membership'] = {'players': [
+            {'gsis_id': 'BBB-M', 'status': 'ACT'}, {'gsis_id': 'BBB-OUT', 'status': 'ACT'}]}
+        resolved = {'away': {'schema': 'lp-nfl-resolved-roster-2', 'blocks': [], 'roles': [],
+                             'players': [
+                                 {'gsis_id': 'BBB-M', 'name': 'Membership Player', 'pos': 'RB',
+                                  'official_eligible': True, 'membership': 'ACTIVE_ROSTER',
+                                  'exclusion_reason': None},
+                                 {'gsis_id': 'BBB-OUT', 'name': 'Unavailable Player', 'pos': 'RB',
+                                  'official_eligible': False, 'membership': 'ACTIVE_ROSTER',
+                                  'exclusion_reason': 'injury_out'}]}}
+        with patch.object(roster_preflight, 'resolve', return_value=resolved):
+            call = {'offense': {'lineup': {'QB': 'BBB-P0'}}}
+            result = {'result': {'carrier_id': 'BBB-M', 'fumble': None},
+                      'events': [], 'participants': {}}
+            actor = source._participants(call, result, 'run', {'offense': 'B'})
+            self.assertEqual((actor['rusher_id'], actor['rusher_team'], actor['rusher_name']),
+                             ('BBB-M', 'BBB', 'Membership Player'))
+            with self.assertRaisesRegex(ValueError, 'gridiron_actor_not_on_expected_roster:BBB-OUT:B'):
+                source._actor_row('BBB-OUT', 'B')
+            with self.assertRaisesRegex(ValueError, 'gridiron_actor_not_on_expected_roster:BBB-M:A'):
+                source._actor_row('BBB-M', 'A')
+
     @contextmanager
     def _valid_preflight(self, source, ineligible=()):
         resolved = {}
