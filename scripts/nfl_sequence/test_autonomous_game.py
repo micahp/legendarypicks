@@ -23,6 +23,36 @@ import v1_complete_roster  # noqa: E402
 from event_expansion import EventExpansionSwitches  # noqa: E402
 
 
+class AutonomousLaunchGate(unittest.TestCase):
+    def test_unverified_snapshot_rejected_before_roster_or_engine_work(self):
+        with patch.object(roster_preflight, 'check') as check:
+            with self.assertRaisesRegex(ValueError, 'AUTONOMOUS_SNAPSHOT_UNVERIFIED'):
+                autonomous_game.require_snapshot_for_launch({'evaluation': {'verified': False}})
+            check.assert_not_called()
+
+    def test_missing_special_teams_rating_rejected_before_engine(self):
+        ratings = {name: 70 for name in autonomous_game.SPECIAL_TEAMS_RATING_KEYS}
+        coverage = [f'c{i}' for i in range(10)]
+        blockers = [f'b{i}' for i in range(10)]
+        call = {'kind': 'punt', 'lineups': {'kicking': {'punter': 'p', 'coverage': coverage},
+                                          'receiving': {'returner': 'r', 'blockers': blockers}},
+                'player_profiles': {pid: {'ratings': dict(ratings)}
+                                    for pid in ['p', 'r', *coverage, *blockers]}}
+        autonomous_game.validate_special_teams_profiles(call)
+        del call['player_profiles']['p']['ratings']['KPW']
+        with self.assertRaisesRegex(ValueError, 'punt:p:KPW'):
+            autonomous_game.validate_special_teams_profiles(call)
+
+    def test_frozen_roster_resolution_must_match(self):
+        snapshot = {'evaluation': {'verified': True}, 'roster_resolution': {'content_hash': 'old'}}
+        with patch.object(roster_preflight, 'check', return_value=([], {'content_hash': 'new'})), \
+                patch.object(roster_preflight, 'exclusions_applied', return_value=('exclusions', 'PASS', '')):
+            with self.assertRaisesRegex(ValueError, 'ROSTER_RESOLUTION_MISSING_OR_MISMATCH'):
+                autonomous_game.require_snapshot_for_launch(snapshot)
+            snapshot['roster_resolution']['content_hash'] = 'new'
+            self.assertEqual(autonomous_game.require_snapshot_for_launch(snapshot), {'content_hash': 'new'})
+
+
 class AutonomousPassInterferenceTests(unittest.TestCase):
     def test_actor_attribution_uses_expected_roster_not_last_duplicate_row(self):
         source = object.__new__(autonomous_game.AutonomousGameExecution)

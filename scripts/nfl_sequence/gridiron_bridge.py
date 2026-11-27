@@ -194,7 +194,8 @@ def _check_engine(root):
     commit = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
     if commit != ENGINE_COMMIT:
         raise ValueError('gridiron_engine_commit_mismatch:' + commit)
-    if subprocess.run(['git', '-C', str(root), 'diff', '--quiet', 'HEAD', '--', 'engine'], check=False).returncode:
+    if subprocess.check_output(['git', '-C', str(root), 'status', '--porcelain',
+                                '--untracked-files=all', '--', 'engine'], text=True).strip():
         raise ValueError('gridiron_engine_modified')
     return commit
 

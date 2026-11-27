@@ -305,24 +305,68 @@ class AutonomousTimeoutDecisions:
         return self.points.get(team, 0) - (self.points.get(other, 0) if other else 0)
 
 
+def validate_special_teams_profiles(call):
+    """Mirror the required profile fields at the pinned special-teams.js input boundary.
+
+    The full smoke game still exercises the real Node validator; this gate
+    exposes missing fields before kickoff, even if the game never punts.
+    """
+    kicking, receiving = call['lineups']['kicking'], call['lineups']['receiving']
+    common = ('SPD', 'ACC', 'AGI', 'STR', 'AWR')
+    units = [
+        ([kicking['punter' if call['kind'] == 'punt' else 'kicker']], ('KPW', 'KAC')),
+        (kicking['coverage'], ('PUR', 'TAK', 'BSH', 'RBK')),
+        ([receiving['returner']], ('CTH', 'CAR', 'BCV', 'ELU', 'TRK', 'PRC')),
+        (receiving['blockers'], ('RBK', 'IBL', 'CTH', 'CAR')),
+    ]
+    for ids, required in units:
+        for pid in ids:
+            ratings = call['player_profiles'][pid]['ratings']
+            for name in (*common, *required):
+                value = ratings.get(name)
+                if type(value) not in (int, float) or not math.isfinite(value) or not 1 <= value <= 99:
+                    raise ValueError(f'AUTONOMOUS_SPECIAL_TEAMS_RATING_MISSING_OR_INVALID:{call["kind"]}:{pid}:{name}')
+            for name, value in ratings.items():
+                if (name not in SPECIAL_TEAMS_RATING_KEYS or type(value) not in (int, float)
+                        or not math.isfinite(value) or not 1 <= value <= 99):
+                    raise ValueError(f'AUTONOMOUS_SPECIAL_TEAMS_RATING_INVALID:{call["kind"]}:{pid}:{name}')
+
+
+def require_snapshot_for_launch(snapshot, *, allow_unverified_snapshot=False):
+    """Do not confuse evidence verification with the legal completion flag."""
+    if (snapshot.get('evaluation') or {}).get('verified') is not True and not allow_unverified_snapshot:
+        raise ValueError('AUTONOMOUS_SNAPSHOT_UNVERIFIED: explicit research mode required')
+    checks, resolved = roster_preflight.check(snapshot)
+    checks.append(roster_preflight.exclusions_applied(snapshot, resolved))
+    frozen = snapshot.get('roster_resolution')
+    if not isinstance(frozen, dict) or frozen.get('content_hash') != resolved['content_hash']:
+        raise ValueError('AUTONOMOUS_SNAPSHOT_ROSTER_RESOLUTION_MISSING_OR_MISMATCH')
+    failed = roster_preflight.failed(checks)
+    if failed:
+        raise ValueError('AUTONOMOUS_ROSTER_PREFLIGHT_FAILED: ' + '; '.join(
+            f'{name}: {detail}' for name, _, detail in failed))
+    return resolved
+
+
 class AutonomousGameExecution:
     """The SLC callback provider backed by one persistent Gridiron process."""
 
     def __init__(self, *, seed, snapshot_path, participation_path, participation_sha256,
                  playbook_dir, playbook_manifest, engine_root, ratings_path=None,
-                 coaching_profiles=None, participation_snap_counts=None, participation_entry_current=True):
+                 coaching_profiles=None, participation_snap_counts=None, participation_entry_current=True,
+                 allow_unverified_snapshot=False):
         self.seed = int(seed)
         self.snapshot_path = str(snapshot_path)
         self.snapshot = pregame_snapshot.load_frozen_snapshot(self.snapshot_path)
+        self.allow_unverified_snapshot = allow_unverified_snapshot
         self.teams = (self.snapshot['schedule']['home_team'], self.snapshot['schedule']['away_team'])
         self.team_by_side = {'A': self.teams[0], 'B': self.teams[1]}
-        checks, self._actor_resolved_rosters = roster_preflight.check(self.snapshot)
-        if (roster_preflight.failed(checks)
-                or roster_preflight.exclusions_applied(self.snapshot, self._actor_resolved_rosters)[1] != 'PASS'):
-            raise ValueError('gridiron_roster_preflight_failed')
+        self._actor_resolved_rosters = require_snapshot_for_launch(
+            self.snapshot, allow_unverified_snapshot=allow_unverified_snapshot)
         self._eligible_rosters = {side: v1_complete_roster.eligible_rows(self._actor_resolved_rosters[side])
                                   for side in ('home', 'away')}
-        self.profile_paths = {team: playbook_profile_path(playbook_dir, team) for team in self.teams}
+        prior_season = int(self.snapshot['schedule']['season']) - 1
+        self.profile_paths = {team: playbook_profile_path(playbook_dir, team, prior_season) for team in self.teams}
         self.playbook_manifest = str(playbook_manifest)
         self.participation_sha256 = participation_sha256
         self.field = participation_field.Field.load(participation_path, participation_sha256)
@@ -334,7 +378,16 @@ class AutonomousGameExecution:
         self.coaching_profiles = coaching_profiles or {}
         self.snap_clock = snap_clock.SnapClock.load()
         self.contract_v3_commit = gridiron_bridge._check_ceg_contract_v3()
+        self._play_prior_cache = {}
+        self.preflight_report = self.preflight_inputs()
         self.session = gridiron_bridge.GridironSession(self.engine_root, player_evaluation_mode='shared_snapshot')
+        try:
+            # Exercise the actual server protocol without simulating or consuming a seed.
+            self.session.request('example_run_assignments', direction='right')
+            self.session.request('example_assignments', concept='slant_flat', coverage='man', direction='right')
+        except Exception:
+            self.session.close()
+            raise
         self.event_switches = EventExpansionSwitches()
         self.event_manifest_sha256 = hashlib.sha256(
             (f'{self.session.commit}:{gridiron_bridge.PLAYBOOK_MANIFEST_SHA256}:{participation_sha256}:'
@@ -342,10 +395,72 @@ class AutonomousGameExecution:
              f'{snaps.sha256 if snaps else None}:{participation_entry_current}').encode()
         ).hexdigest()
         self.play_index = 0
-        self._play_prior_cache = {}
         self.last_generated_play = None
         self.last_failed_transition = None
         self.current_score_diff = 0
+
+    def preflight_inputs(self):
+        """Validate the actual runtime dependencies before starting a live game.
+
+        Build calls with the same bridge and eligibility policy used during play.
+        This tests executable role coverage, not just the generic snapshot schema.
+        No play is executed and no participation state is committed.
+        """
+        engine_commit = gridiron_bridge._check_engine(self.engine_root)
+        rating_path = self._rating_profile_path()
+        if not Path(rating_path).is_file():
+            raise ValueError('AUTONOMOUS_RATINGS_FILE_MISSING: ' + rating_path)
+        ratings, rating_source = gridiron_bridge._ratings(rating_path)
+        if not self.allow_unverified_snapshot and rating_source.get('schema') != 'gridiron-player-ratings-provenance-v1':
+            raise ValueError('AUTONOMOUS_RATINGS_PROVENANCE_MISSING')
+        missing = []
+        for side, roster in self._eligible_rosters.items():
+            for player in roster:
+                pid = player['gsis_id']
+                row = ratings.get(pid)
+                if not isinstance(row, dict) or not isinstance(row.get('ratings'), dict):
+                    missing.append(f'{side}:{pid}')
+                    continue
+                mass = (row.get('physics') or {}).get('mass')
+                if (type(mass) not in (int, float) or not math.isfinite(mass) or not 50 <= mass <= 200):
+                    missing.append(f'{side}:{pid}:mass')
+                role = participation_field.SKILL.get(player['pos_abb'], player['pos_abb'])
+                if role in ('QB', 'RB', 'WR', 'TE'):
+                    gridiron_bridge._validate_player_ratings(pid, role, row['ratings'], 'pass')
+                    gridiron_bridge._validate_player_ratings(pid, role, row['ratings'], 'run')
+        if missing:
+            raise ValueError('AUTONOMOUS_ELIGIBLE_PLAYER_PROFILES_MISSING: ' + ','.join(missing))
+        checks = []
+        for side, team in self.team_by_side.items():
+            other = 'B' if side == 'A' else 'A'
+            opponent = self.team_by_side[other]
+            self._playbook_prior(team)
+            state = {'offense': side, 'defense': other, 'quarter': 1, 'clock': 900,
+                     'down': 1, 'togo': 10, 'yl': 75, 'offense_direction': 1 if side == 'A' else -1}
+            prepared = self.participation.prepare(team, state, 0, group='11')
+            for family in ('run', 'pass'):
+                gridiron_bridge.build_call(
+                    self.snapshot_path, self.field, self.participation_sha256,
+                    self.profile_paths, self.playbook_manifest, seed=0, family=family, state=state,
+                    ratings_path=rating_path, prepared_participation=prepared,
+                    resolved_rosters=self._actor_resolved_rosters)
+                checks.append(f'{team}:{family}')
+            for kind, spot in (('kickoff', 65), ('punt', 60), ('field_goal', 25)):
+                call, _, _ = self._special_teams_call(kind, team, opponent, spot, 0)
+                validate_special_teams_profiles(call)
+                checks.append(f'{team}:{kind}')
+        return {'snapshot_sha256': self.snapshot['snapshot_sha256'],
+                'snapshot_verified': (self.snapshot.get('evaluation') or {}).get('verified') is True,
+                'roster_resolution_hash': self._actor_resolved_rosters['content_hash'],
+                'rating_profile_sha256': gridiron_bridge._sha(rating_path),
+                'rating_source': rating_source,
+                'participation_sha256': self.participation_sha256,
+                'participation': self.participation.provenance,
+                'snap_clock_sha256': self.snap_clock.sha256,
+                'playbook_manifest_sha256': gridiron_bridge.PLAYBOOK_MANIFEST_SHA256,
+                'playbook_profiles_sha256': {team: gridiron_bridge._sha(path) for team, path in self.profile_paths.items()},
+                'gridiron_engine_commit': engine_commit, 'validated_call_types': checks,
+                'research_mode': bool(self.allow_unverified_snapshot)}
 
     def close(self):
         self.session.close()
@@ -1517,14 +1632,15 @@ class AutonomousGameExecution:
 def play_autonomous_game(seed, ref, *, snapshot_path, participation_path, participation_sha256,
                          playbook_dir, playbook_manifest, engine_root, ratings_path=None,
                          coaching_profiles=None, participation_snap_counts=None,
-                         participation_entry_current=True, **game_kwargs):
+                         participation_entry_current=True, allow_unverified_snapshot=False, **game_kwargs):
     """Run one complete SLC game whose snaps are generated by Gridiron agents."""
     source = AutonomousGameExecution(
         seed=seed, snapshot_path=snapshot_path, participation_path=participation_path,
         participation_sha256=participation_sha256, playbook_dir=playbook_dir,
         playbook_manifest=playbook_manifest, engine_root=engine_root, ratings_path=ratings_path,
         coaching_profiles=coaching_profiles, participation_snap_counts=participation_snap_counts,
-        participation_entry_current=participation_entry_current)
+        participation_entry_current=participation_entry_current,
+        allow_unverified_snapshot=allow_unverified_snapshot)
     try:
         original_event_source = source.event_source
         def event_source(state, context):
@@ -1541,6 +1657,7 @@ def play_autonomous_game(seed, ref, *, snapshot_path, participation_path, partic
         source.event_source = event_source
         record = game_state.play_game(seed, ref, pregame_snapshot=source.snapshot,
                                       execution_source=source, **game_kwargs)
+        record['autonomous_input_preflight'] = source.preflight_report
         if source.last_failed_transition is not None:
             record['autonomous_failed_transition'] = source.last_failed_transition
         players = record.get('stats', {}).get('player', [])
