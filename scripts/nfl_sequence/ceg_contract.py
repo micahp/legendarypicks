@@ -753,7 +753,16 @@ def validate_v2(state, play, require_clock=True):
             _v2_fail('play_yardage_crosses_end_line')
         if end == 0:
             boundary = 'opponent_goal_line'
-            if play.scoring is None or play.scoring.kind != 'touchdown' or play.scoring.team != 'offense':
+            offensive_score = (play.scoring is not None and play.scoring.kind == 'touchdown'
+                               and play.scoring.team == 'offense')
+            defensive_return_score = (
+                play.scoring is not None and play.scoring.kind == 'touchdown'
+                and play.scoring.team == 'defense' and play.possession is not None
+                and play.possession.team == 'defense'
+                and play.possession.how in ('interception', 'fumble_recovery')
+                and play.possession.dead_ball_yardline_100 == 100
+            )
+            if not (offensive_score or defensive_return_score):
                 _v2_fail('goal_line_gain_needs_offensive_touchdown_fact')
         elif end == 100:
             boundary = 'own_goal_line'

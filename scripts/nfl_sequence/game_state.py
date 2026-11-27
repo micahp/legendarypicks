@@ -1941,14 +1941,25 @@ class _Game:
         else:
             self.block(f'unhandled_terminal:{terminal}')
 
-    def run(self, max_drives):
+    def run(self, max_drives=None):
         k = self.kickoffs[0]
         self._kick('half_start', k['kicking_team'], k['receiving_team'])
+        stalled_drives = 0
         while self.status is None:
-            if len(self.drives) >= max_drives:
+            if max_drives is not None and len(self.drives) >= max_drives:
                 self.block('drive_limit')
                 break
+            before = (self.quarter, self.clock)
             self._drive()
+            if self.status is not None:
+                break
+            if self.quarter != before[0] or self.clock < before[1]:
+                stalled_drives = 0
+            else:
+                stalled_drives += 1
+                if stalled_drives >= 16:
+                    self.block('game_clock_progress_stalled')
+                    break
         return self
 
     def record(self):
@@ -2131,7 +2142,7 @@ def active_unsupported_rules(guarded, blocker):
     return sorted(active)
 
 
-def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None, pregame_snapshot=None,
+def play_game(seed, ref, winner_choice=None, max_drives=None, winner=None, pregame_snapshot=None,
               paired_randomness=False, execution_source=None):
     """Play one game under the normal-game policy. Returns a record; it never raises for a branch.
 

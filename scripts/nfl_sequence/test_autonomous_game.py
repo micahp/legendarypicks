@@ -202,6 +202,15 @@ class AutonomousPossessionHistoryTests(unittest.TestCase):
             with self.subTest(value=value):
                 self.assertEqual(autonomous_game._gridiron_yardline_round(value, 'test'), expected)
 
+    def test_pass_interference_endzone_geometry_maps_to_legal_rule_spot(self):
+        for direction, x, expected in ((1, 100.4, 0), (1, -0.2, 100),
+                                       (-1, -0.2, 0), (-1, 100.4, 100)):
+            with self.subTest(direction=direction, x=x):
+                self.assertEqual(
+                    autonomous_game._pass_interference_foul_spot_yardline100(x, direction), expected)
+        with self.assertRaisesRegex(ValueError, 'gridiron_pass_interference_spot_invalid'):
+            autonomous_game._pass_interference_foul_spot_yardline100(float('nan'), 1)
+
     def test_fumble_endpoint_stats_cover_both_directions_and_recovery_teams(self):
         source = object.__new__(autonomous_game.AutonomousGameExecution)
         source.event_manifest_sha256 = 'f' * 64

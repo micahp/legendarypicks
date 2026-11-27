@@ -1,4 +1,5 @@
 import unittest
+from dataclasses import replace
 
 import ceg_contract as c
 
@@ -104,6 +105,26 @@ class CegPlay2Contract(unittest.TestCase):
                                       air_yards=None, yards_after_catch=None,
                                       players=record.players,
                                       scoring=c.ScoringV2('touchdown', 'defense')))
+
+    def test_defensive_fumble_return_touchdown_is_not_misread_as_offensive_goal_line_gain(self):
+        state = {'down': 1, 'togo': 2, 'yl': 2}
+        db = c.PlayerRoleV2.named('db1')
+        possession = c.PossessionV2(
+            'defense', 'fumble_recovery', turnover_spot_yardline_100=2,
+            recovery_spot_yardline_100=2, dead_ball_yardline_100=100,
+            return_yards=98, returner=db, recovered_by=db, fumble_spot_yardline_100=2)
+        record = play(call=c.PlayCallV2('designed_run'), event='run', yards_gained=2,
+                      air_yards=None, yards_after_catch=None, fumble=True,
+                      players=c.PlayerRolesV2(rusher=c.PlayerRoleV2.named('rb1'),
+                                              fumbler=c.PlayerRoleV2.named('rb1'),
+                                              recoverer=db, returner=db),
+                      possession=possession, scoring=c.ScoringV2('touchdown', 'defense'))
+        self.assertEqual(c.validate_v2(state, record), 'opponent_goal_line')
+
+        illegal = replace(record, possession=replace(possession, dead_ball_yardline_100=99))
+        with self.assertRaisesRegex(c.ContractViolationV2,
+                                    'goal_line_gain_needs_offensive_touchdown_fact'):
+            c.validate_v2(state, illegal)
 
     def test_sack_fumble_retains_sack_identity_and_recovery_facts(self):
         possession = c.PossessionV2(

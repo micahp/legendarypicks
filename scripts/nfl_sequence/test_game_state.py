@@ -49,6 +49,37 @@ def certain_kicks(fg_made=True, ep_made=True):
             'extra_point': ep, 'two_point': (0, 0), 'source': 'test fixture'}
 
 
+class DriveLoopSafety(unittest.TestCase):
+    def _game_stub(self, drive_fn):
+        game = object.__new__(gs._Game)
+        game.kickoffs = [{'kicking_team': 'A', 'receiving_team': 'B'}]
+        game.quarter, game.clock = 1, 900
+        game.status, game.blocker = None, None
+        game.drives = []
+        game._kick = lambda *_args: None
+        game._drive = drive_fn
+        game.block = lambda reason: (setattr(game, 'blocker', reason), setattr(game, 'status', 'blocked'))
+        return game
+
+    def test_default_game_loop_can_continue_past_eighty_clock_advancing_drives(self):
+        game = self._game_stub(lambda: None)
+        def drive():
+            game.drives.append({})
+            game.clock -= 1
+            if len(game.drives) == 85:
+                game.status = 'complete_regulation'
+        game._drive = drive
+        self.assertIs(gs._Game.run(game), game)
+        self.assertEqual(len(game.drives), 85)
+        self.assertEqual(game.status, 'complete_regulation')
+
+    def test_default_game_loop_stops_if_sixteen_drives_make_no_clock_progress(self):
+        game = self._game_stub(lambda: game.drives.append({}))
+        gs._Game.run(game)
+        self.assertEqual(len(game.drives), 16)
+        self.assertEqual(game.blocker, 'game_clock_progress_stalled')
+
+
 def ref(pool, kpool, kicks=None, blocked_kicks=None, safety_kick_pool=None, overtime_pool=None,
         overtime_try_p_two=None, overtime_p_kick=None, overtime_choice=None):
     """An observed Reference with no participant lookups, so every play's participants are null."""

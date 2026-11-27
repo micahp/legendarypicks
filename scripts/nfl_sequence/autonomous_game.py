@@ -42,6 +42,23 @@ def _gridiron_yardline_round(value, label):
     return math.floor(value + 0.5)
 
 
+def _pass_interference_foul_spot_yardline100(spot_x, direction):
+    """Map live x to the nearest legal field spot in the offense-at-snap frame.
+
+    Player/ball geometry can continue a few inches beyond an end line. For DPI,
+    the rules spot is on the field boundary; the untouched raw coordinate stays
+    in the Gridiron execution record for diagnostics.
+    """
+    if direction not in (-1, 1):
+        raise ValueError('gridiron_pass_interference_direction_invalid')
+    if (isinstance(spot_x, bool) or not isinstance(spot_x, (int, float))
+            or not math.isfinite(spot_x)):
+        raise ValueError('gridiron_pass_interference_spot_invalid')
+    on_field_x = _clamp(spot_x, 0, 100)
+    in_offense_frame = 100 - on_field_x if direction == 1 else on_field_x
+    return _gridiron_yardline_round(in_offense_frame, 'pass_interference')
+
+
 def _validate_gridiron_fumble_return(fumble, direction):
     """Validate continuous geometry and whole-yard stats as separate facts."""
     if direction not in (-1, 1):
@@ -632,7 +649,7 @@ class AutonomousGameExecution:
 
     def _decide_pass_interference(self, call, result, state, direction, pass_interference, play_index):
         spot_x = pass_interference['spot']['x']
-        foul_spot = int(round(100 - spot_x if direction == 1 else spot_x))
+        foul_spot = _pass_interference_foul_spot_yardline100(spot_x, direction)
         accepted_y = 1 if foul_spot == 0 else foul_spot
         def expected_points(yards_to_goal):
             return max(0.0, 5.5 - 0.072 * _clamp(yards_to_goal, 0, 100))
@@ -671,6 +688,7 @@ class AutonomousGameExecution:
         else:
             disposition = 'declined' if best == 'accepted' else 'accepted'
         return {'disposition': disposition, 'foul_spot_yardline_100': foul_spot,
+                'raw_foul_spot_x_yards': spot_x,
                 'accepted_expected_value': round(accepted_ev, 3),
                 'declined_expected_value': round(declined_ev, 3), 'quality_rating': quality,
                 'optimal_disposition': best, 'probability_of_optimal_choice': quality / 100,
@@ -807,8 +825,8 @@ class AutonomousGameExecution:
             draw_ids=(str(call['seed']),))
         penalty = None
         if pass_interference is not None:
-            foul_spot_x = pass_interference['spot']['x']
-            foul_spot = int(round(100 - foul_spot_x if direction == 1 else foul_spot_x))
+            foul_spot = _pass_interference_foul_spot_yardline100(
+                pass_interference['spot']['x'], direction)
             penalty = ceg_contract.PenaltyV2(
                 phase='live_ball',
                 fouls=(ceg_contract.PenaltyFoulV2(
