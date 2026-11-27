@@ -33,3 +33,9 @@ Frozen source policy: [Executable registry at e0d3f603](https://github.com/micah
 Each diagram distinguishes historical, implemented candidate, and target architecture. Update the relevant diagram when execution ordering, model inputs or outcomes change.
 
 For fixed-layout architecture and physical geometry, see the [SVG schematic gallery](../../architecture/diagrams/README.md).
+
+### Portable package acceptance (development)
+
+PR [#51](https://github.com/micahp/legendarypicks/pull/51) integrated the compiler and offline runtime. Use the single maintained compiler and runner on dev; a successful build smoke is not exact parity or forecast adoption. The parity comparison must use a nonempty, explicitly planned valid seed cohort; diagnostic failed-record comparisons do not certify the model. See [batch acceptance](../../API-AGENT-GUIDE.md#mandatory-model-readiness-and-batch-launch) and the [consolidation ledger](../../reports/BRANCH-CONSOLIDATION-2026-11-27.md#portable-packaging-reconciliation).
+
+Frozen registry identities remain unchanged. On 2026-11-27 GitHub could not resolve the exact V1.5 and V1.7 source commits; host/archive recovery is outstanding. Do not relabel replacement sources or infer package validity from source availability. Full family offline parity and model-specific release gates remain pending.

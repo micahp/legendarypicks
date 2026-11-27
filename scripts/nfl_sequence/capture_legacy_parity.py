@@ -27,6 +27,8 @@ def main(argv=None):
         args.legacy_args = args.legacy_args[1:]
     if not args.legacy_args:
         parser.error("pass the legacy batch runner arguments")
+    if args.records_out.exists():
+        raise FileExistsError(f"immutable parity records exist: {args.records_out}")
     spec = get_model(args.model)
     root = args.engine_root.resolve()
     status = subprocess.check_output(

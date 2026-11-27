@@ -26,6 +26,29 @@ class PortableParity(unittest.TestCase):
             self._write(right, {"seed": 17, "record": RECORD})
             self.assertEqual(compare(left, right)["status"], "pass")
 
+    def test_empty_or_matching_failed_cohorts_do_not_pass(self):
+        with tempfile.TemporaryDirectory() as dirname:
+            left, right = Path(dirname) / "legacy.jsonl", Path(dirname) / "portable.jsonl"
+            for path in (left, right):
+                path.write_text("")
+            self.assertEqual(compare(left, right)["status"], "fail")
+            for path in (left, right):
+                self._write(path, {"seed": 17, "record": None, "error": "same failure"})
+            self.assertEqual(compare(left, right)["status"], "fail")
+            diagnostic = compare(left, right, allow_invalid_research=True)
+            self.assertEqual(diagnostic["status"], "pass")
+            self.assertEqual(diagnostic["comparison_class"], "diagnostic_only")
+
+    def test_matching_truncated_cohort_fails_requested_seed_gate(self):
+        with tempfile.TemporaryDirectory() as dirname:
+            left, right = Path(dirname) / "legacy.jsonl", Path(dirname) / "portable.jsonl"
+            for path in (left, right):
+                self._write(path, {"seed": 17, "record": RECORD})
+            self.assertEqual(compare(left, right, expected_seeds=100, seed_start=17)["status"], "fail")
+            report = compare(left, right, expected_seeds=1, seed_start=17)
+            self.assertEqual(report["status"], "pass")
+            self.assertTrue(report["requested_cohort_verified"])
+
     def test_play_stats_score_and_completion_changes_fail(self):
         with tempfile.TemporaryDirectory() as dirname:
             left, right = Path(dirname) / "legacy.jsonl", Path(dirname) / "portable.jsonl"
@@ -36,8 +59,9 @@ class PortableParity(unittest.TestCase):
             changed["points"]["A"] = 7
             changed["complete_game"] = False
             self._write(right, {"seed": 17, "record": changed})
-            report = compare(left, right)
+            report = compare(left, right, expected_seeds=1, seed_start=17)
             self.assertEqual(report["status"], "fail")
+            self.assertFalse(report["requested_cohort_verified"])
             self.assertEqual({row["field"] for row in report["mismatches"]},
                              {"ledger", "stats", "points", "complete_game"})
 

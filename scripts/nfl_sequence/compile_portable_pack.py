@@ -30,6 +30,7 @@ sys.path.insert(0, str(HERE))
 from portable_model_pack import write_pack, collect_engine_files, ModelPackError
 from slc_model_registry import get_model
 from slc_pregame_context import freeze_current_streak_context
+from batch_launch_gate import require_full_seed_census
 
 
 def _commit(root):
@@ -181,6 +182,48 @@ def _freeze_backoff_support(sampler):
     sampler._source_support_lookup = None
 
 
+def _require_build_policy(model_spec, forwarded):
+    """Reject seed-plan escapes and registered variant conflicts before running legacy code."""
+    names = {arg.split("=", 1)[0] for arg in forwarded if arg.startswith("--")}
+    forbidden = names & {"--seed-list-file", "--seed-list", "--resume", "--register-dir"}
+    if forbidden:
+        raise ModelPackError("BUILD_SMOKE_UNSUPPORTED_ARGUMENT: " + ", ".join(sorted(forbidden)))
+    for flag, expected in (("--games", "1"), ("--seed-start", "300001"),
+                           ("--slc-profile", model_spec["profile"])):
+        count = sum(arg == flag or arg.startswith(flag + "=") for arg in forwarded)
+        if count > 1 or (count and _forwarded_option(forwarded, flag) != expected):
+            raise ModelPackError("BUILD_POLICY_CONFLICT: " + flag)
+    for flag in ("--rng-protocol", "--playcall-pass-label-mode", "--slc-penalty-ruling-policy"):
+        if sum(arg == flag or arg.startswith(flag + "=") for arg in forwarded) > 1:
+            raise ModelPackError("BUILD_POLICY_CONFLICT: " + flag)
+    if model_spec["family"] == "v2":
+        if "--slc-v2" not in names or _forwarded_option(forwarded, "--rng-protocol") != "v2":
+            raise ModelPackError("BUILD_V2_POLICY_MISSING")
+    elif "--slc-v2" in names:
+        raise ModelPackError("BUILD_VARIANT_CONFLICT: --slc-v2")
+    pbv1_expected = model_spec.get("experimental_flags", {}).get("pbv1_package_sampler") is True
+    if ("--playcall-pbv1-package" in names) != pbv1_expected:
+        raise ModelPackError("BUILD_PBV1_POLICY_CONFLICT")
+    if model_spec["family"] == "v1.7":
+        if _forwarded_option(forwarded, "--slc-penalty-ruling-policy") != model_spec["experimental_flags"]["penalty_ruling_policy"]:
+            raise ModelPackError("BUILD_V17_RULING_POLICY_CONFLICT")
+    if model_spec["family"] in ("v1.6", "v1.7", "v2"):
+        if _forwarded_option(forwarded, "--playcall-pass-label-mode") != "conditional":
+            raise ModelPackError("BUILD_CONDITIONAL_PASS_LABEL_POLICY_MISSING")
+
+
+def _require_build_smoke(result):
+    """Validate the actual requested seed instead of trusting a summary count."""
+    sim = result.get("simulation") or {}
+    if (sim.get("requested_games") != 1 or sim.get("seed_start") != 300001
+            or sim.get("seed_end_inclusive") != 300001):
+        raise ModelPackError("BUILD_SMOKE_SEED_PLAN_MISMATCH")
+    try:
+        require_full_seed_census((result.get("summary") or {}).get("outcomes"), 300001, 1)
+    except ValueError as exc:
+        raise ModelPackError("BUILD_SMOKE_INVALID: " + str(exc)) from exc
+
+
 def compile_model(engine_root, pack_path, model_id, forwarded_args):
     model_spec = get_model(model_id)
     if not model_spec["build_supported"]:
@@ -188,6 +231,7 @@ def compile_model(engine_root, pack_path, model_id, forwarded_args):
     if "--no-overtime-table" in forwarded_args:
         raise ModelPackError("OVERTIME_DISABLED_PROFILE_RETIRED: standard packages require full-game overtime support")
     forwarded_args = _require_registered_build_inputs(model_spec, forwarded_args)
+    _require_build_policy(model_spec, forwarded_args)
     forwarded_args = _default_frame_cache_args(model_spec, forwarded_args)
     root = Path(engine_root).resolve()
     if not (root / "scripts" / "nfl_sequence" / "simulate_pregame_batch.py").exists():
@@ -238,10 +282,7 @@ def compile_model(engine_root, pack_path, model_id, forwarded_args):
         result = original_run_batch(args)
         if not isinstance(result, dict) or not isinstance(result.get("pregame_snapshot"), dict):
             raise ModelPackError("BATCH_DID_NOT_RETURN_FROZEN_SNAPSHOT")
-        summary = result.get("summary")
-        valid_games = summary.get("valid_full_games") if isinstance(summary, dict) else None
-        if not isinstance(valid_games, int) or valid_games < 1:
-            raise ModelPackError("BUILD_SMOKE_NO_VALID_FULL_GAMES")
+        _require_build_smoke(result)
         reference = captured.get("reference")
         if reference is None:
             raise ModelPackError("BATCH_DID_NOT_LOAD_REFERENCE")

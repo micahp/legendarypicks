@@ -9,7 +9,8 @@ import unittest
 
 from portable_model_pack import ModelPackError, load_pack, write_pack
 from compile_portable_pack import (_default_frame_cache_args, _freeze_backoff_support, _portable_runtime_adapters,
-                                   _require_registered_build_inputs, _export_enabled_layers, compile_model)
+                                   _require_registered_build_inputs, _export_enabled_layers, compile_model,
+                                   _require_build_policy, _require_build_smoke)
 from simulate_portable_pack import _attach_runtime_adapters, _run_seed
 
 
@@ -167,6 +168,31 @@ class PortablePack(unittest.TestCase):
         plan = SimpleNamespace(scheme="v2", paired=True, seed_root=lambda _snapshot: "root")
         with self.assertRaisesRegex(ModelPackError, "PORTABLE_RNG_PROTOCOL_UNSUPPORTED_BY_ENGINE"):
             _run_seed(17, object(), {"schedule": {}}, game_state, engine, plan)
+
+    def test_build_smoke_requires_actual_valid_requested_seed(self):
+        row = {"seed": 300001, "valid_full_game": True, "complete_game": True,
+               "score_scope": "valid_final", "home_points": 21, "away_points": 17}
+        result = {"simulation": {"requested_games": 1, "seed_start": 300001, "seed_end_inclusive": 300001},
+                  "summary": {"valid_full_games": 1, "outcomes": [row]}}
+        _require_build_smoke(result)
+        for rows in ([], [{**row, "seed": 2}], [{**row, "complete_game": False}]):
+            result["summary"]["outcomes"] = rows
+            with self.assertRaisesRegex(ModelPackError, "BUILD_SMOKE_INVALID"):
+                _require_build_smoke(result)
+
+    def test_build_policy_refuses_explicit_seed_file_and_wrong_variant(self):
+        from slc_model_registry import get_model
+        v2 = get_model("v2")
+        args = list(v2["build_args"]) + ["--slc-profile", v2["profile"]]
+        _require_build_policy(v2, args)
+        for extra in (["--seed-list-file", "many.json"], ["--resume"], ["--games", "1000"],
+                      ["--rng-protocol", "v1"], ["--playcall-pass-label-mode=unconditional"]):
+            with self.assertRaises(ModelPackError):
+                _require_build_policy(v2, args + extra)
+        with self.assertRaisesRegex(ModelPackError, "BUILD_V2_POLICY_MISSING"):
+            _require_build_policy(v2, [])
+        with self.assertRaisesRegex(ModelPackError, "BUILD_PBV1_POLICY_CONFLICT"):
+            _require_build_policy(get_model("pbv1-off"), ["--playcall-pbv1-package", "x"])
 
     def test_regulation_only_build_option_is_rejected_by_name(self):
         with self.assertRaisesRegex(ModelPackError, "OVERTIME_DISABLED_PROFILE_RETIRED"):
