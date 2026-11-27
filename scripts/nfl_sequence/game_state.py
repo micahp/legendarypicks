@@ -1866,7 +1866,7 @@ class _Game:
                     if type(receiving_spot) is not int or not 1 <= receiving_spot <= 99:
                         self.block('autonomous_missed_field_goal_ceg_play_3_restart_missing')
                         return
-                    transition = {'status': 'live_execution_rule_restart',
+                    transition = {'status': 'rule_spot_no_return',
                                   'baseline_yardline_100': receiving_spot,
                                   'receiving_start_yardline_100': receiving_spot,
                                   'spot_adjustment_yards': 0,
