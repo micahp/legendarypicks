@@ -1970,7 +1970,7 @@ class _Game:
             if self.execution_source is not None else None)
         valid_candidate = bool(snapshot and legal_game_complete)
         if self.execution_source is not None:
-            valid_candidate = bool(snapshot and verified and legal_game_complete
+            valid_candidate = bool(snapshot and legal_game_complete
                                    and autonomous_player_execution_complete)
             record_mode = 'autonomous_full_game' if complete else 'autonomous_incomplete_game'
         else:

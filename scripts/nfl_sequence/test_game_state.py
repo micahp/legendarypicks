@@ -8,6 +8,7 @@ import random
 import json
 import sys
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -2394,6 +2395,22 @@ class TeamCodes(unittest.TestCase):
 
 
 class AutonomousGameLifecycle(unittest.TestCase):
+    def test_snapshot_verification_does_not_gate_completed_autonomous_game(self):
+        snapshot = {'snapshot_sha256': 'a' * 64, 'roster_snapshot_id': 'fixture',
+                    'as_of': '2026-11-26T00:00:00Z', 'evaluation': {'verified': False},
+                    'schedule': {'game_id': 'fixture', 'home_team': 'AAA', 'away_team': 'BBB',
+                                 'gameday': '2026-11-26', 'gametime': '12:00',
+                                 'gametime_timezone': 'UTC', 'scheduled_kickoff_utc': '2026-11-26T12:00:00Z'}}
+        game = gs._Game(1, ref({}, []), gs.CoinTossLedger('A', 'B', 'receive'),
+                        random.Random(1), pregame_snapshot=snapshot, execution_source=object())
+        game.status = 'complete_regulation'
+        game.points['A'] = 7
+        with patch.object(gs, '_autonomous_execution_complete', return_value=True):
+            record = game.record()
+        self.assertFalse(record['snapshot_verified'])
+        self.assertTrue(record['legal_game_complete'])
+        self.assertTrue(record['valid_full_game'])
+
     class Source:
         def event_source(self, state, context):
             touchdown = state['offense'] == 'A' and context['drive_index'] == 1
