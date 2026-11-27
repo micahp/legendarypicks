@@ -266,6 +266,22 @@ class EventExpansionRulesTests(unittest.TestCase):
         self.assertTrue(result.flags['sack'])
         self.assertTrue(result.flags['fumble'])
 
+    def test_retained_fumble_turnover_on_downs_uses_receiving_field_frame(self):
+        state = {**S, 'down': 4}
+        possession = c.PossessionV2(
+            'offense', 'kept', recovery_spot_yardline_100=38,
+            dead_ball_yardline_100=36, recovered_by=c.PlayerRoleV2.named('rb1'),
+            fumble_spot_yardline_100=38)
+        play = record(yards_gained=2, fumble=True, possession=possession,
+                      players=c.PlayerRolesV2(rusher=c.PlayerRoleV2.named('rb1'),
+                                              fumbler=c.PlayerRoleV2.named('rb1'),
+                                              recoverer=c.PlayerRoleV2.named('rb1')))
+        applied = apply_scrimmage_play(state, play)
+        self.assertEqual(applied.terminal, 'turnover_on_downs')
+        self.assertEqual(applied.state_after['yl'], 64)
+        self.assertEqual(applied.state_after['offense'], 'B')
+        self.assertEqual(applied.flags['fumble_recovery_team'], 'A')
+
     def test_offense_recovery_of_own_end_zone_fumble_is_a_safety(self):
         state = {'offense': 'A', 'defense': 'B', 'down': 1, 'togo': 5, 'yl': 95}
         possession = c.PossessionV2(
