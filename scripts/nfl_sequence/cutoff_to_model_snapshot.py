@@ -137,8 +137,11 @@ def main(argv=None):
         if bad:
             refused.extend(f'{game_id}: {name}: {detail}' for name, _, detail in bad)
             continue
-        snap['roster_resolution'] = resolved
-        roster_preflight.apply_exclusions(snap, resolved)
+        try:
+            snap = oracle.finalize_model_snapshot(snap)
+        except ValueError as exc:
+            refused.append(f'{game_id}: {exc}')
+            continue
         snap['cutoff_capture'] = {'path': str(path.relative_to(ROOT)), 'fetched_at_utc': capture['fetched_at_utc'],
                                   'backfilled': 'backfilled' in capture}
         write_runner_file(snap, streaks, out)

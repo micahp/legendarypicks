@@ -140,15 +140,14 @@ def main(argv=None):
         except ValueError as exc:
             refused.append(str(exc))
             continue
-        rows, resolved = roster_preflight.check(snap, market_qbs(args.props_db, game_id, row['gameday']))
+        priced_qbs = market_qbs(args.props_db, game_id, row['gameday'])
+        rows, resolved = roster_preflight.check(snap, priced_qbs)
         print(roster_preflight.render(f'PREFLIGHT {game_id}', rows))
         bad = roster_preflight.failed(rows)
         if bad:
             refused.extend(f'{game_id}: {name}: {detail}' for name, _, detail in bad)
             continue
-        snap['roster_resolution'] = resolved
-        roster_preflight.apply_exclusions(snap, resolved)
-        built.append((game_id, pregame_snapshot.reseal(snap)))
+        built.append((game_id, oracle.finalize_model_snapshot(snap, priced_qbs)))
     if refused:
         print('\n'.join(f'REFUSED {line}' for line in refused))
         raise SystemExit(f'{len(refused)} refusals, {len(built)} of {len(wanted)} games passed; nothing written')

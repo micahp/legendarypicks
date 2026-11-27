@@ -247,12 +247,59 @@ def scoreboard_kickoff(fetch, row):
     return matches[0], url
 
 
-def build_snapshot(db_path, game_id, as_of, fetch=None):
+def finalize_model_snapshot(snapshot, market_qbs=None):
+    """Resolve and seal the same eligible roster for every model family."""
+    _nfl_sequence_modules()
+    import pregame_snapshot
+    import roster_preflight
+    cutoff = pregame_snapshot.parse_as_of(snapshot['as_of'])
+    for side in ('away', 'home'):
+        roster = snapshot['rosters'][side]
+        if pregame_snapshot.parse_as_of(roster['snapshot_at']) > cutoff:
+            raise ValueError('SNAPSHOT_SOURCE_AFTER_CUTOFF: ' + side + '_depth_chart')
+        available = (roster.get('injury_report') or {}).get('source_available_utc')
+        if available and pregame_snapshot.parse_as_of(available) > cutoff:
+            raise ValueError('SNAPSHOT_SOURCE_AFTER_CUTOFF: ' + side + '_injury_report')
+    rows, resolved = roster_preflight.check(snapshot, market_qbs)
+    bad = roster_preflight.failed(rows)
+    if bad:
+        raise ValueError('SNAPSHOT_ROSTER_PREFLIGHT_FAILED: ' + '; '.join(
+            name + ': ' + detail for name, _, detail in bad))
+    previous = snapshot.get('roster_resolution')
+    if previous and previous.get('content_hash') != resolved['content_hash']:
+        raise ValueError('SNAPSHOT_ROSTER_RESOLUTION_MISMATCH')
+    snapshot['roster_resolution'] = resolved
+    roster_preflight.apply_exclusions(snapshot, resolved)
+    exclusion = roster_preflight.exclusions_applied(snapshot, resolved)
+    if exclusion[1] != 'PASS' or roster_preflight.resolve(snapshot)['content_hash'] != resolved['content_hash']:
+        raise ValueError('SNAPSHOT_ROSTER_FINALIZATION_FAILED: ' + exclusion[2])
+    return pregame_snapshot.reseal(snapshot)
+
+
+def build_snapshot(db_path, game_id, as_of, fetch=None, *, weekly_roster=None,
+                   weekly_roster_available_at=None, injury_report=None, injury_available_at=None,
+                   depth_parquet=None, depth_available_at=None):
     """A frozen pregame snapshot for one game, in the form the SLC batch reads. Built by the SLC code; the kickoff comes
     from the scoreboard and is checked against the schedule first."""
     import paced_http
     _nfl_sequence_modules()
     import pregame_snapshot
+    import roster_preflight
+    if not weekly_roster or not weekly_roster_available_at or injury_report is None or not injury_available_at:
+        raise ValueError('SNAPSHOT_ROSTER_INPUTS_REQUIRED: weekly roster and injury report with availability timestamps')
+    if not isinstance(injury_report, dict):
+        raise ValueError('SNAPSHOT_INJURY_REPORT_INVALID')
+    cutoff = pregame_snapshot.parse_as_of(as_of)
+    for label, stamp in (('weekly_roster', weekly_roster_available_at), ('injury_report', injury_available_at)):
+        if pregame_snapshot.parse_as_of(stamp) > cutoff:
+            raise ValueError('SNAPSHOT_SOURCE_AFTER_CUTOFF: ' + label)
+    if bool(depth_parquet) != bool(depth_available_at):
+        raise ValueError('SNAPSHOT_DEPTH_CAPTURE_AND_TIME_REQUIRED')
+    if depth_available_at and pregame_snapshot.parse_as_of(depth_available_at) > cutoff:
+        raise ValueError('SNAPSHOT_SOURCE_AFTER_CUTOFF: depth_chart')
+    source_available = injury_report.get('source_available_utc')
+    if source_available and pregame_snapshot.parse_as_of(source_available) != pregame_snapshot.parse_as_of(injury_available_at):
+        raise ValueError('SNAPSHOT_INJURY_AVAILABILITY_MISMATCH')
     conn = connect(db_path)
     try:
         row = conn.execute('SELECT * FROM nfl_schedule WHERE game_id = ?', (game_id,)).fetchone()
@@ -262,8 +309,25 @@ def build_snapshot(db_path, game_id, as_of, fetch=None):
         raise ValueError(f'unknown game_id: {game_id}')
     fetch = fetch or paced_http.Fetcher(min_interval=3.0, host_budget=20, on_exhausted='refuse')
     kickoff, url = scoreboard_kickoff(fetch, dict(row))
-    return pregame_snapshot.build(str(db_path), game_id, as_of, kickoff_utc=f'{kickoff:%Y-%m-%dT%H:%M:%SZ}',
-                                  kickoff_source_url=url)
+    archive_depth = (archive_depth_by_team(Path(depth_parquet).parent / '__no_archives__',
+                     extra_parquet=[(depth_parquet, pregame_snapshot.parse_as_of(depth_available_at))])
+                     if depth_parquet else None)
+    snapshot = pregame_snapshot.build(str(db_path), game_id, as_of, kickoff_utc=f'{kickoff:%Y-%m-%dT%H:%M:%SZ}',
+                                      kickoff_source_url=url, injury_report=injury_report, archive_depth=archive_depth)
+    if depth_parquet:
+        depth_path = Path(depth_parquet)
+        capture = {'source': depth_path.name, 'sha256': hashlib.sha256(depth_path.read_bytes()).hexdigest(),
+                   'source_available_utc': depth_available_at}
+        for side in ('away', 'home'):
+            snapshot['rosters'][side]['depth_chart_capture'] = dict(capture)
+    import pandas as pd
+    path = Path(weekly_roster)
+    source = '{} sha256 {} available {}'.format(path.name, hashlib.sha256(path.read_bytes()).hexdigest(),
+                                                weekly_roster_available_at)
+    roster_preflight.attach_membership(snapshot, pd.read_parquet(path).to_dict('records'), source)
+    for side in ('away', 'home'):
+        snapshot['rosters'][side]['injury_report']['source_available_utc'] = injury_available_at
+    return finalize_model_snapshot(snapshot)
 
 
 def _nfl_sequence_modules():
@@ -953,6 +1017,12 @@ def main(argv=None):
     parser.add_argument('--game', metavar='GAME_ID', help='every stored fact about one game, as JSON')
     parser.add_argument('--snapshot', metavar='GAME_ID', help='a frozen pregame snapshot for one game, as JSON')
     parser.add_argument('--as-of', help='with --snapshot: the cutoff, timezone-qualified, before the kickoff')
+    parser.add_argument('--weekly-roster', type=Path, help='cutoff-available nflverse weekly roster parquet')
+    parser.add_argument('--weekly-roster-available-at', help='UTC availability time of the weekly roster')
+    parser.add_argument('--injury-report', type=Path, help='cutoff-available injury report JSON')
+    parser.add_argument('--injury-available-at', help='UTC availability time of the injury report')
+    parser.add_argument('--depth-parquet', type=Path, help='optional cutoff-available nflverse depth chart capture')
+    parser.add_argument('--depth-available-at', help='UTC availability time of the depth chart capture')
     parser.add_argument('--out', help='with --snapshot or --snap-counts: write the file here instead of stdout')
     parser.add_argument('--snap-counts', action='store_true',
                         help='participation snap counts for --season through --through-week, as a file (needs --out)')
@@ -1023,9 +1093,16 @@ def main(argv=None):
             print(f'{len(rows)} lines')
         return 0
     if args.snapshot:
-        if not args.as_of:
-            parser.error('--snapshot needs --as-of')
-        snapshot = build_snapshot(args.db, args.snapshot, args.as_of)
+        if not all((args.as_of, args.weekly_roster, args.weekly_roster_available_at,
+                    args.injury_report, args.injury_available_at)):
+            parser.error('--snapshot needs --as-of, --weekly-roster, --weekly-roster-available-at, '
+                         '--injury-report and --injury-available-at')
+        snapshot = build_snapshot(args.db, args.snapshot, args.as_of,
+                                  weekly_roster=args.weekly_roster,
+                                  weekly_roster_available_at=args.weekly_roster_available_at,
+                                  injury_report=json.loads(args.injury_report.read_text()),
+                                  injury_available_at=args.injury_available_at,
+                                  depth_parquet=args.depth_parquet, depth_available_at=args.depth_available_at)
         text = json.dumps(snapshot, indent=2, sort_keys=True, default=str) + '\n'
         if args.out:
             Path(args.out).write_text(text)
