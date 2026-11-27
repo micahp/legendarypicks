@@ -12,6 +12,7 @@ Use specifications to determine intended behavior and acceptance tests. Current 
 | V1 Complete | [Design and acceptance gates](https://github.com/micahp/legendarypicks/blob/50c15508/docs/research/V1-COMPLETE-DESIGN.md) |
 | PBV1 | [Sampler specification](https://github.com/micahp/legendarypicks/blob/9a2e8624/docs/research/PBV1-SAMPLER-SPEC-2026-11-02.md) |
 | NFL state rules | [Canonical rules](https://github.com/micahp/legendarypicks/blob/50c15508/docs/rules/NFL-2026-GAME-STATE-RULES.md) |
+| Simulation artifact retention (proposed) | [Retention policy](SIMULATION-ARTIFACT-RETENTION.md) |
 | Season simulation | [V2 season specification](https://github.com/micahp/legendarypicks/blob/9a2e8624/docs/research/SLC-V2-2026-SEASON-SIM-SPEC-2026-11-10.md) |
 
 New specifications belong here unless a versioned contract or reproducibility requirement requires an existing stable path. Link from the corresponding card.

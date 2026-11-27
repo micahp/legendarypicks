@@ -155,6 +155,7 @@ No LP live forecast/lock/grading updates, production writes, shared engine chang
     target filesystem; use `du -sh` on relevant directories and estimate peak temporary plus retained
     storage (including simultaneous archive/extracted copies). Reuse existing verified artifacts and
     shared caches instead of duplicating them. Check available space during large jobs and after.
+  - Follow the proposed [simulation artifact retention policy](docs/specifications/SIMULATION-ARTIFACT-RETENTION.md) for the 100-full-record cap, compact all-seed evidence, storage budgets and verified migration. No deletion of required evidence or other agents' work without approval.
   - Budget and cap output growth, especially per-seed traces, logs, repeated snapshots and replay
     files. Retain the smallest reproducible evidence and manifests needed; compress or stream where
     appropriate. Do not create multi-GB copies or caches unnecessarily.
