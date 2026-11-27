@@ -117,6 +117,42 @@ class AutonomousTimeoutRulesTests(unittest.TestCase):
 
 
 class AutonomousPossessionHistoryTests(unittest.TestCase):
+    def test_retained_fumble_can_be_advanced_into_offensive_touchdown(self):
+        source = object.__new__(autonomous_game.AutonomousGameExecution)
+        source.event_manifest_sha256 = 'f' * 64
+        call = {
+            'play_id': 'retained-fumble-touchdown', 'seed': '300030',
+            'offense': {'team': 'BUF', 'lineup': {'QB': 'qb1', 'RB': 'runner'},
+                        'call': {'family': 'run', 'concept': 'inside_zone'}},
+        }
+        fumble = {
+            'fumbler_id': 'runner', 'recoverer_id': 'runner',
+            'recovery_side': 'O', 'recovery_team': 'BUF',
+            'fumble_spot': {'x': 48.57174030855444},
+            'recovery_spot': {'x': 48.88268809455996},
+            'dead_ball_spot': {'x': 0}, 'return_yards': 49,
+            'return_displacement_yards': 48.88268809455996,
+        }
+        result = {
+            'schema_version': 'gridiron.autonomous-result.v1',
+            'result': {'event': 'touchdown', 'possession_team': 'BUF',
+                       'carrier_id': 'runner', 'yards_gained': 49,
+                       'is_touchdown': True, 'turnover': False,
+                       'elapsed_seconds': 12.5, 'fumble': fumble},
+            'participants': {'sackers': []}, 'events': [],
+        }
+        state = {'offense': 'A', 'defense': 'B', 'down': 2, 'togo': 11, 'yl': 49}
+
+        generated = source._ceg_play(
+            call, result, 'run', 0, state, -1, 49, 0, 'touchdown', None, None, None)
+
+        self.assertEqual(generated.scoring, ceg_contract.ScoringV2('touchdown', 'offense'))
+        self.assertEqual(generated.yards_gained, 0)  # rushing gain ends at the fumble spot
+        applied = event_expansion_rules.apply_scrimmage_play(state, generated)
+        self.assertEqual(applied.terminal, 'touchdown')
+        self.assertEqual(applied.scoring_team, 'A')
+        self.assertEqual(applied.flags['fumble_return_yards'], 49)
+
     def test_interception_return_touchdown_uses_dead_ball_geometry_when_flag_is_missing(self):
         source = object.__new__(autonomous_game.AutonomousGameExecution)
         source.event_manifest_sha256 = 'f' * 64

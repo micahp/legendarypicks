@@ -794,7 +794,14 @@ def validate_v2(state, play, require_clock=True):
                 if play.scoring.team != role or play.kick.dead_ball_yardline_100 != (100 if role == 'kicking_team' else 0):
                     _v2_fail('kick_safety_team_or_spot_mismatch')
         elif play.scoring.kind == 'touchdown':
-            if play.scoring.team == 'offense' and boundary != 'opponent_goal_line':
+            offensive_fumble_return_score = (
+                play.scoring.team == 'offense' and play.fumble
+                and play.possession is not None and play.possession.team == 'offense'
+                and play.possession.how == 'kept'
+                and play.possession.dead_ball_yardline_100 == 0
+            )
+            if (play.scoring.team == 'offense' and boundary != 'opponent_goal_line'
+                    and not offensive_fumble_return_score):
                 _v2_fail('offensive_touchdown_must_reach_opponent_goal_line')
             if play.scoring.team == 'defense':
                 if play.possession is None or play.possession.team != 'defense' \
