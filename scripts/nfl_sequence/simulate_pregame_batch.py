@@ -111,6 +111,8 @@ def _reproduction_command(args, seed):
         command.append('--no-safety-table')
     if args.playcall_artifact:
         command.extend(['--playcall-artifact', str(args.playcall_artifact)])
+    if getattr(args, 'slc_geometry_filter', False):
+        command.append('--slc-geometry-filter')
     for fix in args.slc_blocker_fix:
         command.extend(['--slc-blocker-fix', fix])
     for fix in args.slc_disable_blocker_fix:
@@ -399,6 +401,33 @@ def _player_projections(snapshot, totals, games):
                  'sampled historical plays, not player-specific performance projections.'),
         'players': rows,
     }
+
+
+def require_overtime_reference(ref):
+    """Refuse before any seed runs when the observed overtime references are missing. Overtime is part of every full game,
+    so a reference without it would only produce regulation-only predictions."""
+    def probability(value):
+        return type(value) in (int, float) and 0 <= value <= 1
+
+    pool = getattr(ref, 'overtime_pool', None)
+    tries = getattr(ref, 'overtime_try_p_two', None)
+    choice = getattr(ref, 'overtime_p_kick', None)
+    required_buckets = {label for _, _, label in gs.TRY_MARGIN_BUCKETS}
+    missing = []
+    if not pool:
+        missing.append('overtime drive pool')
+    if (not isinstance(tries, dict) or not required_buckets <= tries.keys()
+            or not all(probability(tries[label]) for label in required_buckets)):
+        missing.append('overtime try table')
+    if not probability(choice):
+        missing.append('overtime kick-or-receive model')
+    if missing:
+        raise OvertimeReferenceMissing('overtime is played in every full game; the reference has missing or invalid '
+                                       + ', '.join(missing) + '. Refusing to run regulation-only predictions.')
+
+
+class OvertimeReferenceMissing(RuntimeError):
+    """The observed overtime references did not load. Raised at preflight, before any seed is simulated."""
 
 
 def _record_outcome(seed, record=None, error=None, validation_error=False):
@@ -1047,9 +1076,15 @@ def run_batch(args):
                 contextual_bandwidth=args.context_bandwidth,
                 contextual_min_effective_games=args.context_min_source_games,
                 safety_kick_table=safety_kick_table)
+    ref.geometry_filter = bool(getattr(args, 'slc_geometry_filter', False))
+    require_overtime_reference(ref)
     reference_seconds = time.monotonic() - reference_started
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     snapshot['model_reference']['pool_scope'] = ref.pool_scope
+    if ref.geometry_filter:
+        snapshot['model_reference']['geometry_filter'] = 'turnover_goal_line_v1'
+    else:
+        snapshot['model_reference'].pop('geometry_filter', None)
     pregame_snapshot.reseal(snapshot)
     playcall_description = slc_engine.describe(ref)
     if slc_engine.is_slc(ref):
@@ -1090,6 +1125,7 @@ def run_batch(args):
         'slc_profile': profile_manifest,
         'historical_archive_reconstruction': archive_validation,
         'boxscore_export': bool(args.export_boxscores),
+        'geometry_filter': ref.geometry_filter,
         'ordered_play_export': bool(args.export_plays),
         'materialized_history': (os.environ.get('SLC_MATERIALIZED_HISTORY')
                                  if args.slc_profile == 'v1_6_candidate'
@@ -1277,6 +1313,7 @@ def run_batch(args):
                             f"{snapshot['schedule']['week']}"),
             'observed_reference_sha256': ref.model_inputs['sha256'],
             'reference_pool_scope': ref.pool_scope,
+            'geometry_filter': ref.geometry_filter,
             'kickoff_pool_excluded_rows': sum(excluded_kickoffs.values()),
         },
         'baseline_v1': baseline,
@@ -1417,6 +1454,9 @@ def main(argv=None):
     ap.add_argument('--playcall-artifact',
                     help='SLC v1: the frozen score-clock play-call artifact, fitted before the game season; the pool is cut to '
                          'the weeks before the game. Omit for the S0 control')
+    ap.add_argument('--slc-geometry-filter', action='store_true',
+                    help='leave out fumble source rows whose net gain crosses a goal line at the live state '
+                         '(sack fumble behind its own goal line); off keeps the frozen V1.6 sampling')
     ap.add_argument('--slc-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],
                     help='SLC blocker fix (all fixes default on with --playcall-artifact)')
     ap.add_argument('--slc-disable-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],

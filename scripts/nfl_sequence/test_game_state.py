@@ -298,6 +298,35 @@ class Validators(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, 'pregame_full_game'):
             gs.validate_game(record)
 
+    def test_completed_record_does_not_certify_unverified_snapshot(self):
+        # Exercise the record gate in isolation; this is not a simulated full game.
+        snapshot = {
+            'snapshot_sha256': 'd' * 64, 'as_of': '2025-09-01T15:00:00Z',
+            'roster_snapshot_id': 'fixture',
+            'schedule': {'game_id': '2025_01_AAA_BBB', 'home_team': 'AAA', 'away_team': 'BBB',
+                         'gameday': '2025-09-01', 'gametime': '12:00',
+                         'gametime_timezone': 'America/Chicago',
+                         'scheduled_kickoff_utc': '2025-09-01T17:00:00Z'},
+            'evaluation': {},
+        }
+        game = gs._Game(1, ref(StaticPool('run', 0, 450), kickoff_pool()),
+                        gs.CoinTossLedger('A', 'B', 'receive'), random.Random(1),
+                        pregame_snapshot=snapshot)
+        game.status, game.quarter, game.clock = 'complete_regulation', 4, 0
+        game.points.update({'A': 7, 'B': 0})
+        for verified in (False, None, 'true', True):
+            with self.subTest(verified=verified):
+                snapshot['evaluation']['verified'] = verified
+                record = game.record()
+                self.assertTrue(record['complete_game'])
+                self.assertIs(record['valid_full_game'], verified is True)
+                self.assertEqual(record['mode'], 'pregame_full_game' if verified is True
+                                 else 'pregame_statistical_game')
+                if verified is not True:
+                    tampered = {**record, 'mode': 'pregame_full_game', 'valid_full_game': True}
+                    with self.assertRaisesRegex(AssertionError, 'verified pregame snapshot'):
+                        gs.validate_game(tampered)
+
     def test_a_touchdown_whose_points_disagree_with_its_try_is_refused(self):
         record = gs.play_game(1, ref(StaticPool('run', 80, 20), kickoff_pool()), winner_choice='receive', max_drives=1)
         record['drives'][0]['points_scored_on_drive']['points'] = 6  # the try was made, so the points must be 7

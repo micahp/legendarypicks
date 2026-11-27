@@ -1437,7 +1437,8 @@ class _Game:
                                       play_index_start=self.next_play_sequence,
                                       drive_index=len(self.drives) + 1,
                                       paired_random_streams=self.paired_random_streams,
-                                      sampling_guard=timeout_guard, **research)
+                                      sampling_guard=timeout_guard,
+                                      geometry_filter=getattr(self.ref, 'geometry_filter', False), **research)
         if plays is None:
             self.blocked_attempt = {'drive_index': len(self.drives) + 1, 'offense_team': self.offense,
                                     'quarter_start': start['quarter'], 'clock_start': start['clock'],
@@ -1589,7 +1590,7 @@ class _Game:
         points = {'A': self.points['A'], 'B': self.points['B']}
         snapshot = self.pregame_snapshot
         # a full game is valid only on verified input provenance; an exploratory replay stays a statistical game
-        verified = bool((snapshot or {}).get('evaluation', {}).get('verified'))
+        verified = (snapshot or {}).get('evaluation', {}).get('verified') is True
         valid_candidate = bool(snapshot and verified and complete and blocker is None and not guarded and not unsupported)
         record_mode = ('pregame_full_game' if valid_candidate else 'pregame_statistical_game') if snapshot else 'legal_game_state_first_piece'
         scope_out = scope_out_reasons(blocker, complete) + guard_reasons(guarded)
@@ -1775,6 +1776,9 @@ def _validate_game_impl(record):
     """Fail closed on the ledger, clock and points invariants of one record. Returns the list of checks that passed.
     """
     checks = []
+    if record.get('valid_full_game') and record.get('mode') == 'pregame_full_game':
+        if (record.get('pregame_snapshot') or {}).get('evaluation', {}).get('verified') is not True:
+            raise AssertionError('valid_full_game requires verified pregame snapshot provenance')
     for d in record.get('drives', []):
         for p in d['plays']:
             if p['state_before']['clock_seconds'] < 0 or p['state_after']['clock_seconds'] < 0:
