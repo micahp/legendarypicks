@@ -106,6 +106,27 @@ class CegPlay2Contract(unittest.TestCase):
                                       players=record.players,
                                       scoring=c.ScoringV2('touchdown', 'defense')))
 
+    def test_goal_line_interception_return_is_not_an_offensive_touchdown(self):
+        state = {'down': 1, 'togo': 3, 'yl': 3}
+        db = c.PlayerRoleV2.named('db1')
+        record = play(
+            event='interception', yards_gained=3, air_yards=None,
+            yards_after_catch=None,
+            players=c.PlayerRolesV2(passer=c.PlayerRoleV2.named('qb1'),
+                                    interceptor=db, returner=db),
+            possession=c.PossessionV2(
+                'defense', 'interception', turnover_spot_yardline_100=0,
+                dead_ball_yardline_100=1, return_yards=1, returner=db))
+
+        self.assertEqual(c.validate_v2(state, record), 'opponent_goal_line')
+
+        wrong_turnover_spot = replace(
+            record, possession=replace(record.possession,
+                                       turnover_spot_yardline_100=1))
+        with self.assertRaisesRegex(c.ContractViolationV2,
+                                    'goal_line_gain_needs_offensive_touchdown_fact'):
+            c.validate_v2(state, wrong_turnover_spot)
+
     def test_defensive_fumble_return_touchdown_is_not_misread_as_offensive_goal_line_gain(self):
         state = {'down': 1, 'togo': 2, 'yl': 2}
         db = c.PlayerRoleV2.named('db1')
