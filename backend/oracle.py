@@ -278,7 +278,7 @@ def finalize_model_snapshot(snapshot, market_qbs=None):
 
 def build_snapshot(db_path, game_id, as_of, fetch=None, *, weekly_roster=None,
                    weekly_roster_available_at=None, injury_report=None, injury_available_at=None,
-                   depth_parquet=None, depth_available_at=None):
+                   depth_parquet=None, depth_available_at=None, props_db=None):
     """A frozen pregame snapshot for one game, in the form the SLC batch reads. Built by the SLC code; the kickoff comes
     from the scoreboard and is checked against the schedule first."""
     import paced_http
@@ -327,7 +327,10 @@ def build_snapshot(db_path, game_id, as_of, fetch=None, *, weekly_roster=None,
     roster_preflight.attach_membership(snapshot, pd.read_parquet(path).to_dict('records'), source)
     for side in ('away', 'home'):
         snapshot['rosters'][side]['injury_report']['source_available_utc'] = injury_available_at
-    return finalize_model_snapshot(snapshot)
+    from prop_identity import resolve_market_qbs, priced_qbs
+    evidence = resolve_market_qbs(props_db or db_path, game_id, dict(row)['gameday'], dict(row).get('espn'), as_of)
+    snapshot['market_qb_evidence'] = evidence
+    return finalize_model_snapshot(snapshot, priced_qbs(evidence))
 
 
 def _nfl_sequence_modules():
@@ -1015,6 +1018,7 @@ def main(argv=None):
     parser.add_argument('--season', type=int, help='with --slate: the season to list')
     parser.add_argument('--week', type=int, help='with --slate: the week to list')
     parser.add_argument('--game', metavar='GAME_ID', help='every stored fact about one game, as JSON')
+    parser.add_argument('--props-db', help='optional separate cutoff-aware prop database for snapshot preflight')
     parser.add_argument('--snapshot', metavar='GAME_ID', help='a frozen pregame snapshot for one game, as JSON')
     parser.add_argument('--as-of', help='with --snapshot: the cutoff, timezone-qualified, before the kickoff')
     parser.add_argument('--weekly-roster', type=Path, help='cutoff-available nflverse weekly roster parquet')
@@ -1102,7 +1106,8 @@ def main(argv=None):
                                   weekly_roster_available_at=args.weekly_roster_available_at,
                                   injury_report=json.loads(args.injury_report.read_text()),
                                   injury_available_at=args.injury_available_at,
-                                  depth_parquet=args.depth_parquet, depth_available_at=args.depth_available_at)
+                                  depth_parquet=args.depth_parquet, depth_available_at=args.depth_available_at,
+                                  props_db=args.props_db)
         text = json.dumps(snapshot, indent=2, sort_keys=True, default=str) + '\n'
         if args.out:
             Path(args.out).write_text(text)

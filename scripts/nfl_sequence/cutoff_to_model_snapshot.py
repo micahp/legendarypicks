@@ -24,7 +24,7 @@ import argparse
 import hashlib
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -32,6 +32,7 @@ sys.path[:0] = [str(ROOT / 'backend'), str(ROOT / 'scripts' / 'nfl_sequence'), s
 import oracle  # noqa: E402
 import pregame_snapshot  # noqa: E402
 import roster_preflight  # noqa: E402
+from prop_identity import resolve_market_qbs, priced_qbs  # noqa: E402
 import slc_pregame_context  # noqa: E402
 from scripts import nfl_team_codes  # noqa: E402
 
@@ -88,9 +89,48 @@ def depth_from_capture(capture):
     return out
 
 
+def validate_capture(capture, game_id):
+    if capture.get('game_id') != game_id:
+        raise ValueError('CUTOFF_CAPTURE_GAME_ID_MISMATCH')
+    cutoff, kickoff = (utc(capture[k]) for k in ('cutoff_utc', 'kickoff_utc'))
+    if cutoff.tzinfo is None or kickoff.tzinfo is None or kickoff - cutoff != timedelta(minutes=90):
+        raise ValueError('CUTOFF_CAPTURE_NOT_T90')
+    away, home = nfl_team_codes.teams_from_game_id(game_id)
+    if (nfl_team_codes.to_db(capture['away']), nfl_team_codes.to_db(capture['home'])) != (away, home):
+        raise ValueError('CUTOFF_CAPTURE_TEAM_MISMATCH')
+    fetched = utc(capture['fetched_at_utc'])
+    if fetched.tzinfo is None:
+        raise ValueError('CUTOFF_CAPTURE_FETCH_TIME_UNVERIFIED')
+    return cutoff
+
+
+def validate_existing(out, capture, provenance, game_id):
+    snap = pregame_snapshot.load_frozen_snapshot(str(out))
+    payload = json.loads(out.read_text())
+    if 'pregame_snapshot' not in payload or not isinstance(payload.get('runtime_model_inputs'), dict):
+        raise ValueError('EXISTING_SNAPSHOT_NOT_RUNNER_FORMAT')
+    schedule = snap['schedule']
+    if (schedule['game_id'] != game_id or utc(snap['as_of']) != utc(capture['cutoff_utc'])
+            or utc(schedule['scheduled_kickoff_utc']) != utc(capture['kickoff_utc'])):
+        raise ValueError('EXISTING_SNAPSHOT_CUTOFF_OR_IDENTITY_MISMATCH')
+    if snap.get('cutoff_capture') != provenance:
+        raise ValueError('EXISTING_SNAPSHOT_PROVENANCE_MISMATCH')
+    if not snap.get('roster_resolution'):
+        raise ValueError('EXISTING_SNAPSHOT_ROSTER_RESOLUTION_MISSING')
+    rows, resolved = roster_preflight.check(snap, priced_qbs(snap['market_qb_evidence']))
+    if roster_preflight.failed(rows + [roster_preflight.exclusions_applied(snap, resolved)]):
+        raise ValueError('EXISTING_SNAPSHOT_ROSTER_PREFLIGHT_FAILED')
+    expected = slc_pregame_context.freeze_current_streak_model_inputs(
+        out.with_suffix('.streak.json'), snap, StreakBuckets, nfl_team_codes)
+    if payload['runtime_model_inputs'] != expected:
+        raise ValueError('EXISTING_SNAPSHOT_RUNTIME_INPUT_MISMATCH')
+    slc_pregame_context.current_streaks_for_snapshot(snap, nfl_team_codes, StreakBuckets, expected)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--db', required=True)
+    ap.add_argument('--props-db', help='separate prop database, defaults to --db')
     ap.add_argument('--archive-schedule', required=True, type=Path)
     ap.add_argument('--weekly-roster', required=True, type=Path,
                     help='nflverse roster_weekly_<season>.parquet: membership for the preflight (no publish time; record when fetched)')
@@ -99,32 +139,35 @@ def main(argv=None):
     import pandas as pd
     weekly_roster = pd.read_parquet(args.weekly_roster).to_dict('records')
     roster_source = f'{args.weekly_roster.name} sha256 {hashlib.sha256(args.weekly_roster.read_bytes()).hexdigest()}'
-    archive = {g: [(utc(at), row) for at, row in obs] for g, obs in json.loads(args.archive_schedule.read_text()).items()}
+    archive_bytes = args.archive_schedule.read_bytes()
+    archive_sha = hashlib.sha256(archive_bytes).hexdigest()
+    archive = {g: [(utc(at), row) for at, row in obs] for g, obs in json.loads(archive_bytes).items()}
     built, skipped, refused = 0, 0, []
     for path in sorted(CUTOFF_DIR.glob('week-*/*.json')):
         game_id = path.stem
         if args.games and game_id not in args.games:
             continue
         out = OUT_DIR / path.parent.name / path.name
-        if out.exists():
-            existing = json.loads(out.read_text())
-            if 'pregame_snapshot' in existing:
+        try:
+            raw = path.read_bytes()
+            capture = json.loads(raw)
+            cutoff = validate_capture(capture, game_id)
+            provenance = {'path': str(path.relative_to(ROOT)), 'sha256': hashlib.sha256(raw).hexdigest(),
+                          'fetched_at_utc': capture['fetched_at_utc'], 'backfilled': 'backfilled' in capture,
+                          'weekly_roster_source': roster_source, 'archive_schedule_sha256': archive_sha}
+            if out.exists():
+                validate_existing(out, capture, provenance, game_id)
                 skipped += 1
                 continue
-            out.unlink()  # an earlier run of this script wrote the bare snapshot; rebuild it in the runner's format
-        if out.with_suffix('.streak.json').exists():
-            skipped += 1
-            continue
-        capture = json.loads(path.read_text())
-        cutoff = utc(capture['cutoff_utc'])
-        try:
+            if out.with_suffix('.streak.json').exists():
+                raise ValueError('ORPHAN_STREAK_FILE: preserve and inspect before rebuilding')
             injury, _ = oracle.rotowire_injury_report(args.db, cutoff)
             snap = pregame_snapshot.build(args.db, game_id, capture['cutoff_utc'],
                                           kickoff_utc=utc(capture['kickoff_utc']).strftime('%Y-%m-%dT%H:%M:%SZ'),
                                           kickoff_source_url=KICKOFF_SOURCE, archive_schedule=archive,
                                           archive_depth=depth_from_capture(capture), injury_report=injury)
             streaks, _used = oracle.build_streaks(args.db, cutoff, game_id)
-        except ValueError as exc:
+        except (ValueError, KeyError, TypeError, OSError) as exc:
             refused.append(f'{game_id}: {exc}')
             continue
         try:
@@ -132,18 +175,26 @@ def main(argv=None):
         except ValueError as exc:
             refused.append(f'{game_id}: {exc}')
             continue
-        rows, resolved = roster_preflight.check(snap)
+        try:
+            schedule_row = snap['schedule']
+            observed = [row for at, row in archive.get(game_id, []) if at <= cutoff]
+            event_id = schedule_row.get('espn') or (observed[-1].get('espn') if observed else None)
+            evidence = resolve_market_qbs(args.props_db or args.db, game_id, schedule_row['gameday'], event_id, cutoff)
+            snap['market_qb_evidence'] = evidence
+        except (ValueError, KeyError) as exc:
+            refused.append(f'{game_id}: {exc}')
+            continue
+        rows, resolved = roster_preflight.check(snap, priced_qbs(evidence))
         bad = roster_preflight.failed(rows)
         if bad:
             refused.extend(f'{game_id}: {name}: {detail}' for name, _, detail in bad)
             continue
         try:
-            snap = oracle.finalize_model_snapshot(snap)
+            snap = oracle.finalize_model_snapshot(snap, priced_qbs(evidence))
         except ValueError as exc:
             refused.append(f'{game_id}: {exc}')
             continue
-        snap['cutoff_capture'] = {'path': str(path.relative_to(ROOT)), 'fetched_at_utc': capture['fetched_at_utc'],
-                                  'backfilled': 'backfilled' in capture}
+        snap['cutoff_capture'] = provenance
         write_runner_file(snap, streaks, out)
         built += 1
     for line in refused:

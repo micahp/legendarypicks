@@ -74,13 +74,15 @@ class OutQuarterback(unittest.TestCase):
                    'position': p['pos_abb'], 'status': 'ACT', 'status_description_abbr': None}
                   for side in ('away', 'home') for p in snap['rosters'][side]['players']]
         conn = MagicMock()
-        conn.execute.return_value.fetchone.return_value = {'game_id': '2026_11_ARI_KC'}
+        conn.execute.return_value.fetchone.return_value = {'game_id': '2026_11_ARI_KC', 'gameday': '2026-11-22', 'espn': '123'}
         with tempfile.TemporaryDirectory() as folder:
             roster_path = Path(folder) / 'weekly.parquet'
             roster_path.write_bytes(b'frozen')
             with patch.object(oracle, 'connect', return_value=conn), \
                  patch.object(oracle, 'scoreboard_kickoff', return_value=(datetime(2026, 11, 22, 18, tzinfo=timezone.utc), 'source')), \
                  patch.object(pregame_snapshot, 'build', return_value=snap), \
+                 patch('prop_identity.resolve_market_qbs', return_value={'quotes': [
+                     {'team': 'ARI', 'gsis_id': JOHNSON}, {'team': 'KC', 'gsis_id': '00-0033873'}]}), \
                  patch.object(pd, 'read_parquet', return_value=pd.DataFrame(weekly)):
                 result_snapshot = oracle.build_snapshot('unused', '2026_11_ARI_KC', CUTOFF, fetch=object(),
                     weekly_roster=roster_path, weekly_roster_available_at=CUTOFF,

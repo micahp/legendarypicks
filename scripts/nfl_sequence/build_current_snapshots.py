@@ -38,6 +38,7 @@ sys.path[:0] = [str(ROOT / 'backend'), str(ROOT / 'scripts' / 'nfl_sequence'), s
 import oracle  # noqa: E402
 import pregame_snapshot  # noqa: E402
 import roster_preflight  # noqa: E402
+from prop_identity import resolve_market_qbs, priced_qbs as qb_sets  # noqa: E402
 from cutoff_to_model_snapshot import write_runner_file  # noqa: E402
 from paced_http import Fetcher  # noqa: E402
 from scripts import nfl_team_codes  # noqa: E402
@@ -67,68 +68,8 @@ def schedule_rows(path, season, week, fetched_at):
     return out
 
 
-def _prop_game_teams(props_db):
-    """Map the stored franchise display names in prop_games back to canonical DB team codes."""
-    names_path = ROOT / 'docs' / 'espn-team-codes-2026-07-27.json'
-    names = json.loads(names_path.read_text())['nfl']
-    return {name: nfl_team_codes.to_db(code) for code, name in names.items()}
-
-
-def market_qbs(props_db, game_id, gameday, espn_event_id=None):
-    """Return QB GSIS IDs with passing-yards lines for this event.
-
-    `prop_games.away/home` is commonly stored as a display name (for example,
-    "Pittsburgh Steelers"), while SLC and `players.team` use canonical codes.
-    Prefer the schedule's exact ESPN event ID, then use a strict date/team match.
-    """
-    away, home = (nfl_team_codes.to_db(code) for code in nfl_team_codes.teams_from_game_id(game_id))
-    con = sqlite3.connect(f'file:{props_db}?mode=ro', uri=True)
-    try:
-        event = None
-        if espn_event_id:
-            matches = con.execute(
-                "SELECT id FROM prop_games WHERE league = 'nfl' AND CAST(espn_event_id AS TEXT) = ? "
-                "AND date BETWEEN date(?, '-1 day') AND date(?, '+1 day')",
-                (str(espn_event_id), gameday, gameday)).fetchall()
-            if len(matches) > 1:
-                raise ValueError(f'{game_id}: multiple prop games match ESPN event {espn_event_id}')
-            if matches:
-                event = matches[0][0]
-
-        if event is None:
-            name_to_code = _prop_game_teams(props_db)
-            candidates = con.execute(
-                "SELECT id, away, home FROM prop_games WHERE league = 'nfl' "
-                "AND date BETWEEN date(?, '-1 day') AND date(?, '+1 day')",
-                (gameday, gameday)).fetchall()
-
-            def canonical(value):
-                code = name_to_code.get(value, value)
-                try:
-                    return nfl_team_codes.to_db(code)
-                except ValueError:
-                    return None
-
-            matches = [row[0] for row in candidates
-                       if canonical(row[1]) == away and canonical(row[2]) == home]
-            if len(matches) > 1:
-                raise ValueError(f'{game_id}: multiple prop games match date and teams')
-            if matches:
-                event = matches[0]
-        if event is None:
-            return {}
-
-        rows = con.execute(
-            "SELECT pl.team, pl.nfl_gsis_id FROM props p JOIN players pl ON pl.id = p.player_id "
-            "WHERE p.game_id = ? AND p.market = 'passing_yards'",
-            (event,)).fetchall()
-    finally:
-        con.close()
-    out = {}
-    for team, gsis in rows:
-        if gsis:
-            out.setdefault(nfl_team_codes.to_db(team), set()).add(gsis)
-    return out
+def market_qbs(props_db, game_id, gameday, espn_event_id=None, *, as_of):
+    return qb_sets(resolve_market_qbs(props_db, game_id, gameday, espn_event_id, as_of))
 
 
 def main(argv=None):
@@ -185,7 +126,9 @@ def main(argv=None):
         except ValueError as exc:
             refused.append(str(exc))
             continue
-        priced_qbs = market_qbs(args.props_db, game_id, row['gameday'], row.get('espn'))
+        evidence = resolve_market_qbs(args.props_db, game_id, row['gameday'], row.get('espn'), cutoff)
+        snap['market_qb_evidence'] = evidence
+        priced_qbs = qb_sets(evidence)
         rows, resolved = roster_preflight.check(snap, priced_qbs)
         print(roster_preflight.render(f'PREFLIGHT {game_id}', rows))
         bad = roster_preflight.failed(rows)
