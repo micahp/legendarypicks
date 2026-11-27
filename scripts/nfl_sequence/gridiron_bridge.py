@@ -21,7 +21,7 @@ import roster_preflight
 import v1_complete_roster
 from scripts import nfl_team_codes
 
-ENGINE_COMMIT = 'e1dd50de8941efbd28fd638e62a6bc65df51a376'
+ENGINE_COMMIT = '90cbdd9de0fa20a01d009a6fca49866981176e73'
 PLAYBOOK_MANIFEST_SHA256 = '220af2a590b2e7ddf5c28a32977aadd4d5a5e6e128ca8392da8bac37ef0917ac'
 DEFENSE_SLOTS = ('LEDGE', 'LDT', 'RDT', 'REDGE', 'MLB', 'WLB', 'NB', 'LCB', 'RCB', 'SS', 'FS')
 DEFENSE_POSITION_CANDIDATES = {
@@ -324,7 +324,10 @@ def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_pat
         rating_ids[pid] = rating_source
     call = {'schema_version': 'gridiron.autonomous-play.v1', 'mode': 'autonomous_from_snap',
             'play_id': f"{snapshot['schedule']['game_id']}:{offense_team}:{family}:{seed}", 'seed': str(seed),
-            'situation': {'quarter': state['quarter'], 'clock_seconds': state['clock'], 'down': state['down'],
+            'situation': {'quarter': state['quarter'],
+                          'period_type': state.get('period_type',
+                                                   'overtime' if state['quarter'] > 4 else 'regulation'),
+                          'clock_seconds': state['clock'], 'down': state['down'],
                           'yards_to_go': state['togo'], 'yardline_100': x, 'offense_direction': direction,
                           'ball_lateral_yards': 160 / 6},
             'offense': {'team': offense_team, 'formation': 'singleback_11',
@@ -344,7 +347,7 @@ def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_pat
 
 def _validate_result(call, result):
     if result.get('schema_version') != 'gridiron.autonomous-result.v1' or result.get('status') != 'complete':
-        raise ValueError('gridiron_play_incomplete:' + str(result.get('failure')))
+        raise ValueError(_execution_failure_message('gridiron_play_incomplete', call, result, 'play'))
     if not result.get('diagnostics', {}).get('reconciliation', {}).get('ok'):
         raise ValueError('gridiron_reconciliation_failed')
     if result['diagnostics'].get('outcome_inputs') != [] or result.get('seed') != str(call['seed']):
@@ -363,7 +366,8 @@ def _validate_special_teams_result(call, result):
     if (result.get('schema_version') != 'gridiron.autonomous-special-teams.v1'
             or result.get('status') != 'complete' or result.get('kind') != call.get('kind')
             or result.get('seed') != str(call.get('seed'))):
-        raise ValueError('gridiron_special_teams_incomplete:' + str(result.get('failure')))
+        raise ValueError(_execution_failure_message(
+            'gridiron_special_teams_incomplete', call, result, 'special_teams'))
     if result.get('diagnostics', {}).get('outcome_inputs') != []:
         raise ValueError('gridiron_special_teams_outcome_input_detected')
     if (result['diagnostics'].get('assignments_executed') != 22
@@ -394,6 +398,57 @@ def _validate_special_teams_result(call, result):
     if result.get('result', {}).get('result') not in expected_results:
         raise ValueError('gridiron_special_teams_result_classification_invalid')
     return result
+
+
+def _execution_failure_message(prefix, call, result, operation):
+    """Preserve a replayable input and compact terminal state on rejected runs."""
+    trajectory = result.get('trajectory') or {}
+    roster = trajectory.get('roster') or []
+    frames = trajectory.get('frames') or []
+    stride = trajectory.get('stride')
+    last_frame = frames[-1] if frames else None
+    players = []
+    ball = None
+    if (isinstance(last_frame, (list, tuple)) and isinstance(stride, int)
+            and stride == len(roster) * 6 + 6 and len(last_frame) == stride):
+        for index, player in enumerate(roster):
+            offset = index * 6
+            players.append({
+                'player_id': player.get('id'), 'team': player.get('team'),
+                'role': player.get('roleKey') or player.get('slot'),
+                'x_yards': last_frame[offset], 'y_yards': last_frame[offset + 1],
+                'height': last_frame[offset + 2], 'speed_yards_per_second': last_frame[offset + 3],
+                'pose': last_frame[offset + 4], 'has_ball': bool(last_frame[offset + 5]),
+            })
+        offset = len(roster) * 6
+        ball = {'x_yards': last_frame[offset], 'y_yards': last_frame[offset + 1],
+                'height': last_frame[offset + 2]}
+    if not players and isinstance(result.get('diagnostics'), dict):
+        players = result['diagnostics'].get('player_execution', [])
+    events = result.get('events') or []
+    state_events = [event for event in events if event.get('type') in {
+        'snap', 'snap_receive', 'throw', 'catch', 'interception', 'fumble', 'fumble_recovery',
+        'muff', 'kick_recovery', 'loose_ball_recovery_attempt', 'tackle', 'return_tackle',
+        'engage', 'engagement', 'disengage', 'decision', 'whistle', 'simulation_failure',
+    }]
+    diagnostic = {
+        'operation': operation,
+        'call': call,
+        'failure': result.get('failure'),
+        'result_status': result.get('status'),
+        'seed': result.get('seed'),
+        'carrier_id': result.get('carrier_id'),
+        'ball_state': ball,
+        'players_at_timeout': players,
+        'recent_state_events': state_events[-30:],
+        'last_transition': state_events[-1] if state_events else None,
+        'event_count': len(events),
+        'elapsed_seconds': (events[-1].get('t') if events else None),
+        'failure_state': (result.get('diagnostics') or {}).get('failure_state'),
+        'diagnostics': result.get('diagnostics'),
+    }
+    return prefix + ':' + str(result.get('failure')) + '; replay_diagnostic=' + json.dumps(
+        diagnostic, sort_keys=True, separators=(',', ':'), allow_nan=False)
 
 
 class GridironSession:

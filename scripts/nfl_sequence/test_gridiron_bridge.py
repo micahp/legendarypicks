@@ -106,6 +106,33 @@ def test_reject_mismatch_and_unsupported_boundaries(play):
         bridge.reduce_result(call, result, altered)
 
 
+def test_incomplete_gridiron_result_preserves_exact_call_and_compact_terminal_state():
+    call = {'seed': '300022', 'situation': {'quarter': 2, 'clock_seconds': 512},
+            'offense': {'team': 'CHI', 'lineup': {'QB': 'qb'}}}
+    result = {
+        'schema_version': 'gridiron.autonomous-result.v1', 'status': 'failed',
+        'seed': '300022', 'failure': {'reason': 'simulation_time_cap', 'time_limit_seconds': 12},
+        'carrier_id': 'rb',
+        'trajectory': {'roster': [{'id': 'rb', 'team': 'O', 'roleKey': 'O.RB'}],
+                       'stride': 12,
+                       'frames': [[40.0, 22.0, 0.0, 3.0, 1.0, 1.0, 40.2, 22.0, 0.1, 0, 0, 0]]},
+        'events': [{'type': 'decision', 't': 11.9, 'player_id': 'rb', 'decision': 'advance'}],
+        'diagnostics': {'blockers': [{'player_id': 'lt', 'won': False}],
+                        'failure_state': {'active_engagements': [{'a': 'lt', 'b': 'de'}]}},
+    }
+
+    with pytest.raises(ValueError, match='replay_diagnostic=') as error:
+        bridge._validate_result(call, result)
+
+    diagnostic = json.loads(str(error.value).split('replay_diagnostic=', 1)[1])
+    assert diagnostic['call'] == call
+    assert diagnostic['ball_state'] == {'x_yards': 40.2, 'y_yards': 22.0, 'height': 0.1}
+    assert diagnostic['players_at_timeout'][0]['player_id'] == 'rb'
+    assert diagnostic['players_at_timeout'][0]['has_ball'] is True
+    assert diagnostic['last_transition']['decision'] == 'advance'
+    assert diagnostic['failure_state']['active_engagements'] == [{'a': 'lt', 'b': 'de'}]
+
+
 @pytest.mark.parametrize(('team', 'playbook_team'), [
     ('LA', 'LA'), ('LAR', 'LA'), ('WAS', 'WAS'), ('WSH', 'WAS'),
 ])
