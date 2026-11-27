@@ -117,6 +117,34 @@ class AutonomousTimeoutRulesTests(unittest.TestCase):
 
 
 class AutonomousPossessionHistoryTests(unittest.TestCase):
+    def test_interception_return_touchdown_uses_dead_ball_geometry_when_flag_is_missing(self):
+        source = object.__new__(autonomous_game.AutonomousGameExecution)
+        source.event_manifest_sha256 = 'f' * 64
+        call = {
+            'play_id': 'interception-return-touchdown', 'seed': 'fixture',
+            'offense': {'team': 'AAA', 'lineup': {'QB': 'qb1'},
+                        'call': {'family': 'pass', 'concept': 'four_verticals'}},
+        }
+        result = {
+            'schema_version': 'gridiron.autonomous-result.v1',
+            'result': {'event': 'interception', 'possession_team': 'BBB',
+                       'carrier_id': 'defender', 'yards_gained': 0,
+                       'is_touchdown': False, 'turnover': True,
+                       'elapsed_seconds': 3, 'fumble': None},
+            'participants': {'interceptor': 'defender', 'sackers': []}, 'events': [],
+        }
+        state = {'offense': 'A', 'defense': 'B', 'down': 1, 'togo': 10, 'yl': 50}
+
+        generated = source._ceg_play(
+            call, result, 'interception', 0, state, 1, 50, 0, 'tackle',
+            {'at': {'x': 50}}, None, None)
+
+        self.assertEqual(generated.scoring, ceg_contract.ScoringV2('touchdown', 'defense'))
+        applied = event_expansion_rules.apply_scrimmage_play(state, generated)
+        self.assertEqual(applied.terminal, 'touchdown')
+        self.assertEqual(applied.scoring_team, 'B')
+        self.assertTrue(applied.flags['return_touchdown'])
+
     def test_defensive_fumble_recovered_in_opponent_end_zone_scores_from_dead_ball_fact(self):
         source = object.__new__(autonomous_game.AutonomousGameExecution)
         source.event_manifest_sha256 = 'f' * 64
