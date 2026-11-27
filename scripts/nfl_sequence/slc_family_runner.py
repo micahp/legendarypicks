@@ -7,13 +7,14 @@ paths or hashes of its own.
 
 Each model is extracted to its own runtime tree with a git dir, because simulate_pregame_batch records its producer
 commit and branch and exits 128 without one. Work order: games in kickoff order, models inside each game, seed chunks
-last, so the earliest kickoff finishes first. A chunk whose output already exists is skipped.
+last. Every game/model must pass a one-seed smoke before any full batch.
+Full runs use bounded chunks and refuse existing outputs; no blind resume.
 
     python3 scripts/nfl_sequence/slc_family_runner.py CONFIG.json --dry-run
     python3 scripts/nfl_sequence/slc_family_runner.py CONFIG.json [--only GAME_ID ...]
 """
 import argparse
-import concurrent.futures
+import os
 import hashlib
 import json
 import subprocess
@@ -26,6 +27,10 @@ REQUIRED = ("out_dir", "db", "snapshot_dir", "game_glob", "source_repo", "models
             "blocker_fixes", "seeds", "concurrency")
 BATCH = "scripts/nfl_sequence/simulate_pregame_batch.py"
 GIT_LOCK = threading.Lock()
+MAX_CHUNK = 25  # bound work lost when a frozen engine cannot abort within a chunk
+
+from batch_launch_gate import run_stage, require_full_seed_census
+import pregame_snapshot
 
 
 def now():
@@ -46,8 +51,15 @@ def load_config(path):
     if missing:
         raise ValueError("config is missing %s" % ", ".join(missing))
     names = [m["name"] for m in cfg["models"]]
-    if len(names) != len(set(names)):
-        raise ValueError("model names must be unique")
+    if not names or len(names) != len(set(names)):
+        raise ValueError("model names must be nonempty and unique")
+    seeds = cfg['seeds']
+    if (any(type(seeds[k]) is not int for k in ('start', 'total', 'chunk'))
+            or seeds['start'] < 0 or seeds['total'] < 1 or seeds['chunk'] < 1
+            or type(cfg['concurrency']) is not int or cfg['concurrency'] < 1):
+        raise ValueError('invalid seed plan or concurrency')
+    for key in ('out_dir', 'db', 'snapshot_dir', 'source_repo'):
+        cfg[key] = str(Path(cfg[key]).resolve())
     return cfg
 
 
@@ -68,7 +80,10 @@ def games_in_kickoff_order(snapshot_dir, game_glob):
         files = sorted(d.glob("prospective-*.json"))
         if not files:
             continue
-        sched = json.loads(files[0].read_text())["schedule"]
+        if len(files) != 1:
+            raise ValueError(f"AMBIGUOUS_SNAPSHOT: {d}")
+        payload = json.loads(files[0].read_text())
+        sched = payload.get("pregame_snapshot", payload)["schedule"]
         out.append(((sched["gameday"], sched["gametime"]), d.name, files[0]))
     return sorted(out)
 
@@ -102,55 +117,79 @@ def runtime_paths(cfg, model):
     return base / (model["name"] + "-metadata.git"), base / ("runtime-" + model["name"])
 
 
-GIT_READY = set()
-
-
 def ensure_runtime(cfg, model):
-    """Give the model a git dir and a checked-out runtime tree at its ref. Returns (metadata, runtime)."""
+    """Materialize the exact pinned tree; refuse dirty or stale existing runtimes."""
     metadata, runtime = runtime_paths(cfg, model)
     source = cfg["source_repo"]
-    if not (metadata / "HEAD").is_file():
-        subprocess.run(["git", "init", "--bare", "-q", str(metadata)], check=True)
-        (metadata / "objects/info").mkdir(parents=True, exist_ok=True)
-        (metadata / "objects/info/alternates").write_text(str(Path(source) / ".git/objects") + "\n")
-        commit = subprocess.check_output(["git", "-C", source, "rev-parse", model["ref"]], text=True).strip()
-        ref = "refs/heads/" + model["name"]
-        subprocess.run(["git", "--git-dir=" + str(metadata), "update-ref", ref, commit], check=True)
-        subprocess.run(["git", "--git-dir=" + str(metadata), "symbolic-ref", "HEAD", ref], check=True)
-    env = {"GIT_DIR": str(metadata), "GIT_WORK_TREE": str(runtime), "PATH": "/usr/bin:/bin"}
+    commit = model["commit"]
     with GIT_LOCK:
-        if model["name"] not in GIT_READY:
-            subprocess.run(["git", "read-tree", "HEAD"], env=env, check=True)
-            GIT_READY.add(model["name"])
+        if not (metadata / "HEAD").is_file():
+            if runtime.exists():
+                raise ValueError(f"UNOWNED_RUNTIME: {runtime}")
+            subprocess.run(["git", "init", "--bare", "-q", str(metadata)], check=True)
+            objects = subprocess.check_output(
+                ["git", "-C", source, "rev-parse", "--path-format=absolute", "--git-path", "objects"],
+                text=True).strip()
+            (metadata / "objects/info/alternates").write_text(objects + "\n")
+            ref = "refs/heads/" + model["name"]
+            subprocess.run(["git", "--git-dir=" + str(metadata), "update-ref", ref, commit], check=True)
+            subprocess.run(["git", "--git-dir=" + str(metadata), "symbolic-ref", "HEAD", ref], check=True)
+            runtime.mkdir()
+            git = ["git", "--git-dir=" + str(metadata), "--work-tree=" + str(runtime)]
+            subprocess.run(git + ["read-tree", "HEAD"], check=True)
+            subprocess.run(git + ["checkout-index", "-a"], check=True)
+        git = ["git", "--git-dir=" + str(metadata), "--work-tree=" + str(runtime)]
+        if subprocess.check_output(git + ["rev-parse", "HEAD"], text=True).strip() != commit:
+            raise ValueError(f"RUNTIME_PIN_MISMATCH: {model['name']}")
+        if subprocess.check_output(git + ["status", "--porcelain", "--untracked-files=normal"], text=True).strip():
+            raise ValueError(f"RUNTIME_DIRTY: {runtime}")
     return metadata, runtime
 
 
-def run_chunk(cfg, job):
+def require_report(report, game, snapshot_sha, commit, start, count):
+    sim = report.get("simulation") or {}
+    summary = report.get("summary") or {}
+    if (report.get("game_id") != game
+            or (report.get("data_sources") or {}).get("source_snapshot_sha256") != snapshot_sha
+            or (report.get("source") or {}).get("base_commit") != commit
+            or (report.get("source") or {}).get("producer_worktree_dirty") is not False
+            or (report.get("pregame_snapshot", {}).get("evaluation") or {}).get("verified") is not True):
+        raise ValueError("RUN_IDENTITY_OR_PROVENANCE_MISMATCH")
+    if (sim.get("requested_games") != count or sim.get("seed_start") != start
+            or sim.get("seed_end_inclusive") != start + count - 1):
+        raise ValueError("RUN_SEED_PLAN_MISMATCH")
+    require_full_seed_census(summary.get("outcomes"), start, count)
+    # Some frozen aggregators omit completed overtime games. The actual seed census
+    # is authoritative; retain the historical summary count as a separate diagnostic.
+    return count
+
+
+def run_chunk(cfg, job, smoke=False):
     name, game, snapshot, start, count = job
     model = next(m for m in cfg["models"] if m["name"] == name)
-    out = Path(cfg["out_dir"]) / "runs" / name / ("%s-seed-%06d-%06d.json" % (game, start, start + count - 1))
+    root = "smoke" if smoke else "runs"
+    out = Path(cfg["out_dir"]) / root / name / ("%s-seed-%06d-%06d.json" % (game, start, start + count - 1))
     out.parent.mkdir(parents=True, exist_ok=True)
-    if out.is_file() and out.stat().st_size > 0:
-        return {"model": name, "game_id": game, "seed_start": start, "games": count,
-                "status": "already_present", "out": str(out)}
-    for suffix in (".seeds.jsonl", ".boxscores.jsonl"):
-        ledger = out.with_suffix(suffix)
-        if ledger.exists():
-            ledger.unlink()
-    metadata, runtime = ensure_runtime(cfg, model)
     log = out.with_suffix(".log")
-    with log.open("w") as f:
+    if any(path.exists() for path in (out, log, out.with_suffix(".seeds.jsonl"),
+                                      out.with_suffix(".boxscores.jsonl"))):
+        raise ValueError(f"EXISTING_OUTPUT_REFUSED: {out}")
+    if sha256(snapshot) != cfg["snapshot_pins"][snapshot]["file_sha256"]:
+        raise ValueError(f"SNAPSHOT_CHANGED_AFTER_PREFLIGHT: {snapshot}")
+    metadata, runtime = runtime_paths(cfg, model)
+    with log.open("x") as handle:
         result = subprocess.run(build_command(cfg, model, snapshot, start, count, out), cwd=runtime,
-                                stdout=f, stderr=subprocess.STDOUT,
-                                env={"PATH": "/usr/bin:/bin", "OPENBLAS_NUM_THREADS": "1", "OMP_NUM_THREADS": "1",
-                                     "HOME": "/root", "GIT_DIR": str(metadata), "GIT_WORK_TREE": str(runtime)})
+                                stdout=handle, stderr=subprocess.STDOUT,
+                                env={**os.environ, "OPENBLAS_NUM_THREADS": "1", "OMP_NUM_THREADS": "1",
+                                     "GIT_DIR": str(metadata), "GIT_WORK_TREE": str(runtime)})
     if result.returncode:
-        raise RuntimeError("%s %s %d exited %d; see %s" % (name, game, start, result.returncode, log))
+        raise RuntimeError(f"{name} {game} {start} exited {result.returncode}; see {log}")
     report = json.loads(out.read_text())
-    sim = report.get("simulation") if isinstance(report.get("simulation"), dict) else {}
+    valid = require_report(report, game, cfg["snapshot_pins"][snapshot]["snapshot_sha256"],
+                           model["commit"], start, count)
     return {"model": name, "game_id": game, "seed_start": start, "games": count,
-            "valid_games": sim.get("valid_games"), "errors": sim.get("errors"),
-            "out": str(out), "log": str(log), "bytes": out.stat().st_size}
+            "valid_games": valid, "reported_valid_games": report["summary"].get("valid_full_games"),
+            "status": "completed", "out": str(out), "log": str(log), "bytes": out.stat().st_size}
 
 
 def main(argv=None):
@@ -162,7 +201,10 @@ def main(argv=None):
     cfg = load_config(a.config)
     check_pins(cfg)
     games = games_in_kickoff_order(cfg["snapshot_dir"], cfg["game_glob"])
+    cfg["seeds"]["chunk"] = min(cfg["seeds"]["chunk"], MAX_CHUNK)
     jobs = plan_jobs(cfg, games, a.only)
+    if not jobs or (a.only and set(a.only) != {j[1] for j in jobs}):
+        raise ValueError("NO_JOBS_OR_MISSING_SELECTED_GAME")
     if a.dry_run:
         print("games %d, models %d, jobs %d" % (len(games), len(cfg["models"]), len(jobs)))
         print(" ".join(build_command(cfg, cfg["models"][0], jobs[0][2], jobs[0][3], jobs[0][4],
@@ -170,31 +212,73 @@ def main(argv=None):
         return
     base = Path(cfg["out_dir"])
     base.mkdir(parents=True, exist_ok=True)
+    manifest_path = base / "manifest.json"
+    # Freeze branch refs once, before any model process starts.
     for model in cfg["models"]:
-        ensure_runtime(cfg, model)
-    manifest = {"status": "running", "started_at_utc": now(), "config": a.config,
-                "models": [m["name"] for m in cfg["models"]], "job_count": len(jobs),
+        model["commit"] = subprocess.check_output(
+            ["git", "-C", cfg["source_repo"], "rev-parse", model["ref"] + "^{commit}"],
+            text=True).strip()
+    cfg["snapshot_pins"] = {}
+    for _, game, path, _, _ in jobs:
+        if path in cfg["snapshot_pins"]:
+            continue
+        file_hash = sha256(path)
+        snap = pregame_snapshot.load_frozen_snapshot(path)
+        if (snap["schedule"]["game_id"] != game
+                or (snap.get("evaluation") or {}).get("verified") is not True):
+            raise ValueError(f"SNAPSHOT_IDENTITY_OR_EVIDENCE_INVALID: {path}")
+        if sha256(path) != file_hash:
+            raise ValueError(f"SNAPSHOT_CHANGED_DURING_PREFLIGHT: {path}")
+        cfg["snapshot_pins"][path] = {"file_sha256": file_hash, "snapshot_sha256": snap["snapshot_sha256"]}
+    manifest = {"status": "preflight", "started_at_utc": now(), "config": a.config,
+                "models": [{"name": m["name"], "commit": m["commit"]} for m in cfg["models"]],
+                "job_count": len(jobs), "max_chunk": MAX_CHUNK, "snapshot_pins": cfg["snapshot_pins"],
                 "pins": [{"path": p, "sha256": sha256(p)} for p in [cfg["db"]] + [
                     pin["path"] for pin in cfg.get("pinned_files", [])]],
-                "results": [], "failures": []}
-    manifest_path = base / "manifest.json"
+                "smoke": [], "results": [], "failures": []}
+    with manifest_path.open("x") as handle:
+        handle.write(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
 
     def save():
-        manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+        tmp = manifest_path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+        os.replace(tmp, manifest_path)
 
-    save()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=cfg["concurrency"]) as pool:
-        futures = {pool.submit(run_chunk, cfg, job): job for job in jobs}
-        for future in concurrent.futures.as_completed(futures):
-            job = futures[future]
-            try:
-                manifest["results"].append(future.result())
-            except Exception as exc:
-                manifest["failures"].append({"job": list(job), "error": repr(exc)})
+    try:
+        for model in cfg["models"]:
+            ensure_runtime(cfg, model)
+    except Exception as exc:
+        manifest["status"] = "blocked_by_runtime_preflight"
+        manifest["failures"].append({"error": repr(exc)})
+        save()
+        return 1
+
+    def collect(stage):
+        def on_result(job, result, error):
+            if error is not None:
+                manifest["failures"].append({"stage": stage, "job": list(job), "error": repr(error)})
+                print(f"FAILED {stage} {job}: {error}", file=sys.stderr, flush=True)
+            else:
+                manifest[stage].append(result)
             save()
-    manifest.update({"status": "complete", "completed_at_utc": now()})
+            return error is None
+        return on_result
+
+    smoke = list(dict.fromkeys((name, game, snapshot, cfg["seeds"]["start"], 1)
+                               for name, game, snapshot, _, _ in jobs))
+    manifest["status"] = "smoke"
     save()
+    if not run_stage(smoke, lambda job: run_chunk(cfg, job, smoke=True), collect("smoke"), cfg["concurrency"]):
+        manifest["status"] = "blocked_by_smoke_test"
+        save()
+        return 1
+    manifest["status"] = "running"
+    save()
+    ok = run_stage(jobs, lambda job: run_chunk(cfg, job), collect("results"), cfg["concurrency"])
+    manifest.update({"status": "complete" if ok else "aborted_invalid_chunk", "completed_at_utc": now()})
+    save()
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

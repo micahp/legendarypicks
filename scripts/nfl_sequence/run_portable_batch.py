@@ -16,7 +16,6 @@ Usage (on the host with the packs):
 from __future__ import annotations
 
 import argparse
-import concurrent.futures
 import hashlib
 import json
 import os
@@ -30,6 +29,7 @@ sys.path[:0] = [str(Path(__file__).resolve().parent), str(Path(__file__).resolve
 import roster_preflight  # noqa: E402
 import pregame_snapshot  # noqa: E402
 from prop_identity import validated_priced_qbs  # noqa: E402
+from batch_launch_gate import run_stage  # noqa: E402
 
 HEAVY = {'v1.6'}  # about 2.1 GB each; one at a time on the 11 GB fast host
 
@@ -102,6 +102,14 @@ def main(argv=None):
     if (args.seeds < 1 or args.seed_start < 0 or args.parallel < 1 or args.runtime_workers < 1
             or not all(models) or len(set(models)) != len(models)):
         ap.error('positive seed count, nonnegative start and unique model IDs required')
+    # The maintained serial runtime has no --workers option. Don't send an
+    # unsupported flag by default; explicitly requested parallelism must exist.
+    help_result = subprocess.run([args.python, str(args.runtime), '--help'], capture_output=True, text=True)
+    if help_result.returncode:
+        raise SystemExit('RUNTIME_CLI_UNAVAILABLE: ' + help_result.stderr[-1000:])
+    worker_option = '--workers' in help_result.stdout
+    if args.runtime_workers != 1 and not worker_option:
+        raise SystemExit('RUNTIME_WORKERS_UNSUPPORTED: use --runtime-workers 1')
     registry = {e['model_id']: e for e in json.loads((args.packs / 'registry.json').read_text())['packages']}
     for m in models:
         pack = args.packs / registry[m]['package']
@@ -178,7 +186,9 @@ def main(argv=None):
             return {'game_id': game, 'model': model, 'status': 'snapshot_changed_after_preflight'}
         cmd = [args.python, str(args.runtime), '--model', model, '--game', game, '--snapshot', str(f),
                '--pack', str(args.packs / entry['package']), '--pack-sha256', entry['sha256'], '--games', str(seeds),
-               '--seed-start', str(args.seed_start), '--out', str(output), '--workers', str(args.runtime_workers)]
+               '--seed-start', str(args.seed_start), '--out', str(output)]
+        if worker_option:
+            cmd.extend(['--workers', str(args.runtime_workers)])
         if score_only:
             cmd.append('--no-player-lines')
         start = time.time()
@@ -218,27 +228,30 @@ def main(argv=None):
         bad = [row for row in result.get('postflight', []) if row[1] == 'FAIL']
         print(time.strftime('%FT%TZ', time.gmtime()), game, model, result['status'], result.get('valid_full_games'),
               '; '.join(f'{n}: {d}' for n, _, d in bad), flush=True)
+        return result
 
-    # smoke test: first requested seed for every game and model, before any full run
+    pairs = [(g, m) for g in snapshots for m in models]
+    accepted = ('completed', 'completed_score_only')
+    def collect(stage):
+        def on_result(pair, result, error):
+            if error is not None:
+                manifest.setdefault('errors', []).append({'stage': stage, 'job': pair, 'error': repr(error)})
+                save()
+                return False
+            return result['status'] in accepted
+        return on_result
+
     manifest['smoke'] = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=args.parallel) as pool:
-        for future in [pool.submit(job, g, m, True) for g in snapshots for m in models]:
-            future.result()
-    bad_smoke = [f"{r['game_id']} {r['model']}" for r in manifest['smoke'] if r['status'] not in ('completed', 'completed_score_only')]
-    if bad_smoke:
+    if not run_stage(pairs, lambda pair: job(*pair, smoke=True), collect('smoke'), args.parallel):
         manifest['status'] = 'blocked_by_smoke_test'
         save()
-        raise SystemExit(f'SMOKE_TEST_FAILED, no full run started: {bad_smoke}')
+        raise SystemExit('SMOKE_TEST_FAILED, no full run started')
     print('SMOKE_TEST_PASSED', len(manifest['smoke']), 'runs', flush=True)
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=args.parallel) as pool:
-        for future in [pool.submit(job, g, m) for g in snapshots for m in models]:
-            future.result()
-    manifest['status'] = 'completed' if all(r['status'] in ('completed', 'completed_score_only') for r in manifest['runs']) \
-        else 'completed_with_failures'
+    ok = run_stage(pairs, lambda pair: job(*pair), collect('runs'), args.parallel)
+    manifest['status'] = 'completed' if ok else 'aborted_after_failure'
     save()
     print('BATCH_DONE', args.name, manifest['status'], flush=True)
-    return 0 if manifest['status'] == 'completed' else 1
+    return 0 if ok else 1
 
 
 if __name__ == '__main__':

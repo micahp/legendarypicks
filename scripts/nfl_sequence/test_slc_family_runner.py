@@ -59,6 +59,24 @@ class Plan(unittest.TestCase):
             self.assertEqual(["2026_10_A_B", "2026_10_B_A"], [g[1] for g in games])
 
 
+class ReportAcceptance(unittest.TestCase):
+    def test_complete_census_not_legacy_ot_aggregate(self):
+        report = {'game_id': 'g', 'data_sources': {'source_snapshot_sha256': 'snap'},
+                  'source': {'base_commit': 'commit', 'producer_worktree_dirty': False},
+                  'pregame_snapshot': {'evaluation': {'verified': True}},
+                  'simulation': {'requested_games': 1, 'seed_start': 7, 'seed_end_inclusive': 7},
+                  'summary': {'valid_full_games': 0, 'outcomes': [
+                      {'seed': 7, 'valid_full_game': True, 'complete_game': True,
+                       'score_scope': 'valid_final', 'home_points': 24, 'away_points': 24}]}}
+        self.assertEqual(fr.require_report(report, 'g', 'snap', 'commit', 7, 1), 1)
+        report['summary']['outcomes'][0]['valid_full_game'] = False
+        with self.assertRaisesRegex(ValueError, 'INVALID_SEED'):
+            fr.require_report(report, 'g', 'snap', 'commit', 7, 1)
+        report['source']['base_commit'] = 'wrong'
+        with self.assertRaisesRegex(ValueError, 'IDENTITY'):
+            fr.require_report(report, 'g', 'snap', 'commit', 7, 1)
+
+
 class Pins(unittest.TestCase):
     def test_a_changed_pinned_file_is_refused(self):
         with tempfile.TemporaryDirectory() as d:

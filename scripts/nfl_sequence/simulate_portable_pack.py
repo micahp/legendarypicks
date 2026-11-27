@@ -623,6 +623,9 @@ def main(argv=None):
     args = ap.parse_args(argv)
     if args.games < 1 or args.seed_start < 0:
         ap.error("games must be positive and seed-start nonnegative")
+    outputs = [Path(args.out), *[path for path in (args.records_out, args.decisions_out) if path is not None]]
+    if len({path.resolve() for path in outputs}) != len(outputs) or any(path.exists() for path in outputs):
+        ap.error("output paths must be distinct and must not already exist")
     # Fail if imports or any seed execution tries to reach source data.
     _forbid_source_table_reads()
     with tempfile.TemporaryDirectory(prefix="slc-model-runtime-") as temporary:
