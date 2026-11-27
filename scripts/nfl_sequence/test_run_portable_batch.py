@@ -7,9 +7,10 @@ from roster_preflight import failed
 
 class RunAcceptance(unittest.TestCase):
     def setUp(self):
-        self.data = {'game_id': 'game', 'snapshot_sha256': 'snap',
+        self.data = {'game_id': 'game', 'snapshot_sha256': 'snap', 'snapshot_verified': True,
+                     'run_class': 'verified_snapshot_batch', 'run_status': 'complete',
                      'pack': {'model_id': 'model', 'sha256': 'pack'},
-                     'simulation': {'requested_games': 2, 'valid_full_games': 2,
+                     'simulation': {'requested_games': 2, 'attempted_games': 2, 'valid_full_games': 2,
                                     'seed_start': 5, 'seed_end_inclusive': 6},
                      'summary': {'valid_full_games': 2, 'outcomes': [
                          {'seed': seed, 'valid_full_game': True, 'complete_game': True,
@@ -22,6 +23,14 @@ class RunAcceptance(unittest.TestCase):
 
     def test_complete(self):
         self.assertFalse(self.check())
+
+    def test_unverified_snapshot_refuses_even_complete_games(self):
+        self.data['snapshot_verified'] = False
+        self.assertTrue(self.check())
+
+    def test_partial_attempt_cannot_pass(self):
+        self.data['simulation']['attempted_games'] = 1
+        self.assertTrue(self.check())
 
     def test_requested_is_not_valid(self):
         self.data['simulation']['valid_full_games'] = 1

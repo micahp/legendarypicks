@@ -32,6 +32,14 @@ from slc_model_registry import get_model
 from slc_pregame_context import current_streaks_for_snapshot
 
 
+def require_verified_snapshot(snapshot, allow_invalid_research=False):
+    """Forecast evidence and legal game completion are independent gates."""
+    verified = (snapshot.get("evaluation") or {}).get("verified") is True
+    if not verified and not allow_invalid_research:
+        raise ModelPackError("RUNTIME_SNAPSHOT_UNVERIFIED: rebuild from cutoff evidence or explicitly use --allow-invalid-research")
+    return verified
+
+
 def _include_completed_overtime(summary, outcomes, requested, aggregation):
     """Count completed OT ties as valid full games in portable batch summaries."""
     complete = [row for row in outcomes
@@ -273,6 +281,8 @@ def _run(args, engine_dir):
     # reseals model metadata. Keep the supplied snapshot hash for the RNG plan;
     # the mutable snapshot below may be resealed to record the loaded reference.
     pregame_state_sha256 = runtime_snapshot["snapshot_sha256"]
+    research = bool(getattr(args, "allow_invalid_research", False))
+    snapshot_verified = require_verified_snapshot(runtime_snapshot, research)
     runtime_schedule = runtime_snapshot["schedule"]
     if runtime_schedule["game_id"] != args.game:
         raise ModelPackError("RUNTIME_SNAPSHOT_GAME_ID_MISMATCH")
@@ -469,7 +479,7 @@ def _run(args, engine_dir):
                                seed_diagnostics if args.experimental_profile else None)
             status = record.get("status", "unknown")
             blocker = record.get("blocker")
-            valid = bool(record.get("valid_full_game") and record.get("complete_game"))
+            valid = record.get("valid_full_game") is True and record.get("complete_game") is True
             reached_reg = bool(record.get("regulation_end_reached"))
             # The overtime subrecord captures the score at the end of regulation.
             # Keep that diagnostic independent from the final, possibly overtime,
@@ -513,11 +523,20 @@ def _run(args, engine_dir):
                                      "decisions": seed_decisions, "error": record_error})
         if args.records_out:
             records.append({"seed": seed, "record": record, "error": record_error})
-    summary = aggregation.summarize_outcomes(rows, args.games)
+        if not research and not row["valid_full_game"]:
+            print(f"INVALID_SEED_ABORT seed={seed} status={row['status']} blocker={row.get('blocker')} "
+                  f"error={row.get('error')}; stopping before further seeds", file=sys.stderr, flush=True)
+            break
+    attempted = len(rows)
+    summary = aggregation.summarize_outcomes(rows, attempted)
     # The frozen engine aggregator excludes any game tied at regulation, even
     # when overtime completed. Keep its football behavior frozen and correct
     # only the portable runner's full-game reporting boundary.
-    summary = _include_completed_overtime(summary, rows, args.games, aggregation)
+    summary = _include_completed_overtime(summary, rows, attempted, aggregation)
+    failed = attempted != args.games or summary["valid_full_games"] != args.games
+    summary["attempted_games"] = attempted
+    summary["requested_games"] = args.games
+    summary["valid_full_game_coverage"] = summary["valid_full_games"] / args.games
     regulation_diagnostics = {
         "games_reaching_regulation_end": sum(row["regulation_end_reached"] for row in rows),
         "games_tied_at_regulation_end": sum(row["tied_at_regulation_end"] for row in rows),
@@ -535,10 +554,15 @@ def _run(args, engine_dir):
                  "build_game_id": manifest["game_id"],
                  "build_snapshot_sha256": manifest["snapshot_sha256"]},
         "game_id": args.game, "as_of_utc": snapshot["as_of"],
-        "snapshot_sha256": snapshot["snapshot_sha256"],
+        "snapshot_sha256": pregame_state_sha256,
+        "runtime_snapshot_sha256": snapshot["snapshot_sha256"],
+        "snapshot_verified": snapshot_verified,
+        "run_class": "research" if research else "verified_snapshot_batch",
+        "run_status": ("incomplete" if failed else "complete"),
         "rng_protocol": rng_manifest,
         "experimental_configuration": experimental_configuration,
-        "simulation": {"requested_games": args.games, "valid_full_games": summary["valid_full_games"],
+        "simulation": {"requested_games": args.games, "attempted_games": attempted,
+                       "valid_full_games": summary["valid_full_games"],
                        "seed_start": args.seed_start, "seed_end_inclusive": args.seed_start + args.games - 1},
         "summary": summary,
         "player_lines_available": bool(args.with_player_lines),
@@ -563,8 +587,8 @@ def _run(args, engine_dir):
     if output.exists():
         raise FileExistsError(f"immutable output exists: {output}")
     output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
-    print(f"wrote {output}: {summary['valid_full_games']}/{args.games} complete valid games")
-    return 0
+    print(f"wrote {output}: {summary['valid_full_games']}/{args.games} complete valid games; {attempted} attempted")
+    return 1 if failed and not research else 0
 
 
 def main(argv=None):
@@ -577,6 +601,8 @@ def main(argv=None):
     ap.add_argument("--pack-sha256", required=True, help="independent pack hash from trusted build manifest")
     ap.add_argument("--games", type=int, required=True)
     ap.add_argument("--seed-start", type=int, default=0)
+    ap.add_argument("--allow-invalid-research", action="store_true",
+                    help="explicit diagnostic mode: allow unverified inputs and continue after invalid seeds; not a forecast")
     ap.add_argument("--rng-protocol", choices=("v1", "v2"), default=None,
                     help="override the pack's recorded RNG scheme; V1 default remains unchanged")
     ap.add_argument("--expected-stream-root-sha256", default=None,

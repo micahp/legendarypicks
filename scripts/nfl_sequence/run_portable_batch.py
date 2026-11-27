@@ -48,7 +48,9 @@ def validate_run(data, requested, seed_start, game, model, pack_sha, snapshot_sh
     summary = data.get('summary') or {}
     rows = summary.get('outcomes')
     expected = set(range(seed_start, seed_start + requested))
-    identity = (data.get('game_id') == game and data.get('snapshot_sha256') == snapshot_sha
+    identity = (data.get('snapshot_verified') is True and data.get('run_class') == 'verified_snapshot_batch'
+                and data.get('run_status') == 'complete'
+                and data.get('game_id') == game and data.get('snapshot_sha256') == snapshot_sha
                 and (data.get('pack') or {}).get('model_id') == model
                 and (data.get('pack') or {}).get('sha256') == pack_sha)
     census = (isinstance(rows, list) and len(rows) == requested
@@ -59,7 +61,8 @@ def validate_run(data, requested, seed_start, game, model, pack_sha, snapshot_sh
                            and type(row.get('home_points')) is int and row['home_points'] >= 0
                            and type(row.get('away_points')) is int and row['away_points'] >= 0
                            for row in rows))
-    counts = (sim.get('requested_games') == requested and sim.get('valid_full_games') == requested
+    counts = (sim.get('requested_games') == requested and sim.get('attempted_games') == requested
+              and sim.get('valid_full_games') == requested
               and summary.get('valid_full_games') == requested and sim.get('seed_start') == seed_start
               and sim.get('seed_end_inclusive') == seed_start + requested - 1)
     boxes = data.get('player_boxscores_by_seed') or []
@@ -124,6 +127,8 @@ def main(argv=None):
         sealed = pregame_snapshot.load_frozen_snapshot(str(f))
         if sealed['schedule']['game_id'] != f.stem:
             raise SystemExit(f'SNAPSHOT_GAME_ID_MISMATCH: {f}')
+        if (sealed.get('evaluation') or {}).get('verified') is not True:
+            raise SystemExit(f'SNAPSHOT_UNVERIFIED: {f}; no forecast seeds run')
         rows, resolved = roster_preflight.check(snap, validated_priced_qbs(sealed))
         frozen = roster_preflight.unwrap(snap).get('roster_resolution')
         rows.append(('frozen roster resolution matches', 'PASS' if frozen and frozen['content_hash'] == resolved['content_hash'] else 'FAIL',
@@ -214,7 +219,7 @@ def main(argv=None):
         print(time.strftime('%FT%TZ', time.gmtime()), game, model, result['status'], result.get('valid_full_games'),
               '; '.join(f'{n}: {d}' for n, _, d in bad), flush=True)
 
-    # smoke test: one seed for every game and model, postflight included, before any full run
+    # smoke test: first requested seed for every game and model, before any full run
     manifest['smoke'] = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.parallel) as pool:
         for future in [pool.submit(job, g, m, True) for g in snapshots for m in models]:

@@ -141,11 +141,18 @@ class PortableRuntime(unittest.TestCase):
             ).encode("utf-8")).hexdigest()
             snapshot_path.write_text(json.dumps({"pregame_snapshot": runtime_snapshot,
                                                  "runtime_model_inputs": model_inputs}))
+            with self.assertRaisesRegex(Exception, "RUNTIME_SNAPSHOT_UNVERIFIED"):
+                _run_main_isolated([
+                    "--model", "v1", "--game", "2026_12_NYG_DAL",
+                    "--pack", str(pack_path), "--pack-sha256", pack["sha256"],
+                    "--snapshot", str(snapshot_path), "--games", "1000", "--out", str(root / "refused.json"),
+                ])
+            self.assertFalse((root / "refused.json").exists())
             status = _run_main_isolated([
                 "--model", "v1", "--game", "2026_12_NYG_DAL",
                 "--pack", str(pack_path), "--pack-sha256", pack["sha256"],
                 "--snapshot", str(snapshot_path),
-                "--games", "2", "--seed-start", "51", "--out", str(report_path),
+                "--games", "2", "--seed-start", "51", "--out", str(report_path), "--allow-invalid-research",
                 "--records-out", str(records_path),
             ], probe_file=root / "research.csv")
             report = json.loads(report_path.read_text())
@@ -170,7 +177,7 @@ class PortableRuntime(unittest.TestCase):
                 "--pack", str(pack_path), "--pack-sha256", pack["sha256"],
                 "--snapshot", str(snapshot_path), "--games", "1", "--seed-start", "71",
                 "--rng-protocol", "v2", "--expected-stream-root-sha256", "d" * 64,
-                "--out", str(v2_report_path),
+                "--out", str(v2_report_path), "--allow-invalid-research",
             ])
             self.assertEqual(v2_status, 0)
             self.assertEqual(json.loads(v2_report_path.read_text())["rng_protocol"],
@@ -182,7 +189,7 @@ class PortableRuntime(unittest.TestCase):
                     "--pack", str(pack_path), "--pack-sha256", pack["sha256"],
                     "--snapshot", str(snapshot_path), "--games", "1", "--seed-start", "71",
                     "--rng-protocol", "v2", "--expected-stream-root-sha256", "e" * 64,
-                    "--out", str(root / "wrong-root.json"),
+                    "--out", str(root / "wrong-root.json"), "--allow-invalid-research",
                 ])
 
     def test_completed_overtime_tie_counts_as_valid_full_game(self):
