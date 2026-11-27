@@ -1,5 +1,6 @@
 """Cross-engine translation checks. No historical outcome is supplied to Gridiron."""
 import copy
+import hashlib
 import json
 import math
 import os
@@ -13,6 +14,21 @@ import gridiron_bridge as bridge
 import participation_field
 
 ENGINE = Path(os.environ.get('GRIDIRON_ENGINE_TEST_ROOT', '/root/gridiron-v1-player-state'))
+
+
+def test_bundled_engine_integrity_without_git(tmp_path):
+    engine = tmp_path / 'engine'
+    engine.mkdir()
+    source = engine / 'play.js'
+    source.write_text('export const play = 1;\n')
+    digest = hashlib.sha256(source.read_bytes()).hexdigest()
+    manifest = {'schema': 'slc-gridiron-files-1', 'commit': bridge.ENGINE_COMMIT,
+                'files': {'engine/play.js': digest}}
+    (tmp_path / 'slc-gridiron-manifest.json').write_text(json.dumps(manifest))
+    assert bridge._check_engine(tmp_path) == bridge.ENGINE_COMMIT
+    source.write_text('modified')
+    with pytest.raises(ValueError, match='gridiron_engine_integrity_mismatch'):
+        bridge._check_engine(tmp_path)
 
 @pytest.fixture
 def play():

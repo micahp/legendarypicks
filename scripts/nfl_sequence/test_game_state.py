@@ -2710,6 +2710,13 @@ class AutonomousGameLifecycle(unittest.TestCase):
         self.assertEqual(record['drives'][1]['offense_team'], 'A')
         self.assertEqual(record['drives'][1]['plays'][0]['state_before']['yardline_100'], 80)
 
+    def test_autonomous_game_does_not_require_historical_reference(self):
+        record = gs.play_game(17, None, winner_choice='receive', winner='A',
+                              execution_source=self.Source(), max_drives=80)
+        self.assertEqual(record['status'], 'complete_regulation')
+        self.assertTrue(record['legal_game_complete'])
+        self.assertEqual(record['points'], {'A': 7, 'B': 0})
+
     def test_generated_plays_complete_through_the_shared_regulation_game_lifecycle(self):
         reference = ref({}, [])
         record = gs.play_game(17, reference, winner_choice='receive', winner='A',

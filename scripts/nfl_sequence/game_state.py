@@ -1744,7 +1744,7 @@ class _Game:
                          or self.ref.kicks.get('field_goal_outcomes') else None)
         research = {'clock': self.clock_draws} if self.clock_draws is not None else {}  # the E2 call is unchanged
         attempt = []  # the plays made before a block are evidence, kept apart from drives and stats
-        sampler = self.ref.contextual_sampler
+        sampler = None if self.execution_source is not None else self.ref.contextual_sampler
         timeout_guard = _TimeoutSamplingGuard(getattr(self.ref, 'participants', {}), self.timeouts)
         timeout_policy = getattr(self.ref, 'timeout_policy', None)
         timeout_decisions = (self.execution_source.timeout_model(self.timeouts, self.points)
@@ -1755,7 +1755,8 @@ class _Game:
             research['timeouts'] = timeout_decisions
         decision_log = getattr(sampler, 'decisions', None)
         decision_start = len(decision_log) if isinstance(decision_log, list) else None
-        plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool,
+        pool = None if self.execution_source is not None else self.ref.pool
+        plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), pool,
                                       self.simulation_id, special_teams=special_teams, partial=attempt,
                                       sampling_policy=None if self.execution_source is not None else self.ref.contextual_sampler,
                                       score_diff=self.points[self.offense] - self.points[self.defense],

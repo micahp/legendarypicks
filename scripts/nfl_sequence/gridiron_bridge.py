@@ -173,6 +173,24 @@ def _sha(path):
 
 def _check_engine(root):
     root = Path(root)
+    manifest_path = root / 'slc-gridiron-manifest.json'
+    if manifest_path.is_file() and not (root / '.git').exists():
+        manifest = json.loads(manifest_path.read_text())
+        if manifest.get('schema') != 'slc-gridiron-files-1' or manifest.get('commit') != ENGINE_COMMIT:
+            raise ValueError('gridiron_engine_manifest_mismatch')
+        expected = manifest.get('files')
+        if not isinstance(expected, dict) or not expected:
+            raise ValueError('gridiron_engine_manifest_invalid')
+        engine = root / 'engine'
+        actual = {}
+        for path in engine.rglob('*'):
+            if path.is_symlink():
+                raise ValueError('gridiron_engine_symlink_forbidden')
+            if path.is_file():
+                actual[path.relative_to(root).as_posix()] = _sha(path)
+        if actual != expected:
+            raise ValueError('gridiron_engine_integrity_mismatch')
+        return ENGINE_COMMIT
     commit = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
     if commit != ENGINE_COMMIT:
         raise ValueError('gridiron_engine_commit_mismatch:' + commit)
