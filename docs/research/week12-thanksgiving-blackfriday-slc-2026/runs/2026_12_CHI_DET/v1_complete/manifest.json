@@ -1,0 +1,55 @@
+{
+  "code_commit": "41680940cb61749dd91c4e04ba374a9df8952600",
+  "elapsed_seconds": 1871.6,
+  "finished_at_utc": "2026-11-27T16:28:30Z",
+  "game_id": "2026_12_CHI_DET",
+  "model_id": "v1_complete",
+  "pack_sha256": "1b5a4369aa69f7fb739463d17fbc19c6ed7c307265e1368639fc812d795593a1",
+  "player_lines_available": true,
+  "portable_runner_sha256": "e97d8e6c1a2ea3b4bf546a32202c7b478fa8bbc51dfd50a9532b15e8429387bb",
+  "postflight": [
+    [
+      "run has player box scores",
+      "PASS",
+      "99 seeds"
+    ],
+    [
+      "excluded players receiving stats",
+      "PASS",
+      "0"
+    ],
+    [
+      "CHI simulated passer is the resolved QB1",
+      "PASS",
+      "most seeds: 00-0039918, resolved: 00-0039918"
+    ],
+    [
+      "DET simulated passer is the resolved QB1",
+      "PASS",
+      "most seeds: 00-0033106, resolved: 00-0033106"
+    ]
+  ],
+  "raw_archive_bytes": 33630926,
+  "raw_archive_sha256": "4052134bbbfa6874f8ece7c34302dda30c8e63744f0da0dc87f4bab9787fbb3c",
+  "registry_sha256": "c9370a46cf64e481a0439c0f2cb9d97cf835f1a6861c686b32e980f292b60207",
+  "requested_games": 100,
+  "returncode": 1,
+  "run_id": "2026_12_CHI_DET-20261127T155718Z-fc22ba3e2097",
+  "schema": "slc-run-manifest-1",
+  "seeds": {
+    "count_per_model": 100,
+    "first": 300001,
+    "last_inclusive": 300100
+  },
+  "snapshot": {
+    "as_of": "2026-11-26T16:30:00Z",
+    "path": "/root/runs/week-12/snapshots/2026_12_CHI_DET.frozen.json",
+    "roster_resolution_hash": "248d00103f33c92fa4f8bb73e34482df30ca086b6b3f50990ae4d035e346811a",
+    "sha256": "fc22ba3e20970967b955e58476a428537485dc076320039ad7fa2ddb46036266"
+  },
+  "source_run_manifest_sha256": "92cf816a61115bac884dfd79ece025e7842b12a7306766c720dd196ae44cd000",
+  "started_at_utc": "2026-11-27T15:57:18Z",
+  "status": "completed_with_failures",
+  "valid_full_games": 89,
+  "workers_per_model": 4
+}

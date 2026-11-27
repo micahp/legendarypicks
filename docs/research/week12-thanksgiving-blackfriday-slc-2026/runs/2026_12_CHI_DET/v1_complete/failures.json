@@ -1,0 +1,105 @@
+{
+  "attempted": 100,
+  "failed": 11,
+  "failure_counts": {
+    "defensive_touchback_needs_end_zone_dead_ball_and_restart_facts": 1,
+    "exception": 1,
+    "gridiron_play_incomplete:": 2,
+    "kick_return_start_spot_invalid": 6,
+    "kick_v3_goal_line_dead_ball_needs_explicit_score": 1
+  },
+  "failures": [
+    {
+      "kind": "blocked",
+      "reason": "autonomous_event_transition_unsupported:kick_return_start_spot_invalid",
+      "seed": 300004
+    },
+    {
+      "diagnostic": {
+        "ball_state": {
+          "height": 1.0499999523162842,
+          "x_yards": 87.32744598388672,
+          "y_yards": 29.259653091430664
+        },
+        "last_transition": {
+          "reason": "simulation_time_cap",
+          "t": 12.008333333333292,
+          "time_limit_seconds": 12,
+          "type": "simulation_failure"
+        },
+        "operation": "play",
+        "result_status": "failed"
+      },
+      "kind": "blocked",
+      "reason": "autonomous_event_generation_invalid:gridiron_play_incomplete:{'reason': 'simulation_time_cap', 'time_limit_seconds': 12}",
+      "seed": 300017
+    },
+    {
+      "kind": "blocked",
+      "reason": "autonomous_event_transition_unsupported:kick_return_start_spot_invalid",
+      "seed": 300033
+    },
+    {
+      "kind": "exception",
+      "reason": "play 4: blocked field-goal transition disagrees with its live result",
+      "seed": 300041,
+      "traceback": "Traceback (most recent call last):\n  File \"/root/runs/week-12/inputs/v1-complete-portable-runtime-gzip/simulate_portable_pack.py\", line 588, in _run_autonomous_seed\n    record = context['autonomous'].play_autonomous_game(seed, None, **context['kwargs'])\n  File \"/tmp/slc-model-runtime-0bv3cjta/scripts/nfl_sequence/autonomous_game.py\", line 1515, in play_autonomous_game\n    record = game_state.play_game(seed, ref, pregame_snapshot=source.snapshot,\n  File \"/tmp/slc-model-runtime-0bv3cjta/scripts/nfl_sequence/game_state.py\", line 2168, in play_game\n    return _Game(seed, ref, ledger, rng, pregame_snapshot, model_seed, streams,\n  File \"/tmp/slc-model-runtime-0bv3cjta/scripts/nfl_sequence/game_state.py\", line 1954, in run\n    self._drive()\n  File \"/tmp/slc-model-runtime-0bv3cjta/scripts/nfl_sequence/game_state.py\", line 1220, in _drive\n    self._drive_body()\n  File \"/tmp/slc-model-runtime-0bv3cjta/scripts/nfl_sequence/game_state.py\", line 1796, in _drive_body\n    e1.check_drive(plays, terminal)\n  File \"/tmp/slc-model-runtime-0bv3cjta/scripts/nfl_sequence/e1_drive.py\", line 729, in check_drive\n    raise AssertionError(f'play {i + 1}: blocked field-goal transition disagrees with its live result')\nAssertionError: play 4: blocked field-goal transition disagrees with its live result\n"
+    },
+    {
+      "kind": "blocked",
+      "reason": "autonomous_event_transition_unsupported:kick_return_start_spot_invalid",
+      "seed": 300047
+    },
+    {
+      "kind": "blocked",
+      "reason": "autonomous_event_transition_unsupported:kick_v3_goal_line_dead_ball_needs_explicit_score",
+      "seed": 300072
+    },
+    {
+      "diagnostic": {
+        "ball_state": {
+          "height": 1.0499999523162842,
+          "x_yards": 31.466510772705078,
+          "y_yards": 24.977231979370117
+        },
+        "last_transition": {
+          "reason": "simulation_time_cap",
+          "t": 12.008333333333292,
+          "time_limit_seconds": 12,
+          "type": "simulation_failure"
+        },
+        "operation": "play",
+        "result_status": "failed"
+      },
+      "kind": "blocked",
+      "reason": "autonomous_event_generation_invalid:gridiron_play_incomplete:{'reason': 'simulation_time_cap', 'time_limit_seconds': 12}",
+      "seed": 300077
+    },
+    {
+      "kind": "blocked",
+      "reason": "autonomous_event_transition_unsupported:defensive_touchback_needs_end_zone_dead_ball_and_restart_facts",
+      "seed": 300087
+    },
+    {
+      "kind": "blocked",
+      "reason": "autonomous_event_transition_unsupported:kick_return_start_spot_invalid",
+      "seed": 300090
+    },
+    {
+      "kind": "blocked",
+      "reason": "autonomous_event_transition_unsupported:kick_return_start_spot_invalid",
+      "seed": 300098
+    },
+    {
+      "kind": "blocked",
+      "reason": "autonomous_event_transition_unsupported:kick_return_start_spot_invalid",
+      "seed": 300100
+    }
+  ],
+  "full_attempt_diagnostics_archive": "/root/runs/week-12/games/2026_12_CHI_DET/raw/2026_12_CHI_DET-20261127T155718Z-fc22ba3e2097.tar.gz",
+  "game_id": "2026_12_CHI_DET",
+  "model_id": "v1_complete",
+  "run_id": "2026_12_CHI_DET-20261127T155718Z-fc22ba3e2097",
+  "schema": "slc-seed-failure-ledger-1",
+  "valid_full_games": 89
+}

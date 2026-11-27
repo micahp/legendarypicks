@@ -18,6 +18,7 @@ Kickoff: 2026-11-26T18:00:00+00:00 UTC. Actual: CHI 39, DET 35 (total 74).
 | v2_simplified | 100/100 | 0.540 | 23.5 | 25.2 | 48.7 | 87 | 0.244 |
 | v2_support_aware | 100/100 | 0.590 | 20.0 | 22.2 | 42.2 | 87 | 0.267 |
 | v2_soft_conditioning | 100/100 | 0.670 | 21.7 | 26.2 | 47.9 | 87 | 0.237 |
+| v1_complete | 89/100 valid | 0.551 | 16.4 | 18.8 | 35.3 | 87 | 0.472 |
 
 Actual total error is model mean total minus actual total (74); actual home-margin error is model mean margin minus actual home margin (-4). The detailed values are included per model in `grades.json`. Each run requested seeds 300001–300100. Latest pregame prop over lines were aggregated as the median across sources, using each source's latest quote captured before the scheduled kickoff; empirical P(over) comes from the simulated player box scores. Brier excludes pushes. Supported prop coverage is 87 graded player-market rows from 130 unique pregame quote lines for CHI–DET; this is a limited single-game retrospective grade, not evidence of model selection.
 
@@ -49,7 +50,7 @@ Per-seed scores and artifact/source hashes are in each `ceg_frozen/summary.json`
 
 ## V1 Complete
 
-The 100-seed V1 Complete sequence is running one game at a time with four workers: CHI–DET, PHI–DAL, then KC–BUF. At report preparation, CHI–DET had 84 seed records written; this is progress, not a completed/graded result. Each game uses the frozen game snapshot, the same V1 Complete package and its pinned game-specific rating input. Seed failures are retained in the attempts output. Final counts, stack traces for failed seeds, and player boxes will be appended when the sequence completes.
+The V1 Complete sequence requests 100 seeds per Thanksgiving game, one game at a time with four workers. CHI–DET is complete as a batch but only 89/100 are valid full games; no failed seed was replaced. Its full seed failure ledger, including the exception stack trace, is in `runs/2026_12_CHI_DET/v1_complete/failures.json`, and player prop grades use only its 89 valid games. PHI–DAL is running; KC–BUF is queued. The same pinned package is used with each frozen game snapshot and game-specific ratings input. Results and failures for both remaining games will be added after their batches finish.
 
 ## Coverage and storage
 
