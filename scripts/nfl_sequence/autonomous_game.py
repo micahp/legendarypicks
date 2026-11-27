@@ -729,8 +729,9 @@ class AutonomousGameExecution:
                 possession = ceg_contract.PossessionV2(
                     team='offense', how='kept', recovery_spot_yardline_100=recovery_y,
                     dead_ball_yardline_100=dead_y, recovered_by=ceg_contract.PlayerRoleV2.named(recoverer_id),
-                    return_yards=fumble_geometry['return_yards'],
-                    returner=ceg_contract.PlayerRoleV2.named(returner_id),
+                    # Kept possession has no turnover-return fields in ceg-play-2.
+                    # Raw recovery geometry is validated above; the actor and
+                    # original facts remain in the execution record.
                     fumble_spot_yardline_100=fumble_y)
             else:
                 possession = ceg_contract.PossessionV2(
@@ -855,7 +856,8 @@ class AutonomousGameExecution:
         if fumble:
             fumbler = roster_rows.get(fumble.get('fumbler_id'), {})
             recoverer = roster_rows.get(fumble.get('recoverer_id'), {})
-            post_returner_id = outcome.get('carrier_id') or fumble.get('recoverer_id')
+            post_returner_id = (fumble.get('returner_id') or outcome.get('carrier_id')
+                                or fumble.get('recoverer_id'))
             returner = roster_rows.get(post_returner_id, {})
             participants.update({
                 'fumbler_id': fumble.get('fumbler_id'),
@@ -873,7 +875,7 @@ class AutonomousGameExecution:
                 'returner_name': returner.get('player_name'),
                 'returner_position': returner.get('pos_abb'),
                 'returner_team': returner.get('team'),
-                'returner_side': defense if returner else None,
+                'returner_side': (side if returner.get('team') == team else defense) if returner else None,
             })
         return participants
 
