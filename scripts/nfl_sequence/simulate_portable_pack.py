@@ -541,6 +541,7 @@ def _run(args, engine_dir):
         "simulation": {"requested_games": args.games, "valid_full_games": summary["valid_full_games"],
                        "seed_start": args.seed_start, "seed_end_inclusive": args.seed_start + args.games - 1},
         "summary": summary,
+        "player_lines_available": bool(args.with_player_lines),
         "regulation_end_diagnostics": regulation_diagnostics,
     }
     if args.with_player_lines:

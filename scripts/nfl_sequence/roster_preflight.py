@@ -196,13 +196,16 @@ def check(snapshot, market_qbs=None):
     return rows, resolved
 
 
-def postflight(snapshot, run_output, resolved=None):
+def postflight(snapshot, run_output, resolved=None, *, score_only=False):
     """Rows for a finished run: excluded players with stats, and seeds whose passer was not the resolved QB1."""
     snap = unwrap(snapshot)
     resolved = resolved or resolve(snapshot)
     teams = {snap['rosters'][s]['team']: resolved[s] for s in ('away', 'home')}
     seeds = run_output.get('player_boxscores_by_seed') or []
     if not seeds:
+        if score_only and run_output.get('player_lines_available') is False:
+            return [('player statistics verification', 'NOT_APPLICABLE',
+                     'registered score-only model: player props and roster usage unverified')]
         return [('run has player box scores', 'FAIL', 'no player_boxscores_by_seed')]
     out_hits, passers = Counter(), {t: Counter() for t in teams}
     for seed in seeds:
