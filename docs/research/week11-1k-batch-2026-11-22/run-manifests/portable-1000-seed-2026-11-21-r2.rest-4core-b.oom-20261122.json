@@ -1,0 +1,82 @@
+{
+  "games": [
+    "2026_11_NYJ_LAC",
+    "2026_11_JAX_NYG",
+    "2026_11_LV_DEN",
+    "2026_11_MIN_SF"
+  ],
+  "models": [
+    "v1",
+    "v1.5",
+    "v1.6",
+    "v2",
+    "pbv1",
+    "pbv1-off"
+  ],
+  "name": "rest-4core-b",
+  "pack_directory": "/root/runs/week-11/inputs/models/portable-models-2026-11-19",
+  "packages": {
+    "pbv1": {
+      "code_commit": "8a1d984229cdc20f5ad076ebd81edc7f1be90c75",
+      "path": "/root/runs/week-11/inputs/models/portable-models-2026-11-19/pbv1--season-2026.slcpkg",
+      "sha256": "774366599e23fda6eb2e91c13abd1284083f116af8ef720a2fccdf99b86ac90f"
+    },
+    "pbv1-off": {
+      "code_commit": "8a1d984229cdc20f5ad076ebd81edc7f1be90c75",
+      "path": "/root/runs/week-11/inputs/models/portable-models-2026-11-19/pbv1-off--season-2026.slcpkg",
+      "sha256": "48cca8b62f36d2cd142c5b94230c536b19efa9d6b90bff5129241d4005babb4d"
+    },
+    "v1": {
+      "code_commit": "58ef3861e5f3cc4006ab627102e55bd432ab399d",
+      "path": "/root/runs/week-11/inputs/models/portable-models-2026-11-19/v1--season-2026.slcpkg",
+      "sha256": "6286d341b21d69ea90c1fdd18c4837821a93bba8a1750f82dbcf9dd7ac0a6f0a"
+    },
+    "v1.5": {
+      "code_commit": "2eab8a89efffad23c00a1d451ac80e856579ac5a",
+      "path": "/root/runs/week-11/inputs/models/portable-models-2026-11-19/v1.5-ind-hou-overtime.slcpack",
+      "sha256": "727820b921ce79e4bcb3e168a3586cca16513715da87d3380e95a298cd7a17c8"
+    },
+    "v1.6": {
+      "code_commit": "1bb3bd50c4df5896e4d693245e48329c20c63254",
+      "path": "/root/runs/week-11/inputs/models/portable-models-2026-11-19/v1.6--season-2026.slcpkg",
+      "sha256": "6cf1e83677dc325632c49b2659de3ab04c856fc63d44b19fccc26a6f674f03a2"
+    },
+    "v2": {
+      "code_commit": "8a1d984229cdc20f5ad076ebd81edc7f1be90c75",
+      "path": "/root/runs/week-11/inputs/models/portable-models-2026-11-19/v2--season-2026-runtimefix1.slcpkg",
+      "sha256": "97c4a01e9a60c3f6e31c1701d4c954fddd5d6e9938c193bd1aba9218c7d7f5c3"
+    }
+  },
+  "runs": [
+    {
+      "game_id": "2026_11_NYJ_LAC",
+      "model": "v1",
+      "output": "/root/runs/week-11/games/portable-1000-seed-2026-11-21-r2/2026_11_NYJ_LAC/v1.json",
+      "status": "skipped_existing_output"
+    },
+    {
+      "game_id": "2026_11_NYJ_LAC",
+      "model": "v1.5",
+      "output": "/root/runs/week-11/games/portable-1000-seed-2026-11-21-r2/2026_11_NYJ_LAC/v1.5.json",
+      "status": "skipped_existing_output"
+    },
+    {
+      "code_commit": "8a1d984229cdc20f5ad076ebd81edc7f1be90c75",
+      "elapsed_seconds": 184.1,
+      "game_id": "2026_11_NYJ_LAC",
+      "log": "/root/runs/week-11/games/portable-1000-seed-2026-11-21-r2/2026_11_NYJ_LAC/pbv1-off.log",
+      "model": "pbv1-off",
+      "output": "/root/runs/week-11/games/portable-1000-seed-2026-11-21-r2/2026_11_NYJ_LAC/pbv1-off.json",
+      "package_sha256": "48cca8b62f36d2cd142c5b94230c536b19efa9d6b90bff5129241d4005babb4d",
+      "requested_games": null,
+      "returncode": -9,
+      "runtime_reported_valid_full_games": null,
+      "status": "failed"
+    }
+  ],
+  "schema": "slc-portable-full-slate-batch-1",
+  "seed_start": 300001,
+  "seeds_per_game_model": 1000,
+  "status": "running",
+  "workers": 4
+}

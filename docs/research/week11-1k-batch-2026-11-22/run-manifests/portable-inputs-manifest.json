@@ -1,0 +1,139 @@
+{
+  "db_sha256": "e997951b0a8ceb8acc82eef01520797e053da9033527b8f3693af0f7ecdf3939",
+  "games": [
+    {
+      "current_streak_source_sha256": "3fb3fef67c3b69a68354e4a4ff0efcae8641044878e6c18f918338fd1b718b61",
+      "current_streak_teams": 34,
+      "file_sha256": "3b1c0edfd6508c217c4c26c20bb86073fc8234d02b882b14e00bf83b5e5249ab",
+      "game_id": "2026_11_ARI_KC",
+      "historical_games_used": 150,
+      "kickoff_utc": "2026-11-22T18:00:00Z",
+      "original_snapshot_sha256": "666f0a500dfbcd55d54c5d55d041810956ec7efda9382c046fdde5f6c82e4942",
+      "path": "/root/runs/week-11/snapshots/2026_11_ARI_KC.portable.json",
+      "portable_snapshot_sha256": "d757a89bdecda76ca6c7c7f146e3a83c707064dfb5497f296a37a71084418913",
+      "runtime_model_inputs_sha256": "374ef3026b6fef592170ce641bc6bb4d7ddd22f0787a75eaea7cf0b2b3e799b0"
+    },
+    {
+      "current_streak_source_sha256": "3fb3fef67c3b69a68354e4a4ff0efcae8641044878e6c18f918338fd1b718b61",
+      "current_streak_teams": 34,
+      "file_sha256": "e4a76b8908a63ffe6fcef50989305e1ba06ea13115461720bc0d7f9e063c60f1",
+      "game_id": "2026_11_BAL_CAR",
+      "historical_games_used": 150,
+      "kickoff_utc": "2026-11-22T18:00:00Z",
+      "original_snapshot_sha256": "b190b36cbb0aafdae6154f85d933e4446759d00667071acebd3f201f6453fe17",
+      "path": "/root/runs/week-11/snapshots/2026_11_BAL_CAR.portable.json",
+      "portable_snapshot_sha256": "77a8ca22f38feb4219cd7295050742cf2656fe30dba449bf5066043494a5aa29",
+      "runtime_model_inputs_sha256": "374ef3026b6fef592170ce641bc6bb4d7ddd22f0787a75eaea7cf0b2b3e799b0"
+    },
+    {
+      "current_streak_source_sha256": "3fb3fef67c3b69a68354e4a4ff0efcae8641044878e6c18f918338fd1b718b61",
+      "current_streak_teams": 34,
+      "file_sha256": "abbdc3611755a806ded1e9026bfdfaaf7e9d5fbea16c411a8e8eefa99b00cb72",
+      "game_id": "2026_11_MIA_BUF",
+      "historical_games_used": 150,
+      "kickoff_utc": "2026-11-22T18:00:00Z",
+      "original_snapshot_sha256": "41018062c344f3310e86bf49646c6589427941a759426edaf914dc7a89b30b74",
+      "path": "/root/runs/week-11/snapshots/2026_11_MIA_BUF.portable.json",
+      "portable_snapshot_sha256": "4af18c587a17f1711f2c4d601cc6aef7b02de28c73be3221a526ce071d39d66c",
+      "runtime_model_inputs_sha256": "374ef3026b6fef592170ce641bc6bb4d7ddd22f0787a75eaea7cf0b2b3e799b0"
+    },
+    {
+      "current_streak_source_sha256": "3fb3fef67c3b69a68354e4a4ff0efcae8641044878e6c18f918338fd1b718b61",
+      "current_streak_teams": 34,
+      "file_sha256": "c35d4a60cbd4a4868cc1d04f6d980c77cc6b5f51079fcb703e309b5d5c392b77",
+      "game_id": "2026_11_NO_CHI",
+      "historical_games_used": 150,
+      "kickoff_utc": "2026-11-22T18:00:00Z",
+      "original_snapshot_sha256": "4b52140768b80d37fa489f846ef7de3ac12564e74696d43b2d7709610ce799cc",
+      "path": "/root/runs/week-11/snapshots/2026_11_NO_CHI.portable.json",
+      "portable_snapshot_sha256": "ab699dcac1d70814fc90108522acb710d032009fc5791ee613825d371dfcf870",
+      "runtime_model_inputs_sha256": "374ef3026b6fef592170ce641bc6bb4d7ddd22f0787a75eaea7cf0b2b3e799b0"
+    },
+    {
+      "current_streak_source_sha256": "3fb3fef67c3b69a68354e4a4ff0efcae8641044878e6c18f918338fd1b718b61",
+      "current_streak_teams": 34,
+      "file_sha256": "9e4eeff41db75f1d97293ca76c8fd6160c9c0849980a7f25d70ba7519321bd05",
+      "game_id": "2026_11_PIT_PHI",
+      "historical_games_used": 150,
+      "kickoff_utc": "2026-11-22T18:00:00Z",
+      "original_snapshot_sha256": "f43940b1b42f3bc33b41dac7b012b1b26d06e7f5b4330dd90c9cf26cc65147e9",
+      "path": "/root/runs/week-11/snapshots/2026_11_PIT_PHI.portable.json",
+      "portable_snapshot_sha256": "55ebd3c8a175b1d293109daa96adf04d471fd8aa8926d609c1ed2b2fcea86c67",
+      "runtime_model_inputs_sha256": "374ef3026b6fef592170ce641bc6bb4d7ddd22f0787a75eaea7cf0b2b3e799b0"
+    },
+    {
+      "current_streak_source_sha256": "3fb3fef67c3b69a68354e4a4ff0efcae8641044878e6c18f918338fd1b718b61",
+      "current_streak_teams": 34,
+      "file_sha256": "616547d62e01575a6d4623fa5f5822b96026fdd80b6260a5c3c30d5d0b5389c8",
+      "game_id": "2026_11_TB_DET",
+      "historical_games_used": 150,
+      "kickoff_utc": "2026-11-22T18:00:00Z",
+      "original_snapshot_sha256": "a0078eabf0ad3f041d60abfde18e5d6397a3cebf8b9b3bd0bdcf2b7b1ebf0cd0",
+      "path": "/root/runs/week-11/snapshots/2026_11_TB_DET.portable.json",
+      "portable_snapshot_sha256": "3277c14fe3936d415650e7377b6e72d3bf181563d58f9a53f1ba6e5292918ff4",
+      "runtime_model_inputs_sha256": "374ef3026b6fef592170ce641bc6bb4d7ddd22f0787a75eaea7cf0b2b3e799b0"
+    },
+    {
+      "current_streak_source_sha256": "3fb3fef67c3b69a68354e4a4ff0efcae8641044878e6c18f918338fd1b718b61",
+      "current_streak_teams": 34,
+      "file_sha256": "df97cc9565f1c38580ce896b1d6369e1c78038b4dfc8f6c6e9e92dfb5e511bc4",
+      "game_id": "2026_11_TEN_DAL",
+      "historical_games_used": 150,
+      "kickoff_utc": "2026-11-22T18:00:00Z",
+      "original_snapshot_sha256": "a494b4a7fe2eba345824a1ce97915dccd83a4be845be1264d7987d4580732802",
+      "path": "/root/runs/week-11/snapshots/2026_11_TEN_DAL.portable.json",
+      "portable_snapshot_sha256": "c4ac68ca36fd691208ad0f57b0d6d7cf61d22de0d08868f43371e779ebd1981c",
+      "runtime_model_inputs_sha256": "374ef3026b6fef592170ce641bc6bb4d7ddd22f0787a75eaea7cf0b2b3e799b0"
+    },
+    {
+      "current_streak_source_sha256": "3fb3fef67c3b69a68354e4a4ff0efcae8641044878e6c18f918338fd1b718b61",
+      "current_streak_teams": 34,
+      "file_sha256": "bab33516fe14d13720f9586c7e7fd860f26a0ec0444ffa4ec3e709f416194b8f",
+      "game_id": "2026_11_NYJ_LAC",
+      "historical_games_used": 150,
+      "kickoff_utc": "2026-11-22T21:05:00Z",
+      "original_snapshot_sha256": "ddcec10cdb6942feb271c9bc5371747740bbf4689f20c1386dc3e55efdd8380c",
+      "path": "/root/runs/week-11/snapshots/2026_11_NYJ_LAC.portable.json",
+      "portable_snapshot_sha256": "20959a276fd41d5ce49ea43e2e0fa3fbeffdda00a41724fdc55259f63b25733e",
+      "runtime_model_inputs_sha256": "374ef3026b6fef592170ce641bc6bb4d7ddd22f0787a75eaea7cf0b2b3e799b0"
+    },
+    {
+      "current_streak_source_sha256": "3fb3fef67c3b69a68354e4a4ff0efcae8641044878e6c18f918338fd1b718b61",
+      "current_streak_teams": 34,
+      "file_sha256": "e521e38e3afc34b775ec8a284451988ae1e81ac3270bb2d981f11428286d4109",
+      "game_id": "2026_11_JAX_NYG",
+      "historical_games_used": 150,
+      "kickoff_utc": "2026-11-22T21:25:00Z",
+      "original_snapshot_sha256": "08698b7de89c512e2c7cb9f562e8734a8f2aa0c6c5e147fb0b9876a603c7e803",
+      "path": "/root/runs/week-11/snapshots/2026_11_JAX_NYG.portable.json",
+      "portable_snapshot_sha256": "9929cf8d540b0f5f6dce2c8bc80b5223bdca0f66e43da0e0d9d34bfa9aa926b6",
+      "runtime_model_inputs_sha256": "374ef3026b6fef592170ce641bc6bb4d7ddd22f0787a75eaea7cf0b2b3e799b0"
+    },
+    {
+      "current_streak_source_sha256": "3fb3fef67c3b69a68354e4a4ff0efcae8641044878e6c18f918338fd1b718b61",
+      "current_streak_teams": 34,
+      "file_sha256": "1feb4005da35bb1630f3522a98f1ee007582b6cfbea889a62d0460731409a57a",
+      "game_id": "2026_11_LV_DEN",
+      "historical_games_used": 150,
+      "kickoff_utc": "2026-11-22T21:25:00Z",
+      "original_snapshot_sha256": "aeb909a114a1a6754282d994a5a01917a86755ee905ca98527d8aaf5d61cdfd5",
+      "path": "/root/runs/week-11/snapshots/2026_11_LV_DEN.portable.json",
+      "portable_snapshot_sha256": "ad05bc1a1a0623fd24e7a87a3816b1d0c230762a204d6743a2d0a60fd3c926cb",
+      "runtime_model_inputs_sha256": "374ef3026b6fef592170ce641bc6bb4d7ddd22f0787a75eaea7cf0b2b3e799b0"
+    },
+    {
+      "current_streak_source_sha256": "3fb3fef67c3b69a68354e4a4ff0efcae8641044878e6c18f918338fd1b718b61",
+      "current_streak_teams": 34,
+      "file_sha256": "c728ee0699492119e1a8fb30ef96cf32f881496ad1d36db4c6bf6357e17e84bd",
+      "game_id": "2026_11_MIN_SF",
+      "historical_games_used": 150,
+      "kickoff_utc": "2026-11-23T01:20:00Z",
+      "original_snapshot_sha256": "106635f0fdb648ea7152ca5206aeafa2fc6db31a5c424e5ee71e10671de10920",
+      "path": "/root/runs/week-11/snapshots/2026_11_MIN_SF.portable.json",
+      "portable_snapshot_sha256": "9d15e9a5b85c9c0c1ea4bc2a45a5179bbd6f7afb933f5f9fe63d25061c59522f",
+      "runtime_model_inputs_sha256": "374ef3026b6fef592170ce641bc6bb4d7ddd22f0787a75eaea7cf0b2b3e799b0"
+    }
+  ],
+  "schema": "slc-portable-pregame-inputs-1",
+  "streak_build_policy": "read-only frozen DB, regular season results available by snapshot as_of, kickoff plus 10 hours; target game excluded"
+}

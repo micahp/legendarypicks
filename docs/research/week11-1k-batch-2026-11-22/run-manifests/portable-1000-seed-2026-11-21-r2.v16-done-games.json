@@ -1,0 +1,79 @@
+{
+  "games": [
+    "2026_11_ARI_KC",
+    "2026_11_BAL_CAR",
+    "2026_11_MIA_BUF",
+    "2026_11_NO_CHI"
+  ],
+  "models": [
+    "v1.6"
+  ],
+  "name": "v16-done-games",
+  "pack_directory": "/root/runs/week-11/inputs/models/portable-models-2026-11-19",
+  "packages": {
+    "v1.6": {
+      "code_commit": "1bb3bd50c4df5896e4d693245e48329c20c63254",
+      "path": "/root/runs/week-11/inputs/models/portable-models-2026-11-19/v1.6--season-2026.slcpkg",
+      "sha256": "6cf1e83677dc325632c49b2659de3ab04c856fc63d44b19fccc26a6f674f03a2"
+    }
+  },
+  "runs": [
+    {
+      "code_commit": "1bb3bd50c4df5896e4d693245e48329c20c63254",
+      "elapsed_seconds": 5311.4,
+      "game_id": "2026_11_ARI_KC",
+      "log": "/root/runs/week-11/games/portable-1000-seed-2026-11-21-r2/2026_11_ARI_KC/v1.6.log",
+      "model": "v1.6",
+      "output": "/root/runs/week-11/games/portable-1000-seed-2026-11-21-r2/2026_11_ARI_KC/v1.6.json",
+      "package_sha256": "6cf1e83677dc325632c49b2659de3ab04c856fc63d44b19fccc26a6f674f03a2",
+      "requested_games": 1000,
+      "returncode": 0,
+      "runtime_reported_valid_full_games": 955,
+      "status": "completed"
+    },
+    {
+      "code_commit": "1bb3bd50c4df5896e4d693245e48329c20c63254",
+      "elapsed_seconds": 5750.5,
+      "game_id": "2026_11_BAL_CAR",
+      "log": "/root/runs/week-11/games/portable-1000-seed-2026-11-21-r2/2026_11_BAL_CAR/v1.6.log",
+      "model": "v1.6",
+      "output": "/root/runs/week-11/games/portable-1000-seed-2026-11-21-r2/2026_11_BAL_CAR/v1.6.json",
+      "package_sha256": "6cf1e83677dc325632c49b2659de3ab04c856fc63d44b19fccc26a6f674f03a2",
+      "requested_games": 1000,
+      "returncode": 0,
+      "runtime_reported_valid_full_games": 942,
+      "status": "completed"
+    },
+    {
+      "code_commit": "1bb3bd50c4df5896e4d693245e48329c20c63254",
+      "elapsed_seconds": 5732.1,
+      "game_id": "2026_11_MIA_BUF",
+      "log": "/root/runs/week-11/games/portable-1000-seed-2026-11-21-r2/2026_11_MIA_BUF/v1.6.log",
+      "model": "v1.6",
+      "output": "/root/runs/week-11/games/portable-1000-seed-2026-11-21-r2/2026_11_MIA_BUF/v1.6.json",
+      "package_sha256": "6cf1e83677dc325632c49b2659de3ab04c856fc63d44b19fccc26a6f674f03a2",
+      "requested_games": 1000,
+      "returncode": 0,
+      "runtime_reported_valid_full_games": 969,
+      "status": "completed"
+    },
+    {
+      "code_commit": "1bb3bd50c4df5896e4d693245e48329c20c63254",
+      "elapsed_seconds": 4992.2,
+      "game_id": "2026_11_NO_CHI",
+      "log": "/root/runs/week-11/games/portable-1000-seed-2026-11-21-r2/2026_11_NO_CHI/v1.6.log",
+      "model": "v1.6",
+      "output": "/root/runs/week-11/games/portable-1000-seed-2026-11-21-r2/2026_11_NO_CHI/v1.6.json",
+      "package_sha256": "6cf1e83677dc325632c49b2659de3ab04c856fc63d44b19fccc26a6f674f03a2",
+      "requested_games": 1000,
+      "returncode": 0,
+      "runtime_reported_valid_full_games": 941,
+      "status": "completed"
+    }
+  ],
+  "schema": "slc-portable-full-slate-batch-1",
+  "seed_start": 300001,
+  "seeds_per_game_model": 1000,
+  "status": "completed",
+  "workers": 1
+}
