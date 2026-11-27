@@ -31,6 +31,8 @@ MAX_CHUNK = 25  # bound work lost when a frozen engine cannot abort within a chu
 
 from batch_launch_gate import run_stage, require_full_seed_census
 import pregame_snapshot
+import roster_preflight
+from prop_identity import validated_priced_qbs
 
 
 def now():
@@ -105,6 +107,11 @@ def plan_jobs(cfg, games, only=None):
 def build_command(cfg, model, snapshot, start, count, out):
     """The batch command for one chunk, run from the model's runtime tree."""
     cmd = [sys.executable, BATCH, "--snapshot-file", str(snapshot), "--db", cfg["db"]]
+    controlled = {"--snapshot-file", "--db", "--games", "--seed-start", "--seed-list", "--out",
+                  "--resume", "--register-dir", "--game-id", "--as-of"}
+    for flag in cfg["shared_args"] + list(model.get("extra_args", [])):
+        if flag.split("=", 1)[0] in controlled:
+            raise ValueError("RUNNER_CONTROLLED_ARGUMENT: " + flag)
     cmd += cfg["shared_args"]
     cmd += ["--games", str(count), "--seed-start", str(start), "--out", str(out)]
     for blocker in cfg["blocker_fixes"]:
@@ -227,6 +234,13 @@ def main(argv=None):
         if (snap["schedule"]["game_id"] != game
                 or (snap.get("evaluation") or {}).get("verified") is not True):
             raise ValueError(f"SNAPSHOT_IDENTITY_OR_EVIDENCE_INVALID: {path}")
+        checks, resolved = roster_preflight.check(snap, validated_priced_qbs(snap))
+        checks.append(roster_preflight.exclusions_applied(snap, resolved))
+        if (snap.get("roster_resolution") or {}).get("content_hash") != resolved["content_hash"]:
+            raise ValueError(f"SNAPSHOT_ROSTER_RESOLUTION_MISMATCH: {path}")
+        failed = roster_preflight.failed(checks)
+        if failed:
+            raise ValueError(f"SNAPSHOT_ROSTER_PREFLIGHT_FAILED: {path}: {failed}")
         if sha256(path) != file_hash:
             raise ValueError(f"SNAPSHOT_CHANGED_DURING_PREFLIGHT: {path}")
         cfg["snapshot_pins"][path] = {"file_sha256": file_hash, "snapshot_sha256": snap["snapshot_sha256"]}

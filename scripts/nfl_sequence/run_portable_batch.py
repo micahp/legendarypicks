@@ -107,6 +107,9 @@ def main(argv=None):
     help_result = subprocess.run([args.python, str(args.runtime), '--help'], capture_output=True, text=True)
     if help_result.returncode:
         raise SystemExit('RUNTIME_CLI_UNAVAILABLE: ' + help_result.stderr[-1000:])
+    if '--allow-invalid-research' not in help_result.stdout:
+        raise SystemExit('RUNTIME_VALIDITY_CONTRACT_UNSUPPORTED: use the maintained runtime')
+    runtime_sha256 = sha256_file(args.runtime)
     worker_option = '--workers' in help_result.stdout
     if args.runtime_workers != 1 and not worker_option:
         raise SystemExit('RUNTIME_WORKERS_UNSUPPORTED: use --runtime-workers 1')
@@ -152,11 +155,11 @@ def main(argv=None):
     manifest_path = args.out / f'manifest.{args.name}.json'
     manifest = {'schema': 'lp-slc-portable-batch-2', 'name': args.name, 'snapshots': str(args.snapshots), 'models': models,
                 'seeds_per_game_model': args.seeds, 'seed_start': args.seed_start, 'runtime': str(args.runtime),
+                'runtime_sha256': runtime_sha256,
                 'packages': {m: {**{k: registry[m][k] for k in ('sha256', 'code_commit', 'package')},
                                  'player_lines_available': registry[m].get('player_lines_available') is not False}
                              for m in models},
                 'preflight': preflight, 'runs': [], 'status': 'blocked' if blocked else 'running'}
-    lock = threading.Lock()
 
     def save():
         tmp = manifest_path.with_suffix('.tmp')
@@ -182,6 +185,8 @@ def main(argv=None):
             return {'game_id': game, 'model': model, 'status': 'existing_output_refused', 'output': str(output)}
         entry = registry[model]
         score_only = entry.get('player_lines_available') is False
+        if sha256_file(args.runtime) != runtime_sha256:
+            return {'game_id': game, 'model': model, 'status': 'runtime_changed_after_preflight'}
         if sha256_file(f) != preflight[game]['file_sha256']:
             return {'game_id': game, 'model': model, 'status': 'snapshot_changed_after_preflight'}
         cmd = [args.python, str(args.runtime), '--model', model, '--game', game, '--snapshot', str(f),
@@ -222,9 +227,6 @@ def main(argv=None):
                 result = run(game, model, **kwargs)
         else:
             result = run(game, model, **kwargs)
-        with lock:
-            manifest['smoke' if smoke else 'runs'].append(result)
-            save()
         bad = [row for row in result.get('postflight', []) if row[1] == 'FAIL']
         print(time.strftime('%FT%TZ', time.gmtime()), game, model, result['status'], result.get('valid_full_games'),
               '; '.join(f'{n}: {d}' for n, _, d in bad), flush=True)
@@ -238,6 +240,8 @@ def main(argv=None):
                 manifest.setdefault('errors', []).append({'stage': stage, 'job': pair, 'error': repr(error)})
                 save()
                 return False
+            manifest[stage].append(result)
+            save()
             return result['status'] in accepted
         return on_result
 

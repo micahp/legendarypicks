@@ -575,7 +575,9 @@ def _run(args, engine_dir):
         records_path.parent.mkdir(parents=True, exist_ok=True)
         if records_path.exists():
             raise FileExistsError(f"immutable records file exists: {records_path}")
-        records_path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in records))
+        with records_path.open("x") as handle:
+            for row in records:
+                handle.write(json.dumps(row, sort_keys=True) + "\n")
     if getattr(args, "decisions_out", None):
         decisions_path = Path(args.decisions_out)
         decisions_path.parent.mkdir(parents=True, exist_ok=True)
@@ -584,9 +586,8 @@ def _run(args, engine_dir):
                 stream.write(json.dumps(row, sort_keys=True) + "\n")
     output = Path(args.out)
     output.parent.mkdir(parents=True, exist_ok=True)
-    if output.exists():
-        raise FileExistsError(f"immutable output exists: {output}")
-    output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    with output.open("x") as handle:
+        handle.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
     print(f"wrote {output}: {summary['valid_full_games']}/{args.games} complete valid games; {attempted} attempted")
     return 1 if failed and not research else 0
 
