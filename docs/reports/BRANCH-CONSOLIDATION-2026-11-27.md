@@ -53,3 +53,12 @@ Contained in slc-v2 at comparison:
 
 ## Completion gate
 A complete sweep requires all remote tips with committer timestamps (including undated names), ancestry and patch-equivalence checks against intended destination, current open PRs and local-only commits/worktree ownership. For code integrations, independently review execution path and run target suites; preserve frozen configs and artifact identity. Delete only proven-contained, inactive refs; never delete unique work simply because a newer branch exists. No production, fast-host, model runtime or release changes made during this sweep.
+
+
+## Follow-up — 2026-11-27, 14:27 CT
+
+- Week 11 invalid-forecast evidence is now merged at `9d58f1a7daea4fbec3886114f4b7dc3d5b9a985a`; the previous blob error was resolved by refetching full source files. All 13 paths preserved as source blobs, with no runtime paths touched.
+- November 22 historical context and Madden philosophy merged at `d5793d8f4a6706d271c33b43309293cde550166b` as original dated files, not current architecture authority. Some historical links and status statements are stale.
+- Both source branches now have zero unique commits vs dev: `research/week11-1k-batch-2026-11-22` (tip `63d4e30cdc04bdcefcb705cb861fe4f4a18a4029`) and `docs/context-2026-11-22` (tip `965d3b0f6c86ac446f03f8d97ca13ef45a4f513e`). Add to the deletion candidate list (22 total).
+- Rechecked original 20: all still ancestry-contained. Four open PRs returned (#29, #33, #35, #46); none has a candidate as head or base. Owner authorized deletion of listed candidates. No remote ref deleted: connector has no delete-ref operation and direct git ls-remote failed DNS resolution. Active worktrees on other hosts and branch-name dependencies still require verification before deletion. Use exact-tip leases and recheck ancestry; do not remove worktrees or local-only commits.
+- Runtime integration queue remains pending; no model branch was advanced or model test rerun during this follow-up.
