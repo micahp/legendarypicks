@@ -38,7 +38,14 @@ Actual total error is model mean total minus actual total (77); actual home-marg
 
 ## Frozen CEG
 
-Frozen CEG completed 100/100 valid full games for PHI–DAL (seeds 300001–300100). Its artifact and source hashes, all seed scores, and full-game metrics are in the `ceg_frozen` model manifest and summary under the PHI–DAL run folder. This CEG run emitted no player lines, so player props are unavailable. No equivalent completed CEG CHI–DET result was present in the latest run records inspected.
+Frozen CEG completed 100/100 valid full games for both matchups (seeds 300001–300100). It emitted no player lines, so CEG player props are unavailable.
+
+| Game | P(home wins) | Mean away | Mean home | Mean total | Actual |
+|---|---:|---:|---:|---:|---|
+| CHI–DET | 0.500 | 22.8 | 22.1 | 44.9 | CHI 39, DET 35 |
+| PHI–DAL | 0.450 | 22.1 | 22.0 | 44.1 | PHI 39, DAL 38 |
+
+Per-seed scores and artifact/source hashes are in each `ceg_frozen/summary.json` and `manifest.json`. The umbrella runs also contain failures for other models; this section reports only the individually completed CEG arms.
 
 ## V1 Complete
 

@@ -1,20 +1,36 @@
 {
   "archives": [
     {
-      "game_id": "2026_12_CHI_DET",
-      "path": "/root/runs/week-12/games/2026_12_CHI_DET/raw/2026_12_CHI_DET-20261127T130408Z-19e7e3947cf5.tar.gz",
-      "sha256": "000117ac64b45324ca892274e106b55420ec68dc54f83b71f86cff357ccf3302",
       "bytes": 451145,
+      "file_count": 20,
+      "game_id": "2026_12_CHI_DET",
       "gzip_test": "passed",
-      "file_count": 20
+      "path": "/root/runs/week-12/games/2026_12_CHI_DET/raw/2026_12_CHI_DET-20261127T130408Z-19e7e3947cf5.tar.gz",
+      "sha256": "000117ac64b45324ca892274e106b55420ec68dc54f83b71f86cff357ccf3302"
     },
     {
-      "game_id": "2026_12_PHI_DAL",
-      "path": "/root/runs/week-12/games/2026_12_PHI_DAL/raw/2026_12_PHI_DAL-20261127T142757Z-ca5bf59e3f11.tar.gz",
-      "sha256": "c59153c3f27e50739b36d5ebb9c945d31ca4fce515e47fe5fc45c7ac48571fb6",
       "bytes": 448736,
+      "file_count": 20,
+      "game_id": "2026_12_PHI_DAL",
       "gzip_test": "passed",
-      "file_count": 20
+      "path": "/root/runs/week-12/games/2026_12_PHI_DAL/raw/2026_12_PHI_DAL-20261127T142757Z-ca5bf59e3f11.tar.gz",
+      "sha256": "c59153c3f27e50739b36d5ebb9c945d31ca4fce515e47fe5fc45c7ac48571fb6"
+    },
+    {
+      "bytes": 18231,
+      "file_count": 1,
+      "game_id": "2026_12_CHI_DET",
+      "gzip_test": "passed",
+      "path": "/root/runs/week-12/games/2026_12_CHI_DET/raw/ceg-frozen-100-seeds.tar.gz",
+      "sha256": "5b49829caa1715afdacc5f1e7bd3f72f702e2309f0c4ea398f06824e60b0f9d3"
+    },
+    {
+      "bytes": 17846,
+      "file_count": 1,
+      "game_id": "2026_12_PHI_DAL",
+      "gzip_test": "passed",
+      "path": "/root/runs/week-12/games/2026_12_PHI_DAL/raw/ceg-frozen-100-seeds.tar.gz",
+      "sha256": "dc1a8e97abe4d4302de218219f3f5d5e2adbcaf5b7b31da4cac71bd44fbcc827"
     }
   ]
 }

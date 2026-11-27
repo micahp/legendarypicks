@@ -1,0 +1,20 @@
+{
+  "artifact_sha256": "05554214c1ff663678692128b01813d3af5ffd3ce338eb5def6ea1f53e13525d",
+  "code_commit": "8d86d430270dc5728e5e01200847f78a8acee862",
+  "game_id": "2026_12_CHI_DET",
+  "model_id": "ceg_frozen",
+  "player_lines_available": false,
+  "requested_games": 100,
+  "run_id": "2026_12_CHI_DET-20261127T072524Z-fc22ba3e2097",
+  "schema": "slc-run-manifest-1",
+  "seeds": {
+    "first": 300001,
+    "last_inclusive": 300100,
+    "rng": "python.Random(seed)"
+  },
+  "snapshot_sha256": "fc22ba3e20970967b955e58476a428537485dc076320039ad7fa2ddb46036266",
+  "source_result_sha256": "a89e8808b6cf85aea46b8f9154906dec1f778be403c8cd3b6cef7b80dd7ba8fa",
+  "source_run_manifest_sha256": "65474b738eeb28d20529c158fb34fc7097f27cf5b967fa6381eb14a1b9d9d98d",
+  "status": "completed",
+  "valid_full_games": 100
+}
