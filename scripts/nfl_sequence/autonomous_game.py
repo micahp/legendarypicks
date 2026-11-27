@@ -1319,7 +1319,10 @@ class AutonomousGameExecution:
         if choose_two:
             side = self.current_team
             opponent = 'B' if side == 'A' else 'A'
-            play_state = {'offense': side, 'defense': opponent, 'down': 1, 'togo': 2, 'yl': 98,
+            # The try is untimed, but the call needs the actual game period and clock.
+            # LP yardline_100 measures distance to the opponent's goal.
+            play_state = {'offense': side, 'defense': opponent, 'quarter': situation['quarter'],
+                          'clock': situation['clock'], 'down': 1, 'togo': 2, 'yl': 2,
                           'offense_direction': direction}
             family = self._choose_family(play_state, side, try_index)
             call, _, provenance = gridiron_bridge.build_call(

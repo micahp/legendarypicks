@@ -317,6 +317,7 @@ class AutonomousTryExecutionTests(unittest.TestCase):
         observed = {}
 
         def build_call(*_args, **kwargs):
+            observed.update(kwargs['state'])
             observed['direction'] = kwargs['state']['offense_direction']
             return {'offense': {'call': {'concept': 'inside_zone'}}}, {}, {}
 
@@ -335,6 +336,8 @@ class AutonomousTryExecutionTests(unittest.TestCase):
         self.assertIsNone(blocker)
         self.assertEqual(points, 2)
         self.assertEqual(observed['direction'], -1)
+        self.assertEqual((observed['quarter'], observed['clock'], observed['yl'], observed['togo']),
+                         (3, 400, 2, 2))
         self.assertEqual(record['try_actor_ids'], ['AAA-RB'])
         self.assertEqual(record['execution']['player_ids'], participants)
 
