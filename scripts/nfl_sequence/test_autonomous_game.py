@@ -204,6 +204,7 @@ class AutonomousPossessionHistoryTests(unittest.TestCase):
     def test_fumble_endpoint_stats_cover_both_directions_and_recovery_teams(self):
         source = object.__new__(autonomous_game.AutonomousGameExecution)
         source.event_manifest_sha256 = 'f' * 64
+        source.team_by_side = {'A': 'GB', 'B': 'LAR'}
         call = {'play_id': 'fumble-rounding-directions', 'seed': '300015',
                 'offense': {'team': 'GB', 'lineup': {'QB': 'qb1'},
                             'call': {'family': 'run', 'concept': 'inside_zone'}}}
@@ -217,6 +218,12 @@ class AutonomousPossessionHistoryTests(unittest.TestCase):
         for direction in (-1, 1):
             for recovery_side in ('O', 'D'):
                 with self.subTest(direction=direction, recovery_side=recovery_side):
+                    source.snapshot = {'rosters': {
+                        'home': {'players': [{'gsis_id': 'fumbler', 'team': 'GB', 'pos_abb': 'RB'}]
+                                 + ([{'gsis_id': 'recoverer', 'team': 'GB', 'pos_abb': 'RB'}]
+                                    if recovery_side == 'O' else [])},
+                        'away': {'players': ([{'gsis_id': 'recoverer', 'team': 'LAR', 'pos_abb': 'LB'}]
+                                             if recovery_side == 'D' else [])}}}
                     dead_x = 39.5 if direction == 1 else 41.5
                     row = {**coords, 'recovery_side': recovery_side,
                            'recovery_team': 'GB' if recovery_side == 'O' else 'LAR',
@@ -246,10 +253,7 @@ class AutonomousPossessionHistoryTests(unittest.TestCase):
                                      -1 if recovery_side == 'O' else 1)
                     self.assertTrue(applied.flags['fumble'])
                     start = {**state, 'quarter': 4, 'clock': 1, 'dir': direction}
-                    participants = {'attribution': 'autonomous_execution',
-                                    'rusher_id': 'fumbler', 'passer_id': None, 'receiver_id': None,
-                                    'fumbler_id': 'fumbler', 'fumbler_side': 'A',
-                                    'recoverer_id': 'recoverer', 'returner_id': 'recoverer'}
+                    participants = source._participants(call, result, 'run', state)
                     def produce(_state, _context):
                         return {'event': 'run', 'event_record': generated,
                                 'clock_runoff_seconds': 1,
@@ -266,13 +270,17 @@ class AutonomousPossessionHistoryTests(unittest.TestCase):
                     drive = {'offense_team': 'A', 'quarter_start': 4, 'clock_start': 1,
                              'end_quarter': 4, 'end_clock': 0, 'terminal': terminal,
                              'field_goal_made': None, 'plays': plays}
-                    lines = {line['player_id']: line for line in game_stats.player_lines([drive])}
+                    stats = game_stats.compute([drive], {'A': 0, 'B': 0})
+                    lines = {line['player_id']: line for line in stats['player']}
                     self.assertEqual(lines['fumbler']['miscellaneous']['fumbles'], 1)
                     self.assertEqual(lines['recoverer']['miscellaneous']['fumble_return_yards'],
                                      -1 if recovery_side == 'O' else 1)
-                    teams = game_stats.team_stats([drive], {'A': 0, 'B': 0})
+                    teams = stats['team']
                     self.assertEqual(teams['A']['fumbles'], 1)
                     self.assertEqual(teams['A'].get('fumbles_lost', 0), int(recovery_side == 'D'))
+                    recovery_team = 'A' if recovery_side == 'O' else 'B'
+                    self.assertEqual(teams[recovery_team]['fumble_return_yards'],
+                                     -1 if recovery_side == 'O' else 1)
 
     def test_interception_return_fumble_recovered_by_original_offense_maps_by_history(self):
         source = object.__new__(autonomous_game.AutonomousGameExecution)
@@ -989,8 +997,11 @@ class AutonomousSpecialTeamsTests(unittest.TestCase):
                 with self._valid_preflight(source), patch.object(gridiron_bridge, '_ratings',
                         return_value=(source.rating_rows, {'dataset': 'test-ratings.json',
                                                            'source': 'test_estimates'})):
-                    # This play index deterministically produces a kick out of bounds
-                    # without a preceding muff, which exercises the intended rule.
+                    # The formerly failing kickoff must execute through the real bridge.
+                    formerly_failed = source._execute_live_special_teams(
+                        'kickoff', 'A', 'B', 65, 1001, free_kick_kind='kickoff')
+                    self.assertNotIn('blocker', formerly_failed)
+                    # This separate kickoff exercises out-of-bounds enforcement.
                     generated = source._execute_live_special_teams(
                         'kickoff', 'A', 'B', 65, 1007, free_kick_kind='kickoff')
                     self.assertNotIn('blocker', generated)
