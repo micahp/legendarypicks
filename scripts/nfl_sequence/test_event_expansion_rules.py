@@ -26,6 +26,31 @@ def record(**kw):
 
 
 class EventExpansionRulesTests(unittest.TestCase):
+    def test_defense_recovery_of_blocked_field_goal_changes_possession_not_turnover_stat(self):
+        recovery = c3.FieldSpotV3(50, 'receiving_team')
+        dead = c3.FieldSpotV3(45, 'receiving_team')
+        recoverer = c.PlayerRoleV2.named('recoverer')
+        blocked = c3.BlockedFieldGoalReturnV3(
+            recovery_team='receiving_team', recovery_spot=recovery,
+            recoverer=recoverer, post_block_returner=recoverer,
+            return_yards=5, dead_ball_spot=dead, possession_after='receiving_team')
+        kick = c3.KickV3('field_goal', 'A', 'B', c3.FieldSpotV3(40, 'kicking_team'), 57,
+                         'blocked', possession_after='receiving_team',
+                         recovery_team='receiving_team', recovery_spot=recovery,
+                         blocked_field_goal_return=blocked)
+        play = c3.GeneratedPlayV3(
+            contract=c3.CONTRACT_V3_VERSION, call=c.PlayCallV2('field_goal'),
+            event='field_goal_attempt', yards_gained=None, provenance=P,
+            clock=c.ClockV2(4), kick=kick,
+            players=c.PlayerRolesV2(kicker=c.PlayerRoleV2.named('kicker')))
+        applied = apply_v3_play({**S, 'down': 4}, play)
+        self.assertEqual(applied.terminal, 'turnover')
+        self.assertEqual(applied.state_after, {'offense': 'B', 'defense': 'A',
+                                               'down': 1, 'togo': 10, 'yl': 45})
+        self.assertTrue(applied.flags['possession_change'])
+        self.assertFalse(applied.flags.get('turnover', False))
+        self.assertTrue(applied.flags['field_goal_attempt'])
+
     def test_ceg_play_3_downed_and_fair_catch_punts_are_distinct_nonreturns(self):
         provenance = P
         dead = c3.FieldSpotV3(30, 'receiving_team')
