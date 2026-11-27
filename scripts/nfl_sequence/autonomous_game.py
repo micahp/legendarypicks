@@ -22,6 +22,8 @@ import participation_field
 import pregame_snapshot
 import roster_preflight
 import snap_clock
+import snap_update
+import shared_participation
 import v1_complete_roster
 
 
@@ -271,7 +273,7 @@ class AutonomousGameExecution:
 
     def __init__(self, *, seed, snapshot_path, participation_path, participation_sha256,
                  playbook_dir, playbook_manifest, engine_root, ratings_path=None,
-                 coaching_profiles=None):
+                 coaching_profiles=None, participation_snap_counts=None, participation_entry_current=True):
         self.seed = int(seed)
         self.snapshot_path = str(snapshot_path)
         self.snapshot = pregame_snapshot.load_frozen_snapshot(self.snapshot_path)
@@ -281,16 +283,19 @@ class AutonomousGameExecution:
         self.playbook_manifest = str(playbook_manifest)
         self.participation_sha256 = participation_sha256
         self.field = participation_field.Field.load(participation_path, participation_sha256)
+        snaps = snap_update.SnapCounts.load(*participation_snap_counts) if participation_snap_counts else None
+        self.participation = shared_participation.Policy(self.field, self.snapshot, snaps, participation_entry_current)
         self.engine_root = str(engine_root)
         self.ratings_path = ratings_path
         self.coaching_profiles = coaching_profiles or {}
         self.snap_clock = snap_clock.SnapClock.load()
         self.contract_v3_commit = gridiron_bridge._check_ceg_contract_v3()
-        self.session = gridiron_bridge.GridironSession(self.engine_root)
+        self.session = gridiron_bridge.GridironSession(self.engine_root, player_evaluation_mode='shared_snapshot')
         self.event_switches = EventExpansionSwitches()
         self.event_manifest_sha256 = hashlib.sha256(
             (f'{self.session.commit}:{gridiron_bridge.PLAYBOOK_MANIFEST_SHA256}:{participation_sha256}:'
-             f'{self.snap_clock.sha256}').encode()
+             f'{self.snap_clock.sha256}:{shared_participation.VERSION}:'
+             f'{snaps.sha256 if snaps else None}:{participation_entry_current}').encode()
         ).hexdigest()
         self.play_index = 0
         self._play_prior_cache = {}
@@ -409,14 +414,19 @@ class AutonomousGameExecution:
         elif selected == 'punt':
             event, play_type = 'punt', 'punt'
         else:
+            # The engine currently supports only 11 personnel. Select the actual players before the run/pass draw.
+            # Do not pretend other formations have executable assignments.
+            prepared = self.participation.prepare(self.team_by_side[side], state,
+                                                  self._decision_seed(self.play_index, 'gridiron'), group='11')
             family = selected if selected in ('run', 'pass') else self._choose_family(state, side, self.play_index)
             call_state = {**state, 'offense_direction': context['direction']}
             call, provenance = gridiron_bridge.build_call(
                 self.snapshot_path, self.field, self.participation_sha256,
                 self.profile_paths, self.playbook_manifest,
                 seed=self._decision_seed(self.play_index, 'gridiron'), family=family, state=call_state,
-                ratings_path=self._rating_profile_path())
+                ratings_path=self._rating_profile_path(), prepared_participation=prepared)
             result, timing = self.session.play(call)
+            self.participation.commit(prepared)
             return self._map_scrimmage_result(call, result, timing, provenance, state, context,
                                               decision_note, family)
         play_id = int(context['play_index'])
@@ -719,8 +729,9 @@ class AutonomousGameExecution:
                 possession = ceg_contract.PossessionV2(
                     team='offense', how='kept', recovery_spot_yardline_100=recovery_y,
                     dead_ball_yardline_100=dead_y, recovered_by=ceg_contract.PlayerRoleV2.named(recoverer_id),
-                    return_yards=fumble_geometry['return_yards'],
-                    returner=ceg_contract.PlayerRoleV2.named(returner_id),
+                    # Kept possession has no turnover-return fields in ceg-play-2.
+                    # Raw recovery geometry is validated above; the actor and
+                    # original facts remain in the execution record.
                     fumble_spot_yardline_100=fumble_y)
             else:
                 possession = ceg_contract.PossessionV2(
@@ -845,7 +856,8 @@ class AutonomousGameExecution:
         if fumble:
             fumbler = roster_rows.get(fumble.get('fumbler_id'), {})
             recoverer = roster_rows.get(fumble.get('recoverer_id'), {})
-            post_returner_id = outcome.get('carrier_id') or fumble.get('recoverer_id')
+            post_returner_id = (fumble.get('returner_id') or outcome.get('carrier_id')
+                                or fumble.get('recoverer_id'))
             returner = roster_rows.get(post_returner_id, {})
             participants.update({
                 'fumbler_id': fumble.get('fumbler_id'),
@@ -863,7 +875,7 @@ class AutonomousGameExecution:
                 'returner_name': returner.get('player_name'),
                 'returner_position': returner.get('pos_abb'),
                 'returner_team': returner.get('team'),
-                'returner_side': defense if returner else None,
+                'returner_side': (side if returner.get('team') == team else defense) if returner else None,
             })
         return participants
 
@@ -1309,7 +1321,10 @@ class AutonomousGameExecution:
         if choose_two:
             side = self.current_team
             opponent = 'B' if side == 'A' else 'A'
-            play_state = {'offense': side, 'defense': opponent, 'down': 1, 'togo': 2, 'yl': 98,
+            # The try is untimed, but the call needs the actual game period and clock.
+            # LP yardline_100 measures distance to the opponent's goal.
+            play_state = {'offense': side, 'defense': opponent, 'quarter': situation['quarter'],
+                          'clock': situation['clock'], 'down': 1, 'togo': 2, 'yl': 2,
                           'offense_direction': direction}
             family = self._choose_family(play_state, side, try_index)
             call, _, provenance = gridiron_bridge.build_call(
@@ -1381,13 +1396,15 @@ class AutonomousGameExecution:
 
 def play_autonomous_game(seed, ref, *, snapshot_path, participation_path, participation_sha256,
                          playbook_dir, playbook_manifest, engine_root, ratings_path=None,
-                         coaching_profiles=None, **game_kwargs):
+                         coaching_profiles=None, participation_snap_counts=None,
+                         participation_entry_current=True, **game_kwargs):
     """Run one complete SLC game whose snaps are generated by Gridiron agents."""
     source = AutonomousGameExecution(
         seed=seed, snapshot_path=snapshot_path, participation_path=participation_path,
         participation_sha256=participation_sha256, playbook_dir=playbook_dir,
         playbook_manifest=playbook_manifest, engine_root=engine_root, ratings_path=ratings_path,
-        coaching_profiles=coaching_profiles)
+        coaching_profiles=coaching_profiles, participation_snap_counts=participation_snap_counts,
+        participation_entry_current=participation_entry_current)
     try:
         original_event_source = source.event_source
         def event_source(state, context):

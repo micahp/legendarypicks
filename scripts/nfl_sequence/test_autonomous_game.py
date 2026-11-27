@@ -150,6 +150,36 @@ class AutonomousPossessionHistoryTests(unittest.TestCase):
                 call, result, 'run', -3, state, -1, 32, 35.25672075085281, 'tackle',
                 None, None, None)
 
+    def test_retained_fumble_adapter_matches_kept_possession_contract(self):
+        source = object.__new__(autonomous_game.AutonomousGameExecution)
+        source.event_manifest_sha256 = 'f' * 64
+        source.team_by_side = {'A': 'AAA', 'B': 'BBB'}
+        source.snapshot = {'rosters': {
+            'home': {'players': [{'gsis_id': 'rb1', 'team': 'AAA', 'pos_abb': 'RB'}]},
+            'away': {'players': []}}}
+        call = {'play_id': 'retained-fumble', 'seed': '1',
+                'offense': {'team': 'AAA', 'lineup': {'QB': 'qb1', 'RB': 'rb1'},
+                            'call': {'family': 'run', 'concept': 'inside_zone'}}}
+        fumble = {'fumbler_id': 'rb1', 'recoverer_id': 'rb1', 'recovery_side': 'O',
+                  'recovery_team': 'AAA', 'fumble_spot': {'x': 62},
+                  'recovery_spot': {'x': 63}, 'dead_ball_spot': {'x': 65},
+                  'return_yards': 2, 'return_displacement_yards': 2}
+        result = {'schema_version': 'gridiron.autonomous-result.v1',
+                  'result': {'event': 'tackle', 'possession_team': 'AAA', 'carrier_id': 'rb1',
+                             'yards_gained': 5, 'is_touchdown': False, 'turnover': False,
+                             'elapsed_seconds': 3, 'fumble': fumble},
+                  'participants': {'sackers': []}, 'events': []}
+        state = {'offense': 'A', 'defense': 'B', 'down': 2, 'togo': 7, 'yl': 40}
+        generated = source._ceg_play(call, result, 'run', 2, state, 1, 60, 65,
+                                     'tackle', None, None, None)
+        self.assertEqual(generated.possession.how, 'kept')
+        self.assertIsNone(generated.possession.return_yards)
+        self.assertEqual(generated.players.returner.player_id, 'rb1')
+        applied = event_expansion_rules.apply_scrimmage_play(state, generated)
+        self.assertEqual(applied.state_after['yl'], 35)
+        self.assertEqual(applied.flags['fumble_recovery_team'], 'A')
+        self.assertEqual(source._participants(call, result, 'run', state)['returner_side'], 'A')
+
     def test_gridiron_field_spot_rounding_matches_javascript_at_half_yards(self):
         for value, expected in ((32.499999, 32), (32.5, 33), (32.500001, 33), (0.5, 1), (99.5, 100)):
             with self.subTest(value=value):
@@ -317,6 +347,7 @@ class AutonomousTryExecutionTests(unittest.TestCase):
         observed = {}
 
         def build_call(*_args, **kwargs):
+            observed.update(kwargs['state'])
             observed['direction'] = kwargs['state']['offense_direction']
             return {'offense': {'call': {'concept': 'inside_zone'}}}, {}, {}
 
@@ -335,6 +366,8 @@ class AutonomousTryExecutionTests(unittest.TestCase):
         self.assertIsNone(blocker)
         self.assertEqual(points, 2)
         self.assertEqual(observed['direction'], -1)
+        self.assertEqual((observed['quarter'], observed['clock'], observed['yl'], observed['togo']),
+                         (3, 400, 2, 2))
         self.assertEqual(record['try_actor_ids'], ['AAA-RB'])
         self.assertEqual(record['execution']['player_ids'], participants)
 

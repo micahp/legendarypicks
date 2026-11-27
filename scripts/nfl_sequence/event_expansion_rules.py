@@ -317,10 +317,14 @@ def apply_scrimmage_play(state, play, switches=EXPANDED_DEFAULT):
             raise UnsupportedEventTransition('offensive_fumble_touchdown_spot_mismatch')
         if terminal == 'safety' and dead_spot != 100:
             raise UnsupportedEventTransition('offensive_fumble_safety_spot_mismatch')
-        if after is not None and after['yl'] != dead_spot:
-            raise UnsupportedEventTransition('offense_recovery_spot_disagrees_with_play_yards')
+        if after is not None:
+            expected_spot = dead_spot if after['offense'] == state['offense'] else 100 - dead_spot
+            if after['yl'] != expected_spot:
+                raise UnsupportedEventTransition('offense_recovery_spot_disagrees_with_play_yards')
         flags['fumble'] = True
         flags['recovered_by'] = 'offense'
+        flags['fumble_recovery_team'] = state['offense']
+        flags['recoverer_id'] = play.possession.recovered_by.stat_player_id
         result = AppliedEvent(after, terminal, flags,
                               state['offense'] if terminal == 'touchdown' else
                               state['defense'] if terminal == 'safety' else None)
@@ -816,6 +820,8 @@ def _apply_v3_kick(state, play, switches):
                           'scoring_team': scorer})
             return AppliedEvent(None, facts.scoring_kind, flags, scorer)
         if recovery_team != state['offense']:
+            # A blocked kick changes possession without an interception or lost fumble.
+            flags['possession_change'] = True
             next_yard = 100 - dead_kicking
             return AppliedEvent(_v3_next_state(state, recovery_team, next_yard, 'blocked_field_goal'),
                                 'turnover', flags)

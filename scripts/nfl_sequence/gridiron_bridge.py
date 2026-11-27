@@ -212,7 +212,7 @@ def _ratings(path):
 
 
 def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_path, *, seed, family, state,
-               ratings_path=None):
+               ratings_path=None, prepared_participation=None):
     snapshot = pregame_snapshot.load_frozen_snapshot(snapshot_path)
     checks, resolved = roster_preflight.check(snapshot)
     if roster_preflight.failed(checks) or roster_preflight.exclusions_applied(snapshot, resolved)[1] != 'PASS':
@@ -241,10 +241,17 @@ def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_pat
     field = (field_path if isinstance(field_path, participation_field.Field)
              else participation_field.Field.load(field_path, field_hash))
     roster = snapshot['rosters'][offense_side]['players']
-    selected = live_participation.advance(field, team=offense_team, season=season, resolved=resolved[offense_side],
-                                           roster=roster, group='11', seed=seed)
+    selected = prepared_participation
+    if selected is None:
+        selected = live_participation.advance(field, team=offense_team, season=season, resolved=resolved[offense_side],
+                                              roster=roster, group='11', seed=seed)
+    elif (selected['team'] != offense_team or selected['group'] != '11' or
+          selected['source_sha256'] != field.sha256):
+        raise ValueError('gridiron_prepared_participation_mismatch')
     allowed = v1_complete_roster.eligible_ids(resolved[offense_side])
     players = {selected['qb1']: 'QB', **selected['slots']}
+    if not set(players).issubset(allowed):
+        raise ValueError('gridiron_prepared_participation_ineligible')
     for role in ('LT', 'LG', 'C', 'RG', 'RT'):
         rows = [p for p in roster if p['gsis_id'] in allowed and p['gsis_id'] not in players
                 and p['pos_abb'] == role and type(p['pos_rank']) is int and p['pos_rank'] > 0]
@@ -375,7 +382,10 @@ def _validate_special_teams_result(call, result):
 class GridironSession:
     """One persistent, sequential engine process for many independent plays."""
 
-    def __init__(self, engine_root):
+    def __init__(self, engine_root, player_evaluation_mode=None):
+        if player_evaluation_mode not in (None, 'legacy_sequential', 'shared_snapshot'):
+            raise ValueError('gridiron_player_evaluation_mode_unsupported')
+        self.player_evaluation_mode = player_evaluation_mode
         self.commit = _check_engine(engine_root)
         self.proc = subprocess.Popen(['node', str(Path(engine_root) / 'engine/autonomous/slc-server.js')],
                                      stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1)
@@ -409,17 +419,29 @@ class GridironSession:
             if assignment_coverage is None:
                 raise ValueError('gridiron_bridge_example_assignment_coverage_unsupported:' + str(coverage))
             call['assignments'] = self.request(
-                'example_assignments', concept='slant_flat', coverage=assignment_coverage)['value']
+                'example_assignments', concept='slant_flat', coverage=assignment_coverage,
+                direction=call['offense']['call']['direction'])['value']
         _validate_coverage_assignments(call)
+        mode = getattr(self, 'player_evaluation_mode', None)
+        if mode is not None:
+            call['player_evaluation_mode'] = mode
         start = time.monotonic()
         response = self.request('play', call=call)
-        return _validate_result(call, response['value']), {'engine_commit': self.commit,
+        result = _validate_result(call, response['value'])
+        if mode is not None and result.get('diagnostics', {}).get('player_evaluation_mode') != mode:
+            raise ValueError('gridiron_player_evaluation_mode_mismatch')
+        return result, {'engine_commit': self.commit,
                 'elapsed_wall_seconds': time.monotonic() - start, 'engine_ms': response['engine_ms']}
 
     def special_teams(self, call):
+        mode = getattr(self, 'player_evaluation_mode', None)
+        if mode is not None:
+            call['player_evaluation_mode'] = mode
         start = time.monotonic()
         response = self.request('special_teams', call=call)
         result = _validate_special_teams_result(call, response['value'])
+        if mode is not None and result.get('diagnostics', {}).get('player_evaluation_mode') != mode:
+            raise ValueError('gridiron_player_evaluation_mode_mismatch')
         return result, {'engine_commit': self.commit,
                 'elapsed_wall_seconds': time.monotonic() - start, 'engine_ms': response['engine_ms']}
 

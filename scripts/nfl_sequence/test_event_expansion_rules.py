@@ -26,6 +26,31 @@ def record(**kw):
 
 
 class EventExpansionRulesTests(unittest.TestCase):
+    def test_defense_recovery_of_blocked_field_goal_changes_possession_not_turnover_stat(self):
+        recovery = c3.FieldSpotV3(50, 'receiving_team')
+        dead = c3.FieldSpotV3(45, 'receiving_team')
+        recoverer = c.PlayerRoleV2.named('recoverer')
+        blocked = c3.BlockedFieldGoalReturnV3(
+            recovery_team='receiving_team', recovery_spot=recovery,
+            recoverer=recoverer, post_block_returner=recoverer,
+            return_yards=5, dead_ball_spot=dead, possession_after='receiving_team')
+        kick = c3.KickV3('field_goal', 'A', 'B', c3.FieldSpotV3(40, 'kicking_team'), 57,
+                         'blocked', possession_after='receiving_team',
+                         recovery_team='receiving_team', recovery_spot=recovery,
+                         blocked_field_goal_return=blocked)
+        play = c3.GeneratedPlayV3(
+            contract=c3.CONTRACT_V3_VERSION, call=c.PlayCallV2('field_goal'),
+            event='field_goal_attempt', yards_gained=None, provenance=P,
+            clock=c.ClockV2(4), kick=kick,
+            players=c.PlayerRolesV2(kicker=c.PlayerRoleV2.named('kicker')))
+        applied = apply_v3_play({**S, 'down': 4}, play)
+        self.assertEqual(applied.terminal, 'turnover')
+        self.assertEqual(applied.state_after, {'offense': 'B', 'defense': 'A',
+                                               'down': 1, 'togo': 10, 'yl': 45})
+        self.assertTrue(applied.flags['possession_change'])
+        self.assertFalse(applied.flags.get('turnover', False))
+        self.assertTrue(applied.flags['field_goal_attempt'])
+
     def test_ceg_play_3_downed_and_fair_catch_punts_are_distinct_nonreturns(self):
         provenance = P
         dead = c3.FieldSpotV3(30, 'receiving_team')
@@ -240,6 +265,22 @@ class EventExpansionRulesTests(unittest.TestCase):
         self.assertEqual((result.terminal, result.scoring_team), ('touchdown', 'B'))
         self.assertTrue(result.flags['sack'])
         self.assertTrue(result.flags['fumble'])
+
+    def test_retained_fumble_turnover_on_downs_uses_receiving_field_frame(self):
+        state = {**S, 'down': 4}
+        possession = c.PossessionV2(
+            'offense', 'kept', recovery_spot_yardline_100=38,
+            dead_ball_yardline_100=36, recovered_by=c.PlayerRoleV2.named('rb1'),
+            fumble_spot_yardline_100=38)
+        play = record(yards_gained=2, fumble=True, possession=possession,
+                      players=c.PlayerRolesV2(rusher=c.PlayerRoleV2.named('rb1'),
+                                              fumbler=c.PlayerRoleV2.named('rb1'),
+                                              recoverer=c.PlayerRoleV2.named('rb1')))
+        applied = apply_scrimmage_play(state, play)
+        self.assertEqual(applied.terminal, 'turnover_on_downs')
+        self.assertEqual(applied.state_after['yl'], 64)
+        self.assertEqual(applied.state_after['offense'], 'B')
+        self.assertEqual(applied.flags['fumble_recovery_team'], 'A')
 
     def test_offense_recovery_of_own_end_zone_fumble_is_a_safety(self):
         state = {'offense': 'A', 'defense': 'B', 'down': 1, 'togo': 5, 'yl': 95}

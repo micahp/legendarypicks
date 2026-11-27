@@ -19,6 +19,20 @@ def _elapsed(quarter, clock):
     return (quarter - 1) * QUARTER_LENGTH + (QUARTER_LENGTH - clock)
 
 
+def _lost_fumble_team(play):
+    """A retained fumble on fourth down is not a lost fumble."""
+    out, part = play['outcome'], play['participants']
+    fumbler = part.get('fumbler_side') or play['state_before']['offense_team']
+    if out.get('fumble_lost_team') is not None:
+        return out['fumble_lost_team']
+    recovery = out.get('fumble_recovery_team')
+    if recovery is not None:
+        return fumbler if recovery != fumbler else None
+    if out.get('turnover') and not out.get('turnover_on_downs'):
+        return fumbler
+    return None
+
+
 def team_stats(drives, points, kickoff_events=()):
     """Per-team lines: plays, rushing, passing, turnovers, punts, field goals, possession time and points."""
     teams = {}
@@ -64,9 +78,12 @@ def team_stats(drives, points, kickoff_events=()):
                     if ev == 'pass_complete':
                         t['pass_comp'] += 1
                         t['pass_yds'] += _credited(play, _player_yards(play, 'passing_yards', yards))
-                        if (_player_yards(play, 'receiving_yards', None) is not None):
-                            t['receiving_yds'] += _credited(play, _player_yards(play, 'receiving_yards', yards))
-            if out['turnover'] and (ev in ('interception', 'fumble_lost') or out.get('fumble')):
+                        # Player receiving lines use this same fallback for ordinary
+                        # completions. Do not omit them just because one fumble play
+                        # carries explicit receiving yardage.
+                        t['receiving_yds'] += _credited(play, _player_yards(play, 'receiving_yards', yards))
+            if out['turnover'] and (ev in ('interception', 'fumble_lost') or
+                                    (out.get('fumble') and _lost_fumble_team(play) == d['offense_team'])):
                 t['turnovers'] += 1
             if ev == 'interception':
                 t['interceptions'] += 1
@@ -76,9 +93,7 @@ def team_stats(drives, points, kickoff_events=()):
                 fumbler_side = part.get('fumbler_side')
                 fumbler_team = fumbler_side if fumbler_side in points else play['state_before']['offense_team']
                 team(fumbler_team)['fumbles'] += 1
-                lost_team = out.get('fumble_lost_team')
-                if lost_team is None and out.get('turnover'):
-                    lost_team = fumbler_team
+                lost_team = _lost_fumble_team(play)
                 if lost_team is not None:
                     if ev != 'fumble_lost':
                         team(lost_team)['fumbles_lost'] += 1
@@ -266,10 +281,9 @@ def player_lines(drives, kickoff_events=()):
                 if fumbler:
                     fumble_stats = line(fumbler, part, 'fumbler')['miscellaneous']
                     fumble_stats['fumbles'] += 1
-                    fumbler_side = part.get('fumbler_side')
-                    lost_team = out.get('fumble_lost_team')
-                    if ev != 'fumble_lost' and (lost_team == fumbler_side
-                                                   or (lost_team is None and out.get('turnover'))):
+                    fumbler_side = part.get('fumbler_side') or play['state_before']['offense_team']
+                    lost_team = _lost_fumble_team(play)
+                    if ev != 'fumble_lost' and lost_team is not None and lost_team == fumbler_side:
                         fumble_stats['fumbles_lost'] += 1
                 recoverer = part.get('recoverer_id') or out.get('recoverer_id')
                 if recoverer:
