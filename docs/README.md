@@ -2,6 +2,8 @@
 
 Start here. This is the maintained navigation layer for current definitions, model identities and evidence, **not** a new research log. Last reconciled 2026-11-26; research pins below are snapshots, not deployments.
 
+**Documentation framework:** [Diátaxis (Diataxis) and the Legendary Picks documentation philosophy](DOCUMENTATION-PHILOSOPHY.md). Read before creating or reorganizing documentation.
+
 | I want to know | Go here |
 |---|---|
 | How to query LP data and select a snapshot game | [API agent guide](API-AGENT-GUIDE.md) |
