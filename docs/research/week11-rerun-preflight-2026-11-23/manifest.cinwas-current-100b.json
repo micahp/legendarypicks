@@ -1,0 +1,511 @@
+{
+ "models": [
+  "v1",
+  "v1.5",
+  "v1.6",
+  "v2",
+  "pbv1",
+  "pbv1-off"
+ ],
+ "name": "cinwas-current-100b",
+ "packages": {
+  "pbv1": {
+   "code_commit": "8a1d984229cdc20f5ad076ebd81edc7f1be90c75",
+   "package": "pbv1--season-2026.slcpkg",
+   "sha256": "774366599e23fda6eb2e91c13abd1284083f116af8ef720a2fccdf99b86ac90f"
+  },
+  "pbv1-off": {
+   "code_commit": "8a1d984229cdc20f5ad076ebd81edc7f1be90c75",
+   "package": "pbv1-off--season-2026.slcpkg",
+   "sha256": "48cca8b62f36d2cd142c5b94230c536b19efa9d6b90bff5129241d4005babb4d"
+  },
+  "v1": {
+   "code_commit": "58ef3861e5f3cc4006ab627102e55bd432ab399d",
+   "package": "v1--season-2026.slcpkg",
+   "sha256": "6286d341b21d69ea90c1fdd18c4837821a93bba8a1750f82dbcf9dd7ac0a6f0a"
+  },
+  "v1.5": {
+   "code_commit": "2eab8a89efffad23c00a1d451ac80e856579ac5a",
+   "package": "v1.5-ind-hou-overtime.slcpack",
+   "sha256": "727820b921ce79e4bcb3e168a3586cca16513715da87d3380e95a298cd7a17c8"
+  },
+  "v1.6": {
+   "code_commit": "1bb3bd50c4df5896e4d693245e48329c20c63254",
+   "package": "v1.6--season-2026.slcpkg",
+   "sha256": "6cf1e83677dc325632c49b2659de3ab04c856fc63d44b19fccc26a6f674f03a2"
+  },
+  "v2": {
+   "code_commit": "8a1d984229cdc20f5ad076ebd81edc7f1be90c75",
+   "package": "v2--season-2026-runtimefix1.slcpkg",
+   "sha256": "97c4a01e9a60c3f6e31c1701d4c954fddd5d6e9938c193bd1aba9218c7d7f5c3"
+  }
+ },
+ "preflight": {
+  "2026_11_CIN_WAS": {
+   "file": "/root/runs/week-11/snapshots/cinwas-current-2026-11-23T1418/2026_11_CIN_WAS.json",
+   "file_sha256": "d649bc43edae7dc92f4a039ddac23cac6265989d5bb8e4630e910b036bd001f2",
+   "roster_resolution_hash": "921fa0c30c8a621960eef64abf043cb9b6e0bde2e6984e42701562765c65f764",
+   "rows": [
+    [
+     "CIN roster membership from the weekly roster",
+     "PASS",
+     "75 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "CIN depth chart current",
+     "PASS",
+     "2026-11-23T07:01:28Z, 7.3h before the cutoff"
+    ],
+    [
+     "CIN injury report applies to this game",
+     "PASS",
+     "131 statuses, 0 without a publish time, 0 after the cutoff, 219 dropped as from a previous game"
+    ],
+    [
+     "CIN resolved eligible QB1",
+     "PASS",
+     "Joe Burrow (00-0036442)"
+    ],
+    [
+     "CIN unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "WSH roster membership from the weekly roster",
+     "PASS",
+     "83 players, week 11; 0 depth-chart players not on it"
+    ],
+    [
+     "WSH depth chart current",
+     "PASS",
+     "2026-11-23T07:01:28Z, 7.3h before the cutoff"
+    ],
+    [
+     "WSH injury report applies to this game",
+     "PASS",
+     "131 statuses, 0 without a publish time, 0 after the cutoff, 219 dropped as from a previous game"
+    ],
+    [
+     "WSH resolved eligible QB1",
+     "PASS",
+     "Jayden Daniels (00-0039910)"
+    ],
+    [
+     "WSH unresolved required roles",
+     "PASS",
+     "0"
+    ],
+    [
+     "conflicting player-team memberships",
+     "PASS",
+     "0"
+    ],
+    [
+     "frozen roster resolution matches",
+     "PASS",
+     "921fa0c30c8a"
+    ],
+    [
+     "exclusions reach the engine as Out",
+     "PASS",
+     "all excluded players Out"
+    ]
+   ]
+  }
+ },
+ "runs": [
+  {
+   "elapsed_seconds": 233.5,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/2026_11_CIN_WAS/v1.log",
+   "model": "v1",
+   "output": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/2026_11_CIN_WAS/v1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 91
+  },
+  {
+   "elapsed_seconds": 241.1,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/2026_11_CIN_WAS/v1.5.log",
+   "model": "v1.5",
+   "output": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/2026_11_CIN_WAS/v1.5.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 97
+  },
+  {
+   "elapsed_seconds": 451.5,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/2026_11_CIN_WAS/v2.log",
+   "model": "v2",
+   "output": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/2026_11_CIN_WAS/v2.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 94
+  },
+  {
+   "elapsed_seconds": 555.4,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/2026_11_CIN_WAS/v1.6.log",
+   "model": "v1.6",
+   "output": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/2026_11_CIN_WAS/v1.6.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 98
+  },
+  {
+   "elapsed_seconds": 389.3,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/2026_11_CIN_WAS/pbv1.log",
+   "model": "pbv1",
+   "output": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/2026_11_CIN_WAS/pbv1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 98
+  },
+  {
+   "elapsed_seconds": 383.9,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/2026_11_CIN_WAS/pbv1-off.log",
+   "model": "pbv1-off",
+   "output": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/2026_11_CIN_WAS/pbv1-off.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "100 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 98
+  }
+ ],
+ "runtime": "/root/lp-slc-portable-runtime/scripts/nfl_sequence/simulate_portable_pack.py",
+ "schema": "lp-slc-portable-batch-2",
+ "seed_start": 300001,
+ "seeds_per_game_model": 100,
+ "smoke": [
+  {
+   "elapsed_seconds": 148.0,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/smoke/2026_11_CIN_WAS/v1.log",
+   "model": "v1",
+   "output": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/smoke/2026_11_CIN_WAS/v1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "1 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 1
+  },
+  {
+   "elapsed_seconds": 154.9,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/smoke/2026_11_CIN_WAS/v1.5.log",
+   "model": "v1.5",
+   "output": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/smoke/2026_11_CIN_WAS/v1.5.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "1 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 1
+  },
+  {
+   "elapsed_seconds": 287.7,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/smoke/2026_11_CIN_WAS/v2.log",
+   "model": "v2",
+   "output": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/smoke/2026_11_CIN_WAS/v2.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "1 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 1
+  },
+  {
+   "elapsed_seconds": 301.7,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/smoke/2026_11_CIN_WAS/v1.6.log",
+   "model": "v1.6",
+   "output": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/smoke/2026_11_CIN_WAS/v1.6.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "1 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 1
+  },
+  {
+   "elapsed_seconds": 269.1,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/smoke/2026_11_CIN_WAS/pbv1.log",
+   "model": "pbv1",
+   "output": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/smoke/2026_11_CIN_WAS/pbv1.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "1 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 1
+  },
+  {
+   "elapsed_seconds": 270.3,
+   "game_id": "2026_11_CIN_WAS",
+   "log": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/smoke/2026_11_CIN_WAS/pbv1-off.log",
+   "model": "pbv1-off",
+   "output": "/root/runs/week-11/games/cinwas-current-100b-2026-11-23/smoke/2026_11_CIN_WAS/pbv1-off.json",
+   "postflight": [
+    [
+     "run has player box scores",
+     "PASS",
+     "1 seeds"
+    ],
+    [
+     "excluded players receiving stats",
+     "PASS",
+     "0"
+    ],
+    [
+     "CIN simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0036442, resolved: 00-0036442"
+    ],
+    [
+     "WSH simulated passer is the resolved QB1",
+     "PASS",
+     "most seeds: 00-0039910, resolved: 00-0039910"
+    ]
+   ],
+   "returncode": 0,
+   "status": "completed",
+   "valid_full_games": 1
+  }
+ ],
+ "snapshots": "/root/runs/week-11/snapshots/cinwas-current-2026-11-23T1418",
+ "status": "completed"
+}
