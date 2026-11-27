@@ -46,3 +46,23 @@ The diagram is a conceptual personnel-first V2 research path, not the exact froz
 ## Batch acceptance boundary
 
 The model-independent snapshot is a data artifact. Model readiness requires the selected runtime's actual pinned input/dependency checks. A smoke game is a complete engine run, not just snapshot parsing or package export. For strict batches the launcher requires each requested seed to complete legally with the required execution/statistics and verified snapshot provenance; legal completion and evidence verification are separate facts. Stop at the first rejected seed where the runtime supports it; for old frozen runtimes bound chunks and stop later waves. No replacement seeds or blind resumption. See [mandatory launch procedure](../API-AGENT-GUIDE.md#mandatory-model-readiness-and-batch-launch).
+
+## Moving V2 participation candidate (2026-11-27)
+
+At [`6d2db7e1`](https://github.com/micahp/legendarypicks/commit/6d2db7e1ec0cbebbeba08ce1049f1f64b08a2bad), the moving V2 path has the newer participation and PBV1 coupling code (not validated; the earlier reviewed pin rejected coupling). HE weights entry using prior active-game snap share; exit hazards remain distinct. Historical-rate HS is the explicit control. This changes candidate behavior, not frozen V2.
+
+```mermaid
+flowchart TD
+  A["Eligible roster + prior lineup"] --> B["Grouping / proposed rotation"]
+  C["Historical rate or HE share"] --> D["Bench draw"]
+  B --> D
+  D --> E{"All slots filled?"}
+  E -->|No| F["Deterministic eligible-slot repair"]
+  F --> G{"Feasible?"}
+  G -->|No| X["Reject seed"]
+  E -->|Yes| H["Commit lineup and formation"]
+  G -->|Yes| H
+  H --> I["Call then eligible participant / row draw"]
+```
+
+No full-engine or held-out evaluation was executed during consolidation. See [V2 card](../model-cards/nfl/slc-v2.md).

@@ -1,0 +1,39 @@
+{
+  "actual_result": {
+    "away": "PHI",
+    "away_points": 39.0,
+    "home": "DAL",
+    "home_margin": -1.0,
+    "home_points": 38.0,
+    "kickoff_utc": "2026-11-26T21:30:00+00:00",
+    "scoreboard_date": "2026-11-26",
+    "scoreboard_id": "2026_12_PHI_DAL",
+    "status": "completed",
+    "total": 77.0
+  },
+  "code_commit": "58ef3861e5f3cc4006ab627102e55bd432ab399d",
+  "completed_at_utc": null,
+  "game_id": "2026_12_PHI_DAL",
+  "model_id": "v1",
+  "model_pack_sha256": "bc1c8544c919b7762e696478051fd0947fa41440dc4e2ab1fdd6f27d1efa4011",
+  "portable_runner_sha256": "487818e7362245ab18ce890215603e2c394a86e5612b79c857db573b95a75433",
+  "python_abi": "3.12",
+  "registry_sha256": "f9c6028207c6290e7e815dbac8afb4e396d6b67fe58518be50a01ef61ce68884",
+  "requested_games": 100,
+  "run_id": "2026_12_PHI_DAL-20261127T142757Z-ca5bf59e3f11",
+  "schema": "slc-run-manifest-1",
+  "seeds": {
+    "first": 300001,
+    "last_inclusive": 300100
+  },
+  "snapshot": {
+    "as_of": "2026-11-26T20:00:00Z",
+    "path": "/root/runs/week-12/snapshots/2026_12_PHI_DAL.streak-context.json",
+    "roster_resolution_hash": "fd55bf921b40e2ed9288b6717e40088ba2c7e81a7122bd774abeae25b243a886",
+    "sha256": "ca5bf59e3f11ac4413a6107d936ec1da6436ebbafdffe741b1733c4ff0d33612"
+  },
+  "source_run_manifest_sha256": "e5fad7b6fc4f248a6b77f93eb663e8e8e42b1be5599a07e8afc9059100941d18",
+  "started_at_utc": "2026-11-27T14:47:52Z",
+  "status": "completed",
+  "valid_full_games": 100
+}

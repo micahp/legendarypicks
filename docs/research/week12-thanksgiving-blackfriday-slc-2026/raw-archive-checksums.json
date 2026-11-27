@@ -1,0 +1,56 @@
+{
+  "2026_12_CHI_DET/v1_complete": {
+    "path": "/root/runs/week-12/games/2026_12_CHI_DET/raw/2026_12_CHI_DET-20261127T155718Z-fc22ba3e2097.tar.gz",
+    "sha256": "4052134bbbfa6874f8ece7c34302dda30c8e63744f0da0dc87f4bab9787fbb3c"
+  },
+  "2026_12_KC_BUF/v1_complete": {
+    "path": "/root/runs/week-12/games/2026_12_KC_BUF/raw/2026_12_KC_BUF-20261127T165917Z-15271af975f4.tar.gz",
+    "sha256": "cf867ad0bb3c25dce33355f1a3e6fca3f3e09cca42fc2848b3fdfa66a1f5c92c"
+  },
+  "2026_12_PHI_DAL/v1_complete": {
+    "path": "/root/runs/week-12/games/2026_12_PHI_DAL/raw/2026_12_PHI_DAL-20261127T162830Z-6ed4c646a2c5.tar.gz",
+    "sha256": "e06423be150bd0bf3846d99f7dfc814d4467b3e17d9178719087bdc0404bbca3"
+  },
+  "archives": [
+    {
+      "bytes": 451145,
+      "file_count": 20,
+      "game_id": "2026_12_CHI_DET",
+      "gzip_test": "passed",
+      "path": "/root/runs/week-12/games/2026_12_CHI_DET/raw/2026_12_CHI_DET-20261127T130408Z-19e7e3947cf5.tar.gz",
+      "sha256": "000117ac64b45324ca892274e106b55420ec68dc54f83b71f86cff357ccf3302"
+    },
+    {
+      "bytes": 448736,
+      "file_count": 20,
+      "game_id": "2026_12_PHI_DAL",
+      "gzip_test": "passed",
+      "path": "/root/runs/week-12/games/2026_12_PHI_DAL/raw/2026_12_PHI_DAL-20261127T142757Z-ca5bf59e3f11.tar.gz",
+      "sha256": "c59153c3f27e50739b36d5ebb9c945d31ca4fce515e47fe5fc45c7ac48571fb6"
+    },
+    {
+      "bytes": 18231,
+      "file_count": 1,
+      "game_id": "2026_12_CHI_DET",
+      "gzip_test": "passed",
+      "path": "/root/runs/week-12/games/2026_12_CHI_DET/raw/ceg-frozen-100-seeds.tar.gz",
+      "sha256": "5b49829caa1715afdacc5f1e7bd3f72f702e2309f0c4ea398f06824e60b0f9d3"
+    },
+    {
+      "bytes": 17846,
+      "file_count": 1,
+      "game_id": "2026_12_PHI_DAL",
+      "gzip_test": "passed",
+      "path": "/root/runs/week-12/games/2026_12_PHI_DAL/raw/ceg-frozen-100-seeds.tar.gz",
+      "sha256": "dc1a8e97abe4d4302de218219f3f5d5e2adbcaf5b7b31da4cac71bd44fbcc827"
+    },
+    {
+      "bytes": 33630926,
+      "file_count": 4,
+      "game_id": "2026_12_CHI_DET",
+      "gzip_test": "passed",
+      "path": "/root/runs/week-12/games/2026_12_CHI_DET/raw/2026_12_CHI_DET-20261127T155718Z-fc22ba3e2097.tar.gz",
+      "sha256": "4052134bbbfa6874f8ece7c34302dda30c8e63744f0da0dc87f4bab9787fbb3c"
+    }
+  ]
+}

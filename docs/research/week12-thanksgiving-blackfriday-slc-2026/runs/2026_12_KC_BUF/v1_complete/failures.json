@@ -1,0 +1,90 @@
+{
+  "failed_games": 15,
+  "failures": [
+    {
+      "failure_reason": "autonomous_event_transition_unsupported:kick_return_start_spot_invalid",
+      "seed": 300015,
+      "status": "blocked"
+    },
+    {
+      "failure_reason": "gridiron_executor_failed:{'name': 'TypeError', 'message': 'return-yard endpoints or advance direction are invalid'}",
+      "seed": 300017,
+      "status": "blocked"
+    },
+    {
+      "failure_reason": "autonomous_event_generation_invalid:gridiron_play_incomplete:{'reason': 'live_play_no_progress', 'hard_time_limit_seconds': 36, 'no_progress_limit_seconds': 3.5}; full diagnostic is in raw archive",
+      "seed": 300032,
+      "status": "blocked"
+    },
+    {
+      "failure_reason": "gridiron_executor_failed:{'name': 'TypeError', 'message': 'return-yard endpoints or advance direction are invalid'}",
+      "seed": 300034,
+      "status": "blocked"
+    },
+    {
+      "failure_reason": "gridiron_executor_failed:{'name': 'TypeError', 'message': 'return-yard endpoints or advance direction are invalid'}",
+      "seed": 300039,
+      "status": "blocked"
+    },
+    {
+      "failure_reason": "gridiron_executor_failed:{'name': 'TypeError', 'message': 'return-yard endpoints or advance direction are invalid'}",
+      "seed": 300059,
+      "status": "blocked"
+    },
+    {
+      "failure_reason": "autonomous_event_generation_invalid:gridiron_play_incomplete:{'reason': 'live_play_no_progress', 'hard_time_limit_seconds': 36, 'no_progress_limit_seconds': 3.5}; full diagnostic is in raw archive",
+      "seed": 300060,
+      "status": "blocked"
+    },
+    {
+      "failure_reason": "autonomous_event_generation_invalid:gridiron_play_incomplete:{'reason': 'simulation_time_cap', 'time_limit_seconds': 12}; full diagnostic is in raw archive",
+      "seed": 300064,
+      "status": "blocked"
+    },
+    {
+      "failure_reason": "autonomous_event_transition_unsupported:defensive_touchback_needs_end_zone_dead_ball_and_restart_facts",
+      "seed": 300065,
+      "status": "blocked"
+    },
+    {
+      "error": "play 4: blocked field-goal transition disagrees with its live result",
+      "error_type": "AssertionError",
+      "seed": 300075,
+      "status": "exception",
+      "traceback": "Traceback (most recent call last):\n  File \"/root/runs/week-12/inputs/v1-complete-portable-runtime-gzip/simulate_portable_pack.py\", line 588, in _run_autonomous_seed\n    record = context['autonomous'].play_autonomous_game(seed, None, **context['kwargs'])\n  File \"/tmp/slc-model-runtime-ld6rxypo/scripts/nfl_sequence/autonomous_game.py\", line 1515, in play_autonomous_game\n    record = game_state.play_game(seed, ref, pregame_snapshot=source.snapshot,\n  File \"/tmp/slc-model-runtime-ld6rxypo/scripts/nfl_sequence/game_state.py\", line 2168, in play_game\n    return _Game(seed, ref, ledger, rng, pregame_snapshot, model_seed, streams,\n  File \"/tmp/slc-model-runtime-ld6rxypo/scripts/nfl_sequence/game_state.py\", line 1954, in run\n    self._drive()\n  File \"/tmp/slc-model-runtime-ld6rxypo/scripts/nfl_sequence/game_state.py\", line 1220, in _drive\n    self._drive_body()\n  File \"/tmp/slc-model-runtime-ld6rxypo/scripts/nfl_sequence/game_state.py\", line 1796, in _drive_body\n    e1.check_drive(plays, terminal)\n  File \"/tmp/slc-model-runtime-ld6rxypo/scripts/nfl_sequence/e1_drive.py\", line 729, in check_drive\n    raise AssertionError(f'play {i + 1}: blocked field-goal transition disagrees with its live result')\nAssertionError: play 4: blocked field-goal transition disagrees with its live result\n"
+    },
+    {
+      "error": "play 4: blocked field-goal transition disagrees with its live result",
+      "error_type": "AssertionError",
+      "seed": 300080,
+      "status": "exception",
+      "traceback": "Traceback (most recent call last):\n  File \"/root/runs/week-12/inputs/v1-complete-portable-runtime-gzip/simulate_portable_pack.py\", line 588, in _run_autonomous_seed\n    record = context['autonomous'].play_autonomous_game(seed, None, **context['kwargs'])\n  File \"/tmp/slc-model-runtime-ld6rxypo/scripts/nfl_sequence/autonomous_game.py\", line 1515, in play_autonomous_game\n    record = game_state.play_game(seed, ref, pregame_snapshot=source.snapshot,\n  File \"/tmp/slc-model-runtime-ld6rxypo/scripts/nfl_sequence/game_state.py\", line 2168, in play_game\n    return _Game(seed, ref, ledger, rng, pregame_snapshot, model_seed, streams,\n  File \"/tmp/slc-model-runtime-ld6rxypo/scripts/nfl_sequence/game_state.py\", line 1954, in run\n    self._drive()\n  File \"/tmp/slc-model-runtime-ld6rxypo/scripts/nfl_sequence/game_state.py\", line 1220, in _drive\n    self._drive_body()\n  File \"/tmp/slc-model-runtime-ld6rxypo/scripts/nfl_sequence/game_state.py\", line 1796, in _drive_body\n    e1.check_drive(plays, terminal)\n  File \"/tmp/slc-model-runtime-ld6rxypo/scripts/nfl_sequence/e1_drive.py\", line 729, in check_drive\n    raise AssertionError(f'play {i + 1}: blocked field-goal transition disagrees with its live result')\nAssertionError: play 4: blocked field-goal transition disagrees with its live result\n"
+    },
+    {
+      "failure_reason": "autonomous_event_transition_unsupported:kick_return_start_spot_invalid",
+      "seed": 300084,
+      "status": "blocked"
+    },
+    {
+      "failure_reason": "autonomous_event_generation_invalid:gridiron_executor_failed:{'name': 'RangeError', 'message': 'return geometry coordinates must be between 0 and 100 yards'}",
+      "seed": 300089,
+      "status": "blocked"
+    },
+    {
+      "failure_reason": "autonomous_event_generation_invalid:gridiron_play_incomplete:{'reason': 'simulation_time_cap', 'time_limit_seconds': 12}; full diagnostic is in raw archive",
+      "seed": 300094,
+      "status": "blocked"
+    },
+    {
+      "failure_reason": "autonomous_event_transition_unsupported:kick_v3_goal_line_dead_ball_needs_explicit_score",
+      "seed": 300098,
+      "status": "blocked"
+    }
+  ],
+  "game_id": "2026_12_KC_BUF",
+  "raw_archive_sha256": "cf867ad0bb3c25dce33355f1a3e6fca3f3e09cca42fc2848b3fdfa66a1f5c92c",
+  "requested": 100,
+  "run_id": "2026_12_KC_BUF-20261127T165917Z-15271af975f4",
+  "schema": "slc-v1-complete-failure-ledger-1",
+  "valid_full_games": 85
+}

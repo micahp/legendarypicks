@@ -147,3 +147,5 @@ flowchart TD
 For a fixed-layout alternative to the fit/inference diagram, see [CEG fit and runtime SVG](diagrams/ceg-fit-runtime.svg).
 
 ![CEG offline fit and event-generation runtime](diagrams/ceg-fit-runtime.svg)
+
+**Candidate integration 2026-11-27:** [`df6d8e6f`](https://github.com/micahp/legendarypicks/commit/df6d8e6ffd984d833472f44bec33426f93ff0917) advances the independent research branch from the frozen Phase 9 pin. In the player-aware diagram, the lineup is prepared before intent and attribution; the persistent stint advances only when E1 appends an accepted play (penalty replacement discards the pending lineup). Input preflight and stop-on-blocked single-matchup execution are implemented but not runtime-verified. The older multi-matchup evaluation path remains historical. Do not treat CEG's drive-checker completion as full NFL validity. The frozen baseline is still `8d86d430`. [Handoff](https://github.com/micahp/legendarypicks/blob/df6d8e6ffd984d833472f44bec33426f93ff0917/docs/research/SLC-CEG-PLAYER-INTEGRATION-2026-11-26.md).

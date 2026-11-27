@@ -16,6 +16,9 @@ Use this index to avoid repeating investigations. Dated reports, raw evidence, m
 | Madden 64 | [Mechanics matrix (moving branch)](https://github.com/micahp/legendarypicks/blob/madden-on-main/docs/research/MADDEN64-MECHANICS-MATRIX.md); [Statistical study](https://github.com/micahp/legendarypicks/blob/922671ac/docs/research/MADDEN64-STATISTICAL-SIMULATION-STUDY.md) |
 | V2 typed event expansion | [Reuse inventory](https://github.com/micahp/legendarypicks/blob/50c15508/docs/research/SLC-V2-EVENT-EXPANSION-INVENTORY-2026-11-24.md) |
 | Week 11 roster preflight and rerun | [Historical rerun report](week11-rerun-preflight-2026-11-23/REPORT.md); [original invalid-forecast evidence](week11-1k-batch-2026-11-22/REPORT.md) |
+| Thanksgiving Week 12 (retrospective) | [Run and grading report](week12-thanksgiving-blackfriday-slc-2026/REPORT.md); [archive checksums](week12-thanksgiving-blackfriday-slc-2026/raw-archive-checksums.json) |
+| Shared participation / HE | [Moving V2 integration](https://github.com/micahp/legendarypicks/blob/6d2db7e1ec0cbebbeba08ce1049f1f64b08a2bad/docs/research/SLC-SHARED-PARTICIPATION-2026-11-26.md) |
+| CEG player candidate | [Independent CEG research integration](https://github.com/micahp/legendarypicks/blob/df6d8e6ffd984d833472f44bec33426f93ff0917/docs/research/SLC-CEG-PLAYER-INTEGRATION-2026-11-26.md) |
 | Conditioning | [V2 Simplified and other arms](../model-cards/nfl/slc-v2-simplified.md) |
 
 This is an initial curated index, not a claim of exhaustive cataloguing of every research artifact. Extend the relevant row rather than creating another top-level dated index. Review prior evidence and unresolved blockers before repeating experiments.
