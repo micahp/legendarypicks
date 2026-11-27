@@ -1,0 +1,70 @@
+{
+  "finished_at_utc": "2026-11-27T17:29:40Z",
+  "game_id": "2026_12_KC_BUF",
+  "models": [
+    "v1_complete"
+  ],
+  "portable_runner_sha256": "e97d8e6c1a2ea3b4bf546a32202c7b478fa8bbc51dfd50a9532b15e8429387bb",
+  "raw_archive_path": "/root/runs/week-12/games/2026_12_KC_BUF/raw/2026_12_KC_BUF-20261127T165917Z-15271af975f4.tar.gz",
+  "raw_archive_sha256": "cf867ad0bb3c25dce33355f1a3e6fca3f3e09cca42fc2848b3fdfa66a1f5c92c",
+  "registry_sha256": "c9370a46cf64e481a0439c0f2cb9d97cf835f1a6861c686b32e980f292b60207",
+  "run_id": "2026_12_KC_BUF-20261127T165917Z-15271af975f4",
+  "runs": [
+    {
+      "artifact_sha256": null,
+      "attempts": "/root/runs/automated-slc/2026_12_KC_BUF-20261127T165917Z-15271af975f4/v1_complete.json.attempts.jsonl.gz",
+      "code_commit": "41680940cb61749dd91c4e04ba374a9df8952600",
+      "elapsed_seconds": 1822.9,
+      "log": "/root/runs/automated-slc/2026_12_KC_BUF-20261127T165917Z-15271af975f4/v1_complete.log",
+      "model_id": "v1_complete",
+      "output": "/root/runs/automated-slc/2026_12_KC_BUF-20261127T165917Z-15271af975f4/v1_complete.json",
+      "pack_sha256": "1b5a4369aa69f7fb739463d17fbc19c6ed7c307265e1368639fc812d795593a1",
+      "player_lines_available": true,
+      "postflight": [
+        [
+          "run has player box scores",
+          "PASS",
+          "98 seeds"
+        ],
+        [
+          "excluded players receiving stats",
+          "PASS",
+          "0"
+        ],
+        [
+          "KC simulated passer is the resolved QB1",
+          "PASS",
+          "most seeds: 00-0033873, resolved: 00-0033873"
+        ],
+        [
+          "BUF simulated passer is the resolved QB1",
+          "PASS",
+          "most seeds: 00-0034857, resolved: 00-0034857"
+        ]
+      ],
+      "python_abi": "3.8",
+      "requested_games": 100,
+      "returncode": 1,
+      "rng_stream_root_sha256": null,
+      "started_at_utc": "2026-11-27T16:59:17Z",
+      "status": "failed",
+      "valid_full_games": 85
+    }
+  ],
+  "schema": "lp-slc-automated-family-run-1",
+  "seed_plan": {
+    "count_per_model": 100,
+    "first": 300001,
+    "last_inclusive": 300100
+  },
+  "snapshot": {
+    "as_of": "2026-11-26T16:15:03.896364Z",
+    "path": "/root/runs/week-12/snapshots/2026_12_KC_BUF.oracle-resolved-retrospective-2026-11-26.json",
+    "roster_resolution_hash": "9ebfbee584eec140ab9e6d1a8e09c6bba6d989d988453be24d4d906e004b1479",
+    "sha256": "15271af975f47bb4cae80bd59f89c2f6e995b1ee11f32035b617a31594d201a0"
+  },
+  "started_at_utc": "2026-11-27T16:59:17Z",
+  "status": "completed_with_failures",
+  "v2_treatment_stream_roots_match": null,
+  "workers_per_model": 4
+}

@@ -1,6 +1,6 @@
 # Thanksgiving 2026 SLC run results
 
-Status at 2026-11-27 10:25 CT. These are retrospective runs for the completed Nov 26 games. The latest completed six-model run has 100 requested seeds and 100 valid full games per model for CHI–DET and PHI–DAL. Frozen CEG separately completed 100/100 for PHI–DAL. V1 Complete 100-seed runs are active for all three Thanksgiving games; the three-game sequence has started with CHI–DET and its completed results will be added here after it finishes.
+Status at 2026-11-27 11:38 CT. These are retrospective runs for the completed Nov 26 games. The six statistical SLC arms and frozen CEG results were already published for CHI–DET and PHI–DAL. V1 Complete has now finished 100 attempts for all three Thanksgiving games; failed seeds remain in the evidence and were not replaced.
 
 ## Actual results and forecast summary
 
@@ -50,8 +50,15 @@ Per-seed scores and artifact/source hashes are in each `ceg_frozen/summary.json`
 
 ## V1 Complete
 
-The V1 Complete sequence requests 100 seeds per Thanksgiving game, one game at a time with four workers. CHI–DET is complete as a batch but only 89/100 are valid full games; no failed seed was replaced. Its full seed failure ledger, including the exception stack trace, is in `runs/2026_12_CHI_DET/v1_complete/failures.json`, and player prop grades use only its 89 valid games. PHI–DAL is running; KC–BUF is queued. The same pinned package is used with each frozen game snapshot and game-specific ratings input. Results and failures for both remaining games will be added after their batches finish.
+Each Thanksgiving game used 100 attempts (seeds 300001–300100), four workers, pinned code `41680940cb61749dd91c4e04ba374a9df8952600` and package `1b5a4369aa69f7fb739463d17fbc19c6ed7c307265e1368639fc812d795593a1`. No failed seed was replaced. Completed legal game counts are CHI–DET 89/100, PHI–DAL 91/100, and KC–BUF 85/100. These are execution and grading results, not evidence of forecast readiness.
 
+| Game | Valid games | P(home wins) | Mean away | Mean home | Mean total | Prop rows | Prop Brier |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| CHI–DET | 89/100 | 0.551 | 16.44 | 18.83 | 35.27 | 87 | 0.472 |
+| PHI–DAL | 91/100 | 0.692 | 13.62 | 20.55 | 34.16 | 86 | 0.455 |
+| KC–BUF | 85/100 | 0.824 | 10.51 | 23.29 | 33.80 | 86 | 0.225 |
+
+Failure seeds, named blockers and exception stack traces are in each game's `failures.json`. Full play diagnostics and all attempts remain in the raw archives listed in `raw-archive-checksums.json`. Player prop lines and per-seed scores are in `grades.json` and each V1 Complete `summary.json`. Prop Brier excludes pushes and uses valid games only.
 ## Coverage and storage
 
 The latest completed six-model results cover CHI–DET and PHI–DAL only; no completed 100-seed six-model KC–BUF batch was found. V1 Complete is the only current 100-seed sequence covering all three Thanksgiving games. CEG results are identified above. Raw run archives are kept under `/root/runs/week-12/games/<game>/raw`; the two completed six-model archives passed `gzip -t` and each contains 20 files. Raw host outputs have not been deleted.
