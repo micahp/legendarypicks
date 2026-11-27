@@ -163,6 +163,9 @@ def _reproduction_command(args, seed):
         if getattr(args, flag, None):
             command.extend([f"--{flag.replace('_', '-')}", str(getattr(args, flag)),
                             f"--{sha.replace('_', '-')}", getattr(args, sha)])
+    if getattr(args, 'participation_field', None):
+        command.append('--participation-entry-current-season' if getattr(args, 'participation_entry_current_season', True)
+                       else '--no-participation-entry-current-season')
     if getattr(args, 'paired_randomness', False):
         command.append('--paired-randomness')
     command.append(f"--rng-protocol={getattr(args, 'rng_protocol', rng_protocol.V1)}")
@@ -1058,7 +1061,7 @@ def run_batch(args):
             'context_mode', 'context_bandwidth', 'context_min_source_games', 'team_tendency', 'try_policy',
             'no_safety_table', 'slc_blocker_fix', 'slc_fg_ordinary_cutoff', 'slc_v2',
             'playcall_season_adapt', 'season_adapt_n0', 'participation_field', 'participation_field_sha256',
-            'participation_snap_counts', 'participation_snap_counts_sha256', 'playcall_pbv1_package',
+            'participation_snap_counts', 'participation_snap_counts_sha256', 'participation_entry_current_season', 'playcall_pbv1_package',
             'playcall_fg_kicker', 'playcall_fg_kicker_sha256', 'historical_archive_reconstruction')}
         settings = {key: str(value) if isinstance(value, Path) else value for key, value in settings.items()}
         settings.update(source_snapshot_sha256=source_snapshot_sha256,
@@ -1193,7 +1196,8 @@ def run_batch(args):
     if args.participation_field:  # research flag: the lineup table is pinned in the ledger like PBV1's
         ledger_header['research_integration'] = {'participation_field': {
             'table': str(args.participation_field), 'table_sha256': args.participation_field_sha256,
-            'fit_seasons': ref.contextual_sampler.participation_field.seasons, 'personnel_label': 'lineup grouping'}}
+            'fit_seasons': ref.contextual_sampler.participation_field.seasons, 'personnel_label': 'lineup grouping',
+            'entry_current': ref.contextual_sampler.participation_field.entry_current}}
     if args.participation_snap_counts:  # research flag: the current-season snap counts and what they set, in the ledger
         ledger_header['research_integration']['participation_snap_counts'] = {
             'file': str(args.participation_snap_counts), 'sha256': args.participation_snap_counts_sha256,
@@ -1495,13 +1499,12 @@ def main(argv=None):
                          '--participation-field and --participation-snap-counts-sha256')
     ap.add_argument('--participation-snap-counts-sha256', default=None,
                     help='the expected SHA-256 of the --participation-snap-counts file; a different file is refused')
-    ap.add_argument('--participation-entry-current-season', dest='participation_entry_current_season',
+    ap.add_argument('--participation-entry-current-season', '--participation-entry-current', dest='participation_entry_current_season',
                     action='store_true', default=True,
                     help='default on (HE): the bench draw weights each player by his current-season share of team snaps '
                          'from --participation-snap-counts, and falls back to the table rate when he has no earlier active '
-                         'game. Applies only with --participation-field and --participation-snap-counts; without both, the '
-                         'draw is the table rate. Leave hazards are unchanged.')
-    ap.add_argument('--no-participation-entry-current-season', dest='participation_entry_current_season',
+                         'game. A participation field with HE enabled requires the snap-count artifact. Leave hazards are unchanged.')
+    ap.add_argument('--no-participation-entry-current-season', '--no-participation-entry-current', dest='participation_entry_current_season',
                     action='store_false',
                     help='the table-rate bench draw (HS/historical), instead of HE')
     ap.add_argument('--season-score-file', type=Path, default=None,
@@ -1708,6 +1711,8 @@ def main(argv=None):
             ap.error('--participation-field requires --rng-protocol v2')
         if not args.playcall_artifact:
             ap.error('--participation-field requires --playcall-artifact (the SLC engine)')
+    if args.participation_field and args.participation_entry_current_season and not args.participation_snap_counts:
+        ap.error('HE bench entry requires --participation-snap-counts; use --no-participation-entry-current-season for HS control')
     if args.participation_snap_counts:
         if not args.participation_field:
             ap.error('--participation-snap-counts requires --participation-field')

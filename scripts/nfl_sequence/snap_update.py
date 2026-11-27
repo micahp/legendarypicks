@@ -259,5 +259,8 @@ def apply(field, snaps, week, rosters, player_n0, group_n0=GROUP_N0):
         record['teams'][team] = {'earlier_games': len(weeks), 'last_week_used': max(weeks) if weeks else None,
                                  'group_lambda': [round(x, 6) for x in lam] if lam is not None else None,
                                  'player_weights': {pid: round(w, 6) for (_t, pid), w in sorted(weights.items())},
-                                 'player_status': dict(sorted(status.items()))}
+                                 'player_status': dict(sorted(status.items())),
+                                 'entry_current': getattr(field, 'entry_current', False),
+                                 'entry_share': {pid: share for (t, pid), share in field.entry_share.items()
+                                                 if t == pf.nfl_team_codes.to_db(team)}}
     return record

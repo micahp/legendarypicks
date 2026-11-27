@@ -273,8 +273,9 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, transition_
         if not field.seasons or max(field.seasons) >= season:
             raise ValueError(f'participation field is fitted on {field.seasons}; a {season} game needs earlier seasons only')
         ref.contextual_sampler.participation_field = field
-        # HE (current-season entry weight) is the default; it needs the snap counts, so without them the draw is the table rate
-        field.entry_current = bool(participation_entry_current and participation_snap_counts)
+        field.entry_current = bool(participation_entry_current)
+        if field.entry_current and not participation_snap_counts:
+            raise ValueError('HE bench entry needs cutoff-safe snap counts')
         if participation_snap_counts:  # research flag: this season's published snap counts before the game's week
             import snap_update
             snaps = snap_update.SnapCounts.load(*participation_snap_counts)
@@ -1274,7 +1275,12 @@ def _describe_layer(ref):
     outcome_manifest = getattr(sampler, 'player_outcome_manifest', None)
     if outcome_manifest is not None:
         description['player_outcome_model'] = outcome_manifest
+    field = getattr(sampler, 'participation_field', None)
+    if field is not None:
+        description['participation_entry_current'] = field.entry_current
+        description['participation_snap_update'] = getattr(sampler, 'participation_snap_update', None)
     integration_files = ('clock_d.py', 'e1_drive.py', 'e2_reference.py', 'game_state.py', 'game_stats.py', 'pre_event.py',
+                         'participation_field.py', 'snap_update.py',
                          'source_preflight.py', '../nfl_team_codes.py',
                          'playcall_model.py',
                          'team_tendency.py', 'transition_strength.py', 'formation_layer.py', 'defense_layer.py', 'point_splits.py',
