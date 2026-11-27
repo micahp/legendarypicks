@@ -1,0 +1,130 @@
+# Madden 64 25-game validation and AI investigation
+
+Date: 2026-11-26
+Statistical checkpoint: `922671ac4d62b016c559ea01ed31792653ea5c80`
+Pinned source checkout: `3f79881ce369abbba504c87eb3a6520af53c1cbf`
+
+This preserves the 25-game run as an exploratory checkpoint. No additional statistical batch was collected. One full replay of the archived `q3-s12` game was run solely to check determinism.
+
+## Findings from the 25 games
+
+The archived event stream contains 1,673 candidate pass attempts, 648 completions, 609 rush attempts, 107 sacks, 134 interceptions, and 11 fumbles across 25 games (50 team-games). The opportunity-based rates are:
+
+- Completion rate: 648 / 1,673 = **38.73%**.
+- Net passing yards per pass attempt: 6,682 / 1,673 = **3.99**. The passing counter includes sack losses.
+- Passing yards per dropback: 6,682 / (1,673 + 107) = **3.75**.
+- Sack rate: 107 / 1,780 dropbacks = **6.01%**.
+- Interceptions per attempt: 134 / 1,673 = **8.01%**.
+- Rushing yards per carry: 557 / 609 = **0.91**.
+- Pass share of pass-plus-rush attempts: 1,673 / (1,673 + 609) = **73.31%**. Including sacks as dropbacks, pass share is 74.51%.
+
+The pass-heavy yardage profile has multiple causes. The teams ran more than twice as many pass attempts as rush attempts, while observed carries gained under one yard on average. So the difference is partly opportunity mix and partly execution outcome in this particular simulation. The archived data do not contain the complete pre-snap play-call decisions needed to determine why the CPU chose to pass so often. Every run used the same Seattle-at-Green-Bay CPU exhibition, so this sample cannot separate matchup effects from game logic or establish a general Madden tendency.
+
+### Passing-yard and sack accounting
+
+The 7,559 receiving-yard events reconcile with completion-linked passer-yard events. All 107 sack frames contain a matching negative passer-yard event, totaling **−877 yards**. Therefore 7,559 − 877 = **6,682 net passing yards**. This explains the difference between receiver yards and the passing counter; it does not explain the low rushing output.
+
+There are 156 negative passer-yard entries overall: 107 sack losses and 49 negative completion-yard entries. Those 49 completion events sum to −121 yards and are also present in receiving-yard totals. The “one negative row equals one sack” shortcut is therefore false, but matching by sack frame accounts for all 107 sacks and the full −877-yard sack loss.
+
+For every one of the 50 team-game records, the total-offense counter equals passing plus rushing yards. The observed disparity is not caused by a failure to add the two team counters. Source code updates total offense from the pass and rush event paths; the event recorder and player-stat deltas provide a separate cross-check (see below).
+
+The 11 fumble events are recorded. Team turnovers exceed interceptions by seven across the sample, and for each team-game the difference is no greater than that game’s fumble count. This is consistent with seven lost fumbles, but the archive does not establish which recorded fumbles were lost; treat that as an inference, not a verified event label.
+
+## Accelerated gameplay and scoring compensation (NHL 95 analogy)
+
+**Hypothesis:** Madden 64 may compensate for its elevated offensive opportunity rate by suppressing offensive efficiency, analogous to the high goalie effectiveness observed in the NHL 95 research. This is an observed aggregate tradeoff, not evidence of a deliberately engineered balancing mechanism or a particular defensive AI rule.
+
+### Pace-normalized evidence
+
+Use the archived 25 games, not an extrapolation of mean scores from mixed quarter lengths. For each group, elapsed game-clock seconds = both teams' summed possession counters. Offensive opportunity proxy = candidate pass attempts + rush attempts + sacks; combined points = both final score counters. Normalize pooled counts by multiplying by 3,600 / elapsed seconds. The three overtime games contribute 895 extra seconds; no regulation-only split is claimed.
+
+| Quarter length | Games | Elapsed clock (s) | Opportunity proxy | Combined points | Opportunities / 60 min | Points / 60 min | Net yards / opportunity |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 3 min | 8 | 5837 | 397 | 92 | 244.85 | 56.74 | 3.39 |
+| 5 min | 9 | 11100 | 721 | 116 | 233.84 | 37.62 | 2.89 |
+| 10 min | 8 | 19718 | 1271 | 263 | 232.05 | 48.02 | 3.00 |
+| Pooled | 25 | 36655 | 2389 | 471 | 234.63 | 46.26 | 3.03 |
+
+The 1997 NFL comparison uses regular-season league totals from [Pro Football Reference, NFL & AFL season-by-season team offense](https://www.pro-football-reference.com/years/AFLNFL/index.htm) (1997 row: 30 teams, 240 games, 9,957 points, 30,620 offensive plays, 151,135 net yards, 8,844 completions, 15,729 pass attempts, 479 interceptions, 13,639 rush attempts, 54,260 rush yards; 1,252 sacks inferred as plays minus attempts minus rushes). NFL per-game counts are per scheduled 60-minute game, including overtime in final totals; actual elapsed NFL overtime is not subtracted here. Madden is per 60 elapsed game-clock minutes. This denominator difference is explicit and does not establish exact pace equivalence.
+
+| Metric | Madden 64 archive | 1997 NFL |
+|---|---:|---:|
+| Combined offensive opportunities / plays per 60 min / scheduled game | 234.63 | 127.58 |
+| Combined points per 60 min / scheduled game | 46.26 | 41.49 |
+| Net offensive yards per opportunity / play | 3.03 | 4.94 |
+| Completion rate | 38.73% | 56.23% |
+| Interceptions per attempt | 8.01% | 3.05% |
+| Sacks per dropback | 6.01% | 7.37% |
+| Rush yards per carry | 0.91 | 3.98 |
+| Total points per offensive opportunity / play (includes non-offensive scoring) | 0.197 | 0.325 |
+
+Madden records about 84% more offensive opportunities per equivalent clock duration, yet only 11% more combined points. Total points per recorded opportunity are about 39% lower. This is consistent with scoring compensation. The rates rely on candidate event labels and counters, not a complete snap ledger. A high pace is established relative to game-clock time, not necessarily faster physical movement or faster real-world play. The single CPU matchup and three quarter settings do not establish causality or generality.
+
+![Madden 64 vs. 1997 NFL](charts/madden64-vs-1997-nfl.svg)
+
+![NHL ’95 vs. 1993–94 NHL](charts/nhl95-vs-1993-94-nhl.svg)
+
+NHL reference: [30-game Genesis pilot](https://github.com/micahp/retro-sports-arcade/blob/a7d3b5e/research/nhl95-reference-study/STUDY.md#3a-results-phases-ac-pilot-2026-11-23). The NHL chart visualizes published approximate shot/save rates, clock-weighted rounded goal rates, and pooled PP conversion (27/278); it is not an independent replay or a calibration target.
+
+### Candidate mechanisms and implications
+
+- NHL 95: elevated shot opportunities offset by effective goalies (prior project observation; not independently quantified in this report).
+- Madden 64: elevated offensive opportunities accompanied by low completions, high interceptions and extremely low rushing efficiency. Coverage/ball contest, target choice, blocking and tackling are plausible mechanisms; sacks are not elevated relative to the historical reference. No claim of a direct goalie-equivalent component, intentional tuning or a specific code path is justified yet.
+- **Playable retro football:** pace/efficiency compensation may be a useful design choice if it improves the experience; evaluate scoring, play count and user control separately.
+- **V1 Complete / predictive simulation:** do not copy Madden's suppressed efficiencies as calibration targets. Require independently realistic play frequency, clock runoff, legal transitions, outcome distributions and player statistics against real football, not just plausible final scores.
+
+### Falsifiable follow-up
+
+First finish the small controlled traces below, using recorder V2 plus actual snap/call identity, game clock start/end, live/dead-ball duration, ball release and catch/contact outcomes. Distinguish accelerated between-snap cadence from accelerated player movement. Test whether the opportunity/efficiency tradeoff persists under matched teams, seed sets, difficulty and quarter settings, then against a second matchup or a real-era matchup baseline. Record points by source (offense, defense, special teams), drive counts, play mix, and opportunity-level efficiency. If the low efficiency disappears with corrected event attribution or is confined to this matchup/settings, reject the generalized compensation hypothesis. If it persists, identify a specific causal mechanism with controlled changes before claiming intentional balance. Do not start a large new batch solely to confirm a plausible aggregate observation.
+
+## Reconciliation and replay validation
+
+- **Team counters:** sampled end-state team counters at indices 0–12, 15–22, and 57 match final RAM values in all 50 team-games. The counter comparison has zero mismatches. Index 57 is the score candidate.
+- **Player statistics:** event deltas for event types 3–15 match the corresponding end player-stat arrays in all 650 team/player-stat comparisons. The raw event meanings remain candidate labels except where the source paths below establish the update directly.
+- **Possession time:** the two teams’ possession counters sum to regulation duration plus observed overtime duration in all 25 games. The three overtime games end at period-5 clocks 103 seconds (from 180), 0 (from 300), and 82 (from 600), respectively; the counter sums include those elapsed overtime seconds.
+- **Scores and screenshots:** end RAM score counters reconcile with the score values in the archived team-game summaries. The 25-run `.end.png` images show the field/gameplay, not the final box score, so they do not independently verify each final score or team stat. An older pilot screenshot shows a box-score display, but it is not from these 25 games and is not used as their independent check.
+- **Replay determinism:** `q3-s12` was replayed from the same controller-select state (SHA-256 `73ccee9a5e793e53481f0f82a26cf87509bf0cfc2e37a8782a565c79372eb942`), ROM, BizHawk/Mupen core, driver, initial A input, 12,000-frame chunk size, and candidate seed 8004. All seven chunk CSVs and all seven decompressed RDRAM snapshots are byte-identical to the archived run. Each RDRAM image is 589,824 bytes; the final RDRAM SHA-256 is `3b30e67877646741321460f2b5766325457243e62f3420b67d0d6d82f6e70eab`. BizHawk `.state` container hashes differ, while the emulated RDRAM and recorded game data match.
+- **Candidate RNG word:** the source setter writes `D_80087998`, and the sequence-advance routine reads and updates it. The runner writes candidate seed 8004 to RDRAM address `0x87998` after the initial A input. The exact replay above reproduces the same trajectory; the otherwise matched `q3-s13` run with candidate seed 8005 diverges. This validates that the candidate word is initialized and affects the trajectory, not that every possible RNG source in the game has been enumerated.
+
+The pinned-source paths for [event staging and player-stat updates](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/code/gameplay_event_prepare.c), [team-event append](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/code/team_event_append.c), [rushing events and counters](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/code/play_event_state_build.c), [reception events and counters](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/code/roster_profile_update.c), [team-stat processing](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/code/roster_stat_process.c), and [RNG state initialization](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/code/random_state.c) support these distinctions. Type 9/10 rush attempts/yards and 13/14 receptions/receiving yards are explicit in their source paths. Other labels among types 3–15 are supported by UI labels and player-stat deltas, but their full event-generation paths are not all mapped yet.
+
+## Recorder V2
+
+The archived CSVs, manifests, screenshots, and hashes remain untouched. Recorder V2 is implemented and its Python-side V1/V2 schema paths were checked; it has not yet been run in a new emulator session. It emits `period`, `period_type`, and `mode_state` separately. Periods 1–4 are labeled `regulation`; period 5 is `overtime`; values 6 and 7 are retained as `game_end_state` and `pre_game_state`. `period` and `clock` use the sampled state addresses `0x89538` and `0x8953C`; `mode_state` is sampled separately from `0x876DC`.
+
+Each execution-hook invocation receives `hook_seq` and `hook_id = game_id:chunk_id:hook_seq`; event/staged rows from that invocation share the identifier. State and counter samples have blank hook IDs. `run_chunks.py` includes the game and chunk identity in the command and fingerprints recorder schema 2. Candidate extraction groups by invocation ID when present and retains V1 frame grouping for old archives. V1 event rows’ `quarter` field is preserved as mode-state evidence and is not mislabeled as regulation/overtime.
+
+An invocation ID is not a football play ID. The current hook captures one event-preparation routine; it does not capture every snap, play call, no-play, or football decision. V2 prevents separate callback invocations in the same frame from being merged together, which improves event grouping without pretending that the recorder has a complete play log.
+
+## Liquid AI: source-verified mechanisms
+
+The exact source checkout is pinned above. Overlay catalog addresses are shifted from linked addresses: overlay 1 catalog labels are `0x4724` above the linked address; overlay 4 labels are `0x18A0` above it. The link-map correction is documented in the [existing mechanics matrix](MADDEN64-MECHANICS-MATRIX.md). Candidate breakpoints below require confirming that the overlay is loaded and that the PC is reached before treating a runtime hit as proof.
+
+Corrected candidate PCs for a first trace are QB command handling `0x800BB438`, role update `0x800D51D4`, state classification `0x800D455C`, ball release `0x800D924C`, carrier-pointer setters `0x800C6194`/`0x800C61E8`, and ball update `0x800C62E4`. These addresses are derived from source and the overlay link shifts; none has yet been confirmed by a behavioral trace in the replay.
+
+- **Play selection and assignments:** the offensive/defensive candidate play IDs are held in `D_8006B7AA` and `D_8006B7AC`; selection paths read play tables and assign the selected records. `func_80022354` loops over roster slots and resolves per-slot selections into runtime player objects. These establish play-record selection and personnel assignment paths, not route names or complete route geometry. See [play selection](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/overlays/overlay1/func_800972B8.c), [team/defense setup](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/overlays/overlay1/func_800960B0.c), and [slot assignment](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/code/func_80022354.c).
+- **Dynamic roles and AI state:** `D_80085A48` is a per-player role array updated by `func_800D6B74`; the function also reads team order arrays `D_8008B310`, `D_8008B320`, `D_80089550`, the ball pointer `D_80086178`, and the current-carrier pointer `D_8008A058`. The state classifier `func_800D5EDC` returns values 0–7 based on flags, carrier state, role values, and timing. Several actor loops branch on those returns. These are source-backed state/control fields, but the football meaning of every role and return value remains undecoded. See [role assignment](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/overlays/overlay4/func_800D6B74.c) and [state classification](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/overlays/overlay4/func_800D777C.c).
+- **Movement intent:** `func_800D2378` reads actor flags, handler, state, action, and timers, then dispatches state/action changes and calls `func_800C0018` on a selected path. `func_800A4368` contains a separate object-mode path that compares object and ball positions and sends a heading-like value to `func_800C0018`. These are candidate movement/state mechanisms; neither source path alone establishes receiver route intent or the semantics of the movement command. See [actor update](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/overlays/overlay4/func_800D2378.c) and [object movement path](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/overlays/overlay1/func_800A4368.c).
+- **QB target and ball release:** overlay-1 `func_800BFB5C` resolves a player button mask and, for one throw-button branch, builds command type `0x1F` with `func_800C157C(player) >> 4`. The source exposes a player pointer, slot, flags, button mask, throw command, and angle value to log, but does not identify the receiver target or CPU target-selection rule. `func_800DA8CC` checks whether its object is the current carrier, reads object fields at offsets `0x8C`–`0x98`, builds ball velocity/position state using ball fields including `0x1C`/`0x20`, invokes the ball-velocity routine, and changes flags. This is a release path; the actual selected receiver/aim mapping remains open. See [QB command handling](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/overlays/overlay1/func_800BFB5C.c) and [ball release](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/overlays/overlay4/func_800DA8CC.c).
+- **Flight and possession handoff:** `func_800C7C84` advances ball state and handles a floor-crossing branch. `func_800C7A34` and `func_800C7A88` assign the current-carrier pointer and align/reset related state. The setters do not reveal the collision predicate or all callers that decide whether a catch occurs. See [ball update](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/overlays/overlay4/func_800C7C84.c), [handoff path A](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/overlays/overlay4/func_800C7A34.c), and [handoff path B](https://github.com/TheGh0stShip/Madden-64/blob/3f79881ce369abbba504c87eb3a6520af53c1cbf/src/overlays/overlay4/func_800C7A88.c).
+
+## Runtime observations, unknowns, and hypotheses
+
+**Runtime observations in hand:** archived hook events, counter transitions, event-to-player-stat deltas, clock/period RAM samples, and exact-seed replay are validated above. The existing 25-game recorder did not capture selected play IDs, player object pointers, role/state transitions, movement commands, QB target identity, release vectors, or catch predicates. No claim below should be read as a runtime-confirmed AI trace.
+
+**Unresolved mappings:** identify which loaded actor instances are QB, eligible receiver, ineligible player, and defender; decode route/assignment records and role values; identify the CPU QB's target-selection caller and receiver identity; name the inputs to its throw-angle command; map the movement command into world-space intent; and find the caller/predicate that accepts or rejects a catch before the carrier pointer changes. Event types 3–8, 11, 12, and 15 also need source-to-runtime correlation before their exact semantics are treated as closed.
+
+**Hypotheses to test:** the high pass share may come from CPU play selection, play-record contents, or a particular exhibition/matchup; the low rushing efficiency may arise from assignments, movement, blocking/contact, or roster attributes; low completion rate and interceptions may arise at receiver response, throw targeting/release, flight, or catch/interception resolution. The aggregate totals cannot choose among these causes.
+
+**Small controlled passing sequence:** capture a pre-snap save state and use the same teams, selected offensive play, defensive play, and RNG word for three short traces. First capture an open eligible target as the baseline. Second keep the release and route fixed while placing one defender at the catch point, to distinguish receiver response from a contested resolution. Third keep assignments and coverage fixed while changing only the throw target/angle enough to place the ball outside the receiver's reach. For each trace record play IDs and assignments, role/state changes, actor positions and movement commands, QB command/target fields, release position/velocity, ball flight, the first catch/ground/turnover transition, and resulting event/stat deltas. Stop after these three traces and inspect the mappings before expanding the sample.
+
+This sequence is aimed at the concrete V1 Complete concern documented in the GridIron context: ordinary forward-pass candidates currently include all active players, including the QB and offensive linemen, without an explicit eligible-player filter. The tests should distinguish candidate eligibility, reach geometry, receiver reaction, and contested-ball resolution. They are diagnostic only. Do not tune V1 Complete to the unvalidated Madden aggregate rates or port Madden code/data.
+
+## Local evidence files
+
+- [Archived 25-game full event/counter data](madden64-statistical-study/additional-25-data/additional-25-full-data.csv)
+- [Archived team-game counters](madden64-statistical-study/additional-25-data/additional-25-game-stats.csv)
+- [Derived 50-row opportunity-based stats CSV](madden64-statistical-study/additional-25-data/additional-25-advanced-stats.csv)
+- [Advanced-stat definitions, aggregate rates, and reconciliation results](madden64-statistical-study/additional-25-advanced-stats.json), rebuilt by [`derive_advanced_stats.py`](../../tools/madden64-study/derive_advanced_stats.py)
+- [25-game run results and provenance](madden64-statistical-study/additional-25-run-results.json)
+- [Existing mechanics matrix](MADDEN64-MECHANICS-MATRIX.md)
