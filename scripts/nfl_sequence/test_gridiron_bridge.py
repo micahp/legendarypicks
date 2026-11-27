@@ -222,12 +222,14 @@ def test_defensive_player_roles_require_position_specific_ratings(role, missing_
     }
     ratings[f'd-{role}']['ratings'].pop(missing_rating)
     monkeypatch.setattr(bridge.pregame_snapshot, 'load_frozen_snapshot', lambda _path: snapshot)
-    monkeypatch.setattr(bridge.roster_preflight, 'check', lambda _snapshot: ([], {'home': {}, 'away': {}}))
+    monkeypatch.setattr(bridge.roster_preflight, 'check', lambda _snapshot: ([], {'home': {'side': 'home'}, 'away': {'side': 'away'}}))
     monkeypatch.setattr(bridge.roster_preflight, 'failed', lambda _checks: False)
     monkeypatch.setattr(bridge.roster_preflight, 'exclusions_applied',
                         lambda _snapshot, _resolved: ([], 'PASS'))
     monkeypatch.setattr(bridge.v1_complete_roster, 'eligible_ids',
                         lambda _resolved: set(offense_positions))
+    monkeypatch.setattr(bridge.v1_complete_roster, 'eligible_rows',
+                        lambda resolved: offense_roster if resolved['side'] == 'home' else ())
     monkeypatch.setattr(bridge.participation_field.Field, 'load',
                         lambda _path, _field_hash: object())
     monkeypatch.setattr(bridge.live_participation, 'advance', lambda _field, **_kwargs: selected)

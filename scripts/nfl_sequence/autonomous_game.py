@@ -279,12 +279,19 @@ class AutonomousGameExecution:
         self.snapshot = pregame_snapshot.load_frozen_snapshot(self.snapshot_path)
         self.teams = (self.snapshot['schedule']['home_team'], self.snapshot['schedule']['away_team'])
         self.team_by_side = {'A': self.teams[0], 'B': self.teams[1]}
+        checks, self._actor_resolved_rosters = roster_preflight.check(self.snapshot)
+        if (roster_preflight.failed(checks)
+                or roster_preflight.exclusions_applied(self.snapshot, self._actor_resolved_rosters)[1] != 'PASS'):
+            raise ValueError('gridiron_roster_preflight_failed')
+        self._eligible_rosters = {side: v1_complete_roster.eligible_rows(self._actor_resolved_rosters[side])
+                                  for side in ('home', 'away')}
         self.profile_paths = {team: playbook_profile_path(playbook_dir, team) for team in self.teams}
         self.playbook_manifest = str(playbook_manifest)
         self.participation_sha256 = participation_sha256
         self.field = participation_field.Field.load(participation_path, participation_sha256)
         snaps = snap_update.SnapCounts.load(*participation_snap_counts) if participation_snap_counts else None
-        self.participation = shared_participation.Policy(self.field, self.snapshot, snaps, participation_entry_current)
+        self.participation = shared_participation.Policy(self.field, self.snapshot, snaps, participation_entry_current,
+                                                         resolved=self._actor_resolved_rosters)
         self.engine_root = str(engine_root)
         self.ratings_path = ratings_path
         self.coaching_profiles = coaching_profiles or {}
@@ -424,7 +431,8 @@ class AutonomousGameExecution:
                 self.snapshot_path, self.field, self.participation_sha256,
                 self.profile_paths, self.playbook_manifest,
                 seed=self._decision_seed(self.play_index, 'gridiron'), family=family, state=call_state,
-                ratings_path=self._rating_profile_path(), prepared_participation=prepared)
+                ratings_path=self._rating_profile_path(), prepared_participation=prepared,
+                resolved_rosters=getattr(self, '_actor_resolved_rosters', None))
             result, timing = self.session.play(call)
             self.participation.commit(prepared)
             return self._map_scrimmage_result(call, result, timing, provenance, state, context,
@@ -828,6 +836,11 @@ class AutonomousGameExecution:
         """Resolve a live actor against its expected game-side roster."""
         roster_side = {'A': 'home', 'B': 'away'}[side]
         club = self.team_by_side[side]
+        if hasattr(self, '_eligible_rosters'):
+            row = next((row for row in self._eligible_rosters[roster_side] if row['gsis_id'] == pid), None)
+            if row is None:
+                raise ValueError(f'gridiron_actor_not_on_expected_roster:{pid}:{side}')
+            return row
         rows = [row for row in self.snapshot['rosters'][roster_side]['players']
                 if row['gsis_id'] == pid and row.get('team') == club]
         if not rows and any(row.get('gsis_id') == pid for row in
@@ -896,12 +909,16 @@ class AutonomousGameExecution:
     def _special_teams_call(self, kind, kicking_team, receiving_team, yardline_100, play_index):
         roster_side = 'home' if kicking_team == self.snapshot['schedule']['home_team'] else 'away'
         receiving_roster_side = 'home' if receiving_team == self.snapshot['schedule']['home_team'] else 'away'
-        kicking_roster = self.snapshot['rosters'][roster_side]['players']
-        receiving_roster = self.snapshot['rosters'][receiving_roster_side]['players']
-        checks, resolved = roster_preflight.check(self.snapshot)
-        if (roster_preflight.failed(checks)
-                or roster_preflight.exclusions_applied(self.snapshot, resolved)[1] != 'PASS'):
-            raise ValueError('gridiron_roster_preflight_failed')
+        resolved = getattr(self, '_actor_resolved_rosters', None)
+        if resolved is None:
+            checks, resolved = roster_preflight.check(self.snapshot)
+            if (roster_preflight.failed(checks)
+                    or roster_preflight.exclusions_applied(self.snapshot, resolved)[1] != 'PASS'):
+                raise ValueError('gridiron_roster_preflight_failed')
+        kicking_roster = (self._eligible_rosters[roster_side] if hasattr(self, '_eligible_rosters')
+                          else self.snapshot['rosters'][roster_side]['players'])
+        receiving_roster = (self._eligible_rosters[receiving_roster_side] if hasattr(self, '_eligible_rosters')
+                            else self.snapshot['rosters'][receiving_roster_side]['players'])
         allowed_kicking = v1_complete_roster.eligible_ids(resolved[roster_side])
         allowed_receiving = v1_complete_roster.eligible_ids(resolved[receiving_roster_side])
 
@@ -1348,7 +1365,8 @@ class AutonomousGameExecution:
                 self.snapshot_path, self.field, self.participation_sha256,
                 self.profile_paths, self.playbook_manifest,
                 seed=self._decision_seed(try_index, 'two_point_gridiron'), family=family,
-                state=play_state, ratings_path=self._rating_profile_path())
+                state=play_state, ratings_path=self._rating_profile_path(),
+                resolved_rosters=getattr(self, '_actor_resolved_rosters', None))
             try:
                 result, timing = self.session.play(call)
                 generated = self._map_scrimmage_result(
@@ -1428,7 +1446,16 @@ def play_autonomous_game(seed, ref, *, snapshot_path, participation_path, partic
             source.current_team = state['offense']
             return original_event_source(state, context)
         source.event_source = event_source
-        return game_state.play_game(seed, ref, pregame_snapshot=source.snapshot,
-                                    execution_source=source, **game_kwargs)
+        record = game_state.play_game(seed, ref, pregame_snapshot=source.snapshot,
+                                      execution_source=source, **game_kwargs)
+        players = record.get('stats', {}).get('player', [])
+        if players:
+            checks = roster_preflight.postflight(
+                source.snapshot, {'player_boxscores_by_seed': [{'players': players}]},
+                resolved=source._actor_resolved_rosters)
+            identity = next(row for row in checks if row[0] == 'player box scores belong to eligible team rosters')
+            if identity[1] != 'PASS':
+                raise ValueError('autonomous_roster_postflight_failed:' + identity[2])
+        return record
     finally:
         source.close()

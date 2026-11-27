@@ -19,6 +19,7 @@ import game_state  # noqa: E402
 import e1_drive  # noqa: E402
 import game_stats  # noqa: E402
 import roster_preflight  # noqa: E402
+import v1_complete_roster  # noqa: E402
 from event_expansion import EventExpansionSwitches  # noqa: E402
 
 
@@ -470,6 +471,23 @@ class TryDirectionTests(unittest.TestCase):
 
 
 class AutonomousSpecialTeamsTests(unittest.TestCase):
+    def test_special_teams_selects_eligible_membership_only_punter(self):
+        source = self._source()
+        source.snapshot['rosters']['home']['players'][0]['pos_abb'] = 'RB'
+        member = {'gsis_id': 'AAA-M', 'player_name': 'Member', 'pos_abb': 'P',
+                  'pos_rank': 999, 'team': 'AAA'}
+        source._eligible_rosters = {
+            side: tuple(source.snapshot['rosters'][side]['players']) + ((member,) if side == 'home' else ())
+            for side in ('home', 'away')}
+        source.rating_rows['AAA-M'] = source.rating_rows['AAA-P0']
+        with self._valid_preflight(source), tempfile.NamedTemporaryFile() as ratings:
+            source.ratings_path = ratings.name
+            with patch.object(v1_complete_roster, 'eligible_ids', side_effect=lambda resolved: {
+                    row['gsis_id'] for rows in source._eligible_rosters.values() for row in rows}), \
+                    patch.object(gridiron_bridge, '_ratings', return_value=(source.rating_rows, {})):
+                call, _, _ = source._special_teams_call('punt', 'AAA', 'BBB', 45, 1)
+        self.assertEqual(call['lineups']['kicking']['punter'], 'AAA-M')
+
     def test_attribution_uses_eligible_membership_only_players(self):
         source = self._source()
         source.snapshot['rosters']['away']['membership'] = {'players': [

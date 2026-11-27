@@ -224,17 +224,25 @@ def postflight(snapshot, run_output, resolved=None):
     seeds = run_output.get('player_boxscores_by_seed') or []
     if not seeds:
         return [('run has player box scores', 'FAIL', 'no player_boxscores_by_seed')]
-    out_hits, passers = Counter(), {t: Counter() for t in teams}
+    out_hits, invalid_players, passers = Counter(), Counter(), {t: Counter() for t in teams}
+    eligible = {team: {p['gsis_id'] for p in res['players'] if p.get('official_eligible')
+                       and p.get('membership') in ('ACTIVE_ROSTER', 'ELEVATED')
+                       and p.get('exclusion_reason') is None} for team, res in teams.items()}
     for seed in seeds:
         for p in seed['players']:
             res = teams.get(p.get('player_team'))
             if res is None:
+                invalid_players[(str(p.get('player_team')), str(p.get('player_id')))] += 1
                 continue
+            if p.get('player_id') not in eligible[p['player_team']]:
+                invalid_players[(p['player_team'], str(p.get('player_id')))] += 1
             if p['player_id'] in excluded(res):
                 out_hits[(p['player_team'], p['player_name'])] += 1
             if (p.get('passing') or {}).get('att'):
                 passers[p['player_team']][p['player_id']] += 1
     rows = [('run has player box scores', 'PASS', f'{len(seeds)} seeds'),
+            ('player box scores belong to eligible team rosters', 'PASS' if not invalid_players else 'FAIL',
+             ', '.join(f'{team} {pid} in {count} seeds' for (team, pid), count in invalid_players.items()) or '0'),
             ('excluded players receiving stats', 'PASS' if not out_hits else 'FAIL',
              ', '.join(f'{t} {n} in {c} seeds' for (t, n), c in out_hits.items()) or '0')]
     for team, res in teams.items():

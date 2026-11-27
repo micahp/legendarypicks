@@ -3,6 +3,7 @@
 The resolved roster is the source of eligibility. In particular, a projected
 practice-squad elevation is not an actual game-specific elevation.
 """
+from types import MappingProxyType
 
 
 def eligible_ids(resolved_team):
@@ -28,6 +29,23 @@ def eligible_ids(resolved_team):
         if role.get('required') and (role.get('status') != 'ASSIGNED' or not by_id.get(role.get('gsis_id'), False)):
             raise ValueError('v1_complete_roster_unresolved_role:' + str(role.get('role')))
     return frozenset(player_id for player_id, valid in by_id.items() if valid)
+
+
+def eligible_rows(resolved_team):
+    """Immutable, team-specific eligible positions; published depth ranks sort first."""
+    allowed = eligible_ids(resolved_team)
+    ranks = [p['depth_rank'] for p in resolved_team['players'] if p.get('depth_rank') is not None]
+    unranked = max(ranks, default=0) + 1
+    rows = []
+    for player in resolved_team['players']:
+        if player['gsis_id'] in allowed:
+            rank = player.get('depth_rank')
+            rows.append(MappingProxyType({
+                'gsis_id': player['gsis_id'], 'player_name': player['name'],
+                'pos_abb': player['pos'], 'pos_rank': rank if type(rank) is int and rank > 0 else unranked,
+                'team': resolved_team['team'], 'rank_source': 'published_depth' if rank else 'unranked_sort_only',
+            }))
+    return tuple(rows)
 
 
 def require_participants(resolved_team, selected_ids):

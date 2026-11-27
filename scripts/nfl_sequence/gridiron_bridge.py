@@ -44,6 +44,11 @@ DEFENSE_POSITION_FALLBACKS = {
     'LDT': ('LDE', 'RDE', 'DE', 'EDGE'),
     'RDT': ('LDE', 'RDE', 'DE', 'EDGE'),
 }
+GENERIC_DEFENSE_POSITIONS = {
+    'LEDGE': ('DL',), 'REDGE': ('DL',), 'LDT': ('DL',), 'RDT': ('DL',),
+    'MLB': ('LB',), 'WLB': ('LB',), 'NB': ('DB',), 'LCB': ('DB',),
+    'RCB': ('DB',), 'SS': ('DB',), 'FS': ('DB',),
+}
 EXAMPLE_ASSIGNMENT_COVERAGE = {'cover_1': 'man', 'cover_3': 'zone'}
 MIN_COVERAGE_ASSIGNMENTS = {'cover_1': ('man', 1), 'cover_3': ('zone', 3)}
 COMMON_LIVE_RATINGS = ('SPD', 'ACC', 'AGI', 'STR', 'AWR')
@@ -126,6 +131,7 @@ def _defensive_lineup(resolved, roster):
         position_groups = [DEFENSE_POSITION_CANDIDATES[slot]]
         if slot in DEFENSE_POSITION_FALLBACKS:
             position_groups.append(DEFENSE_POSITION_FALLBACKS[slot])
+        position_groups.append(GENERIC_DEFENSE_POSITIONS[slot])
         choices = []
         for group in position_groups:
             for position in group:
@@ -141,6 +147,24 @@ def _defensive_lineup(resolved, roster):
         choices.sort(key=lambda p: (p['pos_rank'], p['gsis_id']))
         selected[choices[0]['gsis_id']] = slot
     return selected
+
+
+def _add_offensive_line(players, roster):
+    for role in ('LT', 'LG', 'C', 'RG', 'RT'):
+        rows = [p for p in roster if p['gsis_id'] not in players and p['pos_abb'] == role]
+        if not rows:
+            compatible = {'LT': ('OT', 'T', 'OL'), 'RT': ('OT', 'T', 'OL'),
+                          'LG': ('G', 'OG', 'OL'), 'RG': ('G', 'OG', 'OL'), 'C': ('OL',)}[role]
+            rows = [p for p in roster if p['gsis_id'] not in players and p['pos_abb'] in compatible]
+        if not rows:
+            raise ValueError('gridiron_missing_line_role:' + role)
+        rank = min(p['pos_rank'] for p in rows)
+        best = {p['gsis_id'] for p in rows if p['pos_rank'] == rank}
+        if len(best) != 1 and any(p.get('rank_source') != 'unranked_sort_only'
+                                  for p in rows if p['pos_rank'] == rank):
+            raise ValueError('gridiron_ambiguous_line_role:' + role)
+        players[sorted(best)[0]] = role
+    return players
 
 
 def _sha(path):
@@ -212,11 +236,13 @@ def _ratings(path):
 
 
 def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_path, *, seed, family, state,
-               ratings_path=None, prepared_participation=None):
+               ratings_path=None, prepared_participation=None, resolved_rosters=None):
     snapshot = pregame_snapshot.load_frozen_snapshot(snapshot_path)
-    checks, resolved = roster_preflight.check(snapshot)
-    if roster_preflight.failed(checks) or roster_preflight.exclusions_applied(snapshot, resolved)[1] != 'PASS':
-        raise ValueError('gridiron_roster_preflight_failed')
+    resolved = resolved_rosters
+    if resolved is None:
+        checks, resolved = roster_preflight.check(snapshot)
+        if roster_preflight.failed(checks) or roster_preflight.exclusions_applied(snapshot, resolved)[1] != 'PASS':
+            raise ValueError('gridiron_roster_preflight_failed')
     team_by_side = {'home': snapshot['schedule']['home_team'], 'away': snapshot['schedule']['away_team']}
     if state['offense'] in ('A', 'B'):
         offense_team = team_by_side['home' if state['offense'] == 'A' else 'away']
@@ -240,7 +266,7 @@ def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_pat
         selection = 'seeded_prior_season_team_pass_rate'
     field = (field_path if isinstance(field_path, participation_field.Field)
              else participation_field.Field.load(field_path, field_hash))
-    roster = snapshot['rosters'][offense_side]['players']
+    roster = v1_complete_roster.eligible_rows(resolved[offense_side])
     selected = prepared_participation
     if selected is None:
         selected = live_participation.advance(field, team=offense_team, season=season, resolved=resolved[offense_side],
@@ -252,23 +278,14 @@ def build_call(snapshot_path, field_path, field_hash, profile_path, manifest_pat
     players = {selected['qb1']: 'QB', **selected['slots']}
     if not set(players).issubset(allowed):
         raise ValueError('gridiron_prepared_participation_ineligible')
-    for role in ('LT', 'LG', 'C', 'RG', 'RT'):
-        rows = [p for p in roster if p['gsis_id'] in allowed and p['gsis_id'] not in players
-                and p['pos_abb'] == role and type(p['pos_rank']) is int and p['pos_rank'] > 0]
-        if not rows:
-            raise ValueError('gridiron_missing_line_role:' + role)
-        rank = min(p['pos_rank'] for p in rows)
-        best = {p['gsis_id'] for p in rows if p['pos_rank'] == rank}
-        if len(best) != 1:
-            raise ValueError('gridiron_ambiguous_line_role:' + role)
-        players[best.pop()] = role
+    _add_offensive_line(players, roster)
     slots = {role: next(pid for pid, value in players.items() if value == role)
              for role in ('QB', 'RB', 'TE', 'LT', 'LG', 'C', 'RG', 'RT')}
     receivers = sorted(pid for pid, role in players.items() if role == 'WR')
     if len(players) != 11 or len(receivers) != 3:
         raise ValueError('gridiron_offensive_group_unsupported')
     slots.update({f'WR{i + 1}': pid for i, pid in enumerate(receivers)})
-    dslots = _defensive_lineup(resolved[defense_side], snapshot['rosters'][defense_side]['players'])
+    dslots = _defensive_lineup(resolved[defense_side], v1_complete_roster.eligible_rows(resolved[defense_side]))
     dslots = {slot: next(pid for pid, value in dslots.items() if value == slot) for slot in DEFENSE_SLOTS}
     player_roles = _player_roles(players, dslots)
     ids = list(slots.values()) + list(dslots.values())
