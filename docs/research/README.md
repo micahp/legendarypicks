@@ -16,5 +16,7 @@ Use this index to avoid repeating investigations. Dated reports, raw evidence, m
 | Madden 64 | [Mechanics matrix (moving branch)](https://github.com/micahp/legendarypicks/blob/madden-on-main/docs/research/MADDEN64-MECHANICS-MATRIX.md); [Statistical study](https://github.com/micahp/legendarypicks/blob/922671ac/docs/research/MADDEN64-STATISTICAL-SIMULATION-STUDY.md) |
 | V2 typed event expansion | [Reuse inventory](https://github.com/micahp/legendarypicks/blob/50c15508/docs/research/SLC-V2-EVENT-EXPANSION-INVENTORY-2026-11-24.md) |
 | Conditioning | [V2 Simplified and other arms](../model-cards/nfl/slc-v2-simplified.md) |
+| Thanksgiving 2026 SLC runs | [Completed runs, grades and in-progress V1 Complete sequence](week12-thanksgiving-blackfriday-slc-2026/REPORT.md) |
+
 
 This is an initial curated index, not a claim of exhaustive cataloguing of every research artifact. Extend the relevant row rather than creating another top-level dated index. Review prior evidence and unresolved blockers before repeating experiments.

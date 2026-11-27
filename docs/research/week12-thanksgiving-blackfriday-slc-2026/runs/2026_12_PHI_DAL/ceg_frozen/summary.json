@@ -1,0 +1,726 @@
+{
+  "actual": {
+    "away": "PHI",
+    "away_points": 39.0,
+    "home": "DAL",
+    "home_margin": -1.0,
+    "home_points": 38.0,
+    "kickoff_utc": "2026-11-26T21:30:00+00:00",
+    "scoreboard_date": "2026-11-26",
+    "scoreboard_id": "2026_12_PHI_DAL",
+    "status": "completed",
+    "total": 77.0
+  },
+  "game_id": "2026_12_PHI_DAL",
+  "home_win_probability": 0.45,
+  "mean_away_points": 22.14,
+  "mean_home_points": 21.96,
+  "mean_total": 44.1,
+  "model_id": "ceg_frozen",
+  "per_seed_scores": [
+    {
+      "away": 16,
+      "blocker": null,
+      "home": 6,
+      "seed": 300001,
+      "valid_full_game": true
+    },
+    {
+      "away": 26,
+      "blocker": null,
+      "home": 19,
+      "seed": 300002,
+      "valid_full_game": true
+    },
+    {
+      "away": 31,
+      "blocker": null,
+      "home": 6,
+      "seed": 300003,
+      "valid_full_game": true
+    },
+    {
+      "away": 15,
+      "blocker": null,
+      "home": 27,
+      "seed": 300004,
+      "valid_full_game": true
+    },
+    {
+      "away": 22,
+      "blocker": null,
+      "home": 27,
+      "seed": 300005,
+      "valid_full_game": true
+    },
+    {
+      "away": 19,
+      "blocker": null,
+      "home": 34,
+      "seed": 300006,
+      "valid_full_game": true
+    },
+    {
+      "away": 17,
+      "blocker": null,
+      "home": 12,
+      "seed": 300007,
+      "valid_full_game": true
+    },
+    {
+      "away": 23,
+      "blocker": null,
+      "home": 22,
+      "seed": 300008,
+      "valid_full_game": true
+    },
+    {
+      "away": 7,
+      "blocker": null,
+      "home": 20,
+      "seed": 300009,
+      "valid_full_game": true
+    },
+    {
+      "away": 9,
+      "blocker": null,
+      "home": 20,
+      "seed": 300010,
+      "valid_full_game": true
+    },
+    {
+      "away": 20,
+      "blocker": null,
+      "home": 48,
+      "seed": 300011,
+      "valid_full_game": true
+    },
+    {
+      "away": 19,
+      "blocker": null,
+      "home": 14,
+      "seed": 300012,
+      "valid_full_game": true
+    },
+    {
+      "away": 18,
+      "blocker": null,
+      "home": 27,
+      "seed": 300013,
+      "valid_full_game": true
+    },
+    {
+      "away": 17,
+      "blocker": null,
+      "home": 27,
+      "seed": 300014,
+      "valid_full_game": true
+    },
+    {
+      "away": 17,
+      "blocker": null,
+      "home": 27,
+      "seed": 300015,
+      "valid_full_game": true
+    },
+    {
+      "away": 16,
+      "blocker": null,
+      "home": 28,
+      "seed": 300016,
+      "valid_full_game": true
+    },
+    {
+      "away": 23,
+      "blocker": null,
+      "home": 34,
+      "seed": 300017,
+      "valid_full_game": true
+    },
+    {
+      "away": 10,
+      "blocker": null,
+      "home": 24,
+      "seed": 300018,
+      "valid_full_game": true
+    },
+    {
+      "away": 23,
+      "blocker": null,
+      "home": 27,
+      "seed": 300019,
+      "valid_full_game": true
+    },
+    {
+      "away": 30,
+      "blocker": null,
+      "home": 13,
+      "seed": 300020,
+      "valid_full_game": true
+    },
+    {
+      "away": 20,
+      "blocker": null,
+      "home": 23,
+      "seed": 300021,
+      "valid_full_game": true
+    },
+    {
+      "away": 24,
+      "blocker": null,
+      "home": 19,
+      "seed": 300022,
+      "valid_full_game": true
+    },
+    {
+      "away": 30,
+      "blocker": null,
+      "home": 27,
+      "seed": 300023,
+      "valid_full_game": true
+    },
+    {
+      "away": 16,
+      "blocker": null,
+      "home": 20,
+      "seed": 300024,
+      "valid_full_game": true
+    },
+    {
+      "away": 49,
+      "blocker": null,
+      "home": 10,
+      "seed": 300025,
+      "valid_full_game": true
+    },
+    {
+      "away": 24,
+      "blocker": null,
+      "home": 17,
+      "seed": 300026,
+      "valid_full_game": true
+    },
+    {
+      "away": 17,
+      "blocker": null,
+      "home": 24,
+      "seed": 300027,
+      "valid_full_game": true
+    },
+    {
+      "away": 18,
+      "blocker": null,
+      "home": 15,
+      "seed": 300028,
+      "valid_full_game": true
+    },
+    {
+      "away": 26,
+      "blocker": null,
+      "home": 27,
+      "seed": 300029,
+      "valid_full_game": true
+    },
+    {
+      "away": 18,
+      "blocker": null,
+      "home": 12,
+      "seed": 300030,
+      "valid_full_game": true
+    },
+    {
+      "away": 16,
+      "blocker": null,
+      "home": 28,
+      "seed": 300031,
+      "valid_full_game": true
+    },
+    {
+      "away": 14,
+      "blocker": null,
+      "home": 26,
+      "seed": 300032,
+      "valid_full_game": true
+    },
+    {
+      "away": 17,
+      "blocker": null,
+      "home": 15,
+      "seed": 300033,
+      "valid_full_game": true
+    },
+    {
+      "away": 10,
+      "blocker": null,
+      "home": 38,
+      "seed": 300034,
+      "valid_full_game": true
+    },
+    {
+      "away": 16,
+      "blocker": null,
+      "home": 32,
+      "seed": 300035,
+      "valid_full_game": true
+    },
+    {
+      "away": 25,
+      "blocker": null,
+      "home": 38,
+      "seed": 300036,
+      "valid_full_game": true
+    },
+    {
+      "away": 0,
+      "blocker": null,
+      "home": 31,
+      "seed": 300037,
+      "valid_full_game": true
+    },
+    {
+      "away": 17,
+      "blocker": null,
+      "home": 10,
+      "seed": 300038,
+      "valid_full_game": true
+    },
+    {
+      "away": 27,
+      "blocker": null,
+      "home": 23,
+      "seed": 300039,
+      "valid_full_game": true
+    },
+    {
+      "away": 23,
+      "blocker": null,
+      "home": 20,
+      "seed": 300040,
+      "valid_full_game": true
+    },
+    {
+      "away": 13,
+      "blocker": null,
+      "home": 20,
+      "seed": 300041,
+      "valid_full_game": true
+    },
+    {
+      "away": 35,
+      "blocker": null,
+      "home": 3,
+      "seed": 300042,
+      "valid_full_game": true
+    },
+    {
+      "away": 30,
+      "blocker": null,
+      "home": 16,
+      "seed": 300043,
+      "valid_full_game": true
+    },
+    {
+      "away": 16,
+      "blocker": null,
+      "home": 13,
+      "seed": 300044,
+      "valid_full_game": true
+    },
+    {
+      "away": 20,
+      "blocker": null,
+      "home": 13,
+      "seed": 300045,
+      "valid_full_game": true
+    },
+    {
+      "away": 34,
+      "blocker": null,
+      "home": 17,
+      "seed": 300046,
+      "valid_full_game": true
+    },
+    {
+      "away": 23,
+      "blocker": null,
+      "home": 24,
+      "seed": 300047,
+      "valid_full_game": true
+    },
+    {
+      "away": 20,
+      "blocker": null,
+      "home": 16,
+      "seed": 300048,
+      "valid_full_game": true
+    },
+    {
+      "away": 28,
+      "blocker": null,
+      "home": 15,
+      "seed": 300049,
+      "valid_full_game": true
+    },
+    {
+      "away": 10,
+      "blocker": null,
+      "home": 34,
+      "seed": 300050,
+      "valid_full_game": true
+    },
+    {
+      "away": 21,
+      "blocker": null,
+      "home": 16,
+      "seed": 300051,
+      "valid_full_game": true
+    },
+    {
+      "away": 21,
+      "blocker": null,
+      "home": 27,
+      "seed": 300052,
+      "valid_full_game": true
+    },
+    {
+      "away": 37,
+      "blocker": null,
+      "home": 25,
+      "seed": 300053,
+      "valid_full_game": true
+    },
+    {
+      "away": 29,
+      "blocker": null,
+      "home": 25,
+      "seed": 300054,
+      "valid_full_game": true
+    },
+    {
+      "away": 24,
+      "blocker": null,
+      "home": 20,
+      "seed": 300055,
+      "valid_full_game": true
+    },
+    {
+      "away": 26,
+      "blocker": null,
+      "home": 33,
+      "seed": 300056,
+      "valid_full_game": true
+    },
+    {
+      "away": 34,
+      "blocker": null,
+      "home": 27,
+      "seed": 300057,
+      "valid_full_game": true
+    },
+    {
+      "away": 31,
+      "blocker": null,
+      "home": 12,
+      "seed": 300058,
+      "valid_full_game": true
+    },
+    {
+      "away": 23,
+      "blocker": null,
+      "home": 14,
+      "seed": 300059,
+      "valid_full_game": true
+    },
+    {
+      "away": 23,
+      "blocker": null,
+      "home": 41,
+      "seed": 300060,
+      "valid_full_game": true
+    },
+    {
+      "away": 32,
+      "blocker": null,
+      "home": 43,
+      "seed": 300061,
+      "valid_full_game": true
+    },
+    {
+      "away": 38,
+      "blocker": null,
+      "home": 18,
+      "seed": 300062,
+      "valid_full_game": true
+    },
+    {
+      "away": 28,
+      "blocker": null,
+      "home": 13,
+      "seed": 300063,
+      "valid_full_game": true
+    },
+    {
+      "away": 31,
+      "blocker": null,
+      "home": 17,
+      "seed": 300064,
+      "valid_full_game": true
+    },
+    {
+      "away": 17,
+      "blocker": null,
+      "home": 35,
+      "seed": 300065,
+      "valid_full_game": true
+    },
+    {
+      "away": 16,
+      "blocker": null,
+      "home": 19,
+      "seed": 300066,
+      "valid_full_game": true
+    },
+    {
+      "away": 20,
+      "blocker": null,
+      "home": 17,
+      "seed": 300067,
+      "valid_full_game": true
+    },
+    {
+      "away": 33,
+      "blocker": null,
+      "home": 32,
+      "seed": 300068,
+      "valid_full_game": true
+    },
+    {
+      "away": 19,
+      "blocker": null,
+      "home": 10,
+      "seed": 300069,
+      "valid_full_game": true
+    },
+    {
+      "away": 27,
+      "blocker": null,
+      "home": 17,
+      "seed": 300070,
+      "valid_full_game": true
+    },
+    {
+      "away": 15,
+      "blocker": null,
+      "home": 31,
+      "seed": 300071,
+      "valid_full_game": true
+    },
+    {
+      "away": 17,
+      "blocker": null,
+      "home": 16,
+      "seed": 300072,
+      "valid_full_game": true
+    },
+    {
+      "away": 17,
+      "blocker": null,
+      "home": 21,
+      "seed": 300073,
+      "valid_full_game": true
+    },
+    {
+      "away": 20,
+      "blocker": null,
+      "home": 16,
+      "seed": 300074,
+      "valid_full_game": true
+    },
+    {
+      "away": 28,
+      "blocker": null,
+      "home": 27,
+      "seed": 300075,
+      "valid_full_game": true
+    },
+    {
+      "away": 33,
+      "blocker": null,
+      "home": 16,
+      "seed": 300076,
+      "valid_full_game": true
+    },
+    {
+      "away": 13,
+      "blocker": null,
+      "home": 31,
+      "seed": 300077,
+      "valid_full_game": true
+    },
+    {
+      "away": 33,
+      "blocker": null,
+      "home": 14,
+      "seed": 300078,
+      "valid_full_game": true
+    },
+    {
+      "away": 24,
+      "blocker": null,
+      "home": 20,
+      "seed": 300079,
+      "valid_full_game": true
+    },
+    {
+      "away": 6,
+      "blocker": null,
+      "home": 16,
+      "seed": 300080,
+      "valid_full_game": true
+    },
+    {
+      "away": 8,
+      "blocker": null,
+      "home": 27,
+      "seed": 300081,
+      "valid_full_game": true
+    },
+    {
+      "away": 10,
+      "blocker": null,
+      "home": 28,
+      "seed": 300082,
+      "valid_full_game": true
+    },
+    {
+      "away": 9,
+      "blocker": null,
+      "home": 14,
+      "seed": 300083,
+      "valid_full_game": true
+    },
+    {
+      "away": 20,
+      "blocker": null,
+      "home": 14,
+      "seed": 300084,
+      "valid_full_game": true
+    },
+    {
+      "away": 21,
+      "blocker": null,
+      "home": 19,
+      "seed": 300085,
+      "valid_full_game": true
+    },
+    {
+      "away": 27,
+      "blocker": null,
+      "home": 23,
+      "seed": 300086,
+      "valid_full_game": true
+    },
+    {
+      "away": 12,
+      "blocker": null,
+      "home": 27,
+      "seed": 300087,
+      "valid_full_game": true
+    },
+    {
+      "away": 35,
+      "blocker": null,
+      "home": 28,
+      "seed": 300088,
+      "valid_full_game": true
+    },
+    {
+      "away": 34,
+      "blocker": null,
+      "home": 20,
+      "seed": 300089,
+      "valid_full_game": true
+    },
+    {
+      "away": 21,
+      "blocker": null,
+      "home": 34,
+      "seed": 300090,
+      "valid_full_game": true
+    },
+    {
+      "away": 27,
+      "blocker": null,
+      "home": 26,
+      "seed": 300091,
+      "valid_full_game": true
+    },
+    {
+      "away": 20,
+      "blocker": null,
+      "home": 16,
+      "seed": 300092,
+      "valid_full_game": true
+    },
+    {
+      "away": 34,
+      "blocker": null,
+      "home": 36,
+      "seed": 300093,
+      "valid_full_game": true
+    },
+    {
+      "away": 36,
+      "blocker": null,
+      "home": 23,
+      "seed": 300094,
+      "valid_full_game": true
+    },
+    {
+      "away": 31,
+      "blocker": null,
+      "home": 15,
+      "seed": 300095,
+      "valid_full_game": true
+    },
+    {
+      "away": 5,
+      "blocker": null,
+      "home": 23,
+      "seed": 300096,
+      "valid_full_game": true
+    },
+    {
+      "away": 23,
+      "blocker": null,
+      "home": 26,
+      "seed": 300097,
+      "valid_full_game": true
+    },
+    {
+      "away": 20,
+      "blocker": null,
+      "home": 24,
+      "seed": 300098,
+      "valid_full_game": true
+    },
+    {
+      "away": 44,
+      "blocker": null,
+      "home": 3,
+      "seed": 300099,
+      "valid_full_game": true
+    },
+    {
+      "away": 27,
+      "blocker": null,
+      "home": 13,
+      "seed": 300100,
+      "valid_full_game": true
+    }
+  ],
+  "player_props": "unavailable: CEG run has player_lines_available=false",
+  "requested_games": 100,
+  "schema": "slc-model-summary-1",
+  "valid_full_games": 100
+}

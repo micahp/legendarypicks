@@ -1,0 +1,39 @@
+{
+  "actual_result": {
+    "away": "CHI",
+    "away_points": 39.0,
+    "home": "DET",
+    "home_margin": -4.0,
+    "home_points": 35.0,
+    "kickoff_utc": "2026-11-26T18:00:00+00:00",
+    "scoreboard_date": "2026-11-26",
+    "scoreboard_id": "2026_12_CHI_DET",
+    "status": "completed",
+    "total": 74.0
+  },
+  "code_commit": "9a2e8624eb7861998134bc0e836470fd7209b0e2",
+  "completed_at_utc": null,
+  "game_id": "2026_12_CHI_DET",
+  "model_id": "v2_frozen",
+  "model_pack_sha256": "407a514b75febac156dbfe66e4abe30f6eafdfd523eaabccb44a726a7245e3f5",
+  "portable_runner_sha256": "487818e7362245ab18ce890215603e2c394a86e5612b79c857db573b95a75433",
+  "python_abi": "3.8",
+  "registry_sha256": "f9c6028207c6290e7e815dbac8afb4e396d6b67fe58518be50a01ef61ce68884",
+  "requested_games": 100,
+  "run_id": "2026_12_CHI_DET-20261127T130408Z-19e7e3947cf5",
+  "schema": "slc-run-manifest-1",
+  "seeds": {
+    "first": 300001,
+    "last_inclusive": 300100
+  },
+  "snapshot": {
+    "as_of": "2026-11-26T16:30:00Z",
+    "path": "/root/runs/week-12/snapshots/2026_12_CHI_DET.streak-context.json",
+    "roster_resolution_hash": "248d00103f33c92fa4f8bb73e34482df30ca086b6b3f50990ae4d035e346811a",
+    "sha256": "19e7e3947cf5e3f36c8a05412b51d3c57ef1f1f77a41c3a5c6bfd27ff88fb818"
+  },
+  "source_run_manifest_sha256": "2eba0d23496037fe939f16fadd837dc582afd04f32c6f732e6536876e95d5664",
+  "started_at_utc": "2026-11-27T13:30:56Z",
+  "status": "completed",
+  "valid_full_games": 100
+}

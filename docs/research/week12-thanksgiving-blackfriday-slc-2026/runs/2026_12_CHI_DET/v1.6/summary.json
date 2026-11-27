@@ -1,0 +1,2822 @@
+{
+  "actual": {
+    "away": "CHI",
+    "away_points": 39.0,
+    "home": "DET",
+    "home_margin": -4.0,
+    "home_points": 35.0,
+    "kickoff_utc": "2026-11-26T18:00:00+00:00",
+    "scoreboard_date": "2026-11-26",
+    "scoreboard_id": "2026_12_CHI_DET",
+    "status": "completed",
+    "total": 74.0
+  },
+  "game_id": "2026_12_CHI_DET",
+  "grading_method": "For each supported player-market, use median latest over-line across sources captured before scheduled kickoff; empirical simulated P(over) from 100 box-score seeds; Brier excludes pushes. Market coverage varies by player/model availability.",
+  "metrics": {
+    "actual_home_margin_error": 5.5600000000000005,
+    "actual_total_error": -24.119999999999997,
+    "blocked": 0,
+    "home_win_probability": 0.58,
+    "mean_away_points": 24.16,
+    "mean_home_margin": 1.56,
+    "mean_home_points": 25.72,
+    "mean_total": 49.88,
+    "per_seed_scores": [
+      {
+        "away": 18,
+        "blocker": null,
+        "home": 13,
+        "seed": 300001,
+        "valid_full_game": true
+      },
+      {
+        "away": 24,
+        "blocker": null,
+        "home": 14,
+        "seed": 300002,
+        "valid_full_game": true
+      },
+      {
+        "away": 34,
+        "blocker": null,
+        "home": 44,
+        "seed": 300003,
+        "valid_full_game": true
+      },
+      {
+        "away": 19,
+        "blocker": null,
+        "home": 38,
+        "seed": 300004,
+        "valid_full_game": true
+      },
+      {
+        "away": 31,
+        "blocker": null,
+        "home": 28,
+        "seed": 300005,
+        "valid_full_game": true
+      },
+      {
+        "away": 21,
+        "blocker": null,
+        "home": 20,
+        "seed": 300006,
+        "valid_full_game": true
+      },
+      {
+        "away": 28,
+        "blocker": null,
+        "home": 13,
+        "seed": 300007,
+        "valid_full_game": true
+      },
+      {
+        "away": 31,
+        "blocker": null,
+        "home": 30,
+        "seed": 300008,
+        "valid_full_game": true
+      },
+      {
+        "away": 40,
+        "blocker": null,
+        "home": 23,
+        "seed": 300009,
+        "valid_full_game": true
+      },
+      {
+        "away": 9,
+        "blocker": null,
+        "home": 18,
+        "seed": 300010,
+        "valid_full_game": true
+      },
+      {
+        "away": 28,
+        "blocker": null,
+        "home": 13,
+        "seed": 300011,
+        "valid_full_game": true
+      },
+      {
+        "away": 24,
+        "blocker": null,
+        "home": 28,
+        "seed": 300012,
+        "valid_full_game": true
+      },
+      {
+        "away": 25,
+        "blocker": null,
+        "home": 24,
+        "seed": 300013,
+        "valid_full_game": true
+      },
+      {
+        "away": 17,
+        "blocker": null,
+        "home": 35,
+        "seed": 300014,
+        "valid_full_game": true
+      },
+      {
+        "away": 40,
+        "blocker": null,
+        "home": 24,
+        "seed": 300015,
+        "valid_full_game": true
+      },
+      {
+        "away": 13,
+        "blocker": null,
+        "home": 19,
+        "seed": 300016,
+        "valid_full_game": true
+      },
+      {
+        "away": 17,
+        "blocker": null,
+        "home": 43,
+        "seed": 300017,
+        "valid_full_game": true
+      },
+      {
+        "away": 17,
+        "blocker": null,
+        "home": 38,
+        "seed": 300018,
+        "valid_full_game": true
+      },
+      {
+        "away": 16,
+        "blocker": null,
+        "home": 17,
+        "seed": 300019,
+        "valid_full_game": true
+      },
+      {
+        "away": 23,
+        "blocker": null,
+        "home": 39,
+        "seed": 300020,
+        "valid_full_game": true
+      },
+      {
+        "away": 31,
+        "blocker": null,
+        "home": 13,
+        "seed": 300021,
+        "valid_full_game": true
+      },
+      {
+        "away": 14,
+        "blocker": null,
+        "home": 17,
+        "seed": 300022,
+        "valid_full_game": true
+      },
+      {
+        "away": 9,
+        "blocker": null,
+        "home": 24,
+        "seed": 300023,
+        "valid_full_game": true
+      },
+      {
+        "away": 21,
+        "blocker": null,
+        "home": 14,
+        "seed": 300024,
+        "valid_full_game": true
+      },
+      {
+        "away": 12,
+        "blocker": null,
+        "home": 24,
+        "seed": 300025,
+        "valid_full_game": true
+      },
+      {
+        "away": 28,
+        "blocker": null,
+        "home": 33,
+        "seed": 300026,
+        "valid_full_game": true
+      },
+      {
+        "away": 31,
+        "blocker": null,
+        "home": 19,
+        "seed": 300027,
+        "valid_full_game": true
+      },
+      {
+        "away": 19,
+        "blocker": null,
+        "home": 17,
+        "seed": 300028,
+        "valid_full_game": true
+      },
+      {
+        "away": 16,
+        "blocker": null,
+        "home": 23,
+        "seed": 300029,
+        "valid_full_game": true
+      },
+      {
+        "away": 24,
+        "blocker": null,
+        "home": 20,
+        "seed": 300030,
+        "valid_full_game": true
+      },
+      {
+        "away": 32,
+        "blocker": null,
+        "home": 24,
+        "seed": 300031,
+        "valid_full_game": true
+      },
+      {
+        "away": 36,
+        "blocker": null,
+        "home": 24,
+        "seed": 300032,
+        "valid_full_game": true
+      },
+      {
+        "away": 30,
+        "blocker": null,
+        "home": 28,
+        "seed": 300033,
+        "valid_full_game": true
+      },
+      {
+        "away": 16,
+        "blocker": null,
+        "home": 34,
+        "seed": 300034,
+        "valid_full_game": true
+      },
+      {
+        "away": 31,
+        "blocker": null,
+        "home": 34,
+        "seed": 300035,
+        "valid_full_game": true
+      },
+      {
+        "away": 17,
+        "blocker": null,
+        "home": 36,
+        "seed": 300036,
+        "valid_full_game": true
+      },
+      {
+        "away": 30,
+        "blocker": null,
+        "home": 17,
+        "seed": 300037,
+        "valid_full_game": true
+      },
+      {
+        "away": 34,
+        "blocker": null,
+        "home": 24,
+        "seed": 300038,
+        "valid_full_game": true
+      },
+      {
+        "away": 21,
+        "blocker": null,
+        "home": 43,
+        "seed": 300039,
+        "valid_full_game": true
+      },
+      {
+        "away": 10,
+        "blocker": null,
+        "home": 23,
+        "seed": 300040,
+        "valid_full_game": true
+      },
+      {
+        "away": 39,
+        "blocker": null,
+        "home": 33,
+        "seed": 300041,
+        "valid_full_game": true
+      },
+      {
+        "away": 20,
+        "blocker": null,
+        "home": 31,
+        "seed": 300042,
+        "valid_full_game": true
+      },
+      {
+        "away": 20,
+        "blocker": null,
+        "home": 31,
+        "seed": 300043,
+        "valid_full_game": true
+      },
+      {
+        "away": 31,
+        "blocker": null,
+        "home": 10,
+        "seed": 300044,
+        "valid_full_game": true
+      },
+      {
+        "away": 17,
+        "blocker": null,
+        "home": 44,
+        "seed": 300045,
+        "valid_full_game": true
+      },
+      {
+        "away": 40,
+        "blocker": null,
+        "home": 38,
+        "seed": 300046,
+        "valid_full_game": true
+      },
+      {
+        "away": 14,
+        "blocker": null,
+        "home": 20,
+        "seed": 300047,
+        "valid_full_game": true
+      },
+      {
+        "away": 30,
+        "blocker": null,
+        "home": 36,
+        "seed": 300048,
+        "valid_full_game": true
+      },
+      {
+        "away": 27,
+        "blocker": null,
+        "home": 31,
+        "seed": 300049,
+        "valid_full_game": true
+      },
+      {
+        "away": 22,
+        "blocker": null,
+        "home": 20,
+        "seed": 300050,
+        "valid_full_game": true
+      },
+      {
+        "away": 16,
+        "blocker": null,
+        "home": 29,
+        "seed": 300051,
+        "valid_full_game": true
+      },
+      {
+        "away": 31,
+        "blocker": null,
+        "home": 33,
+        "seed": 300052,
+        "valid_full_game": true
+      },
+      {
+        "away": 20,
+        "blocker": null,
+        "home": 13,
+        "seed": 300053,
+        "valid_full_game": true
+      },
+      {
+        "away": 13,
+        "blocker": null,
+        "home": 15,
+        "seed": 300054,
+        "valid_full_game": true
+      },
+      {
+        "away": 22,
+        "blocker": null,
+        "home": 33,
+        "seed": 300055,
+        "valid_full_game": true
+      },
+      {
+        "away": 29,
+        "blocker": null,
+        "home": 24,
+        "seed": 300056,
+        "valid_full_game": true
+      },
+      {
+        "away": 23,
+        "blocker": null,
+        "home": 27,
+        "seed": 300057,
+        "valid_full_game": true
+      },
+      {
+        "away": 45,
+        "blocker": null,
+        "home": 10,
+        "seed": 300058,
+        "valid_full_game": true
+      },
+      {
+        "away": 34,
+        "blocker": null,
+        "home": 25,
+        "seed": 300059,
+        "valid_full_game": true
+      },
+      {
+        "away": 27,
+        "blocker": null,
+        "home": 14,
+        "seed": 300060,
+        "valid_full_game": true
+      },
+      {
+        "away": 14,
+        "blocker": null,
+        "home": 28,
+        "seed": 300061,
+        "valid_full_game": true
+      },
+      {
+        "away": 17,
+        "blocker": null,
+        "home": 23,
+        "seed": 300062,
+        "valid_full_game": true
+      },
+      {
+        "away": 41,
+        "blocker": null,
+        "home": 31,
+        "seed": 300063,
+        "valid_full_game": true
+      },
+      {
+        "away": 33,
+        "blocker": null,
+        "home": 37,
+        "seed": 300064,
+        "valid_full_game": true
+      },
+      {
+        "away": 20,
+        "blocker": null,
+        "home": 37,
+        "seed": 300065,
+        "valid_full_game": true
+      },
+      {
+        "away": 41,
+        "blocker": null,
+        "home": 7,
+        "seed": 300066,
+        "valid_full_game": true
+      },
+      {
+        "away": 23,
+        "blocker": null,
+        "home": 17,
+        "seed": 300067,
+        "valid_full_game": true
+      },
+      {
+        "away": 26,
+        "blocker": null,
+        "home": 34,
+        "seed": 300068,
+        "valid_full_game": true
+      },
+      {
+        "away": 35,
+        "blocker": null,
+        "home": 3,
+        "seed": 300069,
+        "valid_full_game": true
+      },
+      {
+        "away": 21,
+        "blocker": null,
+        "home": 25,
+        "seed": 300070,
+        "valid_full_game": true
+      },
+      {
+        "away": 35,
+        "blocker": null,
+        "home": 26,
+        "seed": 300071,
+        "valid_full_game": true
+      },
+      {
+        "away": 18,
+        "blocker": null,
+        "home": 34,
+        "seed": 300072,
+        "valid_full_game": true
+      },
+      {
+        "away": 27,
+        "blocker": null,
+        "home": 23,
+        "seed": 300073,
+        "valid_full_game": true
+      },
+      {
+        "away": 17,
+        "blocker": null,
+        "home": 46,
+        "seed": 300074,
+        "valid_full_game": true
+      },
+      {
+        "away": 29,
+        "blocker": null,
+        "home": 14,
+        "seed": 300075,
+        "valid_full_game": true
+      },
+      {
+        "away": 14,
+        "blocker": null,
+        "home": 13,
+        "seed": 300076,
+        "valid_full_game": true
+      },
+      {
+        "away": 28,
+        "blocker": null,
+        "home": 16,
+        "seed": 300077,
+        "valid_full_game": true
+      },
+      {
+        "away": 17,
+        "blocker": null,
+        "home": 20,
+        "seed": 300078,
+        "valid_full_game": true
+      },
+      {
+        "away": 25,
+        "blocker": null,
+        "home": 27,
+        "seed": 300079,
+        "valid_full_game": true
+      },
+      {
+        "away": 20,
+        "blocker": null,
+        "home": 25,
+        "seed": 300080,
+        "valid_full_game": true
+      },
+      {
+        "away": 21,
+        "blocker": null,
+        "home": 31,
+        "seed": 300081,
+        "valid_full_game": true
+      },
+      {
+        "away": 10,
+        "blocker": null,
+        "home": 23,
+        "seed": 300082,
+        "valid_full_game": true
+      },
+      {
+        "away": 38,
+        "blocker": null,
+        "home": 29,
+        "seed": 300083,
+        "valid_full_game": true
+      },
+      {
+        "away": 17,
+        "blocker": null,
+        "home": 23,
+        "seed": 300084,
+        "valid_full_game": true
+      },
+      {
+        "away": 27,
+        "blocker": null,
+        "home": 30,
+        "seed": 300085,
+        "valid_full_game": true
+      },
+      {
+        "away": 32,
+        "blocker": null,
+        "home": 17,
+        "seed": 300086,
+        "valid_full_game": true
+      },
+      {
+        "away": 22,
+        "blocker": null,
+        "home": 27,
+        "seed": 300087,
+        "valid_full_game": true
+      },
+      {
+        "away": 27,
+        "blocker": null,
+        "home": 28,
+        "seed": 300088,
+        "valid_full_game": true
+      },
+      {
+        "away": 17,
+        "blocker": null,
+        "home": 22,
+        "seed": 300089,
+        "valid_full_game": true
+      },
+      {
+        "away": 10,
+        "blocker": null,
+        "home": 27,
+        "seed": 300090,
+        "valid_full_game": true
+      },
+      {
+        "away": 15,
+        "blocker": null,
+        "home": 44,
+        "seed": 300091,
+        "valid_full_game": true
+      },
+      {
+        "away": 17,
+        "blocker": null,
+        "home": 31,
+        "seed": 300092,
+        "valid_full_game": true
+      },
+      {
+        "away": 42,
+        "blocker": null,
+        "home": 24,
+        "seed": 300093,
+        "valid_full_game": true
+      },
+      {
+        "away": 17,
+        "blocker": null,
+        "home": 26,
+        "seed": 300094,
+        "valid_full_game": true
+      },
+      {
+        "away": 33,
+        "blocker": null,
+        "home": 40,
+        "seed": 300095,
+        "valid_full_game": true
+      },
+      {
+        "away": 37,
+        "blocker": null,
+        "home": 22,
+        "seed": 300096,
+        "valid_full_game": true
+      },
+      {
+        "away": 20,
+        "blocker": null,
+        "home": 24,
+        "seed": 300097,
+        "valid_full_game": true
+      },
+      {
+        "away": 24,
+        "blocker": null,
+        "home": 37,
+        "seed": 300098,
+        "valid_full_game": true
+      },
+      {
+        "away": 19,
+        "blocker": null,
+        "home": 21,
+        "seed": 300099,
+        "valid_full_game": true
+      },
+      {
+        "away": 13,
+        "blocker": null,
+        "home": 31,
+        "seed": 300100,
+        "valid_full_game": true
+      }
+    ],
+    "player_prop_brier": 0.25176436781609196,
+    "player_prop_lines_graded": 87,
+    "player_prop_market_coverage": {
+      "interceptions_thrown": {
+        "brier": 0.42025,
+        "graded": 2,
+        "lines": 2,
+        "mean_p_over": 0.43499999999999994
+      },
+      "pass_attempts": {
+        "brier": 0.19045,
+        "graded": 2,
+        "lines": 2,
+        "mean_p_over": 0.565
+      },
+      "pass_completions": {
+        "brier": 0.1469,
+        "graded": 2,
+        "lines": 2,
+        "mean_p_over": 0.62
+      },
+      "passing_rushing_yards": {
+        "brier": 0.2753,
+        "graded": 2,
+        "lines": 2,
+        "mean_p_over": 0.48
+      },
+      "passing_touchdowns": {
+        "brier": 0.08244999999999998,
+        "graded": 2,
+        "lines": 2,
+        "mean_p_over": 0.465
+      },
+      "passing_yards": {
+        "brier": 0.29525,
+        "graded": 2,
+        "lines": 2,
+        "mean_p_over": 0.465
+      },
+      "receiving_yards": {
+        "brier": 0.27151875000000003,
+        "graded": 16,
+        "lines": 16,
+        "mean_p_over": 0.406875
+      },
+      "receptions": {
+        "brier": 0.2651375,
+        "graded": 16,
+        "lines": 16,
+        "mean_p_over": 0.44125000000000003
+      },
+      "rush_attempts": {
+        "brier": 0.22973333333333332,
+        "graded": 6,
+        "lines": 6,
+        "mean_p_over": 0.44666666666666666
+      },
+      "rushing_receiving_touchdowns": {
+        "brier": 0.24606,
+        "graded": 5,
+        "lines": 5,
+        "mean_p_over": 0.426
+      },
+      "rushing_receiving_yards": {
+        "brier": 0.18030000000000002,
+        "graded": 5,
+        "lines": 5,
+        "mean_p_over": 0.47000000000000003
+      },
+      "rushing_yards": {
+        "brier": 0.2849714285714286,
+        "graded": 7,
+        "lines": 7,
+        "mean_p_over": 0.48857142857142855
+      },
+      "targets": {
+        "brier": 0.2348416666666667,
+        "graded": 12,
+        "lines": 12,
+        "mean_p_over": 0.46416666666666667
+      },
+      "total_touchdowns": {
+        "brier": 0.2715875,
+        "graded": 8,
+        "lines": 8,
+        "mean_p_over": 0.39875
+      }
+    },
+    "requested": 100,
+    "valid": 100
+  },
+  "model_id": "v1.6",
+  "player_prop_grades": [
+    {
+      "actual": 44.0,
+      "brier": 0.2916,
+      "gsis_id": "00-0040735",
+      "line": 61.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receiving_yards",
+      "player": "Luther Burden III",
+      "player_id": 3194,
+      "settlement": "under",
+      "sim_mean": 70.86,
+      "sim_n": 100,
+      "sim_p_over": 0.54,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 3.0,
+      "brier": 0.3721,
+      "gsis_id": "00-0040735",
+      "line": 4.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receptions",
+      "player": "Luther Burden III",
+      "player_id": 3194,
+      "settlement": "under",
+      "sim_mean": 5.47,
+      "sim_n": 100,
+      "sim_p_over": 0.61,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 45.0,
+      "brier": 0.28090000000000004,
+      "gsis_id": "00-0040735",
+      "line": 68.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "rushing_receiving_yards",
+      "player": "Luther Burden III",
+      "player_id": 3194,
+      "settlement": "under",
+      "sim_mean": 72.36,
+      "sim_n": 100,
+      "sim_p_over": 0.53,
+      "sources": [
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks"
+      ]
+    },
+    {
+      "actual": 1.0,
+      "brier": 0.6561000000000001,
+      "gsis_id": "00-0040735",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "rushing_yards",
+      "player": "Luther Burden III",
+      "player_id": 3194,
+      "settlement": "over",
+      "sim_mean": 1.5,
+      "sim_n": 100,
+      "sim_p_over": 0.19,
+      "sources": [
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:prizepicks"
+      ]
+    },
+    {
+      "actual": 7.0,
+      "brier": 0.31360000000000005,
+      "gsis_id": "00-0040735",
+      "line": 7.75,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "targets",
+      "player": "Luther Burden III",
+      "player_id": 3194,
+      "settlement": "under",
+      "sim_mean": 8.53,
+      "sim_n": 100,
+      "sim_p_over": 0.56,
+      "sources": [
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 0.0,
+      "brier": 0.24009999999999998,
+      "gsis_id": "00-0040735",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "total_touchdowns",
+      "player": "Luther Burden III",
+      "player_id": 3194,
+      "settlement": "under",
+      "sim_mean": 0.64,
+      "sim_n": 100,
+      "sim_p_over": 0.49,
+      "sources": [
+        "rotowire:sleeper"
+      ]
+    },
+    {
+      "actual": 9.0,
+      "brier": 0.6400000000000001,
+      "gsis_id": "00-0034270",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "receiving_yards",
+      "player": "Tyler Conklin",
+      "player_id": 4589,
+      "settlement": "over",
+      "sim_mean": 3.35,
+      "sim_n": 100,
+      "sim_p_over": 0.2,
+      "sources": [
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 1.0,
+      "brier": 0.6241000000000001,
+      "gsis_id": "00-0034270",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "receptions",
+      "player": "Tyler Conklin",
+      "player_id": 4589,
+      "settlement": "over",
+      "sim_mean": 0.32,
+      "sim_n": 100,
+      "sim_p_over": 0.21,
+      "sources": [
+        "rotowire:betr",
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 47.0,
+      "brier": 0.25,
+      "gsis_id": "00-0039139",
+      "line": 36.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receiving_yards",
+      "player": "Jahmyr Gibbs",
+      "player_id": 7979,
+      "settlement": "over",
+      "sim_mean": 39.1,
+      "sim_n": 100,
+      "sim_p_over": 0.5,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 5.0,
+      "brier": 0.19359999999999997,
+      "gsis_id": "00-0039139",
+      "line": 4.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receptions",
+      "player": "Jahmyr Gibbs",
+      "player_id": 7979,
+      "settlement": "over",
+      "sim_mean": 5.19,
+      "sim_n": 100,
+      "sim_p_over": 0.56,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 21.0,
+      "brier": 0.1444,
+      "gsis_id": "00-0039139",
+      "line": 19.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "rush_attempts",
+      "player": "Jahmyr Gibbs",
+      "player_id": 7979,
+      "settlement": "over",
+      "sim_mean": 22.77,
+      "sim_n": 100,
+      "sim_p_over": 0.62,
+      "sources": [
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 3.0,
+      "brier": 0.17640000000000003,
+      "gsis_id": "00-0039139",
+      "line": 0.75,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "rushing_receiving_touchdowns",
+      "player": "Jahmyr Gibbs",
+      "player_id": 7979,
+      "settlement": "over",
+      "sim_mean": 1.16,
+      "sim_n": 100,
+      "sim_p_over": 0.58,
+      "sources": [
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 252.0,
+      "brier": 0.2304,
+      "gsis_id": "00-0039139",
+      "line": 135.0,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "rushing_receiving_yards",
+      "player": "Jahmyr Gibbs",
+      "player_id": 7979,
+      "settlement": "over",
+      "sim_mean": 147.08,
+      "sim_n": 100,
+      "sim_p_over": 0.52,
+      "sources": [
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 205.0,
+      "brier": 0.20249999999999996,
+      "gsis_id": "00-0039139",
+      "line": 93.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "rushing_yards",
+      "player": "Jahmyr Gibbs",
+      "player_id": 7979,
+      "settlement": "over",
+      "sim_mean": 107.98,
+      "sim_n": 100,
+      "sim_p_over": 0.55,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 5.0,
+      "brier": 0.24009999999999998,
+      "gsis_id": "00-0039139",
+      "line": 6.0,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "targets",
+      "player": "Jahmyr Gibbs",
+      "player_id": 7979,
+      "settlement": "under",
+      "sim_mean": 6.45,
+      "sim_n": 100,
+      "sim_p_over": 0.49,
+      "sources": [
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 3.0,
+      "brier": 0.17640000000000003,
+      "gsis_id": "00-0039139",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "total_touchdowns",
+      "player": "Jahmyr Gibbs",
+      "player_id": 7979,
+      "settlement": "over",
+      "sim_mean": 1.16,
+      "sim_n": 100,
+      "sim_p_over": 0.58,
+      "sources": [
+        "rotowire:sleeper"
+      ]
+    },
+    {
+      "actual": 1.0,
+      "brier": 0.5041,
+      "gsis_id": "00-0033106",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "interceptions_thrown",
+      "player": "Jared Goff",
+      "player_id": 8156,
+      "settlement": "over",
+      "sim_mean": 0.31,
+      "sim_n": 100,
+      "sim_p_over": 0.29,
+      "sources": [
+        "rotowire:betmgm-sb",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 36.0,
+      "brier": 0.22089999999999999,
+      "gsis_id": "00-0033106",
+      "line": 34.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "pass_attempts",
+      "player": "Jared Goff",
+      "player_id": 8156,
+      "settlement": "over",
+      "sim_mean": 36.88,
+      "sim_n": 100,
+      "sim_p_over": 0.53,
+      "sources": [
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 25.0,
+      "brier": 0.18490000000000004,
+      "gsis_id": "00-0033106",
+      "line": 23.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "pass_completions",
+      "player": "Jared Goff",
+      "player_id": 8156,
+      "settlement": "over",
+      "sim_mean": 25.29,
+      "sim_n": 100,
+      "sim_p_over": 0.57,
+      "sources": [
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 323.0,
+      "brier": 0.3481000000000001,
+      "gsis_id": "00-0033106",
+      "line": 288.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "passing_rushing_yards",
+      "player": "Jared Goff",
+      "player_id": 8156,
+      "settlement": "over",
+      "sim_mean": 272.42,
+      "sim_n": 100,
+      "sim_p_over": 0.41,
+      "sources": [
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:draftkings-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 1.0,
+      "brier": 0.0625,
+      "gsis_id": "00-0033106",
+      "line": 2.25,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "passing_touchdowns",
+      "player": "Jared Goff",
+      "player_id": 8156,
+      "settlement": "under",
+      "sim_mean": 1.78,
+      "sim_n": 100,
+      "sim_p_over": 0.25,
+      "sources": [
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 313.0,
+      "brier": 0.39690000000000003,
+      "gsis_id": "00-0033106",
+      "line": 280.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "passing_yards",
+      "player": "Jared Goff",
+      "player_id": 8156,
+      "settlement": "over",
+      "sim_mean": 264.15,
+      "sim_n": 100,
+      "sim_p_over": 0.37,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 3.0,
+      "brier": 0.20249999999999996,
+      "gsis_id": "00-0033106",
+      "line": 1.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "rush_attempts",
+      "player": "Jared Goff",
+      "player_id": 8156,
+      "settlement": "over",
+      "sim_mean": 1.94,
+      "sim_n": 100,
+      "sim_p_over": 0.55,
+      "sources": [
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 10.0,
+      "brier": 0.0625,
+      "gsis_id": "00-0033106",
+      "line": 1.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "rushing_yards",
+      "player": "Jared Goff",
+      "player_id": 8156,
+      "settlement": "over",
+      "sim_mean": 8.27,
+      "sim_n": 100,
+      "sim_p_over": 0.75,
+      "sources": [
+        "bovada",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 44.0,
+      "brier": 0.2116,
+      "gsis_id": "00-0039065",
+      "line": 44.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receiving_yards",
+      "player": "Sam LaPorta",
+      "player_id": 12998,
+      "settlement": "under",
+      "sim_mean": 43.18,
+      "sim_n": 100,
+      "sim_p_over": 0.46,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 4.0,
+      "brier": 0.2116,
+      "gsis_id": "00-0039065",
+      "line": 4.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receptions",
+      "player": "Sam LaPorta",
+      "player_id": 12998,
+      "settlement": "under",
+      "sim_mean": 4.4,
+      "sim_n": 100,
+      "sim_p_over": 0.46,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 5.0,
+      "brier": 0.17639999999999997,
+      "gsis_id": "00-0039065",
+      "line": 6.0,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "targets",
+      "player": "Sam LaPorta",
+      "player_id": 12998,
+      "settlement": "under",
+      "sim_mean": 6.19,
+      "sim_n": 100,
+      "sim_p_over": 0.42,
+      "sources": [
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 1.0,
+      "brier": 0.48999999999999994,
+      "gsis_id": "00-0039065",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "total_touchdowns",
+      "player": "Sam LaPorta",
+      "player_id": 12998,
+      "settlement": "over",
+      "sim_mean": 0.35,
+      "sim_n": 100,
+      "sim_p_over": 0.3,
+      "sources": [
+        "rotowire:sleeper"
+      ]
+    },
+    {
+      "actual": 5.0,
+      "brier": 0.2304,
+      "gsis_id": "00-0040126",
+      "line": 52.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receiving_yards",
+      "player": "Colston Loveland",
+      "player_id": 13816,
+      "settlement": "under",
+      "sim_mean": 54.33,
+      "sim_n": 100,
+      "sim_p_over": 0.48,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 1.0,
+      "brier": 0.25,
+      "gsis_id": "00-0040126",
+      "line": 5.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receptions",
+      "player": "Colston Loveland",
+      "player_id": 13816,
+      "settlement": "under",
+      "sim_mean": 5.17,
+      "sim_n": 100,
+      "sim_p_over": 0.5,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 1.0,
+      "brier": 0.2916,
+      "gsis_id": "00-0040126",
+      "line": 7.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "targets",
+      "player": "Colston Loveland",
+      "player_id": 13816,
+      "settlement": "under",
+      "sim_mean": 7.72,
+      "sim_n": 100,
+      "sim_p_over": 0.54,
+      "sources": [
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 0.0,
+      "brier": 0.07840000000000001,
+      "gsis_id": "00-0040126",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "total_touchdowns",
+      "player": "Colston Loveland",
+      "player_id": 13816,
+      "settlement": "under",
+      "sim_mean": 0.33,
+      "sim_n": 100,
+      "sim_p_over": 0.28,
+      "sources": [
+        "rotowire:sleeper"
+      ]
+    },
+    {
+      "actual": 14.0,
+      "brier": 0.4096,
+      "gsis_id": "00-0040236",
+      "line": 4.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receiving_yards",
+      "player": "Kyle Monangai",
+      "player_id": 15662,
+      "settlement": "over",
+      "sim_mean": 6.32,
+      "sim_n": 100,
+      "sim_p_over": 0.36,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 1.0,
+      "brier": 0.21159999999999995,
+      "gsis_id": "00-0040236",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receptions",
+      "player": "Kyle Monangai",
+      "player_id": 15662,
+      "settlement": "over",
+      "sim_mean": 0.95,
+      "sim_n": 100,
+      "sim_p_over": 0.54,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 8.0,
+      "brier": 0.07840000000000001,
+      "gsis_id": "00-0040236",
+      "line": 8.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "rush_attempts",
+      "player": "Kyle Monangai",
+      "player_id": 15662,
+      "settlement": "under",
+      "sim_mean": 6.44,
+      "sim_n": 100,
+      "sim_p_over": 0.28,
+      "sources": [
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 29.0,
+      "brier": 0.11560000000000002,
+      "gsis_id": "00-0040236",
+      "line": 42.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "rushing_receiving_yards",
+      "player": "Kyle Monangai",
+      "player_id": 15662,
+      "settlement": "under",
+      "sim_mean": 36.84,
+      "sim_n": 100,
+      "sim_p_over": 0.34,
+      "sources": [
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 15.0,
+      "brier": 0.1444,
+      "gsis_id": "00-0040236",
+      "line": 33.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "rushing_yards",
+      "player": "Kyle Monangai",
+      "player_id": 15662,
+      "settlement": "under",
+      "sim_mean": 30.52,
+      "sim_n": 100,
+      "sim_p_over": 0.38,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 2.0,
+      "brier": 0.5776,
+      "gsis_id": "00-0040236",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "total_touchdowns",
+      "player": "Kyle Monangai",
+      "player_id": 15662,
+      "settlement": "over",
+      "sim_mean": 0.3,
+      "sim_n": 100,
+      "sim_p_over": 0.24,
+      "sources": [
+        "rotowire:sleeper"
+      ]
+    },
+    {
+      "actual": 87.0,
+      "brier": 0.25,
+      "gsis_id": "00-0039919",
+      "line": 48.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receiving_yards",
+      "player": "Rome Odunze",
+      "player_id": 16752,
+      "settlement": "over",
+      "sim_mean": 54.61,
+      "sim_n": 100,
+      "sim_p_over": 0.5,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 6.0,
+      "brier": 0.19359999999999997,
+      "gsis_id": "00-0039919",
+      "line": 3.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receptions",
+      "player": "Rome Odunze",
+      "player_id": 16752,
+      "settlement": "over",
+      "sim_mean": 4.6,
+      "sim_n": 100,
+      "sim_p_over": 0.56,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 2.0,
+      "brier": 0.4760999999999999,
+      "gsis_id": "00-0039919",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-23T20:34:52.735373+00:00",
+      "market": "rushing_receiving_touchdowns",
+      "player": "Rome Odunze",
+      "player_id": 16752,
+      "settlement": "over",
+      "sim_mean": 0.33,
+      "sim_n": 100,
+      "sim_p_over": 0.31,
+      "sources": [
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 9.0,
+      "brier": 0.17640000000000003,
+      "gsis_id": "00-0039919",
+      "line": 5.75,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "targets",
+      "player": "Rome Odunze",
+      "player_id": 16752,
+      "settlement": "over",
+      "sim_mean": 8.13,
+      "sim_n": 100,
+      "sim_p_over": 0.58,
+      "sources": [
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 20.0,
+      "brier": 0.24009999999999998,
+      "gsis_id": "00-0032464",
+      "line": 25.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receiving_yards",
+      "player": "Kalif Raymond",
+      "player_id": 18339,
+      "settlement": "under",
+      "sim_mean": 33.21,
+      "sim_n": 100,
+      "sim_p_over": 0.49,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 3.0,
+      "brier": 0.31360000000000005,
+      "gsis_id": "00-0032464",
+      "line": 2.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receptions",
+      "player": "Kalif Raymond",
+      "player_id": 18339,
+      "settlement": "over",
+      "sim_mean": 2.58,
+      "sim_n": 100,
+      "sim_p_over": 0.44,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 0.0,
+      "brier": 0.0576,
+      "gsis_id": "00-0032464",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-25T15:06:04.991408+00:00",
+      "market": "rushing_receiving_touchdowns",
+      "player": "Kalif Raymond",
+      "player_id": 18339,
+      "settlement": "under",
+      "sim_mean": 0.28,
+      "sim_n": 100,
+      "sim_p_over": 0.24,
+      "sources": [
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 5.0,
+      "brier": 0.28090000000000004,
+      "gsis_id": "00-0032464",
+      "line": 3.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "targets",
+      "player": "Kalif Raymond",
+      "player_id": 18339,
+      "settlement": "over",
+      "sim_mean": 3.72,
+      "sim_n": 100,
+      "sim_p_over": 0.47,
+      "sources": [
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 31.0,
+      "brier": 0.7055999999999999,
+      "gsis_id": "00-0041558",
+      "line": 7.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receiving_yards",
+      "player": "Sam Roush",
+      "player_id": 19238,
+      "settlement": "over",
+      "sim_mean": 4.45,
+      "sim_n": 100,
+      "sim_p_over": 0.16,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 5.0,
+      "brier": 0.5625,
+      "gsis_id": "00-0041558",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receptions",
+      "player": "Sam Roush",
+      "player_id": 19238,
+      "settlement": "over",
+      "sim_mean": 0.43,
+      "sim_n": 100,
+      "sim_p_over": 0.25,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 5.0,
+      "brier": 0.6724000000000001,
+      "gsis_id": "00-0041558",
+      "line": 1.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "targets",
+      "player": "Sam Roush",
+      "player_id": 19238,
+      "settlement": "over",
+      "sim_mean": 0.61,
+      "sim_n": 100,
+      "sim_p_over": 0.18,
+      "sources": [
+        "rotowire:prizepicks"
+      ]
+    },
+    {
+      "actual": 146.0,
+      "brier": 0.24009999999999998,
+      "gsis_id": "00-0036963",
+      "line": 83.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receiving_yards",
+      "player": "Amon-Ra St. Brown",
+      "player_id": 21011,
+      "settlement": "over",
+      "sim_mean": 85.23,
+      "sim_n": 100,
+      "sim_p_over": 0.51,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 7.0,
+      "brier": 0.1936,
+      "gsis_id": "00-0036963",
+      "line": 7.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receptions",
+      "player": "Amon-Ra St. Brown",
+      "player_id": 21011,
+      "settlement": "under",
+      "sim_mean": 7.27,
+      "sim_n": 100,
+      "sim_p_over": 0.44,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 0.0,
+      "brier": 0.2601,
+      "gsis_id": "00-0036963",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "rushing_receiving_touchdowns",
+      "player": "Amon-Ra St. Brown",
+      "player_id": 21011,
+      "settlement": "under",
+      "sim_mean": 0.64,
+      "sim_n": 100,
+      "sim_p_over": 0.51,
+      "sources": [
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 10.0,
+      "brier": 0.17640000000000003,
+      "gsis_id": "00-0036963",
+      "line": 9.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "targets",
+      "player": "Amon-Ra St. Brown",
+      "player_id": 21011,
+      "settlement": "over",
+      "sim_mean": 11.09,
+      "sim_n": 100,
+      "sim_p_over": 0.58,
+      "sources": [
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 0.0,
+      "brier": 0.2601,
+      "gsis_id": "00-0036963",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "total_touchdowns",
+      "player": "Amon-Ra St. Brown",
+      "player_id": 21011,
+      "settlement": "under",
+      "sim_mean": 0.64,
+      "sim_n": 100,
+      "sim_p_over": 0.51,
+      "sources": [
+        "rotowire:sleeper"
+      ]
+    },
+    {
+      "actual": 97.0,
+      "brier": 0.1444,
+      "gsis_id": "00-0036275",
+      "line": 15.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receiving_yards",
+      "player": "D'Andre Swift",
+      "player_id": 21575,
+      "settlement": "over",
+      "sim_mean": 25.8,
+      "sim_n": 100,
+      "sim_p_over": 0.62,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 7.0,
+      "brier": 0.17640000000000003,
+      "gsis_id": "00-0036275",
+      "line": 2.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receptions",
+      "player": "D'Andre Swift",
+      "player_id": 21575,
+      "settlement": "over",
+      "sim_mean": 3.02,
+      "sim_n": 100,
+      "sim_p_over": 0.58,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 9.0,
+      "brier": 0.28090000000000004,
+      "gsis_id": "00-0036275",
+      "line": 12.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "rush_attempts",
+      "player": "D'Andre Swift",
+      "player_id": 21575,
+      "settlement": "under",
+      "sim_mean": 14.22,
+      "sim_n": 100,
+      "sim_p_over": 0.53,
+      "sources": [
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 1.0,
+      "brier": 0.2601,
+      "gsis_id": "00-0036275",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "rushing_receiving_touchdowns",
+      "player": "D'Andre Swift",
+      "player_id": 21575,
+      "settlement": "over",
+      "sim_mean": 0.65,
+      "sim_n": 100,
+      "sim_p_over": 0.49,
+      "sources": [
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 162.0,
+      "brier": 0.1521,
+      "gsis_id": "00-0036275",
+      "line": 67.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "rushing_receiving_yards",
+      "player": "D'Andre Swift",
+      "player_id": 21575,
+      "settlement": "over",
+      "sim_mean": 89.06,
+      "sim_n": 100,
+      "sim_p_over": 0.61,
+      "sources": [
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 65.0,
+      "brier": 0.18490000000000004,
+      "gsis_id": "00-0036275",
+      "line": 47.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "rushing_yards",
+      "player": "D'Andre Swift",
+      "player_id": 21575,
+      "settlement": "over",
+      "sim_mean": 63.26,
+      "sim_n": 100,
+      "sim_p_over": 0.57,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 8.0,
+      "brier": 0.17640000000000003,
+      "gsis_id": "00-0036275",
+      "line": 3.25,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "targets",
+      "player": "D'Andre Swift",
+      "player_id": 21575,
+      "settlement": "over",
+      "sim_mean": 4.22,
+      "sim_n": 100,
+      "sim_p_over": 0.58,
+      "sources": [
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 1.0,
+      "brier": 0.2601,
+      "gsis_id": "00-0036275",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "total_touchdowns",
+      "player": "D'Andre Swift",
+      "player_id": 21575,
+      "settlement": "over",
+      "sim_mean": 0.65,
+      "sim_n": 100,
+      "sim_p_over": 0.49,
+      "sources": [
+        "rotowire:sleeper"
+      ]
+    },
+    {
+      "actual": 0.0,
+      "brier": 0.1369,
+      "gsis_id": "00-0040669",
+      "line": 19.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receiving_yards",
+      "player": "Isaac TeSlaa",
+      "player_id": 21849,
+      "settlement": "under",
+      "sim_mean": 18.79,
+      "sim_n": 100,
+      "sim_p_over": 0.37,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 0.0,
+      "brier": 0.16000000000000003,
+      "gsis_id": "00-0040669",
+      "line": 1.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receptions",
+      "player": "Isaac TeSlaa",
+      "player_id": 21849,
+      "settlement": "under",
+      "sim_mean": 1.55,
+      "sim_n": 100,
+      "sim_p_over": 0.4,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 1.0,
+      "brier": 0.10890000000000001,
+      "gsis_id": "00-0040669",
+      "line": 3.0,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "targets",
+      "player": "Isaac TeSlaa",
+      "player_id": 21849,
+      "settlement": "under",
+      "sim_mean": 2.83,
+      "sim_n": 100,
+      "sim_p_over": 0.33,
+      "sources": [
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 0.0,
+      "brier": 0.0625,
+      "gsis_id": "00-0041051",
+      "line": 10.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receiving_yards",
+      "player": "Zavion Thomas",
+      "player_id": 22107,
+      "settlement": "under",
+      "sim_mean": 10.89,
+      "sim_n": 100,
+      "sim_p_over": 0.25,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 0.0,
+      "brier": 0.028900000000000006,
+      "gsis_id": "00-0041051",
+      "line": 1.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receptions",
+      "player": "Zavion Thomas",
+      "player_id": 22107,
+      "settlement": "under",
+      "sim_mean": 0.78,
+      "sim_n": 100,
+      "sim_p_over": 0.17,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 0.0,
+      "brier": 0.0529,
+      "gsis_id": "00-0041051",
+      "line": 1.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "targets",
+      "player": "Zavion Thomas",
+      "player_id": 22107,
+      "settlement": "under",
+      "sim_mean": 1.24,
+      "sim_n": 100,
+      "sim_p_over": 0.23,
+      "sources": [
+        "rotowire:prizepicks"
+      ]
+    },
+    {
+      "actual": -4.0,
+      "brier": 0.0841,
+      "gsis_id": "00-0039364",
+      "line": 2.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receiving_yards",
+      "player": "Sione Vaki",
+      "player_id": 22788,
+      "settlement": "under",
+      "sim_mean": 3.72,
+      "sim_n": 100,
+      "sim_p_over": 0.29,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 2.0,
+      "brier": 0.42250000000000004,
+      "gsis_id": "00-0039364",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receptions",
+      "player": "Sione Vaki",
+      "player_id": 22788,
+      "settlement": "over",
+      "sim_mean": 0.5,
+      "sim_n": 100,
+      "sim_p_over": 0.35,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 6.0,
+      "brier": 0.5041,
+      "gsis_id": "00-0039364",
+      "line": 3.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "rush_attempts",
+      "player": "Sione Vaki",
+      "player_id": 22788,
+      "settlement": "over",
+      "sim_mean": 3.29,
+      "sim_n": 100,
+      "sim_p_over": 0.29,
+      "sources": [
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 15.0,
+      "brier": 0.12249999999999998,
+      "gsis_id": "00-0039364",
+      "line": 16.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "rushing_receiving_yards",
+      "player": "Sione Vaki",
+      "player_id": 22788,
+      "settlement": "under",
+      "sim_mean": 17.83,
+      "sim_n": 100,
+      "sim_p_over": 0.35,
+      "sources": [
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 19.0,
+      "brier": 0.3844,
+      "gsis_id": "00-0039364",
+      "line": 9.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "rushing_yards",
+      "player": "Sione Vaki",
+      "player_id": 22788,
+      "settlement": "over",
+      "sim_mean": 14.11,
+      "sim_n": 100,
+      "sim_p_over": 0.38,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 0.0,
+      "brier": 0.3364,
+      "gsis_id": "00-0039918",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "interceptions_thrown",
+      "player": "Caleb Williams",
+      "player_id": 24033,
+      "settlement": "under",
+      "sim_mean": 0.87,
+      "sim_n": 100,
+      "sim_p_over": 0.58,
+      "sources": [
+        "rotowire:betmgm-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 44.0,
+      "brier": 0.16000000000000003,
+      "gsis_id": "00-0039918",
+      "line": 34.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "pass_attempts",
+      "player": "Caleb Williams",
+      "player_id": 24033,
+      "settlement": "over",
+      "sim_mean": 36.53,
+      "sim_n": 100,
+      "sim_p_over": 0.6,
+      "sources": [
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 30.0,
+      "brier": 0.10889999999999997,
+      "gsis_id": "00-0039918",
+      "line": 21.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "pass_completions",
+      "player": "Caleb Williams",
+      "player_id": 24033,
+      "settlement": "over",
+      "sim_mean": 23.63,
+      "sim_n": 100,
+      "sim_p_over": 0.67,
+      "sources": [
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 360.0,
+      "brier": 0.20249999999999996,
+      "gsis_id": "00-0039918",
+      "line": 290.0,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "passing_rushing_yards",
+      "player": "Caleb Williams",
+      "player_id": 24033,
+      "settlement": "over",
+      "sim_mean": 297.26,
+      "sim_n": 100,
+      "sim_p_over": 0.55,
+      "sources": [
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 2.0,
+      "brier": 0.10239999999999996,
+      "gsis_id": "00-0039918",
+      "line": 1.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "passing_touchdowns",
+      "player": "Caleb Williams",
+      "player_id": 24033,
+      "settlement": "over",
+      "sim_mean": 1.93,
+      "sim_n": 100,
+      "sim_p_over": 0.68,
+      "sources": [
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 345.0,
+      "brier": 0.19359999999999997,
+      "gsis_id": "00-0039918",
+      "line": 261.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "passing_yards",
+      "player": "Caleb Williams",
+      "player_id": 24033,
+      "settlement": "over",
+      "sim_mean": 268.57,
+      "sim_n": 100,
+      "sim_p_over": 0.56,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 3.0,
+      "brier": 0.16809999999999997,
+      "gsis_id": "00-0039918",
+      "line": 4.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "rush_attempts",
+      "player": "Caleb Williams",
+      "player_id": 24033,
+      "settlement": "under",
+      "sim_mean": 4.28,
+      "sim_n": 100,
+      "sim_p_over": 0.41,
+      "sources": [
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 15.0,
+      "brier": 0.36,
+      "gsis_id": "00-0039918",
+      "line": 22.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "rushing_yards",
+      "player": "Caleb Williams",
+      "player_id": 24033,
+      "settlement": "under",
+      "sim_mean": 28.69,
+      "sim_n": 100,
+      "sim_p_over": 0.6,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 68.0,
+      "brier": 0.3249000000000001,
+      "gsis_id": "00-0037240",
+      "line": 57.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receiving_yards",
+      "player": "Jameson Williams",
+      "player_id": 24164,
+      "settlement": "over",
+      "sim_mean": 52.66,
+      "sim_n": 100,
+      "sim_p_over": 0.43,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:betrivers-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 6.0,
+      "brier": 0.16810000000000003,
+      "gsis_id": "00-0037240",
+      "line": 3.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receptions",
+      "player": "Jameson Williams",
+      "player_id": 24164,
+      "settlement": "over",
+      "sim_mean": 4.43,
+      "sim_n": 100,
+      "sim_p_over": 0.59,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:prizepicks",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 9.0,
+      "brier": 0.1521,
+      "gsis_id": "00-0037240",
+      "line": 5.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "targets",
+      "player": "Jameson Williams",
+      "player_id": 24164,
+      "settlement": "over",
+      "sim_mean": 6.79,
+      "sim_n": 100,
+      "sim_p_over": 0.61,
+      "sources": [
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 0.0,
+      "brier": 0.09,
+      "gsis_id": "00-0037240",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T12:04:51.203796+00:00",
+      "market": "total_touchdowns",
+      "player": "Jameson Williams",
+      "player_id": 24164,
+      "settlement": "under",
+      "sim_mean": 0.37,
+      "sim_n": 100,
+      "sim_p_over": 0.3,
+      "sources": [
+        "rotowire:sleeper"
+      ]
+    },
+    {
+      "actual": 0.0,
+      "brier": 0.12249999999999998,
+      "gsis_id": "00-0036754",
+      "line": 3.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receiving_yards",
+      "player": "Brock Wright",
+      "player_id": 24820,
+      "settlement": "under",
+      "sim_mean": 5.65,
+      "sim_n": 100,
+      "sim_p_over": 0.35,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:betr",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:pick6",
+        "rotowire:prizepicks",
+        "rotowire:underdog"
+      ]
+    },
+    {
+      "actual": 0.0,
+      "brier": 0.16000000000000003,
+      "gsis_id": "00-0036754",
+      "line": 0.5,
+      "line_latest_capture_utc": "2026-11-26T14:34:02.848363+00:00",
+      "market": "receptions",
+      "player": "Brock Wright",
+      "player_id": 24820,
+      "settlement": "under",
+      "sim_mean": 0.63,
+      "sim_n": 100,
+      "sim_p_over": 0.4,
+      "sources": [
+        "bovada",
+        "rotowire:betmgm-sb",
+        "rotowire:caesars-sb",
+        "rotowire:draftkings-sb",
+        "rotowire:fanduel-sb",
+        "rotowire:hardrock-sb",
+        "rotowire:sleeper",
+        "rotowire:underdog"
+      ]
+    }
+  ],
+  "prop_line_count_from_latest_pregame_quotes": 130,
+  "requested_games": 100,
+  "schema": "slc-model-summary-1",
+  "valid_full_games": 100
+}

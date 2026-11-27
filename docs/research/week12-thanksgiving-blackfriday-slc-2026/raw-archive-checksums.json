@@ -1,0 +1,20 @@
+{
+  "archives": [
+    {
+      "game_id": "2026_12_CHI_DET",
+      "path": "/root/runs/week-12/games/2026_12_CHI_DET/raw/2026_12_CHI_DET-20261127T130408Z-19e7e3947cf5.tar.gz",
+      "sha256": "000117ac64b45324ca892274e106b55420ec68dc54f83b71f86cff357ccf3302",
+      "bytes": 451145,
+      "gzip_test": "passed",
+      "file_count": 20
+    },
+    {
+      "game_id": "2026_12_PHI_DAL",
+      "path": "/root/runs/week-12/games/2026_12_PHI_DAL/raw/2026_12_PHI_DAL-20261127T142757Z-ca5bf59e3f11.tar.gz",
+      "sha256": "c59153c3f27e50739b36d5ebb9c945d31ca4fce515e47fe5fc45c7ac48571fb6",
+      "bytes": 448736,
+      "gzip_test": "passed",
+      "file_count": 20
+    }
+  ]
+}
