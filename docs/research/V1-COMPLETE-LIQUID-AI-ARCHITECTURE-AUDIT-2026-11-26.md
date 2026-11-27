@@ -328,6 +328,8 @@ Replay with LP `85b11c12` and Gridiron `f1fbfab` used the same 30 seeds and froz
 
 The CHI roster-attribution failures came from an eligible weekly-roster player absent from the depth chart: participation correctly selected him, but attribution searched only depth-chart rows. LP `db5685c2` uses the resolved eligible roster across participation, lineups and attribution, and checks box-score identities after execution. Replaying the seven affected seeds produced one valid completed game and six games blocked by later live-play, special-teams or overtime execution failures; none repeated the original roster-attribution error. Results are at `/root/runs/week-12/games/v1-roster-replay-db5685c2/` on the fast host. These runs do not establish statistical realism.
 
+For CHI–DET seed 300027, the blocked-field-goal timeout occurred after a kicking-team recovery at 1.62 seconds, while the return was still live. Gridiron `e1dd50d` separates the seven-second kick-flight limit from the live blocked-kick continuation and records scoring at the goal line. Its saved call now reaches a whistle at 10.15 seconds. The LP `69ea6454` full-game replay passed that blocked-kick event but subsequently stopped at `drive_limit`; it did not complete. The compact call fixture is in Gridiron `test/fixtures/blocked-field-goal-seed-300027.json`, and the full-game replay summary is under `/root/runs/week-12/games/v1-blocked-kick-replay-69ea6454/` on the fast host.
+
 The three Thanksgiving matchups were run with seeds `300021`–`300030` for V1 Complete and player-aware CEG with HE. These executions finished on 2026-11-27 UTC, after the games, so all results are retrospective and exploratory.
 
 | Game | CEG player-aware + HE | V1 Complete |
