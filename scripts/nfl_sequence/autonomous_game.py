@@ -42,6 +42,25 @@ def _gridiron_yardline_round(value, label):
     return math.floor(value + 0.5)
 
 
+def _physical_stat_spot(x, direction):
+    """Statistical projection of measured coordinates, including legal end zones.
+
+    Mirror Gridiron's statFieldSpot. A physical interior point must not
+    become a scoring boundary just because an integer stat spot rounds there.
+    Raw geometry is never overwritten.
+    """
+    if (direction not in (-1, 1) or isinstance(x, bool)
+            or not isinstance(x, (int, float)) or not math.isfinite(x)
+            or not -10 <= x <= 110):
+        raise ValueError('gridiron_physical_spot_or_direction_invalid')
+    value = 100 - x if direction == 1 else x
+    if value <= 0:
+        return 0
+    if value >= 100:
+        return 100
+    return max(1, min(99, _gridiron_yardline_round(value, 'physical_stat')))
+
+
 def _pass_interference_foul_spot_yardline100(spot_x, direction):
     """Map live x to the nearest legal field spot in the offense-at-snap frame.
 
@@ -71,12 +90,11 @@ def _validate_gridiron_fumble_return(fumble, direction):
     recovery_x = recovery.get('x')
     dead_x = dead.get('x')
     if any(isinstance(value, bool) or not isinstance(value, (int, float))
-           or not math.isfinite(value) or not 0 <= value <= 100
+           or not math.isfinite(value) or not -10 <= value <= 110
            for value in (recovery_x, dead_x)):
         raise ValueError('gridiron_fumble_return_endpoint_missing_or_invalid')
-    recovery_y = _gridiron_yardline_round(
-        100 - recovery_x if direction == 1 else recovery_x, 'recovery')
-    dead_y = _gridiron_yardline_round(100 - dead_x if direction == 1 else dead_x, 'dead_ball')
+    recovery_y = _physical_stat_spot(recovery_x, direction)
+    dead_y = _physical_stat_spot(dead_x, direction)
     advance_sign = -1 if side == 'O' else 1
     expected_stat_yards = (dead_y - recovery_y) * advance_sign
     stat_yards = fumble.get('return_yards')
@@ -96,7 +114,7 @@ def _validate_gridiron_fumble_return(fumble, direction):
 
 
 GRIDIRON_SCRIMMAGE_DEAD_BALL_REASONS = frozenset({
-    'tackle', 'out_of_bounds', 'incomplete', 'sack', 'touchdown', 'safety',
+    'tackle', 'out_of_bounds', 'incomplete', 'sack', 'touchdown', 'safety', 'touchback',
 })
 GRIDIRON_SCRIMMAGE_POSSESSION_EVENTS = frozenset({
     'interception', 'fumble', 'fumble_recovery',
@@ -159,6 +177,8 @@ def classify_live_scrimmage_result(call, result):
     # from the later carrier, which may be a defender or a fumble recoverer.
     if family not in ('run', 'pass'):
         raise ValueError('gridiron_original_offensive_action_unsupported:' + str(family))
+    if reason == 'touchback' and not interceptions:
+        raise ValueError('gridiron_touchback_missing_defensive_possession')
     if interceptions:
         snap_event = 'interception'
     elif reason == 'incomplete':
@@ -556,7 +576,7 @@ class AutonomousGameExecution:
         row = {'game_id': self.snapshot['schedule']['game_id'], 'play_id': int(context['play_index']),
                'play_type': 'run' if event == 'run' else 'pass', 'yards_gained': yardage_for_slc,
                'live_elapsed_seconds': elapsed, 'dead_ball_seconds': dead,
-               'clock_stopped': reason in ('out_of_bounds', 'incomplete', 'touchdown', 'safety'),
+               'clock_stopped': reason in ('out_of_bounds', 'incomplete', 'touchdown', 'safety', 'touchback'),
                'out_of_bounds': reason == 'out_of_bounds',
                'decision_note': decision_note or {'selection': family,
                    'team_playbook_prior': self._playbook_prior(call['offense']['team'])['use'],
@@ -627,9 +647,9 @@ class AutonomousGameExecution:
         def yardline(point):
             x = (point or {}).get('x')
             if (isinstance(x, bool) or not isinstance(x, (int, float))
-                    or not math.isfinite(x) or not 0 <= x <= 100):
+                    or not math.isfinite(x) or not -10 <= x <= 110):
                 raise ValueError('gridiron_interception_return_fumble_spot_missing')
-            return _gridiron_yardline_round(100 - x if direction == 1 else x, 'turnover_chain')
+            return _physical_stat_spot(x, direction)
 
         interception_y = yardline(interception.get('at'))
         fumble_y = yardline(facts.get('fumble_spot'))
@@ -766,12 +786,9 @@ class AutonomousGameExecution:
             fumble_x = fumble_info['fumble_spot']['x']
             recovery_x = fumble_info['recovery_spot']['x']
             dead_spot_x = fumble_info['dead_ball_spot']['x']
-            fumble_y = _gridiron_yardline_round(
-                100 - fumble_x if direction == 1 else fumble_x, 'fumble')
-            recovery_y = _gridiron_yardline_round(
-                100 - recovery_x if direction == 1 else recovery_x, 'recovery')
-            dead_y = _gridiron_yardline_round(
-                100 - dead_spot_x if direction == 1 else dead_spot_x, 'dead_ball')
+            fumble_y = _physical_stat_spot(fumble_x, direction)
+            recovery_y = fumble_geometry['recovery_yardline_100']
+            dead_y = fumble_geometry['dead_ball_yardline_100']
             fumble_role = 'offense' if recovery_side == 'O' else 'defense'
             # The live executor can report the carrier being tackled at the
             # goal line without setting is_touchdown. A defensive recovery
@@ -799,36 +816,46 @@ class AutonomousGameExecution:
             elif reason == 'safety':
                 scoring = ceg_contract.ScoringV2('safety', 'defense' if recovery_side == 'O' else 'offense')
         elif ceg_event == 'interception':
-            caught_spot = _clamp(interception['at']['x'], 0, 100)
-            turnover_spot = int(round(100 - caught_spot if direction == 1 else caught_spot))
-            dead_x = _clamp(final_x, 0, 100)
-            dead_spot = int(round(100 - dead_x if direction == 1 else dead_x))
+            catch_x = interception['at']['x']
+            turnover_spot = _physical_stat_spot(catch_x, direction)
+            dead_spot = _physical_stat_spot(final_x, direction)
             return_yards = dead_spot - turnover_spot
-            # Resolve a defensive return that ends in the opponent end zone
-            # from its possession and dead-ball geometry even if the executor
-            # omitted its redundant is_touchdown flag.
-            touchdown = touchdown or dead_spot == 100
+            events = result.get('events', [])
+            touchback_events = [e for e in events if e.get('type') == 'touchback']
+            field_exit = any(e.get('type') == 'interception_possession_established_in_field'
+                             for e in events)
             if touchdown and dead_spot != 100:
-                raise ValueError(
-                    f'gridiron_defensive_touchdown_spot_mismatch:direction={direction},'
-                    f'final_x={final_x},interception_x={caught_spot},dead={dead_spot},'
-                    f'turnover={turnover_spot},reason={reason}')
-            return_safety = not touchdown and dead_spot == 0 and turnover_spot > 0
-            if not touchdown and reason == 'safety' and dead_spot != 0:
-                raise ValueError('gridiron_interception_safety_spot_mismatch')
-            if not touchdown and not return_safety and dead_spot == 100:
+                raise ValueError('gridiron_defensive_touchdown_spot_mismatch')
+            if dead_spot == 100 and not touchdown:
                 raise ValueError('gridiron_interception_goal_line_needs_touchdown')
-            touchback = not touchdown and not return_safety and dead_spot == 0
+            # The old adapter inferred a touchback from rounded spots, then
+            # independently assigned a safety when reason == 'safety'. That
+            # produced contradictory typed facts. Use explicit live evidence.
+            touchback = reason == 'touchback'
+            if touchback and (len(touchback_events) != 1 or turnover_spot != 0
+                              or dead_spot != 0 or field_exit or touchdown):
+                raise ValueError('gridiron_interception_touchback_evidence_invalid')
+            # Historical boundary fixture: genuinely dead at the acquiring
+            # goal line, no safety event or intervening field exit. Never
+            # convert a near-goal interior point to a touchback.
+            if not touchback and reason in ('tackle', 'out_of_bounds') and not touchdown \
+                    and turnover_spot == 0 and dead_spot == 0 and not field_exit:
+                touchback = True
+            return_safety = reason == 'safety'
+            if return_safety and (touchback or dead_spot != 0 or touchdown):
+                raise ValueError('gridiron_interception_safety_spot_mismatch')
+            if dead_spot == 0 and not touchback and not return_safety:
+                raise ValueError('gridiron_defensive_end_zone_impetus_or_momentum_unresolved')
             possession = ceg_contract.PossessionV2(
                 team='defense', how='interception',
                 turnover_spot_yardline_100=turnover_spot,
                 dead_ball_yardline_100=dead_spot, return_yards=return_yards,
                 returner=ceg_contract.PlayerRoleV2.named(interceptor_id),
                 touchback=touchback,
-                next_yardline_100=20 if touchback else None)
+                next_yardline_100=80 if touchback else None)
             if touchdown:
                 scoring = ceg_contract.ScoringV2('touchdown', 'defense')
-            elif return_safety or reason == 'safety':
+            elif return_safety:
                 scoring = ceg_contract.ScoringV2('safety', 'offense')
         elif touchdown:
             scoring = ceg_contract.ScoringV2('touchdown', 'offense')

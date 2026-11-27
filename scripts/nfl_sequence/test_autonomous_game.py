@@ -740,7 +740,7 @@ class AutonomousSpecialTeamsTests(unittest.TestCase):
         self.assertEqual(generated['row']['yards_gained'], 0)
         applied = source.apply_event(state, generated['event_record'])
         self.assertEqual(applied.state_after, {'offense': 'B', 'defense': 'A',
-                                               'down': 1, 'togo': 10, 'yl': 20})
+                                               'down': 1, 'togo': 10, 'yl': 80})
 
     def test_live_gridiron_punt_enters_slc_adapter_with_22_executed_players(self):
         source = self._source()

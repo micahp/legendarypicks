@@ -226,7 +226,7 @@ class EventExpansionRulesTests(unittest.TestCase):
             'defense', 'interception', turnover_spot_yardline_100=0,
             dead_ball_yardline_100=0, return_yards=0,
             returner=c.PlayerRoleV2.unmodelled('interceptor'),
-            touchback=True, next_yardline_100=20)
+            touchback=True, next_yardline_100=80)
         interception = record(
             call=c.PlayCallV2('dropback'), event='interception', yards_gained=0,
             air_yards=None, yards_after_catch=None, possession=possession,
@@ -241,7 +241,7 @@ class EventExpansionRulesTests(unittest.TestCase):
             EventExpansionSwitches.from_enabled(('turnover_terminal_events',)))
         self.assertEqual(result.terminal, 'turnover')
         self.assertEqual(result.state_after,
-                         {'offense': 'B', 'defense': 'A', 'down': 1, 'togo': 10, 'yl': 20})
+                         {'offense': 'B', 'defense': 'A', 'down': 1, 'togo': 10, 'yl': 80})
         self.assertTrue(result.flags['touchback'])
 
     def test_sack_fumble_return_preserves_sack_and_requires_goal_line_switch(self):

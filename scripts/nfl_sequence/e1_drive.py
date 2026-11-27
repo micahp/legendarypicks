@@ -579,6 +579,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                             'defense': after['defense'], 'down': after['down'], 'togo': after['togo'], 'yl': after['yl']}),
                         'clock_clamped_to_zero': clock_raw < 0,
                         'quarter_change': quarter_change,
+                        'live_play_terminal': play_terminal,
                         'clock_only_terminal': ended_by_clock_only,
                         'final_play_yardline_100': yl_after if ended_by_clock_only else None,
                         'sampled_touchdown_flag': None if event_source is not None else bool(row['touchdown'] == 1),
@@ -620,6 +621,29 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         st = {'quarter': next_quarter, 'offense': after['offense'], 'defense': after['defense'],
               'down': after['down'], 'togo': after['togo'], 'yl': yl_after, 'clock': state_clock_after}
     return plays, terminal
+
+
+def _blocked_field_goal_terminal_valid(before, after, outcome):
+    """Validate the live kick result independently from a clock-ending drive."""
+    if not outcome.get('field_goal_attempt'):
+        return False
+    terminal = after.get('end_of_drive')
+    live = outcome.get('live_play_terminal', terminal)
+    legal = (None, 'turnover', 'turnover_on_downs', 'touchdown', 'safety')
+    if live not in legal:
+        return False
+    if terminal == live:
+        return True
+    period_end = {2: 'halftime', 4: 'end_of_regulation', 5: 'end_of_overtime'}
+    if (after.get('clock_seconds') != 0 or after.get('quarter') != before.get('quarter')
+            or terminal != period_end.get(before.get('quarter'))
+            or live not in (None, 'turnover', 'turnover_on_downs')
+            or outcome.get('touchdown') or outcome.get('safety')):
+        return False
+    changed = before.get('offense_team') != after.get('offense_team')
+    if changed != (live in ('turnover', 'turnover_on_downs')):
+        return False
+    return bool(outcome.get('clock_only_terminal')) == (live is None)
 
 
 def check_drive(plays, terminal):
@@ -723,9 +747,7 @@ def check_drive(plays, terminal):
             raise AssertionError(f'play {i + 1}: touchdown flag and terminal disagree')
         if p['event_type'] == 'field_goal_attempt':
             if o.get('field_goal_result') == 'blocked':
-                if (not o['field_goal_attempt']
-                        or sa.get('end_of_drive') not in (
-                            None, 'turnover', 'turnover_on_downs', 'touchdown', 'safety')):
+                if not _blocked_field_goal_terminal_valid(sb, sa, o):
                     raise AssertionError(f'play {i + 1}: blocked field-goal transition disagrees with its live result')
             elif o['field_goal_attempt'] != (sa.get('end_of_drive') == 'field_goal_attempt'):
                 raise AssertionError(f'play {i + 1}: field-goal flag and terminal disagree')

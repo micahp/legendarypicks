@@ -887,7 +887,7 @@ def _apply_v3_kick(state, play, switches):
     if kick.result == 'touchback':
         dead = kick.receiving_restart_spot
         flags['touchback'] = True
-        expected_restart = 80 if kick.kind in ('punt', 'safety_kick') else 65
+        expected_restart = 80 if kick.kind in ('punt', 'safety_kick') or kick_spot == 50 else 65
         if _v3_spot(dead, 'receiving_team', 'touchback_restart') != expected_restart:
             raise UnsupportedEventTransition('kick_v3_touchback_restart_spot_invalid')
         if _v3_spot(kick.dead_ball_spot, 'kicking_team', 'touchback_dead_ball') != 0:
