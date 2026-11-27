@@ -587,7 +587,54 @@ def injury_report_from_db(db_path, season, week):
 
 
 ROTOWIRE_TO_ENGINE = {'OUT': 'Out', 'DOUBTFUL': 'Doubtful', 'QUESTIONABLE': 'Questionable', 'IR': 'Out', 'IR-R': 'Out',
-                      'PUP-R': 'Out', 'RESERVE-DNR': 'Out', 'RESERVE-EX': 'Out', 'INACTIVE': 'Out'}
+                      'PUP-R': 'Out', 'RESERVE-DNR': 'Out', 'RESERVE-EX': 'Out', 'RESERVE-SUS': 'Out',
+                      'INACTIVE': 'Out'}
+
+
+def espn_roster_unavailability(db_path, cutoff, gsis_ids):
+    """Return cutoff-safe ESPN reserve/suspension statuses keyed by canonical GSIS IDs.
+
+    This supplements the RotoWire report only where its player ID is not linked. It never resolves a player by name.
+    ESPN's `last_news_date` is the publication time; `updated_at` prevents using a status ingested after the cutoff.
+    """
+    ids = sorted({str(value) for value in gsis_ids if value})
+    if not ids:
+        return []
+    placeholders = ','.join('?' for _ in ids)
+    conn = connect(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT nfl_gsis_id, injury_status, last_news_date, team, espn_id, updated_at FROM players "
+            "WHERE league='nfl' AND nfl_gsis_id IN ({}) AND injury_status IN ('INJURY_RESERVE','SUSPENSION')".format(placeholders),
+            ids).fetchall()
+    finally:
+        conn.close()
+
+    cutoff = cutoff if cutoff.tzinfo else cutoff.replace(tzinfo=timezone.utc)
+    out = []
+    seen = set()
+    for row in rows:
+        gsis = str(row['nfl_gsis_id'])
+        if gsis in seen:
+            raise ValueError(f'AMBIGUOUS_ESPN_STATUS_GSIS: {gsis}')
+        seen.add(gsis)
+        try:
+            published = datetime.fromtimestamp(int(row['last_news_date']) / 1000, tz=timezone.utc)
+        except (TypeError, ValueError, OSError):
+            continue
+        try:
+            updated = datetime.fromisoformat(str(row['updated_at']).replace('Z', '+00:00'))
+        except (TypeError, ValueError):
+            continue
+        if updated.tzinfo is None:
+            updated = updated.replace(tzinfo=timezone.utc)
+        if published > cutoff or updated > cutoff:
+            continue
+        out.append({'gsis_id': gsis, 'report_status': 'Out', 'rotowire_status': None,
+                    'published_utc': published.isoformat(timespec='seconds'), 'team': row['team'],
+                    'source': 'espn_player_status', 'source_status': row['injury_status'],
+                    'espn_id': row['espn_id']})
+    return out
 
 
 def rotowire_injury_report(db_path, cutoff, window_days=10):

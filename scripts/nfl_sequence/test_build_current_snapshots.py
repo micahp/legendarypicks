@@ -2,6 +2,7 @@
 import sqlite3
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 
 import build_current_snapshots as builder
@@ -69,6 +70,27 @@ class MarketQuarterbacks(unittest.TestCase):
     def test_missing_event_and_matchup_returns_empty(self):
         self.assertEqual(builder.market_qbs(self.db, '2026_12_KC_BUF', '2026-11-27', '999999999',
                                             as_of='2026-11-27T18:30:00Z'), {})
+
+    def test_roster_status_facts_are_attached_by_gsis_to_only_the_matching_team(self):
+        players_db = Path(self.temp.name) / 'players.sqlite'
+        with sqlite3.connect(str(players_db)) as con:
+            con.execute('CREATE TABLE players(league TEXT,nfl_gsis_id TEXT,injury_status TEXT,last_news_date TEXT,'
+                        'team TEXT,espn_id TEXT,updated_at TEXT)')
+            con.executemany('INSERT INTO players VALUES(?,?,?,?,?,?,?)', [
+                ('nfl', '00-0040153', 'INJURY_RESERVE', '1795746262000', 'DEN', '4603189', '2026-11-27T10:10:44+00:00'),
+                ('nfl', '00-0034771', 'ACTIVE', None, 'PIT', '4361087', '2026-11-27T10:10:44+00:00'),
+            ])
+        shared_report = {'players': []}
+        snap = {'rosters': {
+            'away': {'team': 'DEN', 'players': [{'gsis_id': '00-0040153'}], 'injury_report': shared_report},
+            'home': {'team': 'PIT', 'players': [{'gsis_id': '00-0034771'}], 'injury_report': shared_report},
+        }}
+        added = builder.attach_espn_roster_statuses(
+            snap, players_db, datetime(2026, 11, 27, 17, 7, 40, tzinfo=timezone.utc))
+        self.assertIsNot(snap['rosters']['away']['injury_report'], snap['rosters']['home']['injury_report'])
+        self.assertEqual([p['gsis_id'] for p in snap['rosters']['away']['injury_report']['players']], ['00-0040153'])
+        self.assertEqual(snap['rosters']['home']['injury_report']['players'], [])
+        self.assertEqual([p['gsis_id'] for p in added], ['00-0040153'])
 
 
 if __name__ == '__main__':

@@ -168,6 +168,32 @@ class ObsoleteStatus(unittest.TestCase):
         self.assertEqual(sorted(p['gsis_id'] for p in players), sorted([BECK, MINSHEW]))
         self.assertEqual([p['gsis_id'] for p in obsolete], [AGUILAR])
 
+    def test_reserve_suspended_status_maps_to_out_and_persists(self):
+        players, obsolete = oracle.split_obsolete(
+            {BECK: ('RESERVE-SUS', '2026-11-25T19:25:31+00:00', 'ARZ')}, {})
+        self.assertEqual(obsolete, [])
+        self.assertEqual(players, [{'gsis_id': BECK, 'report_status': 'Out',
+                                    'rotowire_status': 'RESERVE-SUS',
+                                    'published_utc': '2026-11-25T19:25:31+00:00', 'team': 'ARZ'}])
+
+    def test_espn_reserve_status_uses_gsis_and_cutoff_timestamps(self):
+        with tempfile.NamedTemporaryFile() as db:
+            con = __import__('sqlite3').connect(db.name)
+            con.execute('CREATE TABLE players(league TEXT,nfl_gsis_id TEXT,injury_status TEXT,last_news_date TEXT,'
+                        'team TEXT,espn_id TEXT,updated_at TEXT)')
+            con.execute('INSERT INTO players VALUES(?,?,?,?,?,?,?)',
+                        ('nfl', BECK, 'INJURY_RESERVE', '1795746262000', 'DEN', '4603189', '2026-11-27T10:10:44+00:00'))
+            con.commit()
+            con.close()
+            rows = oracle.espn_roster_unavailability(
+                db.name, datetime(2026, 11, 27, 17, 7, 40, tzinfo=timezone.utc), [BECK])
+            self.assertEqual(rows, [{'gsis_id': BECK, 'report_status': 'Out', 'rotowire_status': None,
+                                     'published_utc': '2026-11-27T02:24:22+00:00', 'team': 'DEN',
+                                     'source': 'espn_player_status', 'source_status': 'INJURY_RESERVE',
+                                     'espn_id': '4603189'}])
+            self.assertEqual(oracle.espn_roster_unavailability(
+                db.name, datetime(2026, 11, 27, 2, 0, 0, tzinfo=timezone.utc), [BECK]), [])
+
 
 class Membership(unittest.TestCase):
     def test_an_active_kicker_off_the_depth_chart_replaces_a_reserve_kicker(self):

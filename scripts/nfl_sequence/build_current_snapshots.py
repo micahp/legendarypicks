@@ -72,6 +72,24 @@ def market_qbs(props_db, game_id, gameday, espn_event_id=None, *, as_of):
     return qb_sets(resolve_market_qbs(props_db, game_id, gameday, espn_event_id, as_of))
 
 
+def attach_espn_roster_statuses(snapshot, db_path, cutoff):
+    """Attach stable-GSIS ESPN reserve/suspension facts separately to each team's roster."""
+    added = []
+    for side in ('away', 'home'):
+        roster = snapshot['rosters'][side]
+        gsis_ids = {p.get('gsis_id') for p in roster.get('players', [])}
+        gsis_ids.update(p.get('gsis_id') for p in (roster.get('membership') or {}).get('players', []))
+        statuses = oracle.espn_roster_unavailability(db_path, cutoff, gsis_ids)
+        if not statuses:
+            continue
+        # The base snapshot may share the league-wide injury report object between both teams.
+        report = dict(roster.get('injury_report') or {})
+        report['players'] = list(report.get('players', [])) + statuses
+        roster['injury_report'] = report
+        added.extend(dict(row, roster_team=roster['team']) for row in statuses)
+    return added
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--db', required=True, help='database with players and RotoWire news (nfl_player_news_updates)')
@@ -107,7 +125,7 @@ def main(argv=None):
     newest_news = max(p['published_utc'] for p in injury['players'])
 
     fetch = Fetcher(min_interval=3.0, host_budget=len(wanted) + 5, on_exhausted='refuse')
-    built, refused = [], []
+    built, refused, espn_statuses_by_game = [], [], {}
     for game_id in wanted:
         row = schedule[game_id][0][1]
         db_row = dict(row, home_team=nfl_team_codes.to_db(row['home_team']), away_team=nfl_team_codes.to_db(row['away_team']))
@@ -126,6 +144,7 @@ def main(argv=None):
         except ValueError as exc:
             refused.append(str(exc))
             continue
+        espn_statuses_by_game[game_id] = attach_espn_roster_statuses(snap, args.db, now)
         evidence = resolve_market_qbs(args.props_db, game_id, row['gameday'], row.get('espn'), cutoff)
         snap['market_qb_evidence'] = evidence
         priced_qbs = qb_sets(evidence)
@@ -158,7 +177,8 @@ def main(argv=None):
         manifest['games'].append({'game_id': game_id, 'path': str(path), 'snapshot_sha256': loaded['snapshot_sha256'],
                                   'kickoff_utc': loaded['schedule']['scheduled_kickoff_utc'],
                                   'depth_chart_at': {s: loaded['rosters'][s]['snapshot_at'] for s in ('away', 'home')},
-                                  'roster_resolution_hash': loaded['roster_resolution']['content_hash']})
+                                  'roster_resolution_hash': loaded['roster_resolution']['content_hash'],
+                                  'espn_player_statuses_added': espn_statuses_by_game.get(game_id, [])})
     (args.out / 'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n')
     print(f'BUILT {len(built)} snapshots in {args.out}')
     return 0
