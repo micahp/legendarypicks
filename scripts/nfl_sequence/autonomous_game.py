@@ -537,11 +537,8 @@ class AutonomousGameExecution:
                 row['participants']['receiving_yards'] = gain
         if pass_interference is not None:
             defender_id = pass_interference.get('defender_id')
-            roster_rows = {p['gsis_id']: p for side in ('home', 'away')
-                           for p in self.snapshot['rosters'][side]['players']}
-            defender = roster_rows.get(defender_id)
-            if defender is None:
-                raise ValueError('gridiron_pass_interference_defender_not_in_frozen_roster')
+            defender_side = 'B' if state['offense'] == 'A' else 'A'
+            defender = self._actor_row(defender_id, defender_side)
             row['participants'].update({
                 'penalty_offender_id': defender_id,
                 'penalty_offender_name': defender.get('player_name'),
@@ -827,12 +824,19 @@ class AutonomousGameExecution:
             out_of_bounds=reason == 'out_of_bounds', players=roles,
             probabilities=({'dpi_decision': penalty_decision} if penalty_decision else {}))
 
+    def _actor_row(self, pid, side):
+        """Resolve a live actor against its expected game-side roster."""
+        roster_side = {'A': 'home', 'B': 'away'}[side]
+        club = self.team_by_side[side]
+        rows = [row for row in self.snapshot['rosters'][roster_side]['players']
+                if row['gsis_id'] == pid and row.get('team') == club]
+        if not rows:
+            raise ValueError(f'gridiron_actor_not_on_expected_roster:{pid}:{side}')
+        return rows[0]
+
     def _participants(self, call, result, event, state):
         side = state['offense']
-        team = self.team_by_side[side]
         defense = 'B' if side == 'A' else 'A'
-        roster_rows = {row['gsis_id']: row for roster_side in ('home', 'away')
-                       for row in self.snapshot['rosters'][roster_side]['players']}
         qb = call['offense']['lineup']['QB']
         outcome = result['result']
         receiver_event = next((e for e in result['events'] if e['type'] == 'catch'), None)
@@ -845,38 +849,34 @@ class AutonomousGameExecution:
         participants = {'passer_id': passer, 'rusher_id': rusher, 'receiver_id': receiver,
                         'interceptor_id': result['participants'].get('interceptor'),
                         'attribution': 'autonomous_execution', 'timeout': False}
-        for role, pid in (('passer', passer), ('rusher', rusher), ('receiver', receiver)):
+
+        def actor(role, pid, actor_side):
             if pid is None:
-                continue
-            data = roster_rows.get(pid, {})
+                return
+            data = self._actor_row(pid, actor_side)
             participants.update({f'{role}_name': data.get('player_name'),
                                  f'{role}_position': data.get('pos_abb'),
-                                 f'{role}_team': data.get('team'),
-                                 f'{role}_side': side if data.get('team') == team else defense})
+                                 f'{role}_team': data['team'],
+                                 f'{role}_side': actor_side})
+
+        for role, pid in (('passer', passer), ('rusher', rusher), ('receiver', receiver)):
+            actor(role, pid, side)
         if fumble:
-            fumbler = roster_rows.get(fumble.get('fumbler_id'), {})
-            recoverer = roster_rows.get(fumble.get('recoverer_id'), {})
+            fumbler_side = defense if event == 'interception' else side
+            recovery_side = {'O': side, 'D': defense}.get(fumble.get('recovery_side'))
+            if recovery_side is None:
+                raise ValueError('gridiron_fumble_recovery_team_invalid')
             post_returner_id = (fumble.get('returner_id') or outcome.get('carrier_id')
                                 or fumble.get('recoverer_id'))
-            returner = roster_rows.get(post_returner_id, {})
             participants.update({
                 'fumbler_id': fumble.get('fumbler_id'),
                 'recoverer_id': fumble.get('recoverer_id'),
                 'post_recovery_returner_id': post_returner_id,
                 'returner_id': post_returner_id,
-                'fumbler_name': fumbler.get('player_name'),
-                'fumbler_position': fumbler.get('pos_abb'),
-                'fumbler_team': fumbler.get('team'),
-                'fumbler_side': side if fumbler.get('team') == team else defense,
-                'recoverer_name': recoverer.get('player_name'),
-                'recoverer_position': recoverer.get('pos_abb'),
-                'recoverer_team': recoverer.get('team'),
-                'recoverer_side': side if recoverer.get('team') == team else defense,
-                'returner_name': returner.get('player_name'),
-                'returner_position': returner.get('pos_abb'),
-                'returner_team': returner.get('team'),
-                'returner_side': (side if returner.get('team') == team else defense) if returner else None,
             })
+            actor('fumbler', fumble.get('fumbler_id'), fumbler_side)
+            actor('recoverer', fumble.get('recoverer_id'), recovery_side)
+            actor('returner', post_returner_id, recovery_side)
         return participants
 
     def _special_teams_call(self, kind, kicking_team, receiving_team, yardline_100, play_index):
@@ -951,7 +951,8 @@ class AutonomousGameExecution:
             },
             'player_profiles': profiles,
         }
-        player_rows = {p['gsis_id']: p for p in (*kicking_roster, *receiving_roster)}
+        # Resolve actors from the selected live units, not a merged roster.
+        player_rows = {p['gsis_id']: p for p in (specialist, *coverage, selected_returner, *blockers)}
         provenance = {'dataset': Path(ratings_path).name, 'sha256': rating_sha256,
                       **rating_source, 'player_ids': ids}
         return call, player_rows, provenance
@@ -1234,10 +1235,12 @@ class AutonomousGameExecution:
                           ('recoverer', facts.get('recoverer_id'))):
             if pid is None:
                 continue
-            player = player_rows.get(pid, {})
+            player = player_rows.get(pid)
+            if player is None or player.get('team') not in (kicking_club, receiving_club):
+                raise ValueError(f'gridiron_special_teams_actor_not_on_live_roster:{pid}')
             participants.update({f'{role}_{field}': player.get(key) for field, key in (
                 ('name', 'player_name'), ('position', 'pos_abb'), ('team', 'team'))})
-            participants[f'{role}_side'] = (kicking_side if player.get('team') == kicking_club
+            participants[f'{role}_side'] = (kicking_side if player['team'] == kicking_club
                                              else receiving_side)
         execution = {'schema_version': result['schema_version'], 'call': call, 'result': result,
                      'timing': timing, 'rating_provenance': rating_provenance,

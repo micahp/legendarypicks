@@ -361,6 +361,44 @@ class PregamePlayerUsage(unittest.TestCase):
 
 
 class GameStatsReconciliation(unittest.TestCase):
+    def test_autonomous_kickoff_cannot_move_accumulated_rushing_stats_to_other_side(self):
+        play = {'event_type': 'run',
+                'state_before': {'offense_team': 'A', 'defense_team': 'B', 'yardline_100': 40},
+                'participants': {'attribution': 'autonomous_execution', 'rusher_id': 'RB1',
+                                 'rusher_side': 'A', 'rusher_team': 'AAA'},
+                'outcome': {'yards_gained': 3, 'touchdown': False, 'turnover': False}}
+        kick = {'result': 'return', 'returner_id': 'RB1', 'return_yards': 5,
+                'participants': {'attribution': 'autonomous_execution',
+                                 'returner_side': 'B', 'returner_team': 'BBB'}}
+        with self.assertRaisesRegex(ValueError, 'autonomous_player_identity_conflict:RB1'):
+            game_stats.player_lines([{'plays': [play]}], [kick])
+        kick['participants'].update(returner_side='A', returner_team='AAA')
+        rows = game_stats.player_lines([{'plays': [play]}], [kick])
+        self.assertEqual(rows[0]['rushing']['att'], 1)
+        self.assertEqual(rows[0]['player_side'], 'A')
+
+    def test_free_kick_safety_is_in_scoring_ledger_and_invalid_points_are_rejected(self):
+        from collections import Counter
+        kick = {'terminal': 'safety', 'scoring_team': 'B', 'points_scored': 2}
+        by_team = Counter()
+        gs._credit_free_kick_scores({'kickoffs': [kick]}, by_team)
+        self.assertEqual(by_team, {'B': 2})
+        kick['points_scored'] = 3
+        with self.assertRaisesRegex(AssertionError, 'free-kick safety scoring facts invalid'):
+            gs._credit_free_kick_scores({'kickoffs': [kick]}, Counter())
+
+    def test_unresolved_return_td_try_preserves_six_points_but_never_validates_as_complete(self):
+        from collections import Counter
+        reason = 'autonomous_kick_return_try_unavailable:fixture'
+        kick = {'terminal': 'touchdown', 'scoring_team': 'A', 'points_scored': 6,
+                'try': None, 'try_blocker': reason}
+        record = {'kickoffs': [kick], 'blocker': reason, 'valid_full_game': False}
+        by_team = Counter()
+        gs._credit_free_kick_scores(record, by_team)
+        self.assertEqual(by_team, {'A': 6})
+        with self.assertRaisesRegex(AssertionError, 'invalid unresolved'):
+            gs._credit_free_kick_scores({**record, 'valid_full_game': True}, Counter())
+
     def test_retained_fumble_on_fourth_down_is_not_a_lost_fumble(self):
         play = {'event_type': 'run',
                 'state_before': {'offense_team': 'A', 'defense_team': 'B', 'yardline_100': 40},

@@ -250,7 +250,12 @@ def player_lines(drives, kickoff_events=()):
         for field in ('name', 'position', 'team', 'side'):
             value = part.get(f'{role}_{field}')
             if value is not None:
-                entry[f'player_{field}'] = value
+                key = f'player_{field}'
+                if (attribution == 'autonomous_execution' and field in ('team', 'side')
+                        and key in entry and entry[key] != value):
+                    raise ValueError(f'autonomous_player_identity_conflict:{pid}:{field}:'
+                                     f'{entry[key]}:{value}')
+                entry[key] = value
         return entry
 
     for d in drives:
@@ -372,15 +377,7 @@ def player_lines(drives, kickoff_events=()):
                     returning['td'] += int(bool(flags.get('return_touchdown')))
         pid = event.get('returner_id')
         if event.get('result') == 'return' and pid and not event.get('fair_catch'):
-            entry = lines.setdefault(pid, {'passing': defaultdict(int), 'rushing': defaultdict(int),
-                                           'receiving': defaultdict(int), 'kicking': defaultdict(int),
-                                           'returning': defaultdict(int), 'miscellaneous': defaultdict(int),
-                                           'attribution': 'autonomous_execution'})
-            for field in ('name', 'position', 'team', 'side'):
-                value = part.get('returner_' + field)
-                if value is not None:
-                    entry['player_' + field] = value
-            r = entry['returning']
+            r = line(pid, {**part, 'attribution': 'autonomous_execution'}, 'returner')['returning']
             r['kickoff_returns'] += 1
             r['kickoff_return_yds'] += int(event.get('return_yards') or 0)
             r['td'] += int(event.get('terminal') == 'touchdown')

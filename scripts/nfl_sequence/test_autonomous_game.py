@@ -21,6 +21,20 @@ from event_expansion import EventExpansionSwitches  # noqa: E402
 
 
 class AutonomousPassInterferenceTests(unittest.TestCase):
+    def test_actor_attribution_uses_expected_roster_not_last_duplicate_row(self):
+        source = object.__new__(autonomous_game.AutonomousGameExecution)
+        source.team_by_side = {'A': 'AAA', 'B': 'BBB'}
+        source.snapshot = {'rosters': {
+            'home': {'players': [{'gsis_id': 'rb1', 'team': 'AAA', 'pos_abb': 'RB'}]},
+            'away': {'players': [{'gsis_id': 'rb1', 'team': 'BBB', 'pos_abb': 'RB'}]}}}
+        call = {'offense': {'lineup': {'QB': 'qb1', 'RB': 'rb1'}}}
+        result = {'result': {'carrier_id': 'rb1'}, 'participants': {}, 'events': []}
+        part = source._participants(call, result, 'run', {'offense': 'A'})
+        self.assertEqual((part['rusher_team'], part['rusher_side']), ('AAA', 'A'))
+        result['result']['carrier_id'] = 'missing'
+        with self.assertRaisesRegex(ValueError, 'gridiron_actor_not_on_expected_roster'):
+            source._participants(call, result, 'run', {'offense': 'A'})
+
     def test_live_interference_becomes_a_spot_foul_before_scheduling_or_result_is_reused(self):
         source = object.__new__(autonomous_game.AutonomousGameExecution)
         source.event_manifest_sha256 = 'f' * 64

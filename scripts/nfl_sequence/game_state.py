@@ -1030,14 +1030,17 @@ class _Game:
             situation = self._try_situation(scorer)
             self.points[scorer] += TD_POINTS
             try_points, try_result, why = self.execution_source.try_after_touchdown(situation)
-            if why:
-                self.block('autonomous_kick_return_try_unavailable:' + str(why))
+            opponent_points = try_result.get('opponent_points', 0) if not why else 0
+            if why or type(opponent_points) is not int or opponent_points not in (0, 2):
+                reason = ('autonomous_kick_return_try_unavailable:' + str(why) if why
+                          else 'autonomous_try_opponent_points_invalid')
+                # A completed return touchdown remains a scoring event even if its try blocks.
+                event.update(points_scored=TD_POINTS, try_blocker=reason, try_situation=situation)
+                event['try'] = None
+                self.events.append(event)
+                self.block(reason)
                 return
             self.points[scorer] += try_points
-            opponent_points = int(try_result.get('opponent_points', 0))
-            if opponent_points not in (0, 2):
-                self.block('autonomous_try_opponent_points_invalid')
-                return
             if opponent_points:
                 self.points[other(scorer, self.ledger.teams)] += opponent_points
             event['points_scored'] = TD_POINTS + try_points
@@ -1903,11 +1906,11 @@ class _Game:
                 return
             if situation is not None:
                 drive['try_policy'] = {**situation, 'p_two': p_two, 'kind': try_record['kind']}
-            self.points[scorer] += TD_POINTS + try_points
-            opponent_points = int(try_record.get('opponent_points', 0))
-            if opponent_points not in (0, 2):
+            opponent_points = try_record.get('opponent_points', 0)
+            if type(opponent_points) is not int or opponent_points not in (0, 2):
                 self.block('autonomous_try_opponent_points_invalid')
                 return
+            self.points[scorer] += TD_POINTS + try_points
             if opponent_points:
                 self.points[other(scorer, self.ledger.teams)] += opponent_points
             if try_record.get('execution') is not None:
@@ -2150,6 +2153,49 @@ def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None, pregame
     validate_half_start(ledger.half_start_kickoffs())
     return _Game(seed, ref, ledger, rng, pregame_snapshot, model_seed, streams,
                  execution_source=execution_source).run(max_drives).record()
+
+
+def _credit_free_kick_scores(record, by_team):
+    """Reconcile actual free-kick scores, including a TD whose try blocked."""
+    for kick in record.get('kickoffs', []):
+        terminal = kick.get('terminal')
+        if terminal not in ('touchdown', 'safety'):
+            continue
+        scorer = kick.get('scoring_team')
+        points = kick.get('points_scored')
+        result = kick.get('try')
+        if terminal == 'safety':
+            if (scorer not in ('A', 'B') or type(points) is not int or points != SAFETY_POINTS
+                    or result is not None or kick.get('opponent_points', 0) != 0):
+                raise AssertionError('free-kick safety scoring facts invalid')
+            by_team[scorer] += points
+            continue
+        if kick.get('try_blocker') is not None:
+            if (record.get('valid_full_game') or record.get('complete_game')
+                    or kick is not record['kickoffs'][-1]
+                    or kick['try_blocker'] != record.get('blocker') or result is not None
+                    or scorer not in ('A', 'B') or type(points) is not int or points != TD_POINTS
+                    or kick.get('opponent_points', 0) != 0):
+                raise AssertionError('invalid unresolved free-kick touchdown try')
+            by_team[scorer] += points
+            continue
+        if scorer not in ('A', 'B') or type(points) is not int:
+            raise AssertionError('kickoff return touchdown has no scoring team or points')
+        if (not isinstance(result, dict) or result.get('kind') not in TRY_POINTS
+                or type(result.get('made')) is not bool):
+            raise AssertionError('kickoff return touchdown has no valid try record')
+        expected_points = TD_POINTS + (TRY_POINTS[result['kind']] if result['made'] else 0)
+        field = TRY_PUBLISHER_FIELD[result['kind']]
+        if (points != expected_points
+                or result.get(field) != TRY_PUBLISHER_VALUE[result['kind']][result['made']]
+                or 'success' in result):
+            raise AssertionError('kickoff return touchdown points disagree with its try')
+        by_team[scorer] += points
+        opponent_points = kick.get('opponent_points', 0)
+        if type(opponent_points) is not int or opponent_points not in (0, 2):
+            raise AssertionError('kickoff try opponent points are invalid')
+        if opponent_points:
+            by_team['B' if scorer == 'A' else 'A'] += opponent_points
 
 
 def _validate_game_impl(record):
@@ -2433,29 +2479,7 @@ def _validate_game_impl(record):
                 raise AssertionError(f"drive {d['index']} has invalid opponent points")
             if opponent_points:
                 by_team['B' if p['team'] == 'A' else 'A'] += opponent_points
-    for kick in record.get('kickoffs', []):
-        if kick.get('terminal') != 'touchdown':
-            continue
-        scorer = kick.get('scoring_team')
-        points = kick.get('points_scored')
-        result = kick.get('try')
-        if scorer not in ('A', 'B') or type(points) is not int:
-            raise AssertionError('kickoff return touchdown has no scoring team or points')
-        if (not isinstance(result, dict) or result.get('kind') not in TRY_POINTS
-                or type(result.get('made')) is not bool):
-            raise AssertionError('kickoff return touchdown has no valid try record')
-        expected_points = TD_POINTS + (TRY_POINTS[result['kind']] if result['made'] else 0)
-        field = TRY_PUBLISHER_FIELD[result['kind']]
-        if (points != expected_points
-                or result.get(field) != TRY_PUBLISHER_VALUE[result['kind']][result['made']]
-                or 'success' in result):
-            raise AssertionError('kickoff return touchdown points disagree with its try')
-        by_team[scorer] += points
-        opponent_points = kick.get('opponent_points', 0)
-        if type(opponent_points) is not int or opponent_points not in (0, 2):
-            raise AssertionError('kickoff try opponent points are invalid')
-        if opponent_points:
-            by_team['B' if scorer == 'A' else 'A'] += opponent_points
+    _credit_free_kick_scores(record, by_team)
     if by_team['A'] != record['points']['A'] or by_team['B'] != record['points']['B']:
         raise AssertionError('points ledger disagrees with drive and free-kick scoring records')
     checks.append('game points equal drive and free-kick scoring records, touchdown tries included')
