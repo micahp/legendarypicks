@@ -361,6 +361,25 @@ class PregamePlayerUsage(unittest.TestCase):
 
 
 class GameStatsReconciliation(unittest.TestCase):
+    def test_receiving_yards_include_ordinary_completions_with_explicit_yards_on_other_plays(self):
+        participants = {'attribution': 'autonomous_execution', 'passer_id': 'QB1',
+                        'passer_side': 'A', 'receiver_id': 'WR1', 'receiver_side': 'A',
+                        'rusher_id': None}
+        ordinary = {'event_type': 'pass_complete',
+                    'state_before': {'offense_team': 'A', 'defense_team': 'B', 'yardline_100': 60},
+                    'participants': dict(participants),
+                    'outcome': {'yards_gained': 39, 'touchdown': False, 'turnover': False}}
+        explicit = {'event_type': 'pass_complete',
+                    'state_before': {'offense_team': 'A', 'defense_team': 'B', 'yardline_100': 21},
+                    'participants': {**participants, 'receiving_yards': 4, 'passing_yards': 4},
+                    'outcome': {'yards_gained': 4, 'touchdown': False, 'turnover': False}}
+        drive = {'offense_team': 'A', 'quarter_start': 1, 'clock_start': 900,
+                 'end_quarter': 1, 'end_clock': 830, 'terminal': 'continue',
+                 'field_goal_made': None, 'plays': [ordinary, explicit]}
+        stats = game_stats.compute([drive], {'A': 0, 'B': 0})
+        self.assertEqual(stats['team']['A']['receiving_yds'], 43)
+        self.assertEqual(stats['team']['A']['pass_yds'], 43)
+
     def test_non_counting_accepted_penalty_only_charges_the_foul(self):
         play = {
             'event_type': 'pass_incomplete',
