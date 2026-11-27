@@ -1,6 +1,6 @@
 # V1 Complete Thanksgiving regression repair candidate — 2026-11-27
 
-Baseline: LP `41680940cb61749dd91c4e04ba374a9df8952600`, Gridiron `f1adc6777fa415abf72c29df96ca2e3c7d90b942`, evidence [72ea3e69](https://github.com/micahp/legendarypicks/tree/72ea3e69/docs/research/week12-thanksgiving-blackfriday-slc-2026). 265/300 valid, 35 failures; no replaced seeds. Candidate Grid `0cd3c4bde29f2f1ddd8778313bfd34b9000bcf26`. No forecast readiness or promotion claim.
+Baseline: LP `41680940cb61749dd91c4e04ba374a9df8952600`, Gridiron `f1adc6777fa415abf72c29df96ca2e3c7d90b942`, evidence [72ea3e69](https://github.com/micahp/legendarypicks/tree/72ea3e69/docs/research/week12-thanksgiving-blackfriday-slc-2026). 265/300 valid, 35 failures; no replaced seeds. Candidate Grid `2e17dadb297a001eae30f80905ff366dd73613ca`. No forecast readiness or promotion claim.
 
 - Physical/statistical field spots: preserve measured coordinates and signed displacement, project end-zone geometry only at the statistical boundary. Interior spots cannot round to scoring boundaries. Reject coordinates beyond the end lines. Gridiron and LP use matching projection.
 - Kick returns: use actual catch/recovery location; preserve the dead-ball location separately from restart and return yards. Held returner leaving sideline must not be treated as an untouched illegal kickoff. Guard generic missed-kick termination from live blocked-FG handling. Unrecovered loose blocked kicks exiting the field remain a named unsupported rule case, never fabricated recovery.
@@ -23,4 +23,13 @@ cd scripts/nfl_sequence
 python -m unittest test_thanksgiving_runtime_repair test_autonomous_game test_event_expansion_rules
 ```
 
-Do not interpret focused tests as full-game validity. Next acceptance: reproduce the nine original failures on the baseline, replay on candidate, extract/replay all other failed calls with original engine and state, run exact 35 full-game seeds plus controls, then original 300-game cohort and preregistered holdout. Compare legality, score/possession/stat reconciliation, and distributions without changing model assumptions. Any remaining missing facts or invalid seeds are blockers. No archive deletion, host jobs or production changes were performed here.
+Do not interpret focused tests as full-game validity. Next acceptance: extract/replay all other failed calls with original engine and state, run exact 35 full-game seeds plus controls, then original 300-game cohort and preregistered holdout. Compare legality, score/possession/stat reconciliation, and distributions without changing model assumptions. Any remaining missing facts or invalid seeds are blockers. No archive deletion, host jobs or production changes were performed here.
+
+## Focused execution results
+
+- Exact nine published play calls: baseline 9/9 reproduced their original failure category; candidate 9/9 completed, with event reconciliation passing. Result-only replay used the actual fetched engine modules in a V8 module-loading harness, not the full Node suite or frame validation. Six pass-cap and three run-progress cases. Two pass calls completed in 13.808 and 13.658 seconds.
+- Special teams: 33 simulations, 128/128 assertions in the source-based V8 harness (baseline 126/126 original assertions; intermediate candidate 115/126). The carrier target was bounded half a yard inside the scoring goal line; allow the physical ball to cross. Replace incorrect near-goal fixture assumptions with measured possession, ball-location and clock assertions. The old muffed recovery occurred at x=98.9809795758, inside the field, not in the end zone. The old instantaneous safety was not supported by the ball/clock evidence. Return statistics use observed ball positions, rather than the carrier center. Both existing elite touchdown fixtures still score.
+- LP: 4/4 focused Python tests ran locally with source-extracted functions and were verified against exact candidate function/test text. Full imports, cross-repository game execution, and normal repository suites not run here.
+- Decisions requiring broader validation: 0.25-yard rolling displacement threshold, 36-second hard cap, existing run-style reach for pass contact, and physical-to-statistical boundary conventions. Do not infer distribution parity or official-stat accuracy from these checks.
+
+No full-game completion improvement is claimed: original 26 other failed calls, all 35 game replays, and full 300-game cohort remain unverified. Unresolved loose blocked-kick out-of-bounds and defensive impetus/momentum cases remain explicit blockers.
