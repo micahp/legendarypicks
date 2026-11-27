@@ -60,6 +60,12 @@ The 1997 NFL comparison uses regular-season league totals from [Pro Football Ref
 
 Madden records about 84% more offensive opportunities per equivalent clock duration, yet only 11% more combined points. Total points per recorded opportunity are about 39% lower. This is consistent with scoring compensation. The rates rely on candidate event labels and counters, not a complete snap ledger. A high pace is established relative to game-clock time, not necessarily faster physical movement or faster real-world play. The single CPU matchup and three quarter settings do not establish causality or generality.
 
+![Madden 64 vs. 1997 NFL](charts/madden64-vs-1997-nfl.svg)
+
+![NHL ’95 vs. 1993–94 NHL](charts/nhl95-vs-1993-94-nhl.svg)
+
+NHL reference: [30-game Genesis pilot](https://github.com/micahp/retro-sports-arcade/blob/a7d3b5e/research/nhl95-reference-study/STUDY.md#3a-results-phases-ac-pilot-2026-11-23). The NHL chart visualizes published approximate shot/save rates, clock-weighted rounded goal rates, and pooled PP conversion (27/278); it is not an independent replay or a calibration target.
+
 ### Candidate mechanisms and implications
 
 - NHL 95: elevated shot opportunities offset by effective goalies (prior project observation; not independently quantified in this report).
