@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 import sqlite3
+from contextlib import closing
 from scripts import nfl_team_codes
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -30,7 +31,7 @@ def resolve_market_qbs(props_db, game_id, gameday, espn_event_id, as_of):
     def event_id(row):
         return str(row[3]).strip() if row[3] else None
 
-    with sqlite3.connect(Path(props_db).resolve().as_uri() + '?mode=ro', uri=True) as con:
+    with closing(sqlite3.connect(Path(props_db).resolve().as_uri() + '?mode=ro', uri=True)) as con:
         exact = con.execute(
             "SELECT id, away, home, espn_event_id, date FROM prop_games "
             "WHERE league='nfl' AND CAST(espn_event_id AS TEXT)=?", (expected,)).fetchall() if expected else []
@@ -44,7 +45,7 @@ def resolve_market_qbs(props_db, game_id, gameday, espn_event_id, as_of):
                 raise ValueError(f'{game_id}: ESPN prop event conflicts with matchup/date')
             selected, method = exact[0], 'espn_event_id'
         else:
-            matching = [row for row in candidates if teams_match(row)]
+            matching = [row for row in candidates if teams_match(row) and row[4] == gameday]
             if expected and any(event_id(row) not in (None, expected) for row in matching):
                 raise ValueError(f'{game_id}: conflicting ESPN event ID in team/date fallback')
             if len(matching) > 1:

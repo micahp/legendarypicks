@@ -95,6 +95,8 @@ def main(argv=None):
     args = ap.parse_args(argv)
 
     models = args.models.split(',')
+    if args.seeds < 1 or args.seed_start < 0 or not models or len(set(models)) != len(models):
+        ap.error('positive seed count, nonnegative start and unique model IDs required')
     registry = {e['model_id']: e for e in json.loads((args.packs / 'registry.json').read_text())['packages']}
     for m in models:
         pack = args.packs / registry[m]['package']
@@ -110,6 +112,8 @@ def main(argv=None):
             raise SystemExit(f'NO_SNAPSHOT: {missing}')
         files = [by_name[g] for g in order]
 
+    if not files:
+        raise SystemExit('NO_SNAPSHOT: no games selected')
     snapshots, preflight, blocked = {}, {}, []
     for f in files:
         snap = json.loads(f.read_text())
@@ -131,7 +135,9 @@ def main(argv=None):
     manifest_path = args.out / f'manifest.{args.name}.json'
     manifest = {'schema': 'lp-slc-portable-batch-2', 'name': args.name, 'snapshots': str(args.snapshots), 'models': models,
                 'seeds_per_game_model': args.seeds, 'seed_start': args.seed_start, 'runtime': str(args.runtime),
-                'packages': {m: {k: registry[m][k] for k in ('sha256', 'code_commit', 'package')} for m in models},
+                'packages': {m: {**{k: registry[m][k] for k in ('sha256', 'code_commit', 'package')},
+                                 'player_lines_available': registry[m].get('player_lines_available') is not False}
+                             for m in models},
                 'preflight': preflight, 'runs': [], 'status': 'blocked' if blocked else 'running'}
     lock = threading.Lock()
 
@@ -156,15 +162,19 @@ def main(argv=None):
         if output.exists() or log.exists():
             return {'game_id': game, 'model': model, 'status': 'existing_output_refused', 'output': str(output)}
         entry = registry[model]
+        score_only = entry.get('player_lines_available') is False
+        if sha256_file(f) != preflight[game]['file_sha256']:
+            return {'game_id': game, 'model': model, 'status': 'snapshot_changed_after_preflight'}
         cmd = [args.python, str(args.runtime), '--model', model, '--game', game, '--snapshot', str(f),
                '--pack', str(args.packs / entry['package']), '--pack-sha256', entry['sha256'], '--games', str(seeds),
                '--seed-start', str(args.seed_start), '--out', str(output), '--workers', str(args.runtime_workers)]
+        if score_only:
+            cmd.append('--no-player-lines')
         start = time.time()
         with log.open('x') as handle:
             proc = subprocess.run(cmd, stdout=handle, stderr=subprocess.STDOUT,
                                   env=dict(os.environ, OMP_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1'))
         data = json.loads(output.read_text()) if output.exists() else {}
-        score_only = entry.get('player_lines_available') is False
         post = validate_run(data, seeds, args.seed_start, game, model, entry['sha256'],
                             roster_preflight.unwrap(snap)['snapshot_sha256'], score_only=score_only)
         if not roster_preflight.failed(post):
@@ -187,7 +197,7 @@ def main(argv=None):
         with lock:
             manifest['smoke' if smoke else 'runs'].append(result)
             save()
-        bad = roster_preflight.failed(result.get('postflight', []))
+        bad = [row for row in result.get('postflight', []) if row[1] == 'FAIL']
         print(time.strftime('%FT%TZ', time.gmtime()), game, model, result['status'], result.get('valid_full_games'),
               '; '.join(f'{n}: {d}' for n, _, d in bad), flush=True)
 
