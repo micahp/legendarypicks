@@ -18,6 +18,12 @@ Owner's working diagnosis (2026-11-26): the historical-row SLC models' primary p
 
 The Madden analogy shows why plausible scoring alone is insufficient: high opportunity frequency can offset low points per opportunity. A playable retro game may deliberately trade realism of pace or efficiency for playability; a predictive NFL simulator must independently reproduce credible pace, outcome efficiency, scoring, player statistics and forecast probabilities. Madden is a mechanism reference, not a statistical calibration target. CEG does not execute physical player AI; V1 Complete uses typed CEG contracts for event transport, not its statistical outcome generator.
 
+![NHL ’95 vs. 1993–94 NHL](../research/charts/nhl95-vs-1993-94-nhl.svg)
+
+![Madden 64 vs. 1997 NFL](../research/charts/madden64-vs-1997-nfl.svg)
+
+See [simulation learnings](../SIMULATION-LEARNINGS.md#retro-reference-pace-and-efficiency) for source and denominator limitations.
+
 ### Standard pace-versus-efficiency evaluation
 
 For every NFL model evaluation, report the following separately on the same matched real-game cohort, using exact model/configuration pins, cutoff-valid inputs, and stable paired seed streams where available. This is a required reporting standard for future evaluations, not a claim that these metrics are currently emitted by every runner.
