@@ -171,7 +171,7 @@ def check(snapshot, market_qbs=None):
                      'PASS' if members and membership_week == snap['schedule']['week'] else 'FAIL',
                      f"{len(members)} players, week {(roster.get('membership') or {}).get('week')}; "
                      f"{len(set(unknown))} depth-chart players not on it" + (f": {', '.join(sorted(set(unknown))[:5])}" if unknown else '')))
-        rows.append((f'{team} depth chart current', 'PASS' if age <= MAX_DEPTH_AGE else 'FAIL',
+        rows.append((f'{team} depth chart current', 'PASS' if timedelta(0) <= age <= MAX_DEPTH_AGE else 'FAIL',
                      f"{roster['snapshot_at']}, {age.total_seconds() / 3600:.1f}h before the cutoff"))
         report = roster.get('injury_report') or {}
         published = [p.get('published_utc') for p in report.get('players', []) if p.get('source') != EXCLUSION_SOURCE]
@@ -198,23 +198,32 @@ def check(snapshot, market_qbs=None):
     return rows, resolved
 
 
-def postflight(snapshot, run_output, resolved=None):
+def postflight(snapshot, run_output, resolved=None, *, score_only=False):
     """Rows for a finished run: excluded players with stats, and seeds whose passer was not the resolved QB1."""
     snap = unwrap(snapshot)
     resolved = resolved or resolve(snapshot)
     teams = {snap['rosters'][s]['team']: resolved[s] for s in ('away', 'home')}
     seeds = run_output.get('player_boxscores_by_seed') or []
     if not seeds:
+        if score_only and run_output.get('player_lines_available') is False:
+            return [('player statistics verification', 'NOT_APPLICABLE',
+                     'registered score-only model: player props and roster usage unverified')]
         return [('run has player box scores', 'FAIL', 'no player_boxscores_by_seed')]
     out_hits, passers = Counter(), {t: Counter() for t in teams}
+    unknown = Counter()
+    eligible = {team: {p['gsis_id'] for p in res['players'] if p['official_eligible']}
+                for team, res in teams.items()}
     for seed in seeds:
         attempts = {t: Counter() for t in teams}
         for p in seed['players']:
             res = teams.get(p.get('player_team'))
             if res is None:
+                unknown[(str(p.get('player_team')), str(p.get('player_id')))] += 1
                 continue
             if p['player_id'] in excluded(res):
                 out_hits[(p['player_team'], p['player_name'])] += 1
+            elif p['player_id'] not in eligible[p['player_team']]:
+                unknown[(p['player_team'], str(p['player_id']))] += 1
             if (p.get('passing') or {}).get('att'):
                 attempts[p['player_team']][p['player_id']] += p['passing']['att']
         # the seed's passer is the player with the most attempts, so a receiver's trick pass does not count
@@ -223,7 +232,9 @@ def postflight(snapshot, run_output, resolved=None):
                 passers[team][counts.most_common(1)[0][0]] += 1
     rows = [('run has player box scores', 'PASS', f'{len(seeds)} seeds'),
             ('excluded players receiving stats', 'PASS' if not out_hits else 'FAIL',
-             ', '.join(f'{t} {n} in {c} seeds' for (t, n), c in out_hits.items()) or '0')]
+             ', '.join(f'{t} {n} in {c} seeds' for (t, n), c in out_hits.items()) or '0'),
+            ('player box scores belong to eligible team rosters', 'PASS' if not unknown else 'FAIL',
+             ', '.join(f'{t} {p}: {c}' for (t, p), c in unknown.items()) or '0')]
     for team, res in teams.items():
         qb = resolved_qb1(res)
         top = passers[team].most_common(1)

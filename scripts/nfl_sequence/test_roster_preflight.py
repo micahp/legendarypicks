@@ -74,13 +74,15 @@ class OutQuarterback(unittest.TestCase):
                    'position': p['pos_abb'], 'status': 'ACT', 'status_description_abbr': None}
                   for side in ('away', 'home') for p in snap['rosters'][side]['players']]
         conn = MagicMock()
-        conn.execute.return_value.fetchone.return_value = {'game_id': '2026_11_ARI_KC'}
+        conn.execute.return_value.fetchone.return_value = {'game_id': '2026_11_ARI_KC', 'gameday': '2026-11-22', 'espn': '123'}
         with tempfile.TemporaryDirectory() as folder:
             roster_path = Path(folder) / 'weekly.parquet'
             roster_path.write_bytes(b'frozen')
             with patch.object(oracle, 'connect', return_value=conn), \
                  patch.object(oracle, 'scoreboard_kickoff', return_value=(datetime(2026, 11, 22, 18, tzinfo=timezone.utc), 'source')), \
                  patch.object(pregame_snapshot, 'build', return_value=snap), \
+                 patch('prop_identity.resolve_market_qbs', return_value={'quotes': [
+                     {'team': 'ARI', 'gsis_id': JOHNSON}, {'team': 'KC', 'gsis_id': '00-0033873'}]}), \
                  patch.object(pd, 'read_parquet', return_value=pd.DataFrame(weekly)):
                 result_snapshot = oracle.build_snapshot('unused', '2026_11_ARI_KC', CUTOFF, fetch=object(),
                     weekly_roster=roster_path, weekly_roster_available_at=CUTOFF,
@@ -166,6 +168,32 @@ class ObsoleteStatus(unittest.TestCase):
         self.assertEqual(sorted(p['gsis_id'] for p in players), sorted([BECK, MINSHEW]))
         self.assertEqual([p['gsis_id'] for p in obsolete], [AGUILAR])
 
+    def test_reserve_suspended_status_maps_to_out_and_persists(self):
+        players, obsolete = oracle.split_obsolete(
+            {BECK: ('RESERVE-SUS', '2026-11-25T19:25:31+00:00', 'ARZ')}, {})
+        self.assertEqual(obsolete, [])
+        self.assertEqual(players, [{'gsis_id': BECK, 'report_status': 'Out',
+                                    'rotowire_status': 'RESERVE-SUS',
+                                    'published_utc': '2026-11-25T19:25:31+00:00', 'team': 'ARZ'}])
+
+    def test_espn_reserve_status_uses_gsis_and_cutoff_timestamps(self):
+        with tempfile.NamedTemporaryFile() as db:
+            con = __import__('sqlite3').connect(db.name)
+            con.execute('CREATE TABLE players(league TEXT,nfl_gsis_id TEXT,injury_status TEXT,last_news_date TEXT,'
+                        'team TEXT,espn_id TEXT,updated_at TEXT)')
+            con.execute('INSERT INTO players VALUES(?,?,?,?,?,?,?)',
+                        ('nfl', BECK, 'INJURY_RESERVE', '1795746262000', 'DEN', '4603189', '2026-11-27T10:10:44+00:00'))
+            con.commit()
+            con.close()
+            rows = oracle.espn_roster_unavailability(
+                db.name, datetime(2026, 11, 27, 17, 7, 40, tzinfo=timezone.utc), [BECK])
+            self.assertEqual(rows, [{'gsis_id': BECK, 'report_status': 'Out', 'rotowire_status': None,
+                                     'published_utc': '2026-11-27T02:24:22+00:00', 'team': 'DEN',
+                                     'source': 'espn_player_status', 'source_status': 'INJURY_RESERVE',
+                                     'espn_id': '4603189'}])
+            self.assertEqual(oracle.espn_roster_unavailability(
+                db.name, datetime(2026, 11, 27, 2, 0, 0, tzinfo=timezone.utc), [BECK]), [])
+
 
 class Membership(unittest.TestCase):
     def test_an_active_kicker_off_the_depth_chart_replaces_a_reserve_kicker(self):
@@ -211,6 +239,23 @@ class Membership(unittest.TestCase):
 
 
 class Postflight(unittest.TestCase):
+    def test_unknown_player_or_team_is_not_ignored(self):
+        snap = snapshot({BECK: 'Out'})
+        run = {'player_boxscores_by_seed': [{'seed': 1, 'players': [
+            {'player_id': JOHNSON, 'player_name': 'Josh Johnson', 'player_team': 'ARI', 'passing': {'att': 30}},
+            {'player_id': '00-0033873', 'player_name': 'Patrick Mahomes', 'player_team': 'KC', 'passing': {'att': 35}},
+            {'player_id': 'unknown', 'player_name': 'Unknown', 'player_team': 'ARI'},
+            {'player_id': JOHNSON, 'player_name': 'Wrong club', 'player_team': 'DEN'}]}]}
+        rows = rp.postflight(snap, run)
+        self.assertEqual(result(rows, 'player box scores belong to eligible team rosters')[1], 'FAIL')
+
+    def test_score_only_requires_explicit_capability_and_output(self):
+        snap = snapshot({BECK: 'Out'})
+        run = {'player_lines_available': False}
+        self.assertEqual(rp.postflight(snap, run)[0][1], 'FAIL')
+        self.assertEqual(rp.postflight(snap, run, score_only=True)[0][1], 'NOT_APPLICABLE')
+        self.assertEqual(rp.postflight(snap, {}, score_only=True)[0][1], 'FAIL')
+
     def test_an_out_receiver_with_simulated_targets_fails(self):
         snap = snapshot({BECK: 'Out', 'ARI-WR1': 'Out'})
         run = {'player_boxscores_by_seed': [{'seed': 1, 'players': [

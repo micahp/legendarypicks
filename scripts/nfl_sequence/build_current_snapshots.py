@@ -38,6 +38,7 @@ sys.path[:0] = [str(ROOT / 'backend'), str(ROOT / 'scripts' / 'nfl_sequence'), s
 import oracle  # noqa: E402
 import pregame_snapshot  # noqa: E402
 import roster_preflight  # noqa: E402
+from prop_identity import resolve_market_qbs, priced_qbs as qb_sets  # noqa: E402
 from cutoff_to_model_snapshot import write_runner_file  # noqa: E402
 from paced_http import Fetcher  # noqa: E402
 from scripts import nfl_team_codes  # noqa: E402
@@ -67,23 +68,29 @@ def schedule_rows(path, season, week, fetched_at):
     return out
 
 
-def market_qbs(props_db, game_id, gameday):
-    """{team: {gsis ids with a passing-yards prop}} for one game, from props joined to players on the GSIS id."""
-    away, home = (nfl_team_codes.to_db(code) for code in nfl_team_codes.teams_from_game_id(game_id))
-    con = sqlite3.connect(f'file:{props_db}?mode=ro', uri=True)
-    try:
-        rows = con.execute(
-            "SELECT pl.team, pl.nfl_gsis_id FROM prop_games g JOIN props p ON p.game_id = g.id "
-            "JOIN players pl ON pl.id = p.player_id WHERE g.league = 'nfl' AND g.away = ? AND g.home = ? "
-            "AND g.date BETWEEN date(?, '-1 day') AND date(?, '+1 day') AND p.market = 'passing_yards'",
-            (away, home, gameday, gameday)).fetchall()
-    finally:
-        con.close()
-    out = {}
-    for team, gsis in rows:
-        if gsis:
-            out.setdefault(nfl_team_codes.to_db(team), set()).add(gsis)
-    return out
+def market_qbs(props_db, game_id, gameday, espn_event_id=None, *, as_of):
+    return qb_sets(resolve_market_qbs(props_db, game_id, gameday, espn_event_id, as_of))
+
+
+def attach_espn_roster_statuses(snapshot, db_path, cutoff):
+    """Attach stable-GSIS ESPN reserve/suspension facts separately to each team's roster."""
+    added = []
+    for side in ('away', 'home'):
+        roster = snapshot['rosters'][side]
+        gsis_ids = {p.get('gsis_id') for p in roster.get('players', [])}
+        gsis_ids.update(p.get('gsis_id') for p in (roster.get('membership') or {}).get('players', []))
+        report = dict(roster.get('injury_report') or {})
+        existing = {p.get('gsis_id') for p in report.get('players', [])}
+        statuses = [row for row in oracle.espn_roster_unavailability(db_path, cutoff, gsis_ids - existing)
+                    if row.get('team') and nfl_team_codes.to_db(row['team']) == nfl_team_codes.to_db(roster['team'])]
+        if not statuses:
+            continue
+        # The base snapshot may share the league-wide injury report object between both teams.
+        report = dict(roster.get('injury_report') or {})
+        report['players'] = list(report.get('players', [])) + statuses
+        roster['injury_report'] = report
+        added.extend(dict(row, roster_team=roster['team']) for row in statuses)
+    return added
 
 
 def main(argv=None):
@@ -98,20 +105,24 @@ def main(argv=None):
     args.props_db = args.props_db or args.db
 
     now = datetime.now(timezone.utc).replace(microsecond=0)
-    cutoff = now.strftime('%Y-%m-%dT%H:%M:%SZ')
     sources = args.out / 'sources'
     sources.mkdir(parents=True, exist_ok=True)
     depth_path = sources / f'depth_charts_{args.season}.{now:%Y%m%dT%H%M%SZ}.parquet'
     games_path = sources / f'games.{now:%Y%m%dT%H%M%SZ}.csv'
     depth_sha = download(DEPTH_URL.format(season=args.season), depth_path)
+    depth_at = datetime.now(timezone.utc)
     games_sha = download(GAMES_URL, games_path)
+    games_at = datetime.now(timezone.utc)
     roster_path = sources / f'roster_weekly_{args.season}.{now:%Y%m%dT%H%M%SZ}.parquet'
     roster_sha = download(WEEKLY_ROSTER_URL.format(season=args.season), roster_path)
+    roster_at = datetime.now(timezone.utc)
+    now = roster_at
+    cutoff = now.isoformat().replace('+00:00', 'Z')
     import pandas as pd
     weekly_roster = pd.read_parquet(roster_path).to_dict('records')
     depth = oracle.archive_depth_by_team(sources / 'no-archives', since=f'{args.season}-08-01T00:00:00Z',
-                                         extra_parquet=[(depth_path, now)])
-    schedule = schedule_rows(games_path, args.season, args.week, now)
+                                         extra_parquet=[(depth_path, depth_at)])
+    schedule = schedule_rows(games_path, args.season, args.week, games_at)
     wanted = args.games or sorted(schedule)
     missing = [g for g in wanted if g not in schedule]
     if missing:
@@ -121,7 +132,7 @@ def main(argv=None):
     newest_news = max(p['published_utc'] for p in injury['players'])
 
     fetch = Fetcher(min_interval=3.0, host_budget=len(wanted) + 5, on_exhausted='refuse')
-    built, refused = [], []
+    built, refused, espn_statuses_by_game = [], [], {}
     for game_id in wanted:
         row = schedule[game_id][0][1]
         db_row = dict(row, home_team=nfl_team_codes.to_db(row['home_team']), away_team=nfl_team_codes.to_db(row['away_team']))
@@ -140,7 +151,10 @@ def main(argv=None):
         except ValueError as exc:
             refused.append(str(exc))
             continue
-        priced_qbs = market_qbs(args.props_db, game_id, row['gameday'])
+        espn_statuses_by_game[game_id] = attach_espn_roster_statuses(snap, args.db, now)
+        evidence = resolve_market_qbs(args.props_db, game_id, row['gameday'], row.get('espn'), cutoff)
+        snap['market_qb_evidence'] = evidence
+        priced_qbs = qb_sets(evidence)
         rows, resolved = roster_preflight.check(snap, priced_qbs)
         print(roster_preflight.render(f'PREFLIGHT {game_id}', rows))
         bad = roster_preflight.failed(rows)
@@ -154,10 +168,10 @@ def main(argv=None):
 
     manifest = {'schema': 'lp-nfl-current-snapshot-build-1', 'cutoff_utc': cutoff, 'db': args.db,
                 'db_sha256': hashlib.sha256(Path(args.db).read_bytes()).hexdigest(), 'props_db': args.props_db,
-                'sources': {'depth_chart': {'url': DEPTH_URL.format(season=args.season), 'fetched_utc': cutoff,
+                'sources': {'depth_chart': {'url': DEPTH_URL.format(season=args.season), 'fetched_utc': depth_at.isoformat(),
                                             'path': str(depth_path), 'sha256': depth_sha},
-                            'schedule': {'url': GAMES_URL, 'fetched_utc': cutoff, 'path': str(games_path), 'sha256': games_sha},
-                            'weekly_roster': {'url': WEEKLY_ROSTER_URL.format(season=args.season), 'fetched_utc': cutoff,
+                            'schedule': {'url': GAMES_URL, 'fetched_utc': games_at.isoformat(), 'path': str(games_path), 'sha256': games_sha},
+                            'weekly_roster': {'url': WEEKLY_ROSTER_URL.format(season=args.season), 'fetched_utc': roster_at.isoformat(),
                                               'path': str(roster_path), 'sha256': roster_sha},
                             'injury_news': {'table': 'nfl_player_news_updates', 'newest_published_utc': newest_news,
                                             'players_listed': injury['listed'], 'obsolete_dropped': len(injury['obsolete']),
@@ -170,7 +184,8 @@ def main(argv=None):
         manifest['games'].append({'game_id': game_id, 'path': str(path), 'snapshot_sha256': loaded['snapshot_sha256'],
                                   'kickoff_utc': loaded['schedule']['scheduled_kickoff_utc'],
                                   'depth_chart_at': {s: loaded['rosters'][s]['snapshot_at'] for s in ('away', 'home')},
-                                  'roster_resolution_hash': loaded['roster_resolution']['content_hash']})
+                                  'roster_resolution_hash': loaded['roster_resolution']['content_hash'],
+                                  'espn_player_statuses_added': espn_statuses_by_game.get(game_id, [])})
     (args.out / 'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n')
     print(f'BUILT {len(built)} snapshots in {args.out}')
     return 0
