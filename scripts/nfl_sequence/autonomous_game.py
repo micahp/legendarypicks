@@ -323,6 +323,8 @@ class AutonomousGameExecution:
         ).hexdigest()
         self.play_index = 0
         self._play_prior_cache = {}
+        self.last_generated_play = None
+        self.last_failed_transition = None
         self.current_score_diff = 0
 
     def close(self):
@@ -347,21 +349,30 @@ class AutonomousGameExecution:
         return AutonomousTimeoutDecisions(self, remaining, points)
 
     def apply_event(self, state, event_record):
-        if isinstance(event_record, ceg_contract_v3.GeneratedPlayV3):
-            applied = event_expansion_rules.apply_v3_play(
-                state, event_record, switches=self.event_switches)
-            if applied.scoring_team is not None:
-                self.current_team = applied.scoring_team
-            return applied
-        adapters = {
-            'punt': event_expansion_rules.apply_punt_play,
-            'field_goal_attempt': event_expansion_rules.apply_field_goal_play,
-            'kickoff': event_expansion_rules.apply_kickoff_play,
-        }
-        adapter = adapters.get(event_record.event)
-        applied = (event_expansion_rules.apply_scrimmage_play(
-            state, event_record, switches=self.event_switches) if adapter is None else
-            adapter(state, event_record, switches=self.event_switches))
+        try:
+            if isinstance(event_record, ceg_contract_v3.GeneratedPlayV3):
+                applied = event_expansion_rules.apply_v3_play(
+                    state, event_record, switches=self.event_switches)
+            else:
+                adapters = {
+                    'punt': event_expansion_rules.apply_punt_play,
+                    'field_goal_attempt': event_expansion_rules.apply_field_goal_play,
+                    'kickoff': event_expansion_rules.apply_kickoff_play,
+                }
+                adapter = adapters.get(event_record.event)
+                applied = (event_expansion_rules.apply_scrimmage_play(
+                    state, event_record, switches=self.event_switches) if adapter is None else
+                    adapter(state, event_record, switches=self.event_switches))
+        except Exception as exc:
+            generated = getattr(self, 'last_generated_play', None) or {}
+            self.last_failed_transition = {
+                **generated,
+                'state': dict(state),
+                'error_type': type(exc).__name__,
+                'error': str(exc),
+                'event_record': asdict(event_record),
+            }
+            raise
         if applied.scoring_team is not None:
             self.current_team = applied.scoring_team
         return applied
@@ -468,6 +479,12 @@ class AutonomousGameExecution:
     def _map_scrimmage_result(self, call, result, timing, provenance, state, context,
                               decision_note, family):
         outcome = result['result']
+        self.last_generated_play = {
+            'call': call,
+            'gridiron_result': {'result': outcome, 'participants': result.get('participants'),
+                                'events': result.get('events')},
+            'state': dict(state),
+        }
         if (not all(isinstance(outcome.get(key), (int, float)) and math.isfinite(outcome[key])
                     for key in ('yards_gained', 'elapsed_seconds'))
                 or not isinstance(outcome.get('final_ball_spot'), dict)
@@ -583,6 +600,14 @@ class AutonomousGameExecution:
                      'classification': classification,
                      'ceg_event': asdict(event_record),
                      'viewer': 'gridiron_result.trajectory.frames'}
+        self.last_generated_play = {
+            **self.last_generated_play,
+            'call': call,
+            'gridiron_result': {'result': outcome, 'participants': result.get('participants'),
+                                'events': events},
+            'state': dict(state),
+            'event_record': asdict(event_record),
+        }
         return {'event': event, 'row': row, 'clock_runoff_seconds': runoff, 'spot': spot,
                 'execution': execution, 'event_record': event_record}
 
@@ -1394,6 +1419,11 @@ class AutonomousGameExecution:
                     {'selection': 'two_point_try', 'family': family}, family)
                 applied = self.apply_event(play_state, generated['event_record'])
             except (AssertionError, OSError, TypeError, ValueError) as exc:
+                generated_play = getattr(self, 'last_generated_play', None) or {}
+                self.last_failed_transition = {
+                    **generated_play, 'state': dict(play_state),
+                    'error_type': type(exc).__name__, 'error': str(exc),
+                }
                 return 0, game_state.try_record('two_point', False), 'autonomous_two_point_execution:' + str(exc)
             made = applied.terminal == 'touchdown' and applied.scoring_team == side
             opponent_points = (2 if applied.terminal == 'touchdown'
@@ -1463,10 +1493,20 @@ def play_autonomous_game(seed, ref, *, snapshot_path, participation_path, partic
         original_event_source = source.event_source
         def event_source(state, context):
             source.current_team = state['offense']
-            return original_event_source(state, context)
+            try:
+                return original_event_source(state, context)
+            except Exception as exc:
+                generated_play = getattr(source, 'last_generated_play', None) or {}
+                source.last_failed_transition = {
+                    **generated_play, 'state': dict(state),
+                    'error_type': type(exc).__name__, 'error': str(exc),
+                }
+                raise
         source.event_source = event_source
         record = game_state.play_game(seed, ref, pregame_snapshot=source.snapshot,
                                       execution_source=source, **game_kwargs)
+        if source.last_failed_transition is not None:
+            record['autonomous_failed_transition'] = source.last_failed_transition
         players = record.get('stats', {}).get('player', [])
         if players:
             checks = roster_preflight.postflight(

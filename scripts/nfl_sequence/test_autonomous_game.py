@@ -211,6 +211,37 @@ class AutonomousPossessionHistoryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'gridiron_pass_interference_spot_invalid'):
             autonomous_game._pass_interference_foul_spot_yardline100(float('nan'), 1)
 
+    def test_rejected_transition_preserves_exact_generated_play_inputs(self):
+        source = object.__new__(autonomous_game.AutonomousGameExecution)
+        source.event_switches = EventExpansionSwitches()
+        source.last_generated_play = {'call': {'seed': 'exact-seed', 'concept': 'assigned'}}
+        provenance = ceg_contract.ProvenanceV2('test', '1', 'a' * 64)
+        generated = ceg_contract.GeneratedPlayV2(
+            contract=ceg_contract.CONTRACT_V2_VERSION,
+            call=ceg_contract.PlayCallV2('designed_run'), event='run', yards_gained=0,
+            provenance=provenance, clock=ceg_contract.ClockV2(1))
+        state = {'quarter': 4, 'clock': 846, 'offense': 'A', 'yl': 3, 'down': 1, 'togo': 3}
+        with patch.object(event_expansion_rules, 'apply_scrimmage_play',
+                          side_effect=ceg_contract.ContractViolationV2('fixture_rejection')):
+            with self.assertRaisesRegex(ceg_contract.ContractViolationV2, 'fixture_rejection'):
+                source.apply_event(state, generated)
+        self.assertEqual(source.last_failed_transition['call'], source.last_generated_play['call'])
+        self.assertEqual(source.last_failed_transition['state'], state)
+        self.assertEqual(source.last_failed_transition['error'], 'fixture_rejection')
+        self.assertEqual(source.last_failed_transition['event_record']['event'], 'run')
+
+    def test_v2_goal_line_gain_requires_the_offensive_team_to_score(self):
+        state = {'down': 1, 'togo': 3, 'yl': 3}
+        event = ceg_contract.GeneratedPlayV2(
+            contract=ceg_contract.CONTRACT_V2_VERSION,
+            call=ceg_contract.PlayCallV2('designed_run'), event='run', yards_gained=3,
+            provenance=ceg_contract.ProvenanceV2('test', '1', 'b' * 64),
+            clock=ceg_contract.ClockV2(1),
+            players=ceg_contract.PlayerRolesV2(rusher=ceg_contract.PlayerRoleV2.named('rb')))
+        with self.assertRaisesRegex(ceg_contract.ContractViolationV2,
+                                    'goal_line_gain_needs_offensive_touchdown_fact'):
+            ceg_contract.validate_v2(state, event)
+
     def test_fumble_endpoint_stats_cover_both_directions_and_recovery_teams(self):
         source = object.__new__(autonomous_game.AutonomousGameExecution)
         source.event_manifest_sha256 = 'f' * 64
