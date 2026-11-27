@@ -31,6 +31,14 @@
       "gzip_test": "passed",
       "path": "/root/runs/week-12/games/2026_12_PHI_DAL/raw/ceg-frozen-100-seeds.tar.gz",
       "sha256": "dc1a8e97abe4d4302de218219f3f5d5e2adbcaf5b7b31da4cac71bd44fbcc827"
+    },
+    {
+      "bytes": 33630926,
+      "file_count": 4,
+      "game_id": "2026_12_CHI_DET",
+      "gzip_test": "passed",
+      "path": "/root/runs/week-12/games/2026_12_CHI_DET/raw/2026_12_CHI_DET-20261127T155718Z-fc22ba3e2097.tar.gz",
+      "sha256": "4052134bbbfa6874f8ece7c34302dda30c8e63744f0da0dc87f4bab9787fbb3c"
     }
   ]
 }
