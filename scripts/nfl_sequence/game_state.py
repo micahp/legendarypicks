@@ -1028,6 +1028,7 @@ class _Game:
             else:
                 self.execution_source.current_team = scorer
             situation = self._try_situation(scorer)
+            situation['scoring_team'] = scorer
             self.points[scorer] += TD_POINTS
             try_points, try_result, why = self.execution_source.try_after_touchdown(situation)
             opponent_points = try_result.get('opponent_points', 0) if not why else 0
@@ -1894,6 +1895,7 @@ class _Game:
             situation = p_two = None
             if self.execution_source is not None:
                 situation = self._try_situation(scorer)
+                situation['scoring_team'] = scorer
                 try_points, try_record, why = self.execution_source.try_after_touchdown(situation)
             else:
                 if self.ref.try_policy is not None:

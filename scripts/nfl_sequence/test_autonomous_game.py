@@ -375,7 +375,7 @@ class AutonomousTryExecutionTests(unittest.TestCase):
 
         with patch.object(autonomous_game.random, 'Random', FixedRandom):
             points, record, blocker = source.try_after_touchdown(
-                {'margin': 7, 'quarter': 1, 'clock': 600, 'offense_direction': 1})
+                {'margin': 7, 'quarter': 1, 'clock': 600, 'offense_direction': 1, 'scoring_team': 'A'})
 
         self.assertEqual((points, record['kind'], blocker), (1, 'extra_point', None))
 
@@ -385,7 +385,7 @@ class AutonomousTryExecutionTests(unittest.TestCase):
         source.team_by_side = {'A': 'AAA', 'B': 'BBB'}
         source.teams = ('AAA', 'BBB')
         source.play_index = 4
-        source.coaching_profiles = {'AAA': {'two_point_tendency': 1.0}}
+        source.coaching_profiles = {'BBB': {'two_point_tendency': 1.0}}
         source.coaching_quality = lambda *_args: 1
         source._decision_seed = lambda *_args: 11
         source._choose_family = lambda *_args: 'run'
@@ -400,13 +400,13 @@ class AutonomousTryExecutionTests(unittest.TestCase):
         generated = {'row': {'participants': participants}, 'execution': {'trace': 'live'},
                      'event_record': object()}
         source._map_scrimmage_result = lambda *_args: generated
-        source.apply_event = lambda *_args: SimpleNamespace(terminal='touchdown', scoring_team='A')
+        source.apply_event = lambda *_args: SimpleNamespace(terminal='touchdown', scoring_team='B')
         observed = {}
 
         def build_call(*_args, **kwargs):
             observed.update(kwargs['state'])
             observed['direction'] = kwargs['state']['offense_direction']
-            return {'offense': {'call': {'concept': 'inside_zone'}}}, {}, {}
+            return {'offense': {'call': {'concept': 'inside_zone'}}}, {}
 
         class FixedRandom:
             def __init__(self, *_args):
@@ -418,10 +418,11 @@ class AutonomousTryExecutionTests(unittest.TestCase):
         with patch.object(gridiron_bridge, 'build_call', side_effect=build_call), \
                 patch.object(autonomous_game.random, 'Random', FixedRandom):
             points, record, blocker = source.try_after_touchdown(
-                {'margin': 0, 'quarter': 3, 'clock': 400, 'offense_direction': -1})
+                {'margin': 0, 'quarter': 3, 'clock': 400, 'offense_direction': -1, 'scoring_team': 'B'})
 
         self.assertIsNone(blocker)
         self.assertEqual(points, 2)
+        self.assertEqual(observed['offense'], 'B')
         self.assertEqual(observed['direction'], -1)
         self.assertEqual((observed['quarter'], observed['clock'], observed['yl'], observed['togo']),
                          (3, 400, 2, 2))

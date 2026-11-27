@@ -1337,8 +1337,9 @@ class AutonomousGameExecution:
         return result
 
     def try_after_touchdown(self, situation):
-        scorer = self.team_by_side.get(self.current_team, self.current_team)
-        quality = self.coaching_quality(self.current_team, 'two_point')
+        scoring_side = situation['scoring_team']
+        scorer = self.team_by_side[scoring_side]
+        quality = self.coaching_quality(scoring_side, 'two_point')
         profile = getattr(self, 'coaching_profiles', {}).get(scorer, {})
         tendency = _clamp(float(profile.get('two_point_tendency', 0.08)), 0.0, 1.0)
         expected_two, expected_extra = 2 * 0.46, 0.94
@@ -1353,7 +1354,7 @@ class AutonomousGameExecution:
         direction = situation.get('offense_direction', 1)
         try_index = self.play_index + 1
         if choose_two:
-            side = self.current_team
+            side = scoring_side
             opponent = 'B' if side == 'A' else 'A'
             # The try is untimed, but the call needs the actual game period and clock.
             # LP yardline_100 measures distance to the opponent's goal.
@@ -1361,7 +1362,7 @@ class AutonomousGameExecution:
                           'clock': situation['clock'], 'down': 1, 'togo': 2, 'yl': 2,
                           'offense_direction': direction}
             family = self._choose_family(play_state, side, try_index)
-            call, _, provenance = gridiron_bridge.build_call(
+            call, provenance = gridiron_bridge.build_call(
                 self.snapshot_path, self.field, self.participation_sha256,
                 self.profile_paths, self.playbook_manifest,
                 seed=self._decision_seed(try_index, 'two_point_gridiron'), family=family,
