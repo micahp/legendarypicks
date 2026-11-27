@@ -166,7 +166,9 @@ def check(snapshot, market_qbs=None):
         age = cutoff - _utc(roster['snapshot_at'])
         members = (roster.get('membership') or {}).get('players', [])
         unknown = sorted(p['name'] for p in res['players'] if p['membership'] == 'UNKNOWN' and p['depth_rank'] is not None)
-        rows.append((f'{team} roster membership from the weekly roster', 'PASS' if members else 'FAIL',
+        membership_week = (roster.get('membership') or {}).get('week')
+        rows.append((f'{team} roster membership from the weekly roster',
+                     'PASS' if members and membership_week == snap['schedule']['week'] else 'FAIL',
                      f"{len(members)} players, week {(roster.get('membership') or {}).get('week')}; "
                      f"{len(set(unknown))} depth-chart players not on it" + (f": {', '.join(sorted(set(unknown))[:5])}" if unknown else '')))
         rows.append((f'{team} depth chart current', 'PASS' if age <= MAX_DEPTH_AGE else 'FAIL',

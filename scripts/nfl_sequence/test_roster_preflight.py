@@ -4,7 +4,9 @@ Regression cases from week 11 2026: an Out QB1 who still has a prop line (Carson
 injury status from a previous game, a starter on two teams, and an Out receiver who still gets simulated targets.
 """
 import sys
+import tempfile
 import unittest
+from unittest.mock import MagicMock, patch
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -63,6 +65,66 @@ def result(rows, name):
 
 
 class OutQuarterback(unittest.TestCase):
+    def test_oracle_direct_builder_attaches_and_seals_roster(self):
+        import pandas as pd
+        import pregame_snapshot
+        snap = snapshot({BECK: 'Out'})
+        weekly = [{'team': snap['rosters'][side]['team'], 'week': 11,
+                   'gsis_id': p['gsis_id'], 'full_name': p['player_name'],
+                   'position': p['pos_abb'], 'status': 'ACT', 'status_description_abbr': None}
+                  for side in ('away', 'home') for p in snap['rosters'][side]['players']]
+        conn = MagicMock()
+        conn.execute.return_value.fetchone.return_value = {'game_id': '2026_11_ARI_KC'}
+        with tempfile.TemporaryDirectory() as folder:
+            roster_path = Path(folder) / 'weekly.parquet'
+            roster_path.write_bytes(b'frozen')
+            with patch.object(oracle, 'connect', return_value=conn), \
+                 patch.object(oracle, 'scoreboard_kickoff', return_value=(datetime(2026, 11, 22, 18, tzinfo=timezone.utc), 'source')), \
+                 patch.object(pregame_snapshot, 'build', return_value=snap), \
+                 patch.object(pd, 'read_parquet', return_value=pd.DataFrame(weekly)):
+                result_snapshot = oracle.build_snapshot('unused', '2026_11_ARI_KC', CUTOFF, fetch=object(),
+                    weekly_roster=roster_path, weekly_roster_available_at=CUTOFF,
+                    injury_report={'players': []}, injury_available_at=CUTOFF)
+        self.assertEqual(result_snapshot['roster_resolution']['content_hash'], rp.resolve(result_snapshot)['content_hash'])
+        self.assertTrue(result_snapshot['snapshot_sha256'])
+
+    def test_oracle_finalizes_roster_and_refuses_missing_membership(self):
+        snap = snapshot({BECK: 'Out'})
+        set_status(snap, 'away', 'ARI-WR2', 'RES')
+        result_snapshot = oracle.finalize_model_snapshot(snap)
+        self.assertEqual(result_snapshot['roster_resolution']['content_hash'], rp.resolve(result_snapshot)['content_hash'])
+        self.assertEqual(rp.exclusions_applied(result_snapshot, rp.resolve(result_snapshot))[1], 'PASS')
+        self.assertTrue(any(p['gsis_id'] == 'ARI-WR2' and p['report_status'] == 'Out'
+                            for p in result_snapshot['rosters']['away']['injury_report']['players']))
+        bad = snapshot({BECK: 'Out'})
+        del bad['rosters']['away']['membership']
+        with self.assertRaisesRegex(ValueError, 'SNAPSHOT_ROSTER_PREFLIGHT_FAILED'):
+            oracle.finalize_model_snapshot(bad)
+        bad = snapshot({BECK: 'Out'})
+        bad['rosters']['away']['membership']['week'] = 10
+        with self.assertRaisesRegex(ValueError, 'SNAPSHOT_ROSTER_PREFLIGHT_FAILED'):
+            oracle.finalize_model_snapshot(bad)
+
+    def test_oracle_snapshot_refuses_unavailable_or_late_roster_inputs(self):
+        with self.assertRaisesRegex(ValueError, 'SNAPSHOT_ROSTER_INPUTS_REQUIRED'):
+            oracle.build_snapshot('unused', 'unused', CUTOFF)
+        with self.assertRaisesRegex(ValueError, 'SNAPSHOT_SOURCE_AFTER_CUTOFF: weekly_roster'):
+            oracle.build_snapshot('unused', 'unused', CUTOFF, weekly_roster='unused',
+                                  weekly_roster_available_at='2026-11-22T16:31:00Z',
+                                  injury_report={}, injury_available_at=CUTOFF)
+        with self.assertRaisesRegex(ValueError, 'SNAPSHOT_SOURCE_AFTER_CUTOFF: depth_chart'):
+            oracle.build_snapshot('unused', 'unused', CUTOFF, weekly_roster='unused',
+                                  weekly_roster_available_at=CUTOFF, injury_report={}, injury_available_at=CUTOFF,
+                                  depth_parquet='unused', depth_available_at='2026-11-22T16:31:00Z')
+        snap = snapshot({BECK: 'Out'})
+        snap['rosters']['away']['snapshot_at'] = '2026-11-22T16:31:00Z'
+        with self.assertRaisesRegex(ValueError, 'SNAPSHOT_SOURCE_AFTER_CUTOFF: away_depth_chart'):
+            oracle.finalize_model_snapshot(snap)
+        snap = snapshot({BECK: 'Out'})
+        snap['rosters']['away']['injury_report']['source_available_utc'] = '2026-11-22T16:31:00Z'
+        with self.assertRaisesRegex(ValueError, 'SNAPSHOT_SOURCE_AFTER_CUTOFF'):
+            oracle.finalize_model_snapshot(snap)
+
     def test_an_out_qb1_with_a_prop_line_is_excluded_and_the_backup_promoted(self):
         snap = snapshot({BECK: 'Out', AGUILAR: 'Out', MINSHEW: 'Out'})
         rows, resolved = rp.check(snap, {'ARI': {BECK, JOHNSON}, 'KC': {'00-0033873'}})
