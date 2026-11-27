@@ -158,6 +158,16 @@ These are composable layers, **not** a commitment that every production forecast
 
 **Principle:** Preserve what predicts well, test mechanisms against actual event sequences, and reject complexity when it harms the measured goal. The physical model may be most valuable for selected interactions or to train a fast surrogate rather than running for every production game.
 
+### Retro reference: pace and efficiency
+
+![NHL ’95 versus 1993–94 NHL](research/charts/nhl95-vs-1993-94-nhl.svg)
+
+[Genesis pilot and historical baseline](https://github.com/micahp/retro-sports-arcade/blob/a7d3b5e/research/nhl95-reference-study/STUDY.md#3a-results-phases-ac-pilot-2026-11-23): 30 CPU games, one matchup, roughly twice the real shot rate with higher save percentage. The chart uses reported approximate shot/save rates, clock-weighted rounded goal rates (6.7), and pooled power-play conversion (27/278). Real NHL figures are per scheduled game. Raw emulator results were not committed; this is a visualization of the published pilot, not a new validation.
+
+![Madden 64 versus 1997 NFL](research/charts/madden64-vs-1997-nfl.svg)
+
+[25-game Madden study](https://github.com/micahp/legendarypicks/blob/3607143826f5ef2c55b52ee87a53366bdd1491c4/docs/research/MADDEN64-25-GAME-VALIDATION-AND-AI-INVESTIGATION-2026-11-26.md#accelerated-gameplay-and-scoring-compensation-nhl-95-analogy): elevated offensive opportunities with low efficiency. Both references illustrate that realistic scores can coexist with unrealistic intermediate distributions; intentional compensation remains a hypothesis. For predictive models, diagnose sampling versus autonomous decision/execution separately from pace; do not make one error cancel another.
+
 ## 7. Open questions and prioritized work (active 2026-10-24)
 
 1. **E0 LP→Gridiron generated play:** Which existing sequence engine, reducer and mirrored v1 contract entry points can already emit a legal hypothetical event and playback without modifying its result? Freeze exact commits, paths and one example; avoid new adapters until missing seams are proven.
