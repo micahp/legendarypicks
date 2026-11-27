@@ -5,7 +5,7 @@
 **LP implementation inspected:** `feat/slc-v1-complete-implementation-2026-11-24`, HEAD `917d268e81d6f58b6506f1f7ffa5229602803f66`
 **GridIron implementation:** `feat/v1-complete-autonomous-execution-2026-11-24`, `058571b5f23c43418d3cbb5a202214b1b99b8f55`
 
-This is a source audit and controlled-experiment record, not a declaration that V1 Complete has passed its gates. The LP and GridIron branches were clean of tracked edits before this note; GridIron already had four untracked input artifacts, which were left untouched. No full-game or large simulation batch was run. Bounded pass diagnostics are recorded below.
+This is a source audit and controlled-experiment record, not a declaration that V1 Complete has passed its gates. The LP and GridIron branches were clean of tracked edits before this note; GridIron already had four untracked input artifacts, which were left untouched. No full-game batch had run when this audit was first written; the Thanksgiving retrospective batch and its seed-level failures are recorded at the end.
 
 ## Earlier coordinator checkpoint (before LP `917d268`) — 2026-11-26
 
@@ -29,7 +29,7 @@ All 220 calls used one identical assignment set. The call metadata says `cover_1
 | B — isolated interactions | **Not passed.** The recovered 48-call synthetic diagnostic is reproducible, but it is not an NFL roster/assignment cohort and changes materially with timestep. The `ACC`-as-throw-accuracy defect is fixed and tested in isolated worktrees; it does not explain the saved 220-call catch failure. The initial sack-only arbitration experiment was superseded by an opt-in `shared_snapshot` player-evaluation mode. Default `legacy_sequential` preserves pinned 058571 full result hashes on 60/60 matched synthetic seeds. In shared mode, the saved GB–LAR play has identical semantic state at all 323 ticks under reversed callbacks; six pass/fumble regression plays match full per-tick state and ordered event rows; a 20-play check has 0 terminal/event-multiset differences. The two modes differ on all 60 paired synthetic terminals, so shared-snapshot results are a distinct experimental identity, not legacy parity. Broader fumble-return coverage, timestep stability, NFL behavior and forecasting remain unverified. The exact 058571 saved-call control still has five catches in 220 calls; assignment and target-reachability deficits remain. |
 | C — autonomous 11-on-11 plays | **Not passed.** The saved 220-call cohort repeats one zone/rush assignment set under `cover_1` metadata, so it does not validate coverage fidelity. LP `917d268` now fills absent assignments from the matching example coverage and validates the shell; one live call exercised that path, but assignment execution across concepts and schemes remains unproven. |
 | D — legal drives | **Not passed.** Prior GB–LAR runs stopped on event/rules blockers at earlier pins; no legal-drive acceptance run is verified for the current pair. |
-| E — full regulation and overtime games | **Not passed.** Retained earlier-pin GB–LAR seeds are incomplete; no complete current-pair game is verified. Full-game rules, clock and statistical reconciliation remain open. |
+| E — full regulation and overtime games | **Not passed.** The Thanksgiving V1 Complete cohort completed 0/30 valid full games. It exposed play and special-teams time caps, invalid yardline facts, missing scoring facts, rush-stat reconciliation failures and points-ledger mismatches. Full-game rules, clock and statistical reconciliation remain open; details are in the final section. |
 | F — NFL distribution validation | **Not started.** |
 | G — forecasting evaluation | **Not started.** |
 
@@ -321,3 +321,121 @@ The six compact JSON reports and runner hashes are:
 | Retro + both memories | `ca8c934c683be935ec06c572a22f9be085703a72c9b8529f135d9b1b37d4b310` | `cca97c7f96ddfd19b55311e80c95972b038409d0555e4992ccabce670baafccf` |
 
 Each JSON includes the frozen input hashes, per-call hashes, base GridIron commit, dirty prototype source hashes and, for probe arms, the temporary override SHA-256. The test code for the probe arms lived only in `/tmp`; no shared GridIron source was changed. Runtime was about 8–15 CPU seconds per 220-call arm, with approximately 284 MiB peak RSS.
+
+## Thanksgiving retrospective full-game batch — 2026-11-26 slate
+
+The three Thanksgiving matchups were run with seeds `300021`–`300030` for V1 Complete and player-aware CEG with HE. These executions finished on 2026-11-27 UTC, after the games, so all results are retrospective and exploratory.
+
+| Game | CEG player-aware + HE | V1 Complete |
+|---|---:|---:|
+| CHI at DET | 10/10 runner-completed; 0 blocks, 0 exceptions | 0/10 valid; 4 blocked, 6 exceptions |
+| PHI at DAL | 10/10 runner-completed; 0 blocks, 0 exceptions | 0/10 valid; 9 blocked, 1 exception |
+| KC at BUF | 10/10 runner-completed; 0 blocks, 0 exceptions | 0/10 valid; 7 blocked, 3 exceptions |
+| **Total** | **30/30 runner-completed** | **0/30 valid; 20 blocked, 10 exceptions** |
+
+“Runner-completed” is the CEG runner's status; no separate independent legality audit was run on those 30 records. None of the V1 Complete attempts qualifies as a completed legal game, and none was graded as a valid forecast. CEG's descriptive mean points were CHI 23.5–DET 18.2 (mean total 41.7), PHI 24.2–DAL 19.4 (43.6), and KC 24.8–BUF 20.7 (45.5). These small retrospective samples are not calibrated forecasts.
+
+### V1 Complete: exact failed seeds
+
+Every V1 seed failed. The table gives each seed and its recorded terminal failure. Full exception tracebacks, blocker strings, output paths and SHA-256 values are preserved in the machine-readable evidence ledger named below.
+
+| Game | Seed | Status | Exact failure |
+|---|---:|---|---|
+| CHI–DET | 300021 | Exception | Pregame player/team stats do not reconcile for A: `rush_att (21, 19)`, `rush_yds (-15, -13)`. |
+| CHI–DET | 300022 | Exception | Pregame player/team stats do not reconcile for A: `rush_att (9, 8)`, `rush_yds (12, 13)`. |
+| CHI–DET | 300023 | Exception | Pregame player/team stats do not reconcile for A: `rush_att (19, 16)`, `rush_yds (24, 28)`. |
+| CHI–DET | 300024 | Exception | Pregame player/team stats do not reconcile for A: `rush_att (45, 42)`, `rush_yds (-41, -38)`. |
+| CHI–DET | 300025 | Blocked | `gridiron_executor_failed:{'name': 'RangeError', 'message': 'yardline spot must be finite and between 0 and 100'}`. |
+| CHI–DET | 300026 | Blocked | `gridiron_special_teams_incomplete:{'reason': 'blocked_field_goal_recovery_time_cap', 'time_limit_seconds': 7}`. |
+| CHI–DET | 300027 | Blocked | `gridiron_executor_failed:{'name': 'RangeError', 'message': 'yardline spot must be finite and between 0 and 100'}`. |
+| CHI–DET | 300028 | Exception | Pregame player/team stats do not reconcile for A: `rush_att (27, 25)`, `rush_yds (-3, -2)`. |
+| CHI–DET | 300029 | Blocked | `autonomous_event_generation_invalid:gridiron_play_incomplete:{'reason': 'simulation_time_cap', 'time_limit_seconds': 12}`. |
+| CHI–DET | 300030 | Exception | Pregame player/team stats do not reconcile for A: `rush_att (48, 36)`, `rush_yds (27, 24)`. |
+| PHI–DAL | 300021 | Blocked | `gridiron_executor_failed:{'name': 'RangeError', 'message': 'yardline spot must be finite and between 0 and 100'}`. |
+| PHI–DAL | 300022 | Blocked | `gridiron_special_teams_incomplete:{'reason': 'blocked_field_goal_recovery_time_cap', 'time_limit_seconds': 7}`. |
+| PHI–DAL | 300023 | Blocked | `gridiron_executor_failed:{'name': 'RangeError', 'message': 'yardline spot must be finite and between 0 and 100'}`. |
+| PHI–DAL | 300024 | Blocked | `gridiron_executor_failed:{'name': 'RangeError', 'message': 'yardline spot must be finite and between 0 and 100'}`. |
+| PHI–DAL | 300025 | Blocked | `autonomous_event_generation_invalid:gridiron_terminal_scoring_fact_missing`. |
+| PHI–DAL | 300026 | Blocked | `gridiron_special_teams_incomplete:{'reason': 'blocked_field_goal_recovery_time_cap', 'time_limit_seconds': 7}`. |
+| PHI–DAL | 300027 | Blocked | `gridiron_executor_failed:{'name': 'RangeError', 'message': 'yardline spot must be finite and between 0 and 100'}`. |
+| PHI–DAL | 300028 | Blocked | `autonomous_event_generation_invalid:gridiron_play_incomplete:{'reason': 'simulation_time_cap', 'time_limit_seconds': 12}`. |
+| PHI–DAL | 300029 | Blocked | `gridiron_special_teams_incomplete:{'reason': 'blocked_field_goal_recovery_time_cap', 'time_limit_seconds': 7}`. |
+| PHI–DAL | 300030 | Exception | `FootballAssertionError`: points ledger disagrees with drive and free-kick scoring records. |
+| KC–BUF | 300021 | Blocked | `gridiron_special_teams_incomplete:{'reason': 'blocked_field_goal_recovery_time_cap', 'time_limit_seconds': 7}`. |
+| KC–BUF | 300022 | Exception | `FootballAssertionError`: points ledger disagrees with drive and free-kick scoring records. |
+| KC–BUF | 300023 | Blocked | `autonomous_event_generation_invalid:gridiron_play_incomplete:{'reason': 'simulation_time_cap', 'time_limit_seconds': 12}`. |
+| KC–BUF | 300024 | Blocked | `gridiron_executor_failed:{'name': 'RangeError', 'message': 'yardline spot must be finite and between 0 and 100'}`. |
+| KC–BUF | 300025 | Exception | `FootballAssertionError`: points ledger disagrees with drive and free-kick scoring records. |
+| KC–BUF | 300026 | Blocked | `gridiron_special_teams_incomplete:{'reason': 'blocked_field_goal_recovery_time_cap', 'time_limit_seconds': 7}`. |
+| KC–BUF | 300027 | Blocked | `gridiron_special_teams_incomplete:{'reason': 'blocked_field_goal_recovery_time_cap', 'time_limit_seconds': 7}`. |
+| KC–BUF | 300028 | Exception | `FootballAssertionError`: points ledger disagrees with drive and free-kick scoring records. |
+| KC–BUF | 300029 | Blocked | `autonomous_event_generation_invalid:gridiron_play_incomplete:{'reason': 'simulation_time_cap', 'time_limit_seconds': 12}`. |
+| KC–BUF | 300030 | Blocked | `autonomous_event_generation_invalid:gridiron_play_incomplete:{'reason': 'simulation_time_cap', 'time_limit_seconds': 12}`. |
+
+The detailed KC points-ledger failures all identify the failing assertion in `game_state.py:2460`, wrapped by `validate_game()` at lines 2546 and 2560. The PHI points-ledger traceback is preserved in the same evidence ledger. The CHI stat-reconciliation tracebacks pass through `game_stats.py:496` (`_verify_pregame_reconciliation`). Exceptions from the first CHI–DET and PHI–DAL batches have no standalone `seed-*.json` file; their full traceback is in the attempt ledger. Blocked seeds have saved result records; the evidence ledger hashes each file that exists.
+
+### Reproduction pins and commands
+
+All V1 runs used LP source commit `6b7acb85718c2bef8637aa85cae7aa1838b2f311`, GridIron `885036d4c2a2f2f0b5ccea9006f7bb7ce2acabb7`, Python 3.8.20 (`/root/envs/lp-standard/bin/python`), four workers and one historical-reference load per batch. The frozen reference database was `/root/runs/week-11/inputs/picks.frozen.db`, SHA-256 `e997951b0a8ceb8acc82eef01520797e053da9033527b8f3693af0f7ecdf3939`. Participation field SHA-256 is `9aaf7e57ce45bc525393de105c2b803673d441b589588a279a28e57ce2880a41`; pre-Week-12 snap counts SHA-256 is `9c99574d5605c2bf853e658767cfa5b6915a3e9b7febaa05d191ba731e790be6`; playbook manifest SHA-256 is `220af2a590b2e7ddf5c28a32977aadd4d5a5e6e128ca8392da8bac37ef0917ac`. Overtime and safety reference tables were loaded. The KC runner explicitly used the CLI default `paired_randomness=false`; the shared CHI/DET + PHI/DAL manifest omitted this setting, so that batch's RNG flag cannot be independently confirmed from its saved manifest.
+
+| Game | V1 snapshot path (file SHA-256 / embedded snapshot SHA-256) | Ratings profile path (SHA-256) |
+|---|---|---|
+| CHI–DET | `/root/runs/week-12/snapshots/2026_12_CHI_DET.frozen.json` (`fc22ba3e20970967b955e58476a428537485dc076320039ad7fa2ddb46036266` / `f1f76ea5c3e3f895053b4a853073c4d282523ad3610d20b90ed45c20b174384f`) | `/root/ot-sim-out/gpia-01-fullgame-inputs-2026-11-26/ratings/ratings-2026_12_CHI_DET.json` (`64296287b48f93dc8e311f095928df3cc78f1f01892ed46c7b7cedafc9ad15ef`) |
+| PHI–DAL | `/root/ot-sim-out/gpia-01-fullgame-inputs-2026-11-26/snapshots/2026_12_PHI_DAL.v1-complete.frozen.json` (`6ed4c646a2c51c7b3a81e9f55f24ca7b32cba47ab014736ca681555155d6f549` / `b8d1ab68ffe480acae1712cc6ee15181544daded74604d8c2e3a343a39873317`) | `/root/ot-sim-out/gpia-01-fullgame-inputs-2026-11-26/ratings/ratings-2026_12_PHI_DAL.json` (`f5ca3fbd3859eb7326791b68547ce9dddf8334817654db473a13eac1da73c41b`) |
+| KC–BUF | `/root/runs/week-12/snapshots/2026_12_KC_BUF.oracle-rebuilt-retrospective-2026-11-26.json` (`c54e865bfc08be6accf31699323203195f52ee9973ff41e3fe83d8ea32490c44` / `61bc974af1761937e71a211ac73b060851659f64de486e277c066f890c81a12f`) | `/root/ot-sim-out/gpia-01-fullgame-inputs-2026-11-26/ratings/ratings-2026_12_KC_BUF.json` (`9cd4f74be4d435856eea168cfb513ce8bc84861c46cd315df1ee56a2dd3a2ab1`) |
+
+The CHI–DET and PHI–DAL profiles were fitted through Week 11 from the same four source files: `players.csv` SHA `05c74c1d8a0ead2e9834839d59e2507a743af6050e252cc6582c18b6e1ec1768`, `combine.csv` SHA `5648886b1bb9de8a0c42b05ee7b1d9cbe58897676caaa2f6a4a3d3c9228235bb`, `stats_player_reg_2025.csv` SHA `aaa8559478dd8d58569c93e278239e70e9411e79ee649c99d8d506030cd42b12`, and `stats_player_week_2026.csv` SHA `642a39fc10523818320ad583574fbc408c0caf530f7f2f2d2f545dd136d`. The KC source file hashes differ and are listed in its run manifest.
+
+For any failed V1 seed, run the pinned single-seed entry point on the fast host with the matching row above. Use the snapshot and ratings paths from the run manifests; change only `GAME_ID`, `SNAPSHOT`, `RATINGS`, `SEED` and the fresh output path:
+
+```bash
+PY=/root/envs/lp-standard/bin/python
+RUNTIME=/tmp/lp-v1-complete-6b7acb85-runtime
+PYTHONPATH="$RUNTIME/scripts/nfl_sequence:$RUNTIME:$RUNTIME/backend" \
+  "$PY" "$RUNTIME/scripts/nfl_sequence/simulate_autonomous_gridiron.py" \
+  --snapshot "$SNAPSHOT" --game-id "$GAME_ID" \
+  --participation-field /root/ot-sim-out/gpia-01-fullgame-inputs-2026-11-26/participation/participation-field-v4.json \
+  --participation-sha256 9aaf7e57ce45bc525393de105c2b803673d441b589588a279a28e57ce2880a41 \
+  --participation-snap-counts /root/ot-sim-out/gpia-01-fullgame-inputs-2026-11-26/participation/participation-snap-counts-2026-preweek12.json \
+  --participation-snap-counts-sha256 9c99574d5605c2bf853e658767cfa5b6915a3e9b7febaa05d191ba731e790be6 \
+  --participation-entry-current \
+  --playbook-dir /root/ot-sim-out/engine-gpia-D/data/playbooks \
+  --playbook-manifest /root/ot-sim-out/gpia-01-fullgame-inputs-2026-11-26/playbooks/v1-runtime-manifest.json \
+  --engine-root /root/ot-sim-out/engine-gpia-D \
+  --rating-profile "$RATINGS" \
+  --db /root/runs/week-11/inputs/picks.frozen.db \
+  --seed "$SEED" --output "/tmp/v1-replay/$GAME_ID-$SEED.json"
+```
+
+CEG used runner `/root/runs/week-12/configs/run_ceg_seed_cohort.py` (SHA-256 `bb2f402f3f592cfbfa33afc185e5e5d23e5d3f50489b5565780820f7ee48468c`), runtime commit `f8cf6104a6629e9a65fcb7ce02aae03b222bd7c0`, CEG contract `1aeabdba`, frozen model artifact `/root/runs/week-12/inputs/models/ceg-thanksgiving-2026-11-26/ceg-sel-e-2026w12.frozen.pkl` (SHA-256 `05554214c1ff663678692128b01813d3af5ffd3ce338eb5def6ea1f53e13525d`), and opportunity artifact `/root/runs/week-12/inputs/models/ceg-thanksgiving-2026-11-26/opportunity-m3-2026w12.json` (SHA-256 `b1c6a88f0592bbd243395d8ca63f0add6782a6847c2cfdd3298d970960518739`). Its command used `--model ceg_players_he`, `--seed-start 300021`, `--games 10`, `--entry-current`, and the same participation/snap-count hashes above for each game. The exact CEG snapshot, ledger and summary hashes are:
+
+| Game | CEG snapshot path (file SHA / embedded SHA) | Attempt ledger SHA-256 | Summary SHA-256 |
+|---|---|---|---|
+| CHI–DET | `/root/runs/week-12/snapshots/2026_12_CHI_DET.frozen.json` (`fc22ba3e20970967b955e58476a428537485dc076320039ad7fa2ddb46036266` / `f1f76ea5c3e3f895053b4a853073c4d282523ad3610d20b90ed45c20b174384f`) | `3b79e1c94421e23cdfe5e35d5f7a58c2b59bdf418b000de44a22f167e2606cf5` | `1665b3da653a8a8e752fa681fbd7fd402cfc2544a52651f16c8586a5d48ef0ed` |
+| PHI–DAL | `/root/runs/week-12/snapshots/2026_12_PHI_DAL.oracle-rebuilt.json` (`8a84fe1c7db0fc16c9ae87f169171161435fe8fc1e03089c91f22e16103a121a` / `f85b8d9ccfa9b1895b93bbb43256343ed08b6e04f60e7166046cc571acf35db4`) | `5951c024e668e0da2364ed49a8cdcc444151cf94d37675de018d49509aaae3e0` | `395110456a9a86aa1b23dea6578650e0810ad7de62e18a3577b6bef6e7c2ee26` |
+| KC–BUF | `/root/runs/week-12/snapshots/2026_12_KC_BUF.oracle-rebuilt-retrospective-2026-11-26.json` (`c54e865bfc08be6accf31699323203195f52ee9973ff41e3fe83d8ea32490c44` / `61bc974af1761937e71a211ac73b060851659f64de486e277c066f890c81a12f`) | `569ff20675228a6500ffcb2bdbb113ed7cd497150a87db8898409a7b4cd394dc` | `b22bed06452030de74dadc309e8545965cf7e08da98ffba8f74d7faf5f6e4c89` |
+
+Each CEG ledger is named `ceg_players_he.300021-300030.jsonl` and each summary has the same basename with `.summary.json`, under `/root/runs/week-12/games/thanksgiving-v1complete-ceg-10-retro-2026-11-26/ceg/<GAME_ID>/`. To rerun one game with a new output path, use the matching snapshot and embedded hash above:
+
+```bash
+/root/envs/lp-standard/bin/python /root/runs/week-12/configs/run_ceg_seed_cohort.py \
+  --model ceg_players_he --snapshot "$SNAPSHOT" --snapshot-sha256 "$SNAPSHOT_EMBEDDED_SHA" \
+  --artifact /root/runs/week-12/inputs/models/ceg-thanksgiving-2026-11-26/ceg-sel-e-2026w12.frozen.pkl \
+  --artifact-sha256 05554214c1ff663678692128b01813d3af5ffd3ce338eb5def6ea1f53e13525d \
+  --seed-start 300021 --games 10 --out "$NEW_OUTPUT_JSONL" \
+  --player-field /root/ot-sim-out/gpia-01-fullgame-inputs-2026-11-26/participation/participation-field-v4.json \
+  --player-field-sha256 9aaf7e57ce45bc525393de105c2b803673d441b589588a279a28e57ce2880a41 \
+  --player-snap-counts /root/ot-sim-out/gpia-01-fullgame-inputs-2026-11-26/participation/participation-snap-counts-2026-preweek12.json \
+  --player-snap-counts-sha256 9c99574d5605c2bf853e658767cfa5b6915a3e9b7febaa05d191ba731e790be6 \
+  --opportunity-artifact /root/runs/week-12/inputs/models/ceg-thanksgiving-2026-11-26/opportunity-m3-2026w12.json \
+  --opportunity-sha256 b1c6a88f0592bbd243395d8ca63f0add6782a6847c2cfdd3298d970960518739 \
+  --entry-current
+```
+
+**PHI–DAL input caveat:** CEG used the oracle-rebuilt snapshot with embedded SHA `f85b8d9ccfa9b1895b93bbb43256343ed08b6e04f60e7166046cc571acf35db4`; V1 used the distinct V1 Complete snapshot with embedded SHA `b8d1ab68ffe480acae1712cc6ee15181544daded74604d8c2e3a343a39873317`. Their PHI results are not a paired-input model comparison. All run inputs were labeled exploratory/retrospective; CHI and PHI source classifications also retain unverified depth/schedule provenance.
+
+KC–BUF's rating profile was built from the frozen membership roster with current-season rows filtered to weeks strictly below 12. Its raw `players.csv` and weekly-stat source hashes differ from the earlier CHI/PHI rating profiles; all four KC source hashes are recorded in the KC run manifest. The profile is retrospective, not a preserved pre-kickoff artifact.
+
+**Seed-level evidence:** the compact, committed artifact `docs/research/V1-COMPLETE-THANKSGIVING-SEED-FAILURES-2026-11-26.jsonl` contains all 30 V1 failed-seed rows, exact exception tracebacks, terminal blockers, artifact paths and hashes for saved per-seed outputs. It is 31,548 bytes; SHA-256 `4a3182a45ce7be77016fa4bea13c611cbb125f849e454d5ed5bfa5766fc3c3f9`. An identical copy remains on the fast host at `/root/runs/week-12/games/thanksgiving-v1complete-ceg-10-retro-2026-11-26/v1-complete/seed-failure-evidence.jsonl`. The shared CHI/DET + PHI/DAL V1 manifest at `/root/runs/week-12/games/thanksgiving-v1complete-ceg-10-retro-2026-11-26/v1-complete/run_manifest.json` has SHA-256 `24c977bca0080d484d2059042e1156719fe466e9bac7137214bde841f796f5e0`; the KC manifest at `/root/runs/week-12/games/thanksgiving-v1complete-ceg-10-retro-2026-11-26/v1-complete/2026_12_KC_BUF/run_manifest.json` has SHA-256 `97d2940d5cf91a3e568db96f4573994a903063ef2f8e80360699572fb991d846`. The latter pins its saved batch runner (`run_kc_buf_v1_10.py`, SHA-256 `fc07f30876fc44f28e31721b51d2ec37d747ba0c8e78cb63d2782771a6b90418`). CEG ledgers and summaries are under `/root/runs/week-12/games/thanksgiving-v1complete-ceg-10-retro-2026-11-26/ceg/`; V1 per-seed outputs and manifests are under the sibling `v1-complete/`. No full trajectories were copied into the repository.
+
+The pinned LP source commit is local on `feat/slc-v1-complete-implementation-2026-11-24` and had not been pushed when this report was written. The fast-host runtime archive used for replay is `/tmp/lp-v1-complete-6b7acb85-runtime`; reproduce against that archive or the exact LP commit, not the branch's later working tree.
