@@ -42,3 +42,7 @@ flowchart TD
 ```
 
 The diagram is a conceptual personnel-first V2 research path, not the exact frozen V1/V1.5/V1.6/V1.7 order. See individual model cards and their pinned manifests for enabled layers. [Four conditioning methods](../model-cards/nfl/slc-v2-simplified.md#conditioning-methods-visual) shows the part of this flow that changes. CEG replaces the row draw, not the need for a rules engine.
+
+## Batch acceptance boundary
+
+The model-independent snapshot is a data artifact. Model readiness requires the selected runtime's actual pinned input/dependency checks. A smoke game is a complete engine run, not just snapshot parsing or package export. For strict batches the launcher requires each requested seed to complete legally with the required execution/statistics and verified snapshot provenance; legal completion and evidence verification are separate facts. Stop at the first rejected seed where the runtime supports it; for old frozen runtimes bound chunks and stop later waves. No replacement seeds or blind resumption. See [mandatory launch procedure](../API-AGENT-GUIDE.md#mandatory-model-readiness-and-batch-launch).

@@ -1,5 +1,6 @@
 """Existing frozen snapshot reuse must not bypass validation."""
 import unittest
+import json
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -22,6 +23,24 @@ class CaptureReuse(unittest.TestCase):
         self.capture['away'] = 'KC'
         with self.assertRaisesRegex(ValueError, 'TEAM_MISMATCH'):
             converter.validate_capture(self.capture, self.capture['game_id'])
+
+    def test_builder_cannot_claim_model_readiness(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'run.json'
+            snap = {'schedule': {'game_id': self.capture['game_id']}}
+            with patch.object(converter.slc_pregame_context, 'freeze_current_streak_context'), \
+                    patch.object(converter.pregame_snapshot, 'reseal', return_value=snap), \
+                    patch.object(converter.slc_pregame_context, 'freeze_current_streak_model_inputs', return_value={}), \
+                    patch.object(converter.pregame_snapshot, 'load_frozen_snapshot', return_value=snap), \
+                    patch.object(converter.slc_pregame_context, 'current_streaks_for_snapshot'):
+                converter.write_runner_file(snap, {}, path)
+            payload = json.loads(path.read_text())
+            self.assertEqual(payload['runtime_readiness']['status'], 'not_evaluated')
+            payload['runtime_readiness']['status'] = 'ready'
+            path.write_text(json.dumps(payload))
+            with patch.object(converter.pregame_snapshot, 'load_frozen_snapshot', return_value=snap):
+                with self.assertRaisesRegex(ValueError, 'UNSUPPORTED_READINESS_CLAIM'):
+                    converter.validate_existing(path, self.capture, {}, self.capture['game_id'])
 
     def test_refuses_old_provenance(self):
         snap = {'schedule': {'game_id': self.capture['game_id'],

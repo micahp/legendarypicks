@@ -14,7 +14,8 @@ Every run downloads the published nflverse depth chart and schedule, so it never
     eligible QB1, an unresolved required role, a player on both teams, or a resolved QB1 with no passing-yards prop in
     --props-db (joined on the GSIS id; a game with no QB prop yet cannot be checked and is refused)
 Nothing is written unless every requested game passes. Each game is written in the pack runner's format
-({pregame_snapshot, runtime_model_inputs} plus <game>.streak.json, win-loss streaks known at the cutoff), ready to run.
+({pregame_snapshot, runtime_model_inputs} plus <game>.streak.json, win-loss streaks known at the cutoff).
+Snapshot construction does not establish readiness for any selected engine.
 The manifest records each source, its capture time and hash.
 
 Usage:
@@ -39,7 +40,7 @@ import oracle  # noqa: E402
 import pregame_snapshot  # noqa: E402
 import roster_preflight  # noqa: E402
 from prop_identity import resolve_market_qbs, priced_qbs as qb_sets  # noqa: E402
-from cutoff_to_model_snapshot import write_runner_file  # noqa: E402
+from cutoff_to_model_snapshot import write_runner_file, BUILD_RUNTIME_READINESS  # noqa: E402
 from paced_http import Fetcher  # noqa: E402
 from scripts import nfl_team_codes  # noqa: E402
 
@@ -176,7 +177,8 @@ def main(argv=None):
                             'injury_news': {'table': 'nfl_player_news_updates', 'newest_published_utc': newest_news,
                                             'players_listed': injury['listed'], 'obsolete_dropped': len(injury['obsolete']),
                                             'unmatched': len(unmatched)}},
-                'max_depth_chart_age_hours': pregame_snapshot.MAX_DEPTH_CHART_AGE.total_seconds() / 3600, 'games': []}
+                'max_depth_chart_age_hours': pregame_snapshot.MAX_DEPTH_CHART_AGE.total_seconds() / 3600,
+                'runtime_readiness': BUILD_RUNTIME_READINESS, 'games': []}
     for game_id, snap in built:
         path = args.out / f'{game_id}.json'
         streaks, _used = oracle.build_streaks(args.db, now, game_id)
@@ -187,7 +189,7 @@ def main(argv=None):
                                   'roster_resolution_hash': loaded['roster_resolution']['content_hash'],
                                   'espn_player_statuses_added': espn_statuses_by_game.get(game_id, [])})
     (args.out / 'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n')
-    print(f'BUILT {len(built)} snapshots in {args.out}')
+    print(f'BUILT {len(built)} snapshots in {args.out}; model readiness NOT_EVALUATED')
     return 0
 
 

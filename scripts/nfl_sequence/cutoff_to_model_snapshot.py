@@ -59,6 +59,9 @@ class StreakBuckets:
         return f'{side}5+' if count >= 5 else f'{side}{count}'
 
 
+BUILD_RUNTIME_READINESS = {'status': 'not_evaluated', 'required': 'model_specific_preflight_and_smoke'}
+
+
 def write_runner_file(snap, streaks, out):
     """Write the pack runner's input: {pregame_snapshot, runtime_model_inputs} at `out`, and the streak source it hashes
     at <out stem>.streak.json. Refuses to overwrite either. Reloads and checks the file it wrote."""
@@ -70,7 +73,8 @@ def write_runner_file(snap, streaks, out):
     snap = pregame_snapshot.reseal(snap)
     inputs = slc_pregame_context.freeze_current_streak_model_inputs(streak_path, snap, StreakBuckets, nfl_team_codes)
     with out.open('x') as handle:
-        json.dump({'pregame_snapshot': snap, 'runtime_model_inputs': inputs}, handle, indent=1, sort_keys=True)
+        json.dump({'pregame_snapshot': snap, 'runtime_model_inputs': inputs,
+                   'runtime_readiness': BUILD_RUNTIME_READINESS}, handle, indent=1, sort_keys=True)
         handle.write('\n')
     loaded = pregame_snapshot.load_frozen_snapshot(str(out))
     slc_pregame_context.current_streaks_for_snapshot(loaded, nfl_team_codes, StreakBuckets, inputs)
@@ -109,6 +113,8 @@ def validate_existing(out, capture, provenance, game_id):
     payload = json.loads(out.read_text())
     if 'pregame_snapshot' not in payload or not isinstance(payload.get('runtime_model_inputs'), dict):
         raise ValueError('EXISTING_SNAPSHOT_NOT_RUNNER_FORMAT')
+    if payload.get('runtime_readiness', BUILD_RUNTIME_READINESS) != BUILD_RUNTIME_READINESS:
+        raise ValueError('EXISTING_SNAPSHOT_UNSUPPORTED_READINESS_CLAIM')
     schedule = snap['schedule']
     if (schedule['game_id'] != game_id or utc(snap['as_of']) != utc(capture['cutoff_utc'])
             or utc(schedule['scheduled_kickoff_utc']) != utc(capture['kickoff_utc'])):
@@ -201,7 +207,7 @@ def main(argv=None):
         built += 1
     for line in refused:
         print('REFUSED', line)
-    print(f'built {built}, already there {skipped}, refused {len(refused)}')
+    print(f'built {built}, already there {skipped}, refused {len(refused)}; model readiness NOT_EVALUATED')
     return 1 if refused else 0
 
 
