@@ -11,6 +11,17 @@ class TestOpportunity(unittest.TestCase):
         state = {'yl':50,'down':1,'score_diff':0}
         for seed in range(40):
             self.assertIn(model.choose('receive','MIN',selected,state,seed), ('rb','wr'))
+    def test_commit_only_after_accepted_play_callback(self):
+        from unittest.mock import Mock
+        from ceg_harness import Provider
+        provider = Provider.__new__(Provider)
+        provider.players = Mock()
+        lineup = {'team': 'MIN'}
+        provider.accept_play({'ceg_event': 'penalty'})
+        provider.players.commit.assert_not_called()
+        provider.accept_play({'_ceg_pending_lineup': lineup})
+        provider.players.commit.assert_called_once_with(lineup)
+
     def test_stats_no_penalty_and_reconcile(self):
         box = collections.defaultdict(collections.Counter)
         tally(box, {'yards_gained':0})

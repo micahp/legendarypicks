@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import hashlib
 import json
 import pickle
 import random
@@ -120,7 +121,8 @@ def build(args):
            'clock': {'live': live, 'dead': dead, 'to_first': to_first, 'to_more': to_more, 'oob': oob},
            'special': special, 'chosen': {'phase2': ch2, 'phase3': ch3, 'phase4': ch4}}
     audit(art)
-    args.out.write_bytes(pickle.dumps(art))
+    with args.out.open('xb') as handle:
+        handle.write(pickle.dumps(art))
     print(f'wrote {args.out} ({args.out.stat().st_size} bytes); K2 touchback p {special["K2"]["p"][0]:.3f}; tb spot {tb_spot}')
 
 
@@ -135,7 +137,7 @@ def audit(obj, path='art', seen=None):
         for k, v in obj.items():
             audit(v, f'{path}.{k}', seen)
     elif isinstance(obj, (list, tuple)):
-        for i, v in enumerate(obj[:50]):
+        for i, v in enumerate(obj):
             audit(v, f'{path}[{i}]', seen)
     elif hasattr(obj, '__dict__'):
         for k, v in vars(obj).items():
@@ -250,6 +252,9 @@ class PenaltyProvider:
                 return 'penalty', rec, 0, None
         self.last = rec
         return event, rec, runoff, spot
+
+    def accept_play(self, row):
+        self.inner.accept_play(row)
 
 
 class Game:
@@ -488,15 +493,41 @@ class PuntModel:
         return int(c)
 
 
+def load_artifact(path, expected_sha256=None):
+    # Internal trusted artifacts only. A digest pins bytes; it does not make an
+    # untrusted pickle safe. Never deserialize a package from an unknown source.
+    data = path.read_bytes()
+    actual = hashlib.sha256(data).hexdigest()
+    if expected_sha256 is not None and actual != expected_sha256:
+        raise ValueError('CEG_ARTIFACT_HASH_MISMATCH')
+    art = pickle.loads(data)
+    if art.get('schema') != 'ceg-artifact-1':
+        raise ValueError('CEG_ARTIFACT_SCHEMA_MISMATCH')
+    audit(art)
+    return art, actual
+
+
 def run(args):
-    art = pickle.loads(args.artifact.read_bytes())
+    if args.out.exists():
+        raise FileExistsError(f'immutable CEG output exists: {args.out}')
+    if getattr(args, 'player_snapshot', None) and not getattr(args, 'artifact_sha256', None):
+        raise ValueError('CEG_PLAYER_RUN_REQUIRES_TRUSTED_ARTIFACT_SHA256')
+    art, artifact_hash = load_artifact(args.artifact, getattr(args, 'artifact_sha256', None))
     matchups = json.loads(args.matchups.read_text()) if args.matchups else None
     player_inputs = None
     if getattr(args, 'player_snapshot', None):
         if matchups:
             raise ValueError('player-aware CEG uses one frozen matchup per run')
-        from ceg_player_policy import load_inputs
+        from ceg_player_policy import load_inputs, GamePlayers
         player_inputs = load_inputs(args, art)
+        # Construct the actual player policy once before any game seed. Do not
+        # allow the first 1,000 constructors to discover the same missing input.
+        ready = GamePlayers(player_inputs).provenance
+        if getattr(args, 'preflight_only', False):
+            with args.out.open('x') as handle:
+                json.dump({'status': 'ready_for_research_smoke', 'artifact_sha256': artifact_hash,
+                           'player_provenance': ready, 'forecast_certified': False}, handle, indent=1)
+            return 0
     block_data_reads()
     if matchups:
         return run_matchups(args, art, matchups)
@@ -511,8 +542,11 @@ def run(args):
             if player_inputs is None:
                 raise
             out.append({'seed': args.seed + i, 'blocked': f'player-aware check failed: {exc}'})
+        if out[-1].get('blocked') and not getattr(args, 'allow_blocked_research', False):
+            print(f"CEG_BLOCKED_SEED_ABORT seed={args.seed + i}: {out[-1]['blocked']}", file=sys.stderr, flush=True)
+            break
     ok = [r for r in out if not r.get('blocked')]
-    summary = {'games': len(out), 'completed': len(ok), 'blocked': [r['blocked'] for r in out if r.get('blocked')][:10],
+    summary = {'requested_games': args.games, 'games': len(out), 'completed': len(ok), 'blocked': [r['blocked'] for r in out if r.get('blocked')][:10],
                'blocked_n': len(out) - len(ok)}
     if ok:
         for key in ('home', 'away'):
@@ -527,8 +561,14 @@ def run(args):
                 per.update(r['stats'][t])
         summary['per_team_game'] = {k: round(v / (2 * len(ok)), 2) for k, v in sorted(per.items())}
         summary['drives_per_game'] = round(float(np.mean([r['drives'] for r in ok])), 2)
-    args.out.write_text(json.dumps({'summary': summary, 'games': out}, indent=1, default=str) + '\n')
+    summary['status'] = 'complete' if len(ok) == args.games else 'incomplete'
+    with args.out.open('x') as handle:
+        json.dump({'summary': summary, 'games': out, 'artifact_sha256': artifact_hash,
+                   'run_class': 'research_only', 'forecast_certified': False,
+                   'completion_scope': 'CEG drive checker and game-loop termination; not NFL full-game certification'},
+                  handle, indent=1, default=str)
     print(json.dumps(summary, indent=1))
+    return 0 if len(ok) == args.games else 1
 
 
 def run_matchups(args, art, matchups):
@@ -567,6 +607,9 @@ def main(argv=None):
     b.add_argument('--teams', action='store_true', help='add the Phase 6 arm E team tables')
     r = sub.add_parser('run')
     r.add_argument('--artifact', required=True, type=Path)
+    r.add_argument('--artifact-sha256', help='externally pinned SHA-256 of a trusted local CEG artifact')
+    r.add_argument('--preflight-only', action='store_true', help='player-input preflight; no game execution')
+    r.add_argument('--allow-blocked-research', action='store_true', help='diagnostic single-matchup cohort; continue after blocked seeds')
     r.add_argument('--games', type=int, default=100)
     r.add_argument('--seed', type=int, default=1)
     r.add_argument('--out', required=True, type=Path)
@@ -582,6 +625,12 @@ def main(argv=None):
                    help='HE enabled by default for player-aware runs; --no-entry-current for control')
     args = ap.parse_args(argv)
     if args.cmd == 'run':
+        if args.games < 1 or args.seed < 0:
+            ap.error('positive games and nonnegative seed required')
+        if args.preflight_only and not args.player_snapshot:
+            ap.error('--preflight-only requires --player-snapshot')
+        if args.player_snapshot and not args.artifact_sha256:
+            ap.error('player-aware CEG requires --artifact-sha256 for a trusted local artifact')
         companions = (args.player_field, args.player_field_sha256, args.player_snap_counts,
                       args.player_snap_counts_sha256, args.opportunity_artifact, args.opportunity_sha256)
         if args.player_snapshot and not all(companions):

@@ -303,7 +303,7 @@ class Field:
             return None, {'status': 'unsupported_grouping', 'group': group}
         identities = offense_identities(roster)
         starter = starter_of(identities)  # the passer is never in the lineup; a second QB is drawn from the other QBs
-        eligible = {gsis: sorted(cls for cls in ident['roles'] if not (cls == 'QB' and gsis == starter))
+        eligible = {gsis: sorted(cls for cls in ident['roles'] if gsis != starter)
                     for gsis, ident in identities.items()}
         ranks = {gsis: ident['pos_rank'] for gsis, ident in identities.items()}
         slots = dict(slots or {})

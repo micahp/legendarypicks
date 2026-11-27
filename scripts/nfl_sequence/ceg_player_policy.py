@@ -48,7 +48,8 @@ def fit(args):
                                     for y in seasons},
                'position_source_sha256': sha(args.db),
                'position_source_scope': 'fit-time DB position lookup; historical position provenance must be audited'}
-    Path(args.out).write_text(json.dumps(payload, sort_keys=True, separators=(',', ':')) + '\n')
+    with Path(args.out).open('x') as handle:
+        handle.write(json.dumps(payload, sort_keys=True, separators=(',', ':')) + '\n')
     print(sha(args.out))
 
 

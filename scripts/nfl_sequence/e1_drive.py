@@ -512,6 +512,9 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         if row.get('pre_event') is not None:  # SLC: participants chosen before the outcome; absent for the S0 control
             play['outcome']['pre_event'] = row['pre_event']
         plays.append(play)
+        accept_play = getattr(sampling_policy, 'accept_play', None)
+        if generates and callable(accept_play):
+            accept_play(row)
         if (quarter_change and kick_outcome is not None
                 and kick_outcome.get('classification_status') == 'period_expired'):
             # A period-ending blocked kick has no observed next possession or field position. Q1/Q3 continue the game,

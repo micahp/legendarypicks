@@ -17,21 +17,14 @@ def configure(field, snapshot, snaps=None, entry_current=False):
     if not field.seasons or max(field.seasons) >= season:
         raise ValueError('shared_participation_fit_cutoff')
     checks, resolved = roster_preflight.check(snapshot)
+    if (snapshot.get('roster_resolution') or {}).get('content_hash') != resolved['content_hash']:
+        raise ValueError('shared_participation_frozen_roster_resolution_mismatch')
     if roster_preflight.failed(checks) or roster_preflight.exclusions_applied(snapshot, resolved)[1] != 'PASS':
         raise ValueError('shared_participation_roster_preflight_failed')
     rosters, qbs = {}, {}
     for side in ('home', 'away'):
         team = snapshot['rosters'][side]['team']
-        allowed = v1_complete_roster.eligible_ids(resolved[side])
-        # Use the resolver's full eligible population, including membership-only
-        # backups. Unranked players sort after every real depth rank; this is
-        # only an internal ordering key, not an asserted depth-chart rank.
-        ranked = [p['depth_rank'] for p in resolved[side]['players'] if p.get('depth_rank') is not None]
-        unranked_key = max(ranked, default=0) + 1
-        rosters[team] = [{'gsis_id': p['gsis_id'], 'player_name': p['name'], 'pos_abb': p['pos'],
-                          'pos_rank': p['depth_rank'] if p['depth_rank'] is not None else unranked_key,
-                          'rank_source': 'published_depth' if p['depth_rank'] is not None else 'unranked_sort_only'}
-                         for p in resolved[side]['players'] if p['gsis_id'] in allowed]
+        rosters[team] = v1_complete_roster.eligible_rows(resolved[side])
         qbs[team] = next(r['gsis_id'] for r in resolved[side]['roles'] if r['role'] == 'QB1')
         if pf.starter_qb(rosters[team]) != qbs[team]:
             raise ValueError('shared_participation_qb_mismatch:' + team)

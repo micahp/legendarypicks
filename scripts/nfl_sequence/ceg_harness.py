@@ -83,9 +83,7 @@ class Provider:
         else:
             lineup, choose = self.players.prepare(offense, state, f'{seed}:{self.n}')
             play = self.gen.play(st, seed, quarterback=lineup['qb1'], opportunity=choose)
-            if play.event not in ('punt', 'field_goal_attempt'):
-                self.players.commit(lineup)
-            else:
+            if play.event in ('punt', 'field_goal_attempt'):
                 lineup = None
         cc.validate({'down': st['down'], 'togo': st['ydstogo'], 'yl': st['yardline_100']}, play, require_clock=False)
         yl = st['yardline_100']
@@ -120,12 +118,20 @@ class Provider:
                   'play_type': {'run': 'run', 'scramble': 'run', 'kneel': 'qb_kneel', 'spike': 'qb_spike',
                                 'punt': 'punt', 'field_goal_attempt': 'field_goal'}.get(play.event, 'pass')}
         if lineup is not None:
+            record['_ceg_pending_lineup'] = lineup
             record['ceg_player_facts'] = {'event': play.event, 'passer': play.passer,
                 'rusher': play.rusher, 'receiver': play.receiver, 'fumble': play.fumble,
                 'qb1': lineup['qb1'], 'slots': lineup['slots'], 'group': lineup['group'],
                 'stints': lineup['lineup'], 'selection': lineup['selection']}
         self.last = record
         return event, record, 0, spot
+
+    def accept_play(self, row):
+        # Only called after E1 appends an accepted play. Penalty replacement
+        # drops the original row and therefore cannot advance player stints.
+        lineup = row.get('_ceg_pending_lineup')
+        if lineup is not None:
+            self.players.commit(lineup)
 
 
 class CEGClock:
