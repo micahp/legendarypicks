@@ -30,6 +30,7 @@
     ]
   ],
   "raw_archive_bytes": 33630926,
+  "raw_archive_path": "/root/runs/week-12/games/2026_12_CHI_DET/raw/2026_12_CHI_DET-20261127T155718Z-fc22ba3e2097.tar.gz",
   "raw_archive_sha256": "4052134bbbfa6874f8ece7c34302dda30c8e63744f0da0dc87f4bab9787fbb3c",
   "registry_sha256": "c9370a46cf64e481a0439c0f2cb9d97cf835f1a6861c686b32e980f292b60207",
   "requested_games": 100,

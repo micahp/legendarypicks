@@ -1,14 +1,14 @@
 {
   "2026_12_CHI_DET/v1_complete": {
-    "path": "/root/runs/week-12/games/2026_12_CHI_DET/raw",
+    "path": "/root/runs/week-12/games/2026_12_CHI_DET/raw/2026_12_CHI_DET-20261127T155718Z-fc22ba3e2097.tar.gz",
     "sha256": "4052134bbbfa6874f8ece7c34302dda30c8e63744f0da0dc87f4bab9787fbb3c"
   },
   "2026_12_KC_BUF/v1_complete": {
-    "path": "/root/runs/week-12/games/2026_12_KC_BUF/raw",
+    "path": "/root/runs/week-12/games/2026_12_KC_BUF/raw/2026_12_KC_BUF-20261127T165917Z-15271af975f4.tar.gz",
     "sha256": "cf867ad0bb3c25dce33355f1a3e6fca3f3e09cca42fc2848b3fdfa66a1f5c92c"
   },
   "2026_12_PHI_DAL/v1_complete": {
-    "path": "/root/runs/week-12/games/2026_12_PHI_DAL/raw",
+    "path": "/root/runs/week-12/games/2026_12_PHI_DAL/raw/2026_12_PHI_DAL-20261127T162830Z-6ed4c646a2c5.tar.gz",
     "sha256": "e06423be150bd0bf3846d99f7dfc814d4467b3e17d9178719087bdc0404bbca3"
   },
   "archives": [
