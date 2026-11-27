@@ -64,8 +64,10 @@ def team_stats(drives, points, kickoff_events=()):
                     if ev == 'pass_complete':
                         t['pass_comp'] += 1
                         t['pass_yds'] += _credited(play, _player_yards(play, 'passing_yards', yards))
-                        if (_player_yards(play, 'receiving_yards', None) is not None):
-                            t['receiving_yds'] += _credited(play, _player_yards(play, 'receiving_yards', yards))
+                        # Player receiving lines use this same fallback for ordinary
+                        # completions. Do not omit them just because one fumble play
+                        # carries explicit receiving yardage.
+                        t['receiving_yds'] += _credited(play, _player_yards(play, 'receiving_yards', yards))
             if out['turnover'] and (ev in ('interception', 'fumble_lost') or out.get('fumble')):
                 t['turnovers'] += 1
             if ev == 'interception':
