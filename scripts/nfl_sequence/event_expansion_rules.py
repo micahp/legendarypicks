@@ -816,6 +816,8 @@ def _apply_v3_kick(state, play, switches):
                           'scoring_team': scorer})
             return AppliedEvent(None, facts.scoring_kind, flags, scorer)
         if recovery_team != state['offense']:
+            # A blocked kick changes possession without an interception or lost fumble.
+            flags['possession_change'] = True
             next_yard = 100 - dead_kicking
             return AppliedEvent(_v3_next_state(state, recovery_team, next_yard, 'blocked_field_goal'),
                                 'turnover', flags)
