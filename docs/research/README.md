@@ -13,12 +13,14 @@ Use this index to avoid repeating investigations. Dated reports, raw evidence, m
 | CEG phases 0–9 | [CEG source and report map](../architecture/CEG.md) |
 | V1 Complete, Liquid AI | [Source audit](https://github.com/micahp/legendarypicks/blob/50c15508/docs/research/V1-COMPLETE-LIQUID-AI-ARCHITECTURE-AUDIT-2026-11-26.md) |
 | Playbook reuse | [Reuse audit](https://github.com/micahp/legendarypicks/blob/50c15508/docs/research/GRIDIRON-SLC-PLAYBOOK-REUSE-AUDIT-2026-11-23.md) |
+| Madden 64 validation and pace | [25-game validation and pace/efficiency report](https://github.com/micahp/legendarypicks/blob/9c9ee1ff/docs/research/MADDEN64-25-GAME-VALIDATION-AND-AI-INVESTIGATION-2026-11-26.md) |
 | Madden 64 | [Mechanics matrix (moving branch)](https://github.com/micahp/legendarypicks/blob/madden-on-main/docs/research/MADDEN64-MECHANICS-MATRIX.md); [Statistical study](https://github.com/micahp/legendarypicks/blob/922671ac/docs/research/MADDEN64-STATISTICAL-SIMULATION-STUDY.md) |
 | V2 typed event expansion | [Reuse inventory](https://github.com/micahp/legendarypicks/blob/50c15508/docs/research/SLC-V2-EVENT-EXPANSION-INVENTORY-2026-11-24.md) |
 | Week 11 roster preflight and rerun | [Historical rerun report](week11-rerun-preflight-2026-11-23/REPORT.md); [original invalid-forecast evidence](week11-1k-batch-2026-11-22/REPORT.md) |
 | Thanksgiving Week 12 (retrospective) | [Run and grading report](week12-thanksgiving-blackfriday-slc-2026/REPORT.md); [archive checksums](week12-thanksgiving-blackfriday-slc-2026/raw-archive-checksums.json) |
 | Shared participation / HE | [Moving V2 integration](https://github.com/micahp/legendarypicks/blob/6d2db7e1ec0cbebbeba08ce1049f1f64b08a2bad/docs/research/SLC-SHARED-PARTICIPATION-2026-11-26.md) |
 | CEG player candidate | [Independent CEG research integration](https://github.com/micahp/legendarypicks/blob/df6d8e6ffd984d833472f44bec33426f93ff0917/docs/research/SLC-CEG-PLAYER-INTEGRATION-2026-11-26.md) |
+| V2 mechanism ablation and additive event contracts | [Ablation results](https://github.com/micahp/legendarypicks/blob/8d75401c/docs/research/SLC-V2-LAYER-INTERACTION-REPORT.md); [consolidated research contract](https://github.com/micahp/legendarypicks/blob/c4ab5932/scripts/nfl_sequence/ceg_contract_v3.py) |
 | Conditioning | [V2 Simplified and other arms](../model-cards/nfl/slc-v2-simplified.md) |
 
 This is an initial curated index, not a claim of exhaustive cataloguing of every research artifact. Extend the relevant row rather than creating another top-level dated index. Review prior evidence and unresolved blockers before repeating experiments.
