@@ -66,3 +66,11 @@ flowchart TD
 ```
 
 No full-engine or held-out evaluation was executed during consolidation. See [V2 card](../model-cards/nfl/slc-v2.md).
+
+## Portable historical-pool representation (development)
+
+The frozen historical engines may intentionally alias `reference.contextual_sampler.source_pool` to `reference.pool`. Legacy portable schema 1 serializes those occurrences independently, destroying that identity and allocating two historical pools at load. The exact V1.6 OOM investigation is recorded in the [memory audit](https://github.com/micahp/legendarypicks/blob/research/slc-week12-blackfriday-runs-2026-11-27/docs/research/SLC-PORTABLE-MODEL-PACKS-CONTEXT-2026-11-19.md).
+
+Development portable schema 2 omits only that explicitly shared sampler field, streams the original pool once, and restores the alias before reference validation or simulation. Schema 1 remains readable without changing its object semantics. New builds use schema 2 only if the original objects are identical. No general deduplication of content-equal objects, training-data reduction or cross-worker sharing is implemented. The format change does not change frozen engine code, source digests or model identity.
+
+To convert an existing legacy artifact without refitting, use `python scripts/nfl_sequence/slc_cli.py pack repack-shared-pool --pack OLD --pack-sha256 SHA --code-commit COMMIT --out NEW` in a fresh process with the original runtime ABI/dependencies. The conversion requires enough memory to load the old package once; use an approved isolated host, not an active simulation host. It checks ordered tagged-state equality before merging the two fields and preserves the manifest except for format and payload metadata. It never overwrites the source or updates the installed-model registry. Register the new digest only after matching full-record seeded parity (including invalid seeds and box scores), first-seed and load memory measurements, and ordinary launch gates. No full-size conversion, parity or memory result is asserted by this implementation.

@@ -32,6 +32,9 @@ from pathlib import PurePosixPath
 
 
 SCHEMA = "lp-slc-portable-model-pack-1"
+SHARED_POOL_SCHEMA = "lp-slc-portable-model-pack-2"
+STATE_SCHEMA = "lp-slc-model-state-1"
+SHARED_POOL_STATE_SCHEMA = "lp-slc-model-state-2"
 MAX_PAYLOAD_BYTES = 1 << 30  # 1 GiB uncompressed hard cap; validate before allocating.
 MAX_ARCHIVE_BYTES = 2 << 30
 RUNTIME_DISTRIBUTIONS = ("numpy", "scipy")
@@ -252,7 +255,48 @@ def _iter_state_json(value, active=None):
         active.remove(identity)
 
 
-def _write_state_payload(stream, reference, snapshot, config):
+def _has_shared_source_pool(reference):
+    sampler = getattr(reference, "contextual_sampler", None)
+    pool = getattr(reference, "pool", None)
+    return (isinstance(pool, dict) and sampler is not None
+            and getattr(sampler, "__dict__", {}).get("source_pool") is pool)
+
+
+def _without_duplicate_source_pool(reference):
+    """Shallow serialization view only; never mutate the live reference or rows."""
+    if not _has_shared_source_pool(reference):
+        raise ModelPackError("SHARED_SOURCE_POOL_ALIAS_REQUIRED")
+
+    def shallow_instance(value, attrs):
+        cls = type(value)
+        result = types.SimpleNamespace() if cls is types.SimpleNamespace else object.__new__(cls)
+        for key, child in attrs.items():
+            object.__setattr__(result, key, child)
+        return result
+
+    sampler = reference.contextual_sampler
+    attrs = dict(vars(sampler))
+    del attrs["source_pool"]
+    ref_attrs = dict(vars(reference))
+    ref_attrs["contextual_sampler"] = shallow_instance(sampler, attrs)
+    return shallow_instance(reference, ref_attrs)
+
+
+def _restore_shared_source_pool(reference):
+    sampler = getattr(reference, "contextual_sampler", None)
+    pool = getattr(reference, "pool", None)
+    attrs = getattr(sampler, "__dict__", None)
+    if not isinstance(pool, dict) or not isinstance(attrs, dict) or "source_pool" in attrs:
+        raise ModelPackError("SHARED_SOURCE_POOL_STATE_INVALID")
+    object.__setattr__(sampler, "source_pool", pool)
+    if not _has_shared_source_pool(reference):
+        raise ModelPackError("SHARED_SOURCE_POOL_RESTORE_FAILED")
+
+
+def _write_state_payload(stream, reference, snapshot, config, *, shared_pool=False):
+    if shared_pool:
+        reference = _without_duplicate_source_pool(reference)
+    state_schema = SHARED_POOL_STATE_SCHEMA if shared_pool else STATE_SCHEMA
     digest = hashlib.sha256()
     size = 0
     pending = bytearray()
@@ -278,7 +322,7 @@ def _write_state_payload(stream, reference, snapshot, config):
         pending.extend(chunk.encode("utf-8"))
         if len(pending) >= 1 << 20:
             flush()
-    pending.extend(b',"schema":"lp-slc-model-state-1","snapshot":')
+    pending.extend((',"schema":' + json.dumps(state_schema) + ',"snapshot":').encode("utf-8"))
     pending.extend(json.dumps(snapshot, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8"))
     pending.extend(b'}\n')
     flush()
@@ -763,6 +807,7 @@ def write_pack(path, *, reference, snapshot, model_id, code_commit, config=None,
     # A game overlay is part of this execution pack, preventing an accidentally
     # reused week/roster from being treated as the same fitted reference.
     config = config or {}
+    shared_pool = _has_shared_source_pool(reference)
     enabled = set(config.get("enabled_layers") or ())
     if model_id in ("v1.7", "v1.7-penalties-on"):
         adapter = (config.get("runtime_adapters") or {}).get("v1_7_penalty")
@@ -797,9 +842,9 @@ def write_pack(path, *, reference, snapshot, model_id, code_commit, config=None,
                              compresslevel=6, allowZip64=True) as archive:
             with archive.open("reference.json", "w") as payload_stream:
                 payload_sha256, payload_bytes = _write_state_payload(
-                    payload_stream, reference, snapshot, config)
+                    payload_stream, reference, snapshot, config, shared_pool=shared_pool)
             manifest = {
-                "schema": SCHEMA,
+                "schema": SHARED_POOL_SCHEMA if shared_pool else SCHEMA,
                 "model_id": str(model_id),
                 "model_code_commit": str(code_commit),
                 "game_id": snapshot["schedule"]["game_id"],
@@ -853,7 +898,7 @@ def load_pack(path, *, expected_sha256, expected_code_commit, engine_dir=None):
         if file_info.file_size > MAX_PAYLOAD_BYTES:
             raise ModelPackError("PAYLOAD_TOO_LARGE")
         manifest = json.loads(archive.read("manifest.json"))
-        if manifest.get("schema") != SCHEMA:
+        if manifest.get("schema") not in (SCHEMA, SHARED_POOL_SCHEMA):
             raise ModelPackError("PACK_SCHEMA_MISMATCH")
         if manifest.get("model_code_commit") != expected_code_commit:
             raise ModelPackError("MODEL_CODE_COMMIT_MISMATCH")
@@ -909,11 +954,14 @@ def load_pack(path, *, expected_sha256, expected_code_commit, engine_dir=None):
         if (hashing_stream.size != manifest.get("payload_bytes")
                 or hashing_stream.digest.hexdigest() != manifest.get("payload_sha256")):
             raise ModelPackError("PACK_PAYLOAD_HASH_MISMATCH")
-    if loaded.get("schema") != "lp-slc-model-state-1":
+    shared_pool = manifest["schema"] == SHARED_POOL_SCHEMA
+    if loaded.get("schema") != (SHARED_POOL_STATE_SCHEMA if shared_pool else STATE_SCHEMA):
         raise ModelPackError("MODEL_STATE_SCHEMA_MISMATCH")
     if set(loaded) != {"schema", "reference", "snapshot", "config"}:
         raise ModelPackError("MODEL_STATE_FIELDS_MISMATCH")
     ref, snapshot = _decode_state(loaded["reference"], allowed_modules), loaded["snapshot"]
+    if shared_pool:
+        _restore_shared_source_pool(ref)
     checks = _required_reference(ref)
     if any(manifest["checks"].get(k) != v for k, v in checks.items()):
         raise ModelPackError("REFERENCE_SUPPORT_COUNTS_CHANGED")
@@ -924,3 +972,52 @@ def load_pack(path, *, expected_sha256, expected_code_commit, engine_dir=None):
             or (snapshot.get("schedule") or {}).get("game_id") != manifest["game_id"]):
         raise ModelPackError("GAME_OVERLAY_CHANGED")
     return ref, snapshot, manifest, loaded.get("config") or {}
+
+
+def repack_shared_pool(path, destination, *, expected_sha256, expected_code_commit):
+    """Convert a pinned old package without refitting or reading source data.
+
+    The old package must be loaded once on a sufficiently large isolated host.
+    Prove ordered tagged-state equality, not merely matching row counts or a
+    reference fingerprint. Keep all manifest fields other than format/payload
+    unchanged. Publish create-only after these checks; game parity is separate.
+    """
+    from itertools import zip_longest
+
+    destination = Path(destination)
+    if destination.exists():
+        raise FileExistsError(f"immutable pack exists: {destination}")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="slc-repack-", dir=destination.parent) as temp:
+        temp = Path(temp)
+        ref, snapshot, old, config = load_pack(
+            path, expected_sha256=expected_sha256, expected_code_commit=expected_code_commit,
+            engine_dir=temp / "engine")
+        if old["schema"] != SCHEMA:
+            raise ModelPackError("REPACK_REQUIRES_LEGACY_SCHEMA")
+        sampler = getattr(ref, "contextual_sampler", None)
+        source = getattr(sampler, "source_pool", None)
+        if not isinstance(source, dict) or not isinstance(ref.pool, dict):
+            raise ModelPackError("REPACK_SOURCE_POOL_MISSING")
+        if source is not ref.pool and not all(a == b for a, b in zip_longest(
+                _iter_state_json(ref.pool), _iter_state_json(source))):
+            raise ModelPackError("REPACK_SOURCE_POOL_CONTENT_MISMATCH")
+        # The source variable must not retain the duplicate after this point.
+        object.__setattr__(sampler, "source_pool", ref.pool)
+        del source
+        engine_files = {name: (temp / "engine" / name).read_bytes()
+                        for name in old["engine_files_sha256"]}
+        candidate = temp / "repacked.slcpkg"
+        result = write_pack(candidate, reference=ref, snapshot=snapshot,
+                            model_id=old["model_id"], code_commit=expected_code_commit,
+                            config=config, engine_files=engine_files)
+        new = result["manifest"]
+        changed = {"schema", "payload_sha256", "payload_bytes"}
+        if (new["schema"] != SHARED_POOL_SCHEMA
+                or {k: v for k, v in old.items() if k not in changed}
+                != {k: v for k, v in new.items() if k not in changed}):
+            raise ModelPackError("REPACK_MANIFEST_CHANGED")
+        if new["payload_bytes"] >= old["payload_bytes"]:
+            raise ModelPackError("REPACK_PAYLOAD_NOT_SMALLER")
+        os.link(candidate, destination)
+        return dict(result, path=str(destination), original_pack_sha256=expected_sha256)

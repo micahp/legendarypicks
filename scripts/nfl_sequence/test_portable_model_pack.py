@@ -362,6 +362,111 @@ class PortablePack(unittest.TestCase):
         parsed = _StateJSONReader(ChunkedText('{"decimal":1.25,"integer":123}'), set()).read()
         self.assertEqual(parsed, {"decimal": 1.25, "integer": 123})
 
+    def test_shared_pool_is_serialized_once_and_restored_by_identity(self):
+        import zipfile
+        from collections import defaultdict
+        from portable_model_pack import SHARED_POOL_SCHEMA
+        with tempfile.TemporaryDirectory() as dirname:
+            root = Path(dirname)
+            ref = _reference()
+            ref.pool = defaultdict(list, {
+                (1, 2, 3): [("run", {"play_id": "unique-pool-marker-123", "nested": [1, 2]}, 8, 55)],
+                (2, 3, 4): [("pass", {"play_id": "second"}, 5, 60)]})
+            ref.contextual_sampler = SimpleNamespace(source_pool=ref.pool, other={"kept": 1})
+            original_keys = list(vars(ref.contextual_sampler))
+            result = write_pack(root / "new.slcpkg", reference=ref, snapshot=_snapshot(),
+                                model_id="v1", code_commit="1" * 40, engine_files=_engine_files())
+            self.assertEqual(result["manifest"]["schema"], SHARED_POOL_SCHEMA)
+            self.assertIs(ref.contextual_sampler.source_pool, ref.pool)
+            self.assertEqual(list(vars(ref.contextual_sampler)), original_keys)
+            with zipfile.ZipFile(root / "new.slcpkg") as archive:
+                payload = archive.read("reference.json")
+                self.assertEqual(payload.count(b"unique-pool-marker-123"), 1)
+            loaded, snap, manifest, config = load_pack(
+                root / "new.slcpkg", expected_sha256=result["sha256"],
+                expected_code_commit="1" * 40, engine_dir=root / "engine")
+            self.assertIs(loaded.pool, loaded.contextual_sampler.source_pool)
+            self.assertEqual(list(loaded.pool.items()), list(ref.pool.items()))
+            self.assertIsInstance(loaded.pool, defaultdict)
+            self.assertIs(loaded.pool.default_factory, list)
+            self.assertEqual(loaded.contextual_sampler.other, {"kept": 1})
+            self.assertEqual(snap, _snapshot())
+            self.assertEqual(config, {})
+            self.assertEqual(manifest["reference_sha256"], ref.model_inputs["sha256"])
+
+    def test_legacy_equal_but_distinct_pools_are_not_implicitly_merged(self):
+        import copy
+        from portable_model_pack import SCHEMA, repack_shared_pool
+        with tempfile.TemporaryDirectory() as dirname:
+            root = Path(dirname)
+            ref = _reference()
+            ref.contextual_sampler = SimpleNamespace(source_pool=copy.deepcopy(ref.pool))
+            old = write_pack(root / "old.slcpkg", reference=ref, snapshot=_snapshot(),
+                             model_id="v1", code_commit="1" * 40, engine_files=_engine_files())
+            self.assertEqual(old["manifest"]["schema"], SCHEMA)
+            loaded, _, _, _ = load_pack(root / "old.slcpkg", expected_sha256=old["sha256"],
+                                        expected_code_commit="1" * 40, engine_dir=root / "old-engine")
+            self.assertIsNot(loaded.pool, loaded.contextual_sampler.source_pool)
+            self.assertEqual(loaded.pool, loaded.contextual_sampler.source_pool)
+            new = repack_shared_pool(root / "old.slcpkg", root / "new.slcpkg",
+                                     expected_sha256=old["sha256"], expected_code_commit="1" * 40)
+            loaded, _, _, _ = load_pack(root / "new.slcpkg", expected_sha256=new["sha256"],
+                                        expected_code_commit="1" * 40, engine_dir=root / "new-engine")
+            self.assertIs(loaded.pool, loaded.contextual_sampler.source_pool)
+            self.assertEqual(loaded.pool, ref.pool)
+            self.assertLess(new["manifest"]["payload_bytes"], old["manifest"]["payload_bytes"])
+            self.assertEqual(new["original_pack_sha256"], old["sha256"])
+            self.assertTrue((root / "old.slcpkg").is_file())
+
+    def test_repack_refuses_different_source_content_or_order(self):
+        from portable_model_pack import repack_shared_pool
+        with tempfile.TemporaryDirectory() as dirname:
+            root = Path(dirname)
+            ref = _reference()
+            ref.pool[(2, 3, 4)] = [("run", {"play_id": "other"}, 4, 40)]
+            ref.contextual_sampler = SimpleNamespace(source_pool=dict(reversed(list(ref.pool.items()))))
+            old = write_pack(root / "old.slcpkg", reference=ref, snapshot=_snapshot(),
+                             model_id="v1", code_commit="1" * 40, engine_files=_engine_files())
+            with self.assertRaisesRegex(ModelPackError, "REPACK_SOURCE_POOL_CONTENT_MISMATCH"):
+                repack_shared_pool(root / "old.slcpkg", root / "new.slcpkg",
+                                   expected_sha256=old["sha256"], expected_code_commit="1" * 40)
+            self.assertFalse((root / "new.slcpkg").exists())
+
+    def test_shared_pool_schema_refuses_missing_or_duplicate_alias_fields(self):
+        from portable_model_pack import _restore_shared_source_pool
+        for ref in (SimpleNamespace(pool={}, contextual_sampler=None),
+                    SimpleNamespace(pool={}, contextual_sampler=SimpleNamespace(source_pool={})),
+                    SimpleNamespace(pool=None, contextual_sampler=SimpleNamespace())):
+            with self.assertRaisesRegex(ModelPackError, "SHARED_SOURCE_POOL_STATE_INVALID"):
+                _restore_shared_source_pool(ref)
+
+    def test_repack_cli_preserves_snapshot_config_and_engine_hashes(self):
+        import copy
+        import contextlib
+        import slc_cli
+        with tempfile.TemporaryDirectory() as dirname:
+            root = Path(dirname)
+            ref = _reference()
+            ref.contextual_sampler = SimpleNamespace(source_pool=copy.deepcopy(ref.pool))
+            old = write_pack(root / "old.slcpkg", reference=ref, snapshot=_snapshot(),
+                             model_id="v1", code_commit="1" * 40, engine_files=_engine_files(),
+                             config={"training_cutoff": {"eligible_before": [2026, 1]},
+                                     "enabled_layers": ["test"], "source": {"sha256": "b" * 64}})
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                self.assertEqual(slc_cli.main(["pack", "repack-shared-pool",
+                    "--pack", str(root / "old.slcpkg"), "--pack-sha256", old["sha256"],
+                    "--code-commit", "1" * 40, "--out", str(root / "new.slcpkg")]), 0)
+            new = json.loads(output.getvalue())
+            _, snap, manifest, config = load_pack(
+                root / "new.slcpkg", expected_sha256=new["sha256"],
+                expected_code_commit="1" * 40, engine_dir=root / "engine")
+            self.assertEqual(snap, _snapshot())
+            self.assertEqual(config["source"], {"sha256": "b" * 64})
+            for key in old["manifest"]:
+                if key not in {"schema", "payload_sha256", "payload_bytes"}:
+                    self.assertEqual(manifest[key], old["manifest"][key])
+
     def test_wrong_external_hash_blocks_package_load(self):
         with tempfile.TemporaryDirectory() as dirname:
             path = Path(dirname) / "v1.slcpack"

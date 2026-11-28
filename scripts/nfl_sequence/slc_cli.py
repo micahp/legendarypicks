@@ -176,6 +176,14 @@ def simulate(args):
     return simulate_portable_pack.main(run_args)
 
 
+def repack(args):
+    from portable_model_pack import repack_shared_pool
+    result = repack_shared_pool(args.pack, args.out, expected_sha256=args.pack_sha256,
+                                expected_code_commit=args.code_commit)
+    print(json.dumps(result, indent=2, sort_keys=True))
+    return 0
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="slc")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -188,6 +196,13 @@ def main(argv=None):
     build_cmd.add_argument("--snapshot", type=Path)
     build_cmd.add_argument("--out-dir", type=Path, default=Path(os.environ.get("SLC_MODELS_DIR", "models")))
     build_cmd.set_defaults(func=build)
+    repack_cmd = pack_ops.add_parser("repack-shared-pool",
+                                     help="convert one immutable legacy package; no model refit")
+    repack_cmd.add_argument("--pack", type=Path, required=True)
+    repack_cmd.add_argument("--pack-sha256", required=True)
+    repack_cmd.add_argument("--code-commit", required=True)
+    repack_cmd.add_argument("--out", type=Path, required=True)
+    repack_cmd.set_defaults(func=repack)
 
     sim_cmd = commands.add_parser("simulate")
     sim_cmd.add_argument("--model", required=True, choices=tuple(MODELS))
