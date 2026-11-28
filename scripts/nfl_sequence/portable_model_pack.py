@@ -262,24 +262,33 @@ def _has_shared_source_pool(reference):
             and getattr(sampler, "__dict__", {}).get("source_pool") is pool)
 
 
-def _without_duplicate_source_pool(reference):
-    """Shallow serialization view only; never mutate the live reference or rows."""
-    if not _has_shared_source_pool(reference):
-        raise ModelPackError("SHARED_SOURCE_POOL_ALIAS_REQUIRED")
+def _shallow_instance(value, attrs):
+    cls = type(value)
+    result = types.SimpleNamespace() if cls is types.SimpleNamespace else object.__new__(cls)
+    for key, child in attrs.items():
+        object.__setattr__(result, key, child)
+    return result
 
-    def shallow_instance(value, attrs):
-        cls = type(value)
-        result = types.SimpleNamespace() if cls is types.SimpleNamespace else object.__new__(cls)
-        for key, child in attrs.items():
-            object.__setattr__(result, key, child)
-        return result
 
-    sampler = reference.contextual_sampler
-    attrs = dict(vars(sampler))
-    del attrs["source_pool"]
+def _portable_reference_view(reference, *, shared_pool=False):
+    """Omit derived identity memo and optionally encode one shared pool.
+
+    Frozen SLC describe() memoizes (source objects, derived description). The
+    source objects cannot retain identity in legacy packages, so the engine
+    necessarily rebuilds the memo on its next describe() call. No fitted
+    state or authoritative manifest is stored exclusively in this memo.
+    Never mutate the live build reference or its sampler.
+    """
     ref_attrs = dict(vars(reference))
-    ref_attrs["contextual_sampler"] = shallow_instance(sampler, attrs)
-    return shallow_instance(reference, ref_attrs)
+    ref_attrs.pop("_describe_memo", None)
+    if shared_pool:
+        if not _has_shared_source_pool(reference):
+            raise ModelPackError("SHARED_SOURCE_POOL_ALIAS_REQUIRED")
+        sampler = reference.contextual_sampler
+        attrs = dict(vars(sampler))
+        del attrs["source_pool"]
+        ref_attrs["contextual_sampler"] = _shallow_instance(sampler, attrs)
+    return _shallow_instance(reference, ref_attrs)
 
 
 def _restore_shared_source_pool(reference):
@@ -294,8 +303,7 @@ def _restore_shared_source_pool(reference):
 
 
 def _write_state_payload(stream, reference, snapshot, config, *, shared_pool=False):
-    if shared_pool:
-        reference = _without_duplicate_source_pool(reference)
+    reference = _portable_reference_view(reference, shared_pool=shared_pool)
     state_schema = SHARED_POOL_STATE_SCHEMA if shared_pool else STATE_SCHEMA
     digest = hashlib.sha256()
     size = 0

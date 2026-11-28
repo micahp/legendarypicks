@@ -476,6 +476,68 @@ class PortablePack(unittest.TestCase):
         self.assertIs(next(iter(restored[0])), next(iter(restored[-1])))
         self.assertIs(restored[0]["long_key_for_historical_row"], restored[-1]["long_key_for_historical_row"])
 
+    def test_describe_memo_is_not_serialized_in_either_format(self):
+        from portable_model_pack import _write_state_payload, _StateJSONReader
+        for shared_pool in (False, True):
+            with self.subTest(shared_pool=shared_pool):
+                ref = _reference()
+                sampler = SimpleNamespace(source_pool=ref.pool, layer=SimpleNamespace(artifact={"x": 1}))
+                ref.contextual_sampler = sampler
+                ref._describe_memo = ((sampler, ref.model_inputs, sampler.layer.artifact),
+                                      {"derived": "never-serialize-this-memo-marker"})
+                payload = io.BytesIO()
+                _write_state_payload(payload, ref, _snapshot(), {}, shared_pool=shared_pool)
+                raw = payload.getvalue()
+                self.assertNotIn(b"_describe_memo", raw)
+                self.assertNotIn(b"never-serialize-this-memo-marker", raw)
+                self.assertIs(ref._describe_memo[0][0], sampler)
+                self.assertIs(ref.contextual_sampler.source_pool, ref.pool)
+                restored = _StateJSONReader(io.StringIO(raw.decode()), {"types"}).read()["reference"]
+                self.assertFalse(hasattr(restored, "_describe_memo"))
+                self.assertEqual(restored.model_inputs, ref.model_inputs)
+                self.assertEqual(restored.contextual_sampler.layer.artifact, sampler.layer.artifact)
+                self.assertEqual(restored.pool, ref.pool)
+
+    def test_repack_removes_actual_legacy_memo_and_duplicate_pool(self):
+        import copy
+        import hashlib
+        import zipfile
+        from portable_model_pack import repack_shared_pool, _iter_state_json
+        with tempfile.TemporaryDirectory() as dirname:
+            root = Path(dirname)
+            ref = _reference()
+            sampler = SimpleNamespace(source_pool=copy.deepcopy(ref.pool),
+                                      layer=SimpleNamespace(artifact={"x": 1}))
+            ref.contextual_sampler = sampler
+            ref._describe_memo = ((sampler, ref.model_inputs, sampler.layer.artifact),
+                                  {"derived": "legacy-memo-marker"})
+            old = write_pack(root / "base.slcpkg", reference=ref, snapshot=_snapshot(),
+                             model_id="v1", code_commit="1" * 40, engine_files=_engine_files())
+            # Construct a genuine old-schema archive using the original raw
+            # tagged serializer, not the new writer which omits the memo.
+            raw = ('{"config":{},"reference":' + "".join(_iter_state_json(ref))
+                   + ',"schema":"lp-slc-model-state-1","snapshot":'
+                   + json.dumps(_snapshot(), sort_keys=True, separators=(",", ":")) + '}\n').encode()
+            manifest = dict(old["manifest"], payload_bytes=len(raw),
+                            payload_sha256=hashlib.sha256(raw).hexdigest())
+            legacy = root / "legacy.slcpkg"
+            with zipfile.ZipFile(legacy, "w") as archive:
+                archive.writestr("reference.json", raw)
+                archive.writestr("manifest.json", json.dumps(manifest))
+                for name, content in _engine_files().items():
+                    archive.writestr("engine/" + name, content)
+            digest = hashlib.sha256(legacy.read_bytes()).hexdigest()
+            new = repack_shared_pool(legacy, root / "new.slcpkg",
+                                     expected_sha256=digest, expected_code_commit="1" * 40)
+            restored, _, _, _ = load_pack(root / "new.slcpkg", expected_sha256=new["sha256"],
+                                          expected_code_commit="1" * 40, engine_dir=root / "engine")
+            self.assertFalse(hasattr(restored, "_describe_memo"))
+            self.assertIs(restored.pool, restored.contextual_sampler.source_pool)
+            self.assertEqual(restored.pool, ref.pool)
+            self.assertEqual(restored.model_inputs, ref.model_inputs)
+            with zipfile.ZipFile(root / "new.slcpkg") as archive:
+                self.assertNotIn(b"legacy-memo-marker", archive.read("reference.json"))
+
     def test_wrong_external_hash_blocks_package_load(self):
         with tempfile.TemporaryDirectory() as dirname:
             path = Path(dirname) / "v1.slcpack"
