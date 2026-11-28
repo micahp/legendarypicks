@@ -301,12 +301,15 @@ def _decision_resolves_to_event(decision, event):
     )
 
 
-def play(seed, ref, snapshot, *, paired_randomness=False):
+def play(seed, ref, snapshot, *, paired_randomness=False, rng_plan=None):
     """One SLC game. Returns (record, decisions): the engine record and this game's play-call decisions, in order."""
     if not is_slc(ref):
         raise ValueError('the reference was not loaded with the SLC play-call layer')
     sampler = ref.contextual_sampler
     sampler.decisions.clear()
+    seed_root = rng_plan.seed_root(snapshot) if rng_plan is not None else None
+    if rng_plan is not None and rng_plan.paired:
+        paired_randomness = True
     sampler.participant_chooser = pre_event.chooser(require_snapshot(snapshot), seed,
                                                     formation_priors=sampler.formation_priors,
                                                     player_shares=sampler.player_shares,
@@ -316,10 +319,11 @@ def play(seed, ref, snapshot, *, paired_randomness=False):
                                                     qb_decision_table=sampler.qb_decision_table,
                                                     scramble_backoff_enabled=sampler.scramble_backoff_enabled,
                                                     qb_run_role_style_enabled=getattr(
-                                                        sampler, 'qb_run_role_style_enabled', False))
+                                                        sampler, 'qb_run_role_style_enabled', False),
+                                                    seed_root=seed_root)
     try:
         record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot),
-                              paired_randomness=paired_randomness)
+                              paired_randomness=paired_randomness, seed_root=seed_root)
     finally:
         sampler.participant_chooser = None
     decisions = list(sampler.decisions)

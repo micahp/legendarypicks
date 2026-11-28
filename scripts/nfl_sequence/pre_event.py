@@ -108,7 +108,7 @@ def _by_player_share(players, table, team, role, positions, draw):
 def choose(snapshot, side, intent, seed, index, formation_priors=None, state=None, player_shares=None, defense_priors=None,
            role_table=None, decision_table=None, trick_passer_rate=TRICK_PASSER_RATE, qb_receiver_rate=QB_RECEIVER_RATE,
            share_table=None, playbook_table=None, share_cache=None, qb_decision_table=None,
-           scramble_backoff_enabled=False, qb_receiver_package=False, qb_run_role_style_enabled=False):
+           scramble_backoff_enabled=False, qb_receiver_package=False, qb_run_role_style_enabled=False, seed_root=None):
     """{'passer': ..., 'receiver': ...} for a dropback, {'rusher': ...} for a run, None otherwise. Chosen before the outcome.
 
     With formation priors and the situation, also the formation and personnel grouping, from the historical shares."""
@@ -119,7 +119,9 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     import share_distributions
     available_players = share_distributions.eligible_players(players, roster.get('injury_report'))
     observed = snapshot['model_reference']['observed_reference']
-    base = f"{snapshot['snapshot_sha256']}:{seed}:{index}"
+    # v1 keys the draws on the snapshot hash (legacy). v2 passes seed_root, keyed on stable inputs only.
+    root = snapshot['snapshot_sha256'] if seed_root is None else seed_root
+    base = f"{root}:{seed}:{index}"
     chosen = {'side': side, 'team': team}
     if share_table is not None:
         chosen['participant_share_model'] = 'dirichlet_multinomial'
@@ -287,7 +289,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                                    if share_distributions.conditional_role_shares(share_table) else population)
                     share_group_name = (share_distributions.group_for_positions('receive', positions)
                                         if share_distributions.conditional_role_shares(share_table) else 'all')
-                    chosen['receiver'] = _by_game_share(eligible, share_table, team, 'receive', str(seed), snapshot['snapshot_sha256'],
+                    chosen['receiver'] = _by_game_share(eligible, share_table, team, 'receive', str(seed), root,
                                                         _draw(f'{base}:receiver:dirichlet'), share_cache, population=share_group,
                                                         group=share_group_name)
                 else:
@@ -316,7 +318,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                                if share_distributions.conditional_role_shares(share_table) else population)
                 share_group_name = (share_distributions.group_for_positions('carry', positions)
                                     if share_distributions.conditional_role_shares(share_table) else 'all')
-                chosen['rusher'] = _by_game_share(eligible, share_table, team, 'carry', str(seed), snapshot['snapshot_sha256'],
+                chosen['rusher'] = _by_game_share(eligible, share_table, team, 'carry', str(seed), root,
                                                   _draw(f'{base}:rusher:dirichlet'), share_cache, population=share_group,
                                                   group=share_group_name)
             else:
@@ -355,7 +357,7 @@ def _by_game_share(candidates, share_table, team, role, game_id, seed_text, draw
 
 def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_priors=None, role_table=None, decision_table=None,
             share_table=None, playbook_table=None, qb_decision_table=None, scramble_backoff_enabled=False,
-            qb_receiver_package=False, qb_run_role_style_enabled=False):
+            qb_receiver_package=False, qb_run_role_style_enabled=False, seed_root=None):
     """A callable for PlayCallSampler.participant_chooser: called once per scrimmage play, after the intent, before the outcome.
     The decision index counts those calls, so it is the same on every replay of the same game."""
     counter = {'index': 0}
@@ -371,7 +373,7 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
                       share_cache=share_cache, qb_decision_table=qb_decision_table,
                       scramble_backoff_enabled=scramble_backoff_enabled,
                       qb_receiver_package=qb_receiver_package,
-                      qb_run_role_style_enabled=qb_run_role_style_enabled)
+                      qb_run_role_style_enabled=qb_run_role_style_enabled, seed_root=seed_root)
     return pick
 
 
