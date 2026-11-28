@@ -273,3 +273,20 @@ def test_player_prop_comparison_refuses_a_database_without_the_table(tmp_path):
     sqlite3.connect(path).close()
     with pytest.raises(ValueError, match='not readable'):
         oracle.player_prop_comparison(path, 'G1')
+
+
+def test_streak_file_names_each_team_by_both_codes(tmp_path):
+    path = tmp_path / 'codes.db'
+    conn = sqlite3.connect(path)
+    conn.executescript("""CREATE TABLE nfl_schedule (game_id TEXT, season INTEGER, game_type TEXT, gameday TEXT,
+        gametime TEXT, home_team TEXT, away_team TEXT, home_score INTEGER, away_score INTEGER);""")
+    conn.executemany("INSERT INTO nfl_schedule VALUES (?,?,?,?,?,?,?,?,?)", [
+        ('W1', 2026, 'REG', '2026-11-08', '13:00', 'WSH', 'NYG', 20, 10),
+        ('W2', 2026, 'REG', '2026-11-09', '13:00', 'LAR', 'ARI', 30, 6),
+        ('T', 2026, 'REG', '2026-11-19', '20:15', 'HOU', 'IND', None, None)])
+    conn.commit()
+    conn.close()
+    cutoff = oracle.datetime(2026, 11, 17, 12, 0, tzinfo=oracle.timezone.utc)
+    payload, _ = oracle.build_streaks(path, cutoff, 'T')
+    assert payload['teams']['WAS'] == payload['teams']['WSH'] == {'streak': 'W1'}
+    assert payload['teams']['LA'] == payload['teams']['LAR'] == {'streak': 'W1'}
