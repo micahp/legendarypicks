@@ -14,6 +14,7 @@ import team_codes
 
 REPO = Path(__file__).resolve().parents[1]
 OWNER = 'backend/team_codes.py'
+SELF = 'backend/test_team_code_interface.py'  # its own examples are the shapes the alias scan must catch
 # Codes are written in capitals, sometimes with dots (MoneyPuck's T.B). Lower- or mixed-case strings are names
 # ({"utah": "UTA"} maps a city), which this test leaves to team_codes' callers.
 PAIR = re.compile(r"""['"]([A-Z][A-Z.]{1,4})['"]\s*:\s*['"]([A-Z][A-Z.]{1,4})['"]""")
@@ -38,7 +39,7 @@ def find_alias_tables():
     files = subprocess.run(['git', 'ls-files'], cwd=REPO, capture_output=True, text=True, check=True).stdout.split()
     hits = []
     for name in files:
-        if name == OWNER or not name.endswith(SUFFIXES) or '/node_modules/' in name:
+        if name in (OWNER, SELF) or not name.endswith(SUFFIXES) or '/node_modules/' in name:
             continue
         try:
             text = (REPO / name).read_text(encoding='utf-8')
