@@ -439,3 +439,7 @@ The roster system is ready when:
 8. A later official roster update can be compared with the earlier forecast without rewriting history.
 
 Final design principle: Never confuse an incomplete roster feed with an incomplete football team, and never confuse a projected participant with an officially confirmed active player.
+
+### Implementation note: prior-game absence diagnostics
+
+New Oracle reports explicitly mark obsolete OUT/INACTIVE designations with `previous_game_out_no_current_report`. The shared roster preflight carries this flag to the resolved GSIS record only for the same canonical team, when the original timestamp precedes that previous kickoff, that kickoff is no later than the snapshot cutoff, and there is no current designation. The resolver preserves it as diagnostic metadata, not a current Out status or eligibility decision. Current designations supersede it, and a future marked observation is refused. Unmarked historical reports retain their existing resolution behavior and hashes. The marker and original evidence are sealed with the snapshot; no frozen model source or package changes.

@@ -36,7 +36,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 LISTEN = HERE.parent / "data" / "radio-listen.json"
 OUT = pathlib.Path(os.environ.get("LP_RADIO_BLACKOUTS", HERE / "data" / "radio-blackouts.json"))
 SAMPLE_S = 20
-ALIAS = {"nhl": {"UTAH": "UTA"}, "nba": {"UTA": "UTAH"}}
+import team_codes
 NOTICE = re.compile(
     r"not (?:be )?(?:in an area where this game is available|available in (?:your|this) area)"
     r"|blacked out in your area|due to (?:league|leak) restrictions|broadcast guidelines"
@@ -45,9 +45,18 @@ NOTICE = re.compile(
 
 def pick(table, league, home, away):
     """The stream the card plays: home club first, else away (mirrors audioForGame()[0])."""
+    if league not in team_codes.CANONICAL:
+        return None, None
+    streams = {}
+    for code, entry in (table.get(league) or {}).items():
+        key = team_codes.key_code(league, code)
+        if key in streams and streams[key] != entry:
+            raise ValueError(f'conflicting radio entries for {league}:{key}')
+        streams[key] = entry
     for team in (home, away):
-        key = ALIAS.get(league, {}).get(team, team)
-        e = (table.get(league) or {}).get(key)
+        if not team:
+            continue
+        e = streams.get(team_codes.key_code(league, team))
         if e and e.get("stream"):
             return team, e["stream"]
     return None, None

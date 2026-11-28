@@ -332,3 +332,40 @@ def test_normalize_position_lowercase_stripped():
 
 def test_normalize_position_trailing_space():
     assert normalize_position("nfl", "QB ") == "QB"
+
+
+
+def test_source_aliases_keep_native_nhl_and_sport_scoped_identity():
+    from team_codes import to_source, key_code
+    assert normalize("nhl", "LA") == "LAK"
+    assert normalize("nhl", "L.A") == "LAK"
+    assert normalize("nhl", "T.B") == "TBL"
+    assert normalize("nhl", "S.J") == "SJS"
+    assert normalize("nhl", "N.J") == "NJD"
+    assert to_source("nhl", "nhle", "LA") == "LAK"
+    assert normalize("mls", "GAL") == "LA"
+    assert normalize("ligamx", "TIG") == "UANL"
+    assert normalize("mlb", "OAK") == "ATH"
+    assert to_source("mlb", "statsapi", "ARI") == "AZ"
+    assert to_source("mlb", "statsapi", "CWS") == "CWS"
+    # A historical franchise mapping is not a universal current-team alias.
+    assert key_code("nhl", "ATL") == "ATL"
+    assert key_code("nhl", "PHX") == "PHX"
+
+
+def test_radio_lookups_use_same_canonical_key_without_merging_conflicting_streams():
+    from radio_blackout_check import pick
+    streams = {"nhl": {"LA": {"stream": "kings"}, "NJ": {"stream": "devils"}},
+               "nba": {"UTAH": {"stream": "jazz"}}}
+    assert pick(streams, "nhl", "LAK", "NJD") == ("LAK", "kings")
+    assert pick(streams, "nba", "UTA", None) == ("UTA", "jazz")
+    streams["nhl"]["LAK"] = {"stream": "different"}
+    with pytest.raises(ValueError, match="conflicting radio entries"):
+        pick(streams, "nhl", "LAK", "NJD")
+
+
+def test_one_shot_migration_scopes_are_not_expanded_by_new_aliases():
+    from migrate_log_team_vocabulary import MLB_RESPELL
+    from migrate_nhl_tricodes import TRICODES
+    assert MLB_RESPELL == {"AZ": "ARI", "CWS": "CHW"}
+    assert TRICODES == {"LA": "LAK", "SJ": "SJS", "TB": "TBL", "UTAH": "UTA"}

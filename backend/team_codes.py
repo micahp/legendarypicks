@@ -64,11 +64,18 @@ ALIASES: dict[str, dict[str, str]] = {
     "mlb": {
         "CWS": "CHW",
         "AZ": "ARI",
+        "OAK": "ATH",  # historical Athletics spelling at the current-team source boundary
+        "WAS": "WSH",
     },
     "nhl": {
         # NHL-specific tables use NHL's published tricodes. ESPN's alternate
         # spellings normalize into that persisted vocabulary.
         **_NHL_NATIVE_CODES,
+        # MoneyPuck punctuated spellings; retain the persisted native tricodes.
+        "T.B": "TBL",
+        "N.J": "NJD",
+        "L.A": "LAK",
+        "S.J": "SJS",
     },
     "nba": {
         # nba.com (team pages' TEAM_ABBREVIATION) -> the ESPN codes this database stores.
@@ -88,6 +95,14 @@ ALIASES: dict[str, dict[str, str]] = {
         # (Cade Cowell, Jorge Ruvalcaba, Justin Che) because same-name matching
         # is scoped to the same team on purpose. ESPN is canonical.
         "NYRB": "RBNY",
+        # RotoWire per-match stat feed, previously in ingest_rotowire_soccer_stats.py.
+        "DCU": "DC", "GAL": "LA", "LAF": "LAFC", "NER": "NE",
+        "NYR": "RBNY", "SJE": "SJ", "FIR": "CHI", "MNU": "MIN",
+        "RAP": "COL", "SOU": "SEA", "WHI": "VAN",
+    },
+    "ligamx": {
+        "CA": "CAZ", "GUA": "GDL", "MON": "MTY", "NEC": "NCX", "QUE": "QRO",
+        "TIG": "UANL", "UNM": "UNAM",
     },
     "ncaaf": {
         # ESPN's scoreboard flipped Jacksonville State from JVST to JXST in the
@@ -197,6 +212,13 @@ def normalize_optional(league: str, code: str | None) -> str | None:
 SOURCE_VOCABULARIES: dict[str, dict[str, dict[str, str]]] = {
     "nfl": {
         "nflverse": {"LAR": "LA", "WSH": "WAS"},
+    },
+    "mlb": {
+        "statsapi": {"ARI": "AZ", "CHW": "CWS"},
+    },
+    "nhl": {
+        # Our persisted codes already match the native publisher.
+        "nhle": {},
     },
 }
 

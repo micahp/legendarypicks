@@ -50,8 +50,8 @@ import urllib.request
 
 STATSAPI = "https://statsapi.mlb.com/api/v1"
 
-# statsapi -> this repo's vocabulary. The only place this conversion happens.
-TEAM_FIX = {"AZ": "ARI", "CWS": "CHW"}
+# Source spellings and canonical identity are owned by team_codes.
+import team_codes
 
 
 def _get(url):
@@ -85,7 +85,7 @@ def published_people(mlbam_ids, teams):
         for p in d.get("people", []):
             ct = p.get("currentTeam") or {}
             abbr = teams.get(ct.get("id"))          # None => not an MLB club
-            out[p["id"]] = {"team": TEAM_FIX.get(abbr, abbr),
+            out[p["id"]] = {"team": team_codes.normalize_optional("mlb", abbr),
                             "team_name": ct.get("name"),
                             "pos": (p.get("primaryPosition") or {}).get("abbreviation"),
                             "active": p.get("active")}

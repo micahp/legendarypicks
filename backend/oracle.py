@@ -703,7 +703,12 @@ def split_obsolete(latest, last_kickoff):
                'published_utc': published, 'team': team}
         previous = last_kickoff.get(_db_team(team))
         if raw in GAME_DESIGNATIONS and previous is not None and published < previous.strftime(fmt):
-            obsolete.append(dict(row, previous_kickoff_utc=previous.strftime(fmt)))
+            old = dict(row, previous_kickoff_utc=previous.strftime(fmt))
+            if raw in ('OUT', 'INACTIVE'):
+                # Diagnostic only: this is not a current designation. Explicit marker
+                # keeps the hashes of previously sealed reports unchanged.
+                old['extra_flags'] = ['previous_game_out_no_current_report']
+            obsolete.append(old)
             continue
         players.append(row)
     return players, obsolete
@@ -1067,7 +1072,9 @@ def main(argv=None):
     parser.add_argument('--game', metavar='GAME_ID', help='every stored fact about one game, as JSON')
     parser.add_argument('--props-db', help='optional separate cutoff-aware prop database for snapshot preflight')
     parser.add_argument('--snapshot', metavar='GAME_ID', help='a frozen pregame snapshot for one game, as JSON')
-    parser.add_argument('--as-of', help='with --snapshot: the cutoff, timezone-qualified, before the kickoff')
+    parser.add_argument('--as-of', help='with --snapshot or --injury-articles: timezone-qualified cutoff')
+    parser.add_argument('--injury-articles', metavar='TEAM',
+                        help='read-only team sitemap discovery catalog, as of --as-of; not player status')
     parser.add_argument('--weekly-roster', type=Path, help='cutoff-available nflverse weekly roster parquet')
     parser.add_argument('--weekly-roster-available-at', help='UTC availability time of the weekly roster')
     parser.add_argument('--injury-report', type=Path, help='cutoff-available injury report JSON')
@@ -1093,6 +1100,12 @@ def main(argv=None):
     parser.add_argument('--batch', action='append', default=[], metavar='MODEL=FOLDER',
                         help='with --grade-week: a model and its batch folder; repeat for each model')
     args = parser.parse_args(argv)
+    if args.injury_articles:
+        if not args.as_of:
+            parser.error('--injury-articles needs --as-of')
+        from ingest_team_injury_articles import list_observed
+        print(json.dumps(list_observed(args.db, args.injury_articles, args.as_of), indent=2, sort_keys=True))
+        return 0
     if args.streaks:
         missing = [name for name, value in (('--cutoff', args.cutoff), ('--target', args.target),
                                             ('--out', args.out)) if value is None]

@@ -45,9 +45,11 @@ import sqlite3
 import sys
 
 # statsapi spelling -> the spelling players.team and _TEAM_MAPS['mlb'] already use.
-MLB_RESPELL = {"AZ": "ARI", "CWS": "CHW"}
-
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import team_codes
+
+# Keep the measured one-shot migration scope, not every future alias.
+MLB_RESPELL = {code: team_codes.normalize("mlb", code) for code in ("AZ", "CWS")}
 
 from game_types import ALLSTAR as ALLSTAR_GAME_TYPE
 

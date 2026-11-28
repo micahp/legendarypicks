@@ -195,6 +195,44 @@ class ObsoleteStatus(unittest.TestCase):
                 db.name, datetime(2026, 11, 27, 2, 0, 0, tzinfo=timezone.utc), [BECK]), [])
 
 
+class ObsoleteFlagIntegration(unittest.TestCase):
+    def test_oracle_to_sealed_resolution_and_exclusions(self):
+        snap = snapshot({AGUILAR: 'Out'})
+        last = {'ARI': datetime(2026, 11, 15, 21, 5, tzinfo=timezone.utc)}
+        _, old = oracle.split_obsolete({BECK: ('OUT', '2026-11-15T19:51:13+00:00', 'ARZ')}, last)
+        self.assertEqual(old[0]['extra_flags'], ['previous_game_out_no_current_report'])
+        report = snap['rosters']['away']['injury_report']
+        before = rp.resolve(snap)
+        report['obsolete'] = [dict(old[0], extra_flags=old[0]['extra_flags'])]
+        resolved = rp.resolve(snap)
+        beck = next(p for p in resolved['away']['players'] if p['gsis_id'] == BECK)
+        self.assertTrue(beck['official_eligible'])
+        self.assertIn('previous_game_out_no_current_report', beck['flags'])
+        self.assertNotEqual(before['content_hash'], resolved['content_hash'])
+        sealed = oracle.finalize_model_snapshot(snap)
+        self.assertEqual(sealed['roster_resolution']['content_hash'], rp.resolve(sealed)['content_hash'])
+        self.assertEqual(rp.resolved_qb1(resolved['away']), BECK)
+
+    def test_legacy_report_and_current_designation(self):
+        snap = snapshot({BECK: 'Questionable'})
+        before = rp.resolve(snap)
+        old = {'gsis_id': BECK, 'team': 'ARI', 'rotowire_status': 'OUT', 'report_status': 'Out',
+               'published_utc': '2026-11-15T19:51:13+00:00', 'previous_kickoff_utc': '2026-11-15T21:05:00+00:00'}
+        snap['rosters']['away']['injury_report']['obsolete'] = [old]
+        self.assertEqual(before['content_hash'], rp.resolve(snap)['content_hash'])
+        old['extra_flags'] = ['previous_game_out_no_current_report']
+        self.assertEqual(before['content_hash'], rp.resolve(snap)['content_hash'])
+
+    def test_future_obsolete_marker_is_refused(self):
+        snap = snapshot({AGUILAR: 'Out'})
+        snap['rosters']['away']['injury_report']['obsolete'] = [{
+            'gsis_id': BECK, 'team': 'ARI', 'rotowire_status': 'OUT', 'report_status': 'Out',
+            'published_utc': '2026-11-22T16:00:00Z', 'previous_kickoff_utc': '2026-11-22T17:00:00Z',
+            'extra_flags': ['previous_game_out_no_current_report']}]
+        with self.assertRaisesRegex(ValueError, 'not cutoff-valid'):
+            rp.resolve(snap)
+
+
 class Membership(unittest.TestCase):
     def test_an_active_kicker_off_the_depth_chart_replaces_a_reserve_kicker(self):
         # BAL week 9: Tyler Loop on a reserve list, Jake Moody active (elevated) but not on the depth chart

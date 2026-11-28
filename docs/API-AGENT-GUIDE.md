@@ -160,3 +160,13 @@ A builder writes a data artifact, not a model-ready certificate. The consolidate
 5. Accept only the exact requested seed set with all required complete/valid results, matching identities and required stats checks. Never retry with replacement seeds or accept a partial cohort as the requested batch. Inspect failure status, nonzero exit code, rejected record and actual attempted count before repairing and starting a new immutable run. Never launch a fast-host batch without approval.
 
 The focused scheduler and mocked autonomous-launch tests passed; the actual repository suites, host inputs, live engine smoke and full cohorts have not been executed by this integration. External ad hoc launchers are not audited and must not bypass these gates.
+
+### Team injury-article discovery (development tooling)
+
+The optional team sitemap collector records canonical NFL team codes, article URL/title/date, actual observation time and source sitemap digest. It is a **discovery catalog**, not a verified injury report or exact publication-time feed. Legacy date-only records are not upgraded to cutoff evidence. The read-only Oracle command returns the latest matching observations actually acquired by the supplied cutoff:
+
+```bash
+python backend/oracle.py --db /path/to/existing.db --injury-articles LAR --as-of 2026-11-27T18:00:00Z
+```
+
+An operator may explicitly collect into an approved existing development database with `python backend/ingest_team_injury_articles.py --db /path/to/existing.db --months 2026-11`. Do not schedule or launch collection on production or a simulation host without approval. The collector reports partial failures with a nonzero exit. Catalog results explicitly disclaim completeness and verified player status; use the existing cutoff-valid injury/roster acquisition pipeline for eligibility. No automatic article-to-status inference is implemented or authorized.

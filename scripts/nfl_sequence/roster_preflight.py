@@ -70,6 +70,32 @@ def unwrap(snapshot):
     return snapshot.get('pregame_snapshot', snapshot)
 
 
+def _obsolete_flags(roster, report, as_of, current):
+    """Carry only explicitly marked, cutoff-eligible old OUT/INACTIVE evidence.
+    A newer status supersedes it; it never changes official eligibility.
+    Unmarked legacy reports retain their existing sealed resolution identity.
+    """
+    cutoff = _utc(as_of)
+    flags = {}
+    for row in report.get('obsolete', []):
+        if 'extra_flags' not in row:
+            continue
+        if row['extra_flags'] != ['previous_game_out_no_current_report']:
+            raise ValueError('invalid obsolete injury flags')
+        from scripts import nfl_team_codes
+        if nfl_team_codes.to_db(row['team']) != nfl_team_codes.to_db(roster['team']):
+            continue
+        published, previous = (_utc(row[key]) for key in ('published_utc', 'previous_kickoff_utc'))
+        if published.tzinfo is None or previous.tzinfo is None or not published < previous <= cutoff:
+            raise ValueError('obsolete injury evidence is not cutoff-valid')
+        if row.get('rotowire_status') not in ('OUT', 'INACTIVE') or row.get('report_status') != 'Out':
+            raise ValueError('obsolete flag requires prior OUT or INACTIVE evidence')
+        gsis = row['gsis_id']
+        if gsis not in current:
+            flags[gsis] = row['extra_flags']
+    return flags
+
+
 def resolve(snapshot):
     """{'away': resolved, 'home': resolved, 'matchup_blocks': [...], 'content_hash': ...} for one pregame snapshot."""
     snap = unwrap(snapshot)
@@ -95,6 +121,9 @@ def resolve(snapshot):
                 rows[gsis] = {'gsis_id': gsis, 'name': m['name'], 'pos': pos, 'membership': MEMBERSHIP[m['status']],
                               'depth_rank': None, 'injury': INJURY.get(status.get(gsis)),
                               'observed_utc': _z(roster['snapshot_at']), 'positions': [(pos, None)]}
+        for gsis, flags in _obsolete_flags(roster, report, as_of, status).items():
+            if gsis in rows:
+                rows[gsis]['extra_flags'] = flags
         inactives = [g for g, m in members.items() if m['status'] == 'INA']
         out[side] = roster_resolution.resolve_team(snap['schedule']['game_id'], roster['team'], as_of,
                                                    list(rows.values()), [], ROLES, inactives=inactives)

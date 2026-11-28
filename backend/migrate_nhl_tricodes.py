@@ -41,7 +41,10 @@ import sqlite3
 import sys
 
 # The publisher's own tricodes. Verified against api.nhle.com, not inferred.
-TRICODES = {"LA": "LAK", "SJ": "SJS", "TB": "TBL", "UTAH": "UTA"}
+import team_codes
+
+# Keep the measured four-code migration scope; NJ was not part of it.
+TRICODES = {code: team_codes.to_source("nhl", "nhle", code) for code in ("LA", "SJ", "TB", "UTAH")}
 
 # (table, column, how to reach the league). Every entry is scoped; see the docstring.
 TARGETS = [

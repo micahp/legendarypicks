@@ -17,8 +17,8 @@ MLB_TEAMS = "https://statsapi.mlb.com/api/v1/teams?sportId=1&season=2026"
 MLB_ROSTER = "https://statsapi.mlb.com/api/v1/teams/{teamId}/roster?rosterType=40Man"
 HDR = {"User-Agent": "Mozilla/5.0"}
 
-# Our abbrev → MLB abbrev where they differ (Washington, Athletics)
-_ABBR_ALIASES = {"WAS": "WSH", "OAK": "ATH", "ARI": "AZ"}
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "backend"))
+import team_codes
 
 
 def _norm(name: str) -> str:
@@ -47,7 +47,10 @@ def main(dry_run=False):
     for t in _get(MLB_TEAMS).get("teams", []):
         ab = (t.get("abbreviation") or "").upper()
         if ab:
-            teams[ab] = t["id"]
+            code = team_codes.normalize("mlb", ab)
+            if code in teams and teams[code] != t["id"]:
+                raise ValueError(f"ambiguous StatsAPI team identity: {code}")
+            teams[code] = t["id"]
     print(f"Loaded {len(teams)} MLB teams")
 
     # 2. Find MLB players that lack mlbam_id but are referenced by props
@@ -70,13 +73,12 @@ def main(dry_run=False):
     updates = []
 
     for abbr in needed_abbrs:
-        mlb_abbr = _ABBR_ALIASES.get(abbr, abbr)
-        team_id = teams.get(mlb_abbr)
+        try:
+            team_id = teams.get(team_codes.normalize("mlb", abbr))
+        except team_codes.UnknownTeamCode:
+            team_id = None
         if not team_id:
-            # try our own abbr directly
-            team_id = teams.get(abbr)
-        if not team_id:
-            print(f"  {abbr}: no teamId (mlb_abbr={mlb_abbr}) — skip")
+            print(f"  {abbr}: no teamId — skip")
             continue
         try:
             roster = _get(MLB_ROSTER.format(teamId=team_id))

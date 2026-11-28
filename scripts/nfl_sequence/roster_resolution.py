@@ -196,11 +196,16 @@ def resolve_team(game_id, team, as_of, roster, events, roles, inactives=(), inac
         if reasons:
             blocks.add('contradictory_membership')
         eligible, flags, reason = _eligibility(row, membership, inactives)
+        source_flags = row.get('extra_flags', [])
+        if not isinstance(source_flags, list) or any(not isinstance(f, str) or not f for f in source_flags):
+            raise ValueError('invalid roster extra_flags')
         # one record per depth position: a player may appear in several rows (e.g. WR and KR), each with its own rank
         for pos, rank in row.get('positions') or [(row['pos'], row.get('depth_rank'))]:
             player = {'gsis_id': gsis, 'name': row['name'], 'pos': pos, 'depth_rank': rank,
                       'membership': membership, 'official_eligible': eligible, 'projected_participant': eligible,
-                      'projection_status': None, 'flags': sorted(flags + reasons), 'exclusion_reason': reason,
+                      'projection_status': None, 'flags': sorted(flags + reasons + [
+                          f for f in sorted(set(source_flags)) if f not in flags and f not in reasons]),
+                      'exclusion_reason': reason,
                       'events_applied': applied}
             players.append(player)
             by_id.setdefault(gsis, []).append(player)
