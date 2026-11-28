@@ -102,8 +102,11 @@ def main(argv=None):
     if (args.seeds < 1 or args.seed_start < 0 or args.parallel < 1 or args.runtime_workers < 1
             or not all(models) or len(set(models)) != len(models)):
         ap.error('positive seed count, nonnegative start and unique model IDs required')
-    # The maintained serial runtime has no --workers option. Don't send an
-    # unsupported flag by default; explicitly requested parallelism must exist.
+    # Parallel seeds share one loaded reference in the maintained Linux runner.
+    # Do not multiply full-model processes by a second layer of parallelism.
+    if args.runtime_workers > 1 and args.parallel != 1:
+        ap.error('--runtime-workers > 1 requires --parallel 1; avoid nested model loading')
+    # Older pinned runtimes may not expose --workers.
     help_result = subprocess.run([args.python, str(args.runtime), '--help'], capture_output=True, text=True)
     if help_result.returncode:
         raise SystemExit('RUNTIME_CLI_UNAVAILABLE: ' + help_result.stderr[-1000:])
@@ -155,7 +158,8 @@ def main(argv=None):
     manifest_path = args.out / f'manifest.{args.name}.json'
     manifest = {'schema': 'lp-slc-portable-batch-2', 'name': args.name, 'snapshots': str(args.snapshots), 'models': models,
                 'seeds_per_game_model': args.seeds, 'seed_start': args.seed_start, 'runtime': str(args.runtime),
-                'runtime_sha256': runtime_sha256,
+                'runtime_sha256': runtime_sha256, 'runtime_workers': args.runtime_workers,
+                'parallel_model_jobs': args.parallel,
                 'packages': {m: {**{k: registry[m][k] for k in ('sha256', 'code_commit', 'package')},
                                  'player_lines_available': registry[m].get('player_lines_available') is not False}
                              for m in models},

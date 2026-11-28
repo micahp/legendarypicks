@@ -467,6 +467,15 @@ class PortablePack(unittest.TestCase):
                 if key not in {"schema", "payload_sha256", "payload_bytes"}:
                     self.assertEqual(manifest[key], old["manifest"][key])
 
+    def test_schema2_reader_shares_repeated_short_strings(self):
+        from portable_model_pack import _StateJSONReader, _iter_state_json
+        value = [{"long_key_for_historical_row": "a_repeated_game_identifier"} for _ in range(20)]
+        encoded = "".join(_iter_state_json(value))
+        restored = _StateJSONReader(io.StringIO(encoded), {"types"}, share_strings=True).read()
+        self.assertEqual(value, restored)
+        self.assertIs(next(iter(restored[0])), next(iter(restored[-1])))
+        self.assertIs(restored[0]["long_key_for_historical_row"], restored[-1]["long_key_for_historical_row"])
+
     def test_wrong_external_hash_blocks_package_load(self):
         with tempfile.TemporaryDirectory() as dirname:
             path = Path(dirname) / "v1.slcpack"

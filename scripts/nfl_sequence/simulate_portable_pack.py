@@ -13,6 +13,8 @@ import builtins
 import copy
 import io
 from collections import defaultdict
+from contextlib import ExitStack
+from itertools import islice
 import importlib
 import inspect
 import hashlib
@@ -240,6 +242,121 @@ def _attach_runtime_adapters(reference, config, model_id):
     reference.penalty_controller_factory = penalty_factory
 
 
+def _seed_result(seed, args, reference, snapshot, gs, slc_engine, rng_plan):
+    """One seed; return only requested outputs, never the model."""
+    detail = None
+    record = None
+    record_error = None
+    seed_decisions = []
+    seed_diagnostics = {}
+    try:
+        record = _run_seed(seed, reference, snapshot, gs, slc_engine, rng_plan,
+                           seed_decisions if getattr(args, "decisions_out", None) else None,
+                           seed_diagnostics if args.experimental_profile else None)
+        status = record.get("status", "unknown")
+        blocker = record.get("blocker")
+        valid = record.get("valid_full_game") is True and record.get("complete_game") is True
+        reached_reg = bool(record.get("regulation_end_reached"))
+        # The overtime subrecord captures the score at the end of regulation.
+        # Keep that diagnostic independent from the final, possibly overtime,
+        # score and from snapshot evidence classification.
+        regulation_points = ((record.get("overtime") or {}).get("regulation_points")
+                             or record.get("points", {}))
+        regulation_home = regulation_points.get("A")
+        regulation_away = regulation_points.get("B")
+        tied_reg = bool(reached_reg and regulation_home is not None
+                        and regulation_away is not None
+                        and regulation_home == regulation_away)
+        row = {
+            "seed": seed, "status": status, "blocker": blocker,
+            "valid_full_game": valid, "complete_game": bool(record.get("complete_game")),
+            "regulation_end_reached": reached_reg, "tied_at_regulation_end": tied_reg,
+            "regulation_home_points": regulation_home,
+            "regulation_away_points": regulation_away,
+            "home_points": record["points"]["A"], "away_points": record["points"]["B"],
+            "score_scope": "valid_final" if valid else "regulation_end_only" if reached_reg else "partial"
+        }
+        if seed_diagnostics:
+            row["execution_diagnostics"] = seed_diagnostics
+        if args.with_player_lines:
+            detail = {"seed": seed, "players": (record.get("stats") or {}).get("player", [])}
+    except Exception as exc:
+        # Table-access attempts are packaging defects, not per-seed model failures.
+        if "PORTABLE_RUNTIME_SOURCE_" in str(exc):
+            raise
+        record_error = f"{type(exc).__name__}: {str(exc)[:500]}"
+        row = {
+            "seed": seed, "status": "simulation_error", "blocker": None,
+            "valid_full_game": False, "complete_game": False,
+            "regulation_end_reached": False, "tied_at_regulation_end": False,
+            "regulation_home_points": None, "regulation_away_points": None,
+            "home_points": None, "away_points": None, "score_scope": "none",
+            "error": f"{type(exc).__name__}: {str(exc)[:500]}",
+        }
+
+    return (row, detail,
+            {"seed": seed, "record": record, "error": record_error} if args.records_out else None,
+            {"seed": seed, "model_id": args.model, "decisions": seed_decisions, "error": record_error}
+            if getattr(args, "decisions_out", None) else None)
+
+
+# Inherited once via fork; only seed integers enter the executor queue.
+_FORK_SEED_JOB = None
+
+
+def _fork_seed(seed):
+    if _FORK_SEED_JOB is None:
+        raise ModelPackError("SHARED_WORKER_REFERENCE_MISSING")
+    return _FORK_SEED_JOB(seed)
+
+
+def _seed_results(seeds, run_seed, *, workers, research=False):
+    """Ordered, bounded fork waves; no further wave after a strict failure."""
+    if type(workers) is not int or workers < 1:
+        raise ModelPackError("INVALID_RUNTIME_WORKER_COUNT")
+    if workers == 1:
+        for seed in seeds:
+            result = run_seed(seed)
+            yield result
+            if not research and not result[0]["valid_full_game"]:
+                return
+        return
+
+    import multiprocessing
+    import threading
+    from concurrent.futures import ProcessPoolExecutor
+    global _FORK_SEED_JOB
+    if (sys.platform != "linux" or "fork" not in multiprocessing.get_all_start_methods()
+            or threading.active_count() != 1 or _FORK_SEED_JOB is not None):
+        raise ModelPackError("SHARED_WORKERS_REQUIRE_SINGLE_THREADED_LINUX_PARENT")
+    _FORK_SEED_JOB = run_seed
+    try:
+        pending = iter(seeds)
+        with ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context("fork")) as pool:
+            width = 1
+            while True:
+                wave = list(islice(pending, width))
+                if not wave:
+                    return
+                results = list(pool.map(_fork_seed, wave, chunksize=1))
+                if [result[0]["seed"] for result in results] != wave:
+                    raise ModelPackError("SHARED_WORKER_SEED_CENSUS_MISMATCH")
+                yield from results
+                if not research and any(not result[0]["valid_full_game"] for result in results):
+                    return
+                width = workers
+    finally:
+        _FORK_SEED_JOB = None
+
+
+def _open_jsonl(stack, destination):
+    if destination is None:
+        return None
+    path = Path(destination)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return stack.enter_context(path.open("x"))
+
+
 def _run(args, engine_dir):
     model = get_model(args.model)
     if not model.get("runtime_supported", False):
@@ -460,73 +577,38 @@ def _run(args, engine_dir):
     aggregation = importlib.import_module("pregame_batch")
     rows = []
     details = []
-    records = []
-    decision_records = []
     if getattr(args, "decisions_out", None):
         sampler = getattr(reference, "contextual_sampler", None)
         if sampler is None:
             raise ModelPackError("DECISION_TRACE_SAMPLER_MISSING")
         if hasattr(sampler, "trace_outcome_probabilities"):
             sampler.trace_outcome_probabilities = True
-    for seed in range(args.seed_start, args.seed_start + args.games):
-        record = None
-        record_error = None
-        seed_decisions = []
-        seed_diagnostics = {}
-        try:
-            record = _run_seed(seed, reference, snapshot, gs, slc_engine, rng_plan,
-                               seed_decisions if getattr(args, "decisions_out", None) else None,
-                               seed_diagnostics if args.experimental_profile else None)
-            status = record.get("status", "unknown")
-            blocker = record.get("blocker")
-            valid = record.get("valid_full_game") is True and record.get("complete_game") is True
-            reached_reg = bool(record.get("regulation_end_reached"))
-            # The overtime subrecord captures the score at the end of regulation.
-            # Keep that diagnostic independent from the final, possibly overtime,
-            # score and from snapshot evidence classification.
-            regulation_points = ((record.get("overtime") or {}).get("regulation_points")
-                                 or record.get("points", {}))
-            regulation_home = regulation_points.get("A")
-            regulation_away = regulation_points.get("B")
-            tied_reg = bool(reached_reg and regulation_home is not None
-                            and regulation_away is not None
-                            and regulation_home == regulation_away)
-            row = {
-                "seed": seed, "status": status, "blocker": blocker,
-                "valid_full_game": valid, "complete_game": bool(record.get("complete_game")),
-                "regulation_end_reached": reached_reg, "tied_at_regulation_end": tied_reg,
-                "regulation_home_points": regulation_home,
-                "regulation_away_points": regulation_away,
-                "home_points": record["points"]["A"], "away_points": record["points"]["B"],
-                "score_scope": "valid_final" if valid else "regulation_end_only" if reached_reg else "partial"
-            }
-            if seed_diagnostics:
-                row["execution_diagnostics"] = seed_diagnostics
-            if args.with_player_lines:
-                details.append({"seed": seed, "players": (record.get("stats") or {}).get("player", [])})
-        except Exception as exc:
-            # Table-access attempts are packaging defects, not per-seed model failures.
-            if "PORTABLE_RUNTIME_SOURCE_" in str(exc):
-                raise
-            record_error = f"{type(exc).__name__}: {str(exc)[:500]}"
-            row = {
-                "seed": seed, "status": "simulation_error", "blocker": None,
-                "valid_full_game": False, "complete_game": False,
-                "regulation_end_reached": False, "tied_at_regulation_end": False,
-                "regulation_home_points": None, "regulation_away_points": None,
-                "home_points": None, "away_points": None, "score_scope": "none",
-                "error": f"{type(exc).__name__}: {str(exc)[:500]}",
-            }
-        rows.append(row)
-        if getattr(args, "decisions_out", None):
-            decision_records.append({"seed": seed, "model_id": args.model,
-                                     "decisions": seed_decisions, "error": record_error})
-        if args.records_out:
-            records.append({"seed": seed, "record": record, "error": record_error})
-        if not research and not row["valid_full_game"]:
-            print(f"INVALID_SEED_ABORT seed={seed} status={row['status']} blocker={row.get('blocker')} "
-                  f"error={row.get('error')}; stopping before further seeds", file=sys.stderr, flush=True)
-            break
+    workers = min(getattr(args, "workers", 1), args.games)
+
+    def run_one(seed):
+        return _seed_result(seed, args, reference, snapshot, gs, slc_engine, rng_plan)
+
+    # Keep large optional traces off the heap.
+    with ExitStack() as stack:
+        records_stream = _open_jsonl(stack, args.records_out)
+        decisions_stream = _open_jsonl(stack, getattr(args, "decisions_out", None))
+        for row, detail, seed_record, decision_record in _seed_results(
+                range(args.seed_start, args.seed_start + args.games), run_one,
+                workers=workers, research=research):
+            rows.append(row)
+            if detail is not None:
+                details.append(detail)
+            if records_stream is not None:
+                json.dump(seed_record, records_stream, sort_keys=True)
+                records_stream.write("\n")
+                records_stream.flush()
+            if decisions_stream is not None:
+                json.dump(decision_record, decisions_stream, sort_keys=True)
+                decisions_stream.write("\n")
+                decisions_stream.flush()
+            if not research and not row["valid_full_game"]:
+                print(f"INVALID_SEED_ABORT seed={row['seed']} status={row['status']} blocker={row.get('blocker')} "
+                      f"error={row.get('error')}; no further seed wave after this one", file=sys.stderr, flush=True)
     attempted = len(rows)
     summary = aggregation.summarize_outcomes(rows, attempted)
     # The frozen engine aggregator excludes any game tied at regulation, even
@@ -561,6 +643,9 @@ def _run(args, engine_dir):
         "run_status": ("incomplete" if failed else "complete"),
         "rng_protocol": rng_manifest,
         "experimental_configuration": experimental_configuration,
+        "execution": {"workers": workers, "reference_loads": 1,
+                      "mode": "fork_copy_on_write" if workers > 1 else "serial",
+                      "strict_failure_boundary": "submitted_wave" if workers > 1 else "seed"},
         "simulation": {"requested_games": args.games, "attempted_games": attempted,
                        "valid_full_games": summary["valid_full_games"],
                        "seed_start": args.seed_start, "seed_end_inclusive": args.seed_start + args.games - 1},
@@ -570,24 +655,11 @@ def _run(args, engine_dir):
     }
     if args.with_player_lines:
         payload["player_boxscores_by_seed"] = details
-    if args.records_out:
-        records_path = Path(args.records_out)
-        records_path.parent.mkdir(parents=True, exist_ok=True)
-        if records_path.exists():
-            raise FileExistsError(f"immutable records file exists: {records_path}")
-        with records_path.open("x") as handle:
-            for row in records:
-                handle.write(json.dumps(row, sort_keys=True) + "\n")
-    if getattr(args, "decisions_out", None):
-        decisions_path = Path(args.decisions_out)
-        decisions_path.parent.mkdir(parents=True, exist_ok=True)
-        with decisions_path.open("x") as stream:
-            for row in decision_records:
-                stream.write(json.dumps(row, sort_keys=True) + "\n")
     output = Path(args.out)
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("x") as handle:
-        handle.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+        json.dump(payload, handle, indent=2, sort_keys=True)
+        handle.write("\n")
     print(f"wrote {output}: {summary['valid_full_games']}/{args.games} complete valid games; {attempted} attempted")
     return 1 if failed and not research else 0
 
@@ -602,6 +674,8 @@ def main(argv=None):
     ap.add_argument("--pack-sha256", required=True, help="independent pack hash from trusted build manifest")
     ap.add_argument("--games", type=int, required=True)
     ap.add_argument("--seed-start", type=int, default=0)
+    ap.add_argument("--workers", type=int, default=1,
+                    help="Linux: fork seed workers from one loaded model; default 1 (serial)")
     ap.add_argument("--allow-invalid-research", action="store_true",
                     help="explicit diagnostic mode: allow unverified inputs and continue after invalid seeds; not a forecast")
     ap.add_argument("--rng-protocol", choices=("v1", "v2"), default=None,
@@ -622,8 +696,14 @@ def main(argv=None):
     ap.add_argument("--decisions-out", type=Path,
                     help="write per-seed play-call decisions and available probability stages as JSONL")
     args = ap.parse_args(argv)
-    if args.games < 1 or args.seed_start < 0:
-        ap.error("games must be positive and seed-start nonnegative")
+    if args.games < 1 or args.seed_start < 0 or args.workers < 1:
+        ap.error("games and workers must be positive and seed-start nonnegative")
+    if args.workers > 1:
+        if sys.platform != "linux":
+            ap.error("--workers > 1 requires Linux fork copy-on-write")
+        for name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
+                     "BLIS_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
+            os.environ[name] = "1"
     outputs = [Path(args.out), *[path for path in (args.records_out, args.decisions_out) if path is not None]]
     if len({path.resolve() for path in outputs}) != len(outputs) or any(path.exists() for path in outputs):
         ap.error("output paths must be distinct and must not already exist")

@@ -160,7 +160,11 @@ def simulate(args):
         raise RuntimeError(f"MODEL_PACKAGE_NOT_FOUND: model={canonical} training_season={season}")
     entry = entries[0]
     pack = models_dir / entry["package"]
-    digest = hashlib.sha256(pack.read_bytes()).hexdigest()
+    digest_state = hashlib.sha256()
+    with pack.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1 << 20), b""):
+            digest_state.update(chunk)
+    digest = digest_state.hexdigest()
     if digest != entry["sha256"]:
         raise RuntimeError("MODEL_PACKAGE_HASH_MISMATCH")
     run_args = [
@@ -168,6 +172,7 @@ def simulate(args):
         "--snapshot", str(snapshot.resolve()),
         "--pack", str(pack), "--pack-sha256", digest,
         "--games", str(args.seeds), "--seed-start", str(args.seed_start),
+        "--workers", str(args.workers),
         "--out", str(args.out.resolve()),
     ]
     run_args.append("--with-player-lines" if args.with_player_lines else "--no-player-lines")
@@ -211,6 +216,8 @@ def main(argv=None):
                          help="hash-pinned pregame roster/injury snapshot for this game")
     sim_cmd.add_argument("--seeds", type=int, required=True)
     sim_cmd.add_argument("--seed-start", type=int, default=0)
+    sim_cmd.add_argument("--workers", type=int, default=1,
+                         help="Linux seed workers sharing one loaded model")
     sim_cmd.add_argument("--models-dir", type=Path, default=Path(os.environ.get("SLC_MODELS_DIR", "models")))
     sim_cmd.add_argument("--out", type=Path, default=Path("slc-results.json"))
     sim_cmd.add_argument("--with-player-lines", dest="with_player_lines", action="store_true", default=True,

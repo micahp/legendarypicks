@@ -418,8 +418,10 @@ class _HashingRawReader(io.RawIOBase):
 
 class _StateJSONReader:
     """Incrementally parse tagged state JSON directly into runtime objects."""
-    def __init__(self, stream, allowed_modules):
+    def __init__(self, stream, allowed_modules, *, share_strings=False):
         self.stream = stream
+        # Bounded, per-load canonicalization of immutable short strings.
+        self._strings = {} if share_strings else None
         self.allowed_modules = allowed_modules
         self.decoder = json.JSONDecoder()
         self.buffer = ""
@@ -478,6 +480,12 @@ class _StateJSONReader:
                 self._fill()
                 continue
             self.pos = end
+            if self._strings is not None and isinstance(value, str) and len(value) <= 128:
+                existing = self._strings.get(value)
+                if existing is not None:
+                    return existing
+                if len(self._strings) < 32768:
+                    self._strings[value] = value
             return value
 
     def _field(self, expected):
@@ -950,7 +958,8 @@ def load_pack(path, *, expected_sha256, expected_code_commit, engine_dir=None):
             hashing_stream = _HashingRawReader(payload_stream)
             with io.BufferedReader(hashing_stream) as buffered:
                 with io.TextIOWrapper(buffered, encoding="utf-8") as text_stream:
-                    loaded = _StateJSONReader(text_stream, allowed_modules).read()
+                    loaded = _StateJSONReader(text_stream, allowed_modules,
+                                              share_strings=manifest["schema"] == SHARED_POOL_SCHEMA).read()
         if (hashing_stream.size != manifest.get("payload_bytes")
                 or hashing_stream.digest.hexdigest() != manifest.get("payload_sha256")):
             raise ModelPackError("PACK_PAYLOAD_HASH_MISMATCH")
