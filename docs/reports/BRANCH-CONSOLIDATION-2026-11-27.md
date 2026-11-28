@@ -150,3 +150,65 @@ Seven source refs are now ancestry-contained in their selected destinations (sub
 These are shared input/tooling changes, not new model identities. No source pin, production configuration, host workload, live ingestion, raw historical artifact or result changed. Full repository suites and live source validation not performed in this connector session; verify tests on a repository checkout before deployment. All three sources reconciled by ancestry in this commit, with rejected behavior intentionally not adopted; cleanup still requires exact-tip/worktree/reference checks.
 
 The collector bypasses the HTTP cache for fresh observations; the existing roster-resolution CI workflow is extended to run the targeted offline shared-input regressions on changes to these files. CI execution is not evidence until a completed job is inspected.
+
+## Recovered worktree queue closure and outstanding remote ref cleanup
+
+The original 23 recovered refs have all been accounted for: 20 absent remotely (initial ten and ten later reconciled refs), three retained (frozen V1, frozen V2/PBV1, historical forced-PBV1 probe). Both recovered V1.5/V1.7 frozen pins also independently resolve at their exact registry commits. Host worktrees remain a host-side verification responsibility.
+
+The six new Black Friday evidence commits through `c4fa9d6a60e8a6cf77e42e10167a5d6bc869a206` are reconciled into dev by this merge. The seven changed evidence paths are copied as exact Git blobs, with no changes to runtime, forecast claims or frozen inputs. The two previously existing paths matched the merge-base blobs on dev; the five additions were absent. Preserve the active research branch for ongoing batch evidence, even though this tip is now contained.
+
+As of dev `7e015df6786657d7204b27c51f70e062e0f71263`, the following 35 *existing* remote refs have zero commits ahead of their respective destinations. No current open PR (#29, #35, #46) uses these as head/base. This is the remaining ancestry-confirmed cleanup list, not authorization to remove local worktrees or frozen source pins. Recheck exact tips, active worktrees and operational branch-name dependencies before deleting with a lease. No remote deletion capability is available in the current connector.
+
+### dev (22)
+
+- `docs/diataxis-philosophy-2026-11-27`
+- `docs/simulation-artifact-retention-2026-11-27`
+- `research/week12-gbla-grades-2026-11-26`
+- `docs/lp-api-first-snapshot-2026-11-26`
+- `fix/current-snapshot-guard-2026-11-22`
+- `research/nfl-finalized-roster-recovery-extracted-2026-11-21`
+- `research/oracle-walkforward-tooling-extracted-2026-11-21`
+- `fix/nfl-boxscore-layout-2026-11-21`
+- `feat/slc-family-runner`
+- `test/oracle-forward-platt-parity-2026-11-21`
+- `feat/snapshot-roster-text-2026-11-22`
+- `research/week11-1k-batch-2026-11-22`
+- `docs/context-2026-11-22`
+- `feat/week12-pregame-snapshots-2026-11-26`
+- `fix/roster-preflight-2026-11-22`
+- `feat/slc-portable-model-packs-2026-11-18`
+- `feat/slc-v1-executable-package-2026-11-18`
+- `docs/retro-pace-efficiency-charts-2026-11-27`
+- `docs/modeling-handbook-2026-11-26`
+- `docs/slc-architecture-diagrams-2026-11-26`
+- `fix/slc-portable-shared-pool-2026-11-27`
+- `fix/slc-shared-workers-2026-11-27`
+
+### v1-complete (7)
+
+- `feat/v1-complete-combined-2026-11-26`
+- `feat/v1-complete-persistent-lineups-2026-11-26`
+- `feat/v1-complete-persistent-lineups-control-2026-11-26`
+- `feat/v1-complete-player-state-2026-11-26`
+- `feat/v1-complete-runtime-repair-2026-11-26`
+- `feat/v1-complete-shared-policy-2026-11-26`
+- `feat/slc-v1-complete-implementation-2026-11-24`
+
+### slc-v2 (4)
+
+- `fix/slc-v2-kicker-code-normalization-2026-11-21`
+- `feat/slc-v2-pbp-release-2026-11-17`
+- `slc-v2-reconciled-2026-11-17`
+- `feat/slc-v2-he-entry-2026-11-26`
+
+### slc-v1.6 (1)
+
+- `fix/slc-v1.6-rules-2026-11-23`
+
+### research/slc-ceg-2026-11-24 (1)
+
+- `feat/slc-ceg-player-integration-2026-11-26`
+
+Verification caveat: the expanded shared-input CI run [46105005548](https://github.com/micahp/legendarypicks/actions/runs/46105005548) returned 27 passing tests and 91 setup errors due to missing FastAPI in the backend autouse fixture. The independent resolver/adapter step passed. Do not claim the three recovery integrations have passed the expanded suite. No live ingestion or full game verification is asserted. Memory tooling CI at 7e015df6 passed 49 focused tests, not real package parity.
+
+The older report's 315-ref inventory is historical; a current branch enumeration returned 320 names. This closes the specified recovered-branch integration queue, not a semantic review of every older sports/research branch. Preserve unrelated unique work, release branches, frozen source refs and active experiments.
