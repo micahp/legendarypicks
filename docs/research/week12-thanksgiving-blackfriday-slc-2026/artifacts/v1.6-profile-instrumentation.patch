@@ -1,0 +1,70 @@
+--- a/scripts/nfl_sequence/portable_model_pack.py
++++ b/scripts/nfl_sequence/portable_model_pack.py
+@@ -381,9 +381,16 @@
+         self.buffer = ""
+         self.pos = 0
+         self.eof = False
++        self._profile_byte_base = 0
++        self._profile_capture_reference = False
++        self._profile_next_attrs = False
++
++    def _profile_byte_offset(self):
++        return self._profile_byte_base + len(self.buffer[:self.pos].encode("utf-8"))
+ 
+     def _fill(self):
+         if self.pos:
++            self._profile_byte_base += len(self.buffer[:self.pos].encode("utf-8"))
+             self.buffer = self.buffer[self.pos:]
+             self.pos = 0
+         chunk = self.stream.read(65536)
+@@ -464,18 +471,26 @@
+             self._take(",")
+ 
+     def _pairs(self, target):
++        profile_reference_attrs = self._profile_next_attrs
++        if profile_reference_attrs:
++            self._profile_next_attrs = False
+         self._take("[")
+         self._skip_ws()
+         if self._peek() == "]":
+             self.pos += 1
+             return target
+         while True:
++            pair_start = self._profile_byte_offset()
+             self._take("[")
+             key = self._value()
+             self._take(",")
+             value = self._value()
+             self._take("]")
+             target[key] = value
++            if profile_reference_attrs:
++                callback = globals().get("_PROFILE_ATTRIBUTE_CALLBACK")
++                if callback is not None:
++                    callback(key, value, pair_start, self._profile_byte_offset(), len(target))
+             self._skip_ws()
+             ch = self._peek()
+             if ch == "]":
+@@ -501,7 +516,12 @@
+             self._take(":")
+             if key in result:
+                 raise ModelPackError("MODEL_STATE_DUPLICATE_JSON_KEY")
+-            result[key] = self._value()
++            if first_key == "config" and key == "reference":
++                self._profile_capture_reference = True
++                result[key] = self._value()
++                self._profile_capture_reference = False
++            else:
++                result[key] = self._value()
+             self._skip_ws()
+         self._take("}")
+         return result
+@@ -583,6 +603,9 @@
+             self._take("}")
+             return deque(items, maxlen=maxlen)
+         if kind == "object":
++            if self._profile_capture_reference:
++                self._profile_capture_reference = False
++                self._profile_next_attrs = True
+             self._field("attrs")
+             attrs = self._value()
+             self._field("class")
