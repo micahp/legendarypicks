@@ -57,3 +57,31 @@ Focused verification for that earlier change passed: 5 tests, Python compilation
 Commit `6eb4a49ded7d270bdc43f26de0ae97d320fe5357` is pushed to `feat/slc-portable-model-packs-2026-11-18`. The local branch is `feat/slc-v1-executable-package-2026-11-18`. The remote branch was verified at the same commit. `dev` remains unchanged.
 
 The V1 model card records an earlier package and its failed 10-seed comparisons. Its addendum describes the separate one-seed exact-parity run above; the two artifacts and results should not be conflated.
+
+## Runtime memory audit (in progress)
+
+This is an initial read-only census, not a complete object-level audit. Measurements were taken on the fast host while the DEN–PIT batch was running. No model implementation was changed.
+
+Two V2 personnel-first workers, each running 125 seeds from package `407a514b75febac156dbfe66e4abe30f6eafdfd523eaabccb44a726a7245e3f5`, had RSS of 1,457,188 and 1,452,080 KiB. Their private dirty memory was 1,428,676 and 1,423,528 KiB respectively; PSS was 1,440,565 and 1,435,473 KiB. These are single samples, not per-object retained sizes or peak-load measurements. Each subprocess loads its own reference, so most of the measured memory is not shared. The earlier four-worker V1.6 batch exhausted host memory; these V2 figures cannot establish V1.6's object composition.
+
+Representative package ZIP metadata, in bytes, follows. Compressed archive size is disk use; uncompressed `reference.json` size is serialized data, not RAM. These packages are examples, not necessarily the precise artifacts used by every batch.
+
+| Model | Compressed package | Uncompressed reference.json |
+| --- | ---: | ---: |
+| V1 | 19,684,308 | 371,237,538 |
+| V1.5 | 27,420,927 | 536,256,149 |
+| V1.6 | 35,651,506 | 609,926,783 |
+| V1.7 | 27,660,668 | 528,309,685 |
+| V2 personnel-first | 30,966,014 | 561,614,792 |
+| PBV1 | 28,683,973 | 542,886,844 |
+| PBV1-off | 28,675,634 | 542,853,093 |
+
+The inspected PBV1 and PBV1-off manifests carry the same reference fingerprint, `8e1171dcbca8415cfff0341bd48e1ef1d7718d93e9174ed531bc4bd2b1c95c2d`, although their payload hashes differ. That establishes matching recorded reference fingerprints, not byte-identical serialized payloads or proof that all their runtime objects are interchangeable. The frozen CEG artifact inspected is 1,985,586 bytes on disk; its retained memory has not been measured.
+
+The portable loader streams JSON into objects, but constructs separate Python objects and copies decoded NumPy arrays. The runner deep-copies the game snapshot per seed. Its `rows` and player-box-score `details` lists grow with attempted seeds; optional full records and decision traces also accumulate until output. These are output buffers, not evidence of a leaking cache. The inspected V2 play-call sampler builds `_cells`, grouped outcome counters, sorted row lists, `_team_transition_groups`, and, when enabled, a backoff index lazily. They can grow as previously unseen cells are visited across seeds; retained sizes, ceilings, and behavior in every other pinned engine remain unmeasured. Group lists may contain references to existing rows rather than independent copies: object identity profiling is needed to distinguish the two.
+
+Read-only, immutable fitted tables and historical rows are candidates for sharing across workers. Mutable per-game state, RNG streams, snapshot copies, decision traces and mutable caches need isolation or a verified shared read-only representation. A fork or memory map is not automatically safe or effective: copy-on-write behavior, object mutation, platform, provenance and parity must be measured. CEG currently unpickles its artifact in each worker initializer and collects results in the parent.
+
+Counts and weighted aggregates can replace individual historical rows only when they retain every value used by eligibility, conditional filtering, transition and participant weighting, attribution, downstream state, and any required row identity. The inspected V2 sampler selects historical rows after formation, coverage, streak and label conditioning, player weights and transition grouping; a single unconditional count or mean cannot preserve that joint distribution. Exact grouped representations may be possible for rows proven equivalent across all relevant fields, with multiplicity and ordering retained where seed parity requires it. This has not been demonstrated.
+
+Still required for a complete census: profile every pinned V1, V1.5, V1.6, V1.7, V2, PBV1 and CEG artifact independently; enumerate retained object graphs with shared-reference accounting and native allocations; measure load peaks and growth over seeds; trace field access across representative games and all conditional paths; compare dataset identities and cached indexes; and validate any compression or sharing proposal against full seeded records. No field is declared unused on the basis of this source inspection alone.
