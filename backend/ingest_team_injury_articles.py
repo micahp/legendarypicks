@@ -98,7 +98,8 @@ def _month_url(base, month):
 
 def fetch_month(fetch, base, month):
     sitemap_url = _month_url(base, month)
-    page = fetch.text(sitemap_url, ttl=0)
+    # Bypass both memory and disk cache: this observation must represent a fresh response.
+    page = fetch.fetch_text(sitemap_url, retry=False)
     rows = parse_sitemap(page, base)
     if not rows:
         raise ValueError('sitemap parsed to 0 article rows; the page format may have changed')

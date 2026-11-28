@@ -19,9 +19,9 @@ class FakeFetch:
     def __init__(self, page=PAGE):
         self.page = page
 
-    def text(self, url, ttl=None):
+    def fetch_text(self, url, retry=True):
         assert url == URL
-        assert ttl == 0
+        assert retry is False
         if self.page is None:
             raise RuntimeError('fetch failed')
         return self.page
@@ -81,3 +81,13 @@ def test_oracle_cli_reads_catalog_without_ingesting(tmp_path, monkeypatch, capsy
     assert result['team'] == 'LAR'
     assert result['player_status_verified'] is False
     assert len(result['articles']) == 2
+
+
+def test_month_and_discovery_classification():
+    page = PAGE + '<tr><td>2026-10-31</td><td><a href="/news/injury-report-old">Old injury report</a></td></tr>'
+    rows, parsed, _, _ = ing.fetch_month(FakeFetch(page), BASE, '2026-11')
+    assert parsed == 5 and len(rows) == 4
+    assert ing.classify(BASE + '/news/practice-squad-signing', 'Practice squad signing') == 'practice'
+    assert ing.classify(BASE + '/news/ir-move', 'Player on injured reserve') is None
+    with pytest.raises(ValueError):
+        ing.fetch_month(FakeFetch(page), BASE, '2026-13')

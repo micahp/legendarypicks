@@ -6,6 +6,21 @@ on:
       - 'scripts/nfl_sequence/resolved_roster_adapter.py'
       - 'scripts/nfl_sequence/test_roster_resolution.py'
       - 'scripts/nfl_sequence/test_resolved_roster_adapter.py'
+      - 'scripts/nfl_sequence/roster_preflight.py'
+      - 'scripts/nfl_sequence/test_roster_preflight.py'
+      - 'backend/oracle.py'
+      - 'backend/ingest_team_injury_articles.py'
+      - 'backend/test_ingest_team_injury_articles.py'
+      - 'backend/team_codes.py'
+      - 'backend/test_team_codes.py'
+      - 'backend/ingest_rotowire_soccer_stats.py'
+      - 'backend/test_ingest_rotowire_soccer_stats.py'
+      - 'backend/refresh_mlb_player_teams.py'
+      - 'backend/test_mlb_identity_invariants.py'
+      - 'backend/radio_blackout_check.py'
+      - 'backend/migrate_log_team_vocabulary.py'
+      - 'backend/migrate_nhl_tricodes.py'
+      - 'scripts/backfill_mlbam_id.py'
       - '.github/workflows/nfl-roster-resolution-v2-tests.yml'
   pull_request:
     paths:
@@ -13,7 +28,24 @@ on:
       - 'scripts/nfl_sequence/resolved_roster_adapter.py'
       - 'scripts/nfl_sequence/test_roster_resolution.py'
       - 'scripts/nfl_sequence/test_resolved_roster_adapter.py'
+      - 'scripts/nfl_sequence/roster_preflight.py'
+      - 'scripts/nfl_sequence/test_roster_preflight.py'
+      - 'backend/oracle.py'
+      - 'backend/ingest_team_injury_articles.py'
+      - 'backend/test_ingest_team_injury_articles.py'
+      - 'backend/team_codes.py'
+      - 'backend/test_team_codes.py'
+      - 'backend/ingest_rotowire_soccer_stats.py'
+      - 'backend/test_ingest_rotowire_soccer_stats.py'
+      - 'backend/refresh_mlb_player_teams.py'
+      - 'backend/test_mlb_identity_invariants.py'
+      - 'backend/radio_blackout_check.py'
+      - 'backend/migrate_log_team_vocabulary.py'
+      - 'backend/migrate_nhl_tricodes.py'
+      - 'scripts/backfill_mlbam_id.py'
       - '.github/workflows/nfl-roster-resolution-v2-tests.yml'
+permissions:
+  contents: read
 jobs:
   roster-resolution:
     runs-on: ubuntu-latest
@@ -28,3 +60,11 @@ jobs:
         run: |
           python -m unittest discover -s scripts/nfl_sequence -p 'test_roster_resolution.py' -v
           python -m unittest discover -s scripts/nfl_sequence -p 'test_resolved_roster_adapter.py' -v
+
+      - name: Install offline input regression dependencies
+        run: python -m pip install pytest pandas
+      - name: Check shared input integration (no live source or host access)
+        env:
+          PYTHONPATH: .:backend:scripts/nfl_sequence
+        run: |
+          python -m pytest -q scripts/nfl_sequence/test_roster_preflight.py backend/test_team_codes.py backend/test_ingest_team_injury_articles.py backend/test_ingest_rotowire_soccer_stats.py backend/test_mlb_identity_invariants.py
